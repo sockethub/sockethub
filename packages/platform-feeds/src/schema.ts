@@ -13,23 +13,97 @@ export default {
                 type: "string",
                 enum: ["fetch"],
             },
+            // Optional fetch parameters. When present, strictly validated: only
+            // the parameters the platform actually honors are allowed.
             object: {
                 type: "object",
-                oneOf: [
-                    { $ref: "#/definitions/objectTypes/feed-parameters-date" },
-                    { $ref: "#/definitions/objectTypes/feed-parameters-url" },
-                ],
+                additionalProperties: false,
+                properties: {
+                    // Only return entries published at or after this instant.
+                    since: { type: "string", format: "date-time" },
+                    // Cap the number of returned entries (feed order preserved).
+                    limit: { type: "integer", minimum: 1 },
+                },
+            },
+        },
+    },
+    // Outbound (platform -> client): the feeds platform only emits a single
+    // `collection` message whose `items` are `post` entries. Strict: every
+    // field the platform constructs is enumerated.
+    responses: {
+        type: "object",
+        required: ["type", "totalItems", "items"],
+        additionalProperties: false,
+        properties: {
+            "@context": { type: "array", items: { type: "string" } },
+            id: { type: ["string", "null"] },
+            type: { enum: ["collection"] },
+            summary: { type: "string" },
+            totalItems: { type: "number" },
+            items: {
+                type: "array",
+                items: { $ref: "#/definitions/responses/post" },
             },
         },
         definitions: {
-            objectTypes: {
-                "feed-parameters-date": {
+            responses: {
+                post: {
                     type: "object",
-                    additionalProperties: true,
+                    required: ["type", "actor", "object"],
+                    additionalProperties: false,
+                    properties: {
+                        "@context": {
+                            type: "array",
+                            items: { type: "string" },
+                        },
+                        id: { type: "string" },
+                        type: { enum: ["post"] },
+                        actor: { $ref: "#/definitions/responses/feedChannel" },
+                        object: { $ref: "#/definitions/responses/feedItem" },
+                    },
                 },
-                "feed-parameters-url": {
+                feedChannel: {
                     type: "object",
-                    additionalProperties: true,
+                    required: ["id", "type", "name", "link"],
+                    additionalProperties: false,
+                    properties: {
+                        id: { type: "string" },
+                        type: { enum: ["feed"] },
+                        name: { type: "string" },
+                        link: { type: "string" },
+                        description: { type: "string" },
+                        image: { type: "string" },
+                        categories: {
+                            type: "array",
+                            items: { type: "string" },
+                        },
+                        language: { type: "string" },
+                        author: { type: "string" },
+                    },
+                },
+                feedItem: {
+                    type: "object",
+                    required: [
+                        "type",
+                        "title",
+                        "id",
+                        "content",
+                        "contentType",
+                        "url",
+                        "datenum",
+                    ],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["article", "note"] },
+                        title: { type: "string" },
+                        id: { type: "string" },
+                        brief: { type: "string" },
+                        content: { type: "string" },
+                        contentType: { enum: ["html", "text"] },
+                        url: { type: "string" },
+                        published: { type: "string" },
+                        datenum: { type: "number" },
+                    },
                 },
             },
         },

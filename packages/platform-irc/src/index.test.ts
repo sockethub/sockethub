@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 import {
     type ActivityStream,
@@ -12,7 +12,38 @@ import {
 } from "@sockethub/schemas";
 import type { GetClientCallback } from "./index";
 
-import IRC from "./index";
+let capturedIrcSocketOptions:
+    | { connectOptions?: { rejectUnauthorized: boolean } }
+    | undefined;
+
+mock.module("irc-socket-sasl", () => ({
+    default: class FakeIrcSocket {
+        constructor(options: {
+            connectOptions?: { rejectUnauthorized: boolean };
+        }) {
+            capturedIrcSocketOptions = options;
+        }
+
+        connect() {
+            return Promise.resolve({
+                isFail: () => false,
+                fail: () => "",
+                ok: () => true,
+                end: () => {},
+            });
+        }
+
+        once() {}
+
+        end() {}
+
+        raw() {}
+
+        on() {}
+    },
+}));
+
+const { default: IRC, flattenConnectOptions } = await import("./index");
 
 const actor = {
     type: "person",
@@ -225,6 +256,39 @@ describe("Initialize IRC Platform", () => {
                     },
                 }),
             ).toEqual("");
+        });
+
+        it("valid credentials with allowInvalidCert", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        allowInvalidCert: true,
+                    },
+                }),
+            ).toEqual("");
+        });
+
+        it("rejects non-boolean allowInvalidCert", () => {
+            const result = validateCredentials({
+                "@context": IRC_CONTEXT,
+                type: "credentials",
+                actor,
+                object: {
+                    type: "credentials",
+                    nick: "testingham",
+                    server: "irc.example.com",
+                    // @ts-expect-error test invalid params
+                    allowInvalidCert: "yes",
+                },
+            });
+            expect(result).toContain("/object/allowInvalidCert");
+            expect(result).toContain("must be boolean");
         });
 
         it("rejects unknown saslMechanism", () => {
@@ -500,18 +564,74 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
-            it("query()", (done) => {
-                platform.query(
-                    {
-                        "@context": IRC_CONTEXT,
-                        type: "query",
-                        actor: actor,
-                        target: targetRoom,
-                        object: { type: "attendance" },
-                    },
-                    done,
-                );
-                platform.completeJob();
+            describe("query() attendance", () => {
+                let rawCalls;
+                beforeEach(() => {
+                    rawCalls = [];
+                    platform.client.raw = (...args) => {
+                        rawCalls.push(args);
+                    };
+                });
+
+                it("sends NAMES for the target channel name", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: targetRoom,
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toBeUndefined();
+                            expect(rawCalls).toEqual([[["NAMES", "#a-room"]]]);
+                            done();
+                        },
+                    );
+                });
+
+                it("derives the channel from target.id when name is missing", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: {
+                                type: "room",
+                                id: "irc.example.com/#a-room",
+                            },
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toBeUndefined();
+                            expect(rawCalls).toEqual([[["NAMES", "#a-room"]]]);
+                            done();
+                        },
+                    );
+                });
+
+                // Regression coverage for sockethub/sockethub#1085: a query
+                // with no resolvable channel must error rather than emit a
+                // bare `NAMES`, which the server answers with the entire
+                // network channel list (presence flood for unjoined rooms).
+                it("rejects without sending a bare NAMES when no channel resolves", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: { type: "room", id: "irc.example.com/" },
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toEqual(
+                                "cannot query attendance without a valid channel name",
+                            );
+                            expect(rawCalls).toEqual([]);
+                            done();
+                        },
+                    );
+                });
             });
 
             it("disconnect()", (done) => {
@@ -541,5 +661,95 @@ describe("Initialize IRC Platform", () => {
                 });
             });
         });
+    });
+});
+
+describe("ircConnect TLS certificate validation", () => {
+    let platform;
+
+    beforeEach(() => {
+        capturedIrcSocketOptions = undefined;
+        platform = new IRC({
+            log: {
+                error: () => {},
+                warn: () => {},
+                info: () => {},
+                debug: () => {},
+            },
+            updateActor: function async() {
+                return Promise.resolve();
+            },
+            sendToClient: () => {},
+        });
+    });
+
+    const connect = (credentials) =>
+        new Promise((resolve, reject) => {
+            platform.ircConnect(credentials, (err) => {
+                if (err) {
+                    reject(new Error(String(err)));
+                    return;
+                }
+                resolve(undefined);
+            });
+        });
+
+    it("validates secure server certificates by default", async () => {
+        await connect({
+            ...validCredentials,
+            object: {
+                ...validCredentials.object,
+                secure: true,
+            },
+        });
+
+        expect(
+            capturedIrcSocketOptions?.connectOptions?.rejectUnauthorized,
+        ).toEqual(true);
+    });
+
+    it("allows explicit invalid certificate opt-out for secure connections", async () => {
+        await connect({
+            ...validCredentials,
+            object: {
+                ...validCredentials.object,
+                secure: true,
+                allowInvalidCert: true,
+            },
+        });
+
+        expect(
+            capturedIrcSocketOptions?.connectOptions?.rejectUnauthorized,
+        ).toEqual(false);
+    });
+
+    it("does not set TLS connect options for cleartext connections", async () => {
+        await connect({
+            ...validCredentials,
+            object: {
+                ...validCredentials.object,
+                secure: false,
+            },
+        });
+
+        expect(capturedIrcSocketOptions?.connectOptions).toBeUndefined();
+    });
+});
+
+describe("TLS connect option flattening", () => {
+    it("copies inherited rejectUnauthorized into an own property", () => {
+        const inheritedOptions = Object.create({
+            rejectUnauthorized: false,
+        }) as Record<string, unknown>;
+
+        const flattened = flattenConnectOptions(inheritedOptions);
+
+        expect(
+            Object.prototype.hasOwnProperty.call(
+                flattened,
+                "rejectUnauthorized",
+            ),
+        ).toEqual(true);
+        expect(flattened.rejectUnauthorized).toEqual(false);
     });
 });

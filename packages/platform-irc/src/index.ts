@@ -18,8 +18,10 @@
 
 import net from "node:net";
 import tls from "node:tls";
+
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
+    ActivityActor,
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
@@ -38,6 +40,40 @@ import type { PlatformIrcCredentialsObject } from "./types.js";
 
 export type { IrcSocketInstance } from "irc-socket-sasl";
 export type { PlatformIrcCredentialsObject } from "./types.js";
+
+// irc-socket-sasl >=4.1.2 already flattens connectOptions into a plain
+// object before handing them to the transport (silverbucket/irc-socket-sasl#24),
+// so this is now a defensive backstop rather than the primary fix: earlier
+// versions built the options via `Object.create(connectOptions)`, which put
+// our `rejectUnauthorized` setting on the prototype rather than as an own
+// property, and Node's `tls.connect` only honors it as an own property.
+// Keeping this here means we don't depend on the installed dependency
+// version (or a future regression/fork) to get this right.
+export function flattenConnectOptions(
+    options: Record<string, unknown>,
+): Record<string, unknown> {
+    const flattened: Record<string, unknown> = Object.create(null);
+    for (const key in options) {
+        if (
+            key === "__proto__" ||
+            key === "constructor" ||
+            key === "prototype"
+        ) {
+            continue;
+        }
+        flattened[key] = options[key];
+    }
+    return flattened;
+}
+
+const tlsTransport = {
+    connect(options: Record<string, unknown>, ...rest: Array<unknown>) {
+        return (tls.connect as unknown as (...args: Array<unknown>) => unknown)(
+            flattenConnectOptions(options),
+            ...rest,
+        );
+    },
+};
 
 export type GetClientCallback = (
     err: string | null,
@@ -340,10 +376,18 @@ export class IRC implements PersistentPlatformInterface {
             }
 
             if (job.object.type === "attendance") {
-                this.log.debug(
-                    `query() - sending NAMES for ${job.target.name}`,
-                );
-                client.raw(["NAMES", job.target.name]);
+                const channel = this.resolveChannelName(job.target);
+                if (!channel) {
+                    // Never emit a bare `NAMES` (no channel argument): IRC
+                    // servers answer it with the entire network channel list,
+                    // flooding the client with presence for rooms it never
+                    // joined. See sockethub/sockethub#1085.
+                    return done(
+                        "cannot query attendance without a valid channel name",
+                    );
+                }
+                this.log.debug(`query() - sending NAMES for ${channel}`);
+                client.raw(["NAMES", channel]);
                 done();
             } else {
                 done(`unknown 'type' '${job.object.type}'`);
@@ -377,6 +421,28 @@ export class IRC implements PersistentPlatformInterface {
     //
     // Private methods
     //
+    /**
+     * Resolve an IRC channel name from a job target. Prefers `target.name`,
+     * falling back to the channel segment of `target.id` (`<server>/<channel>`).
+     * Returns undefined when no valid `#channel` can be determined, so callers
+     * never emit a bare `NAMES` command (which floods the client with the
+     * server's entire channel list).
+     */
+    private resolveChannelName(target?: ActivityActor): string | undefined {
+        if (typeof target?.name === "string" && target.name.startsWith("#")) {
+            return target.name;
+        }
+        if (typeof target?.id === "string") {
+            const slash = target.id.indexOf("/");
+            const candidate =
+                slash >= 0 ? target.id.slice(slash + 1) : target.id;
+            if (candidate.startsWith("#")) {
+                return candidate;
+            }
+        }
+        return undefined;
+    }
+
     private isJoined(channel: string) {
         if (channel.indexOf("#") === 0) {
             // valid channel name
@@ -488,7 +554,12 @@ export class IRC implements PersistentPlatformInterface {
             debug: console.log,
         };
         if (is_secure) {
-            module_options.connectOptions = { rejectUnauthorized: false };
+            // Validate the server's TLS certificate by default. Only disable
+            // validation when the caller explicitly opts in via
+            // `allowInvalidCert` (e.g. for self-signed IRC networks). See #1056.
+            module_options.connectOptions = {
+                rejectUnauthorized: !credentials.object.allowInvalidCert,
+            };
         }
         if (is_sasl) {
             module_options.saslMechanism = sasl_mechanism;
@@ -502,7 +573,10 @@ export class IRC implements PersistentPlatformInterface {
             } sasl: ${is_sasl}${is_sasl ? ` (${sasl_mechanism})` : ""}`,
         );
 
-        const client = new IrcSocket(module_options, is_secure ? tls : net);
+        const client = new IrcSocket(
+            module_options,
+            is_secure ? tlsTransport : net,
+        );
 
         const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;

@@ -117,7 +117,7 @@ describe("getPlatformId", () => {
             }
         }
         crypto = new TestCrypto();
-        cryptoHashStub = sinon.stub(crypto, "hash");
+        cryptoHashStub = sinon.stub(crypto, "hashFull");
         cryptoHashStub.returnsArg(0);
     });
 

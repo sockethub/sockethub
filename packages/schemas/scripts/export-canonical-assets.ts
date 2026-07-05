@@ -39,11 +39,6 @@ type PlatformSchemaShape = {
 
 type PlatformPackageJson = {
     name?: string;
-    exports?: {
-        "."?: {
-            bun?: string;
-        };
-    };
 };
 
 type PlatformConstructor = new (
@@ -116,14 +111,11 @@ async function loadPlatformSchemas(): Promise<Array<PlatformSchemaShape>> {
             continue;
         }
 
-        const bunEntry = pkg.exports?.["."]?.bun;
-        if (typeof bunEntry !== "string") {
-            throw new Error(
-                `missing exports["."].bun entry for package ${pkg.name ?? platformDir}`,
-            );
-        }
-
-        const modulePath = resolve(packagesRootDir, platformDir, bunEntry);
+        const modulePath = resolve(
+            packagesRootDir,
+            platformDir,
+            "src/index.ts",
+        );
         const imported = await import(modulePath);
         if (typeof imported.default !== "function") {
             throw new Error(

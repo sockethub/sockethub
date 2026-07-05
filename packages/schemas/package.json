@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/schemas",
   "description": "JSON schema files for validating Sockethub Activity Streams",
-  "version": "3.0.0-alpha.12",
+  "version": "3.0.0-alpha.13",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -12,30 +12,29 @@
   "main": "dist/index.js",
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./context": {
-      "bun": "./src/context.ts",
+      "types": "./dist/context.d.ts",
       "import": "./dist/context.js",
       "default": "./dist/context.js"
     },
     "./object-types": {
-      "bun": "./src/object-types.ts",
+      "types": "./dist/object-types.d.ts",
       "import": "./dist/object-types.js",
       "default": "./dist/object-types.js"
     },
     "./schemas/json/sockethub-config.json": {
-      "default": "./src/schemas/json/sockethub-config.json"
+      "default": "./dist/schemas/json/sockethub-config.json"
     }
   },
   "files": [
-    "src/",
     "dist/"
   ],
   "engines": {
-    "bun": ">=1.2"
+    "node": ">=20"
   },
   "keywords": [
     "sockethub",
@@ -63,5 +62,6 @@
     "ajv-formats": "^2.1.1",
     "ajv-formats-draft2019": "^1.6.1"
   },
-  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
+  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd",
+  "types": "./dist/index.d.ts"
 }

@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/data-layer",
   "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.13",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -12,17 +12,16 @@
   "main": "dist/index.js",
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
   "files": [
-    "src/",
     "dist/"
   ],
   "engines": {
-    "bun": ">=1.2"
+    "node": ">=20"
   },
   "keywords": [
     "sockethub",
@@ -47,9 +46,9 @@
     "test:integration": "bun test ./integration/redis.integration.ts"
   },
   "dependencies": {
-    "@sockethub/crypto": "^1.0.0-alpha.12",
-    "@sockethub/logger": "^1.0.0-alpha.12",
-    "@sockethub/schemas": "^3.0.0-alpha.12",
+    "@sockethub/logger": "^1.0.0-alpha.13",
+    "@sockethub/schemas": "^3.0.0-alpha.13",
+    "@sockethub/util": "^1.0.0-alpha.1",
     "bullmq": "^5.66.5",
     "ioredis": "^5.9.2",
     "secure-store-redis": "^4.1.0"
@@ -63,5 +62,6 @@
     "typedoc-plugin-markdown": "^4.9.0",
     "winston": "^3.19.0"
   },
-  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
+  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd",
+  "types": "./dist/index.d.ts"
 }

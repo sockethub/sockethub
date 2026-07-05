@@ -1,0 +1,72 @@
+{
+  "name": "@sockethub/util",
+  "description": "Shared utilities for Sockethub (networking/SSRF helpers, etc.)",
+  "version": "1.0.0-alpha.1",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./net": {
+      "types": "./dist/net/index.d.ts",
+      "import": "./dist/net/index.js",
+      "default": "./dist/net/index.js"
+    },
+    "./error": {
+      "types": "./dist/error/index.d.ts",
+      "import": "./dist/error/index.js",
+      "default": "./dist/error/index.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.js",
+      "default": "./dist/crypto/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "sockethub",
+    "ssrf",
+    "networking",
+    "crypto",
+    "encryption",
+    "utilities"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/util"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/util",
+  "scripts": {
+    "build": "bun build src/index.ts src/net/index.ts src/error/index.ts src/crypto/index.ts --outdir dist --target node --format esm --sourcemap=external --external undici",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "object-hash": "^3.0.0",
+    "secure-store-redis": "^4.1.0",
+    "undici": "^7.19.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/object-hash": "^3.0.6",
+    "@types/sinon": "^17.0.4",
+    "sinon": "^17.0.2"
+  },
+  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd"
+}

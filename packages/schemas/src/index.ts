@@ -14,7 +14,6 @@ import {
     ObjectTypesList,
     ObjectTypesSchema,
 } from "./helpers/objects.js";
-import { ActivityObjectSchema } from "./schemas/activity-object.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
@@ -25,20 +24,14 @@ import {
     registerSystemPlatformContexts,
     resolvePlatformId,
     setValidationErrorOptions,
-    validateActivityObject,
     validateActivityStream,
+    validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
+    validateSockethubConfig,
 } from "./validator.js";
 
-export {
-    type ActivityStreamProcessor,
-    type ActivityStreamProcessorOptions,
-    createActivityStreamProcessor,
-    extractObjectPropertyExtensionsFromMessageSchema,
-    type JsonSchemaLike,
-    normalizeActivityStream,
-} from "./activity-stream-helper.js";
+export { normalizeActivityStream } from "./activity-stream-helper.js";
 
 export {
     AS2_BASE_CONTEXT_URL,
@@ -58,10 +51,10 @@ export {
     validatePlatformSchema,
     validateCredentials,
     validateActivityStream,
-    validateActivityObject,
+    validateActivityStreamResponse,
+    validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
-    ActivityObjectSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     ObjectTypesList,

@@ -424,8 +424,8 @@ export class IncomingHandlers {
             this.presence(stanza);
         } else if (stanza.is("iq")) {
             if (
-                stanza.attrs.id === "muc_id" &&
-                stanza.attrs.type === "result"
+                stanza.attrs.type === "result" &&
+                stanza.attrs.id?.startsWith("attendance_")
             ) {
                 this.session?.log.debug("got room attendance list");
                 this.notifyRoomAttendance(stanza);

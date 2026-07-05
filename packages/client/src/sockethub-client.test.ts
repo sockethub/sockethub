@@ -60,10 +60,6 @@ describe("SockethubClient bad initialization", () => {
 });
 
 describe("SockethubClient", () => {
-    let streamProcessor: {
-        process: (stream: unknown) => unknown;
-        registerObjectTypeExtensions: (...args: unknown[]) => void;
-    };
     let socket: any;
     let sc: any;
     let sandbox: any;
@@ -75,28 +71,7 @@ describe("SockethubClient", () => {
         socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
         sandbox.spy(socket, "on");
         sandbox.spy(socket, "emit");
-        streamProcessor = {
-            process: sandbox.stub().callsFake((stream: any) => {
-                if (!stream || typeof stream !== "object") {
-                    return stream;
-                }
-                const next = { ...stream };
-                if (typeof next.actor === "string") {
-                    next.actor = { id: next.actor };
-                }
-                if (typeof next.target === "string") {
-                    next.target = { id: next.target };
-                }
-                if (typeof next.object === "string") {
-                    next.object = { content: next.object };
-                }
-                return next;
-            }),
-            registerObjectTypeExtensions: sandbox.stub(),
-        };
         sc = new SockethubClient(socket);
-        (sc as { streamProcessor: typeof streamProcessor }).streamProcessor =
-            streamProcessor;
         sandbox.spy(sc.socket, "on");
         sandbox.spy(sc.socket, "emit");
         sandbox.spy(sc.socket, "_emit");
@@ -134,8 +109,9 @@ describe("SockethubClient", () => {
             socket.io = {};
             socket.connected = true;
             sc.socket.connected = true;
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack(TEST_REGISTRY);
                 }
             });
@@ -169,16 +145,6 @@ describe("SockethubClient", () => {
             ]);
         });
 
-        test("registers platform ActivityStreams props from schemas", () => {
-            socket.emit("schemas", TEST_REGISTRY);
-
-            const [type, props] =
-                streamProcessor.registerObjectTypeExtensions.firstCall.args;
-            expect(type).to.equal("message");
-            expect(props).to.include("xmpp:replace");
-            expect(props).to.include("xmpp:stanza-id");
-        });
-
         it("throws for unknown platform when registry is loaded", () => {
             socket.emit("schemas", TEST_REGISTRY);
 
@@ -193,8 +159,9 @@ describe("SockethubClient", () => {
             socket.io = {};
             socket.connected = true;
             sc.socket.connected = true;
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack(TEST_REGISTRY);
                 }
             });
@@ -212,6 +179,56 @@ describe("SockethubClient", () => {
             expect(info.state).to.equal("ready");
         });
 
+        it("echoes the fingerprint and reuses the registry on an 'unchanged' reply (#1117)", () => {
+            socket.io = {};
+            socket.connected = true;
+            sc.socket.connected = true;
+            const FP = "deadbeefdeadbeef";
+            const fingerprinted = { ...TEST_REGISTRY, fingerprint: FP };
+            const echoed: unknown[] = [];
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                const clientFp = args.find((a) => typeof a === "string");
+                echoed.push(clientFp);
+                if (!ack) {
+                    return;
+                }
+                ack(
+                    clientFp === FP
+                        ? { fingerprint: FP, unchanged: true }
+                        : fingerprinted,
+                );
+            });
+
+            // initial connect: no fingerprint echoed -> full registry sent
+            socket.emit("connect");
+            expect(sc.isSchemasReady()).to.equal(true);
+            expect(echoed[0]).to.equal(undefined);
+            const ctxBefore = sc.contextFor("test-xmpp");
+
+            // reconnect: client echoes the stored fingerprint and the server
+            // replies "unchanged"; the cached registry must survive.
+            socket.emit("disconnect");
+            socket.emit("connect");
+            expect(echoed).to.contain(FP);
+            expect(sc.isSchemasReady()).to.equal(true);
+            expect(sc.contextFor("test-xmpp")).to.eql(ctxBefore);
+        });
+
+        it("ignores an 'unchanged' reply when no registry is cached (#1117)", () => {
+            // A malformed or premature "unchanged" reply must not fast-path the
+            // client to ready with no validators registered.
+            expect(sc.isSchemasReady()).to.equal(false);
+            socket.emit("schemas", {
+                fingerprint: "deadbeefdeadbeef",
+                unchanged: true,
+            });
+            expect(sc.isSchemasReady()).to.equal(false);
+            expect(() => sc.contextFor("test-xmpp")).to.throw(
+                "Schema registry not loaded yet",
+            );
+        });
+
         it("ready() rejects on timeout when schemas never arrive", async () => {
             const timeoutSocket = new EventEmitter();
             timeoutSocket.connected = true;
@@ -221,8 +238,6 @@ describe("SockethubClient", () => {
             sandbox.spy(timeoutSocket, "emit");
 
             const client = new SockethubClient(timeoutSocket);
-            (client as { streamProcessor: typeof streamProcessor }).streamProcessor =
-                streamProcessor;
             client.socket.connected = true;
             try {
                 await client.ready(50);
@@ -259,9 +274,6 @@ describe("SockethubClient", () => {
             const timeoutClient = new SockethubClient(timeoutSocket, {
                 initTimeoutMs: 10,
             });
-            (
-                timeoutClient as { streamProcessor: typeof streamProcessor }
-            ).streamProcessor = streamProcessor;
             timeoutClient.socket.on("init_error", (err: any) => {
                 expect(err.phase).to.equal("timeout");
                 expect(err.error).to.contain("timed out");
@@ -282,8 +294,9 @@ describe("SockethubClient", () => {
         it("connect", (done) => {
             expect(sc.socket.connected).to.be.false;
             socket.io = {};
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack({
                         contexts: {
                             as: "https://example.com/as2",
@@ -532,9 +545,6 @@ describe("SockethubClient", () => {
             sandbox.spy(preReadySocket, "emit");
 
             const preReadyClient = new SockethubClient(preReadySocket);
-            (
-                preReadyClient as { streamProcessor: typeof streamProcessor }
-            ).streamProcessor = streamProcessor;
             sandbox.spy(preReadyClient.socket, "_emit");
             sandbox.stub(preReadyClient, "validateActivity").returns("");
 
@@ -575,12 +585,10 @@ describe("SockethubClient", () => {
             sc.events.credentials.set(credentials.actor.id, credentials);
 
             socket.emit.resetHistory();
-            streamProcessor.process.resetHistory();
             socket.emit("connect");
             socket.emit("schemas", TEST_REGISTRY);
 
             setTimeout(() => {
-                expect(streamProcessor.process.called).to.be.true;
                 const replayCalls = socket.emit
                     .getCalls()
                     .filter((call: any) => call.args[0] === "credentials");

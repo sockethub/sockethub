@@ -1,16 +1,17 @@
 #!/usr/bin/env bun
 /**
  * Sockethub launcher with split logging:
- * - Console: filtered via DEBUG pattern
+ * - Console: filtered via namespace patterns
  * - File: full debug output to sockethub.log
  */
 import { spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { dirname, join } from "node:path";
-import debug from "debug";
 
-// Console filter using DEBUG syntax
-const CONSOLE_DEBUG = [
+// Console namespace filter. Include patterns show a namespace; a leading "-"
+// excludes it; "*" matches any run of characters. (Self-contained matcher so we
+// don't depend on the legacy `debug` package — Sockethub logs via winston.)
+const CONSOLE_FILTER = [
     "sockethub:init",
     "sockethub:server:bootstrap:*",
     "sockethub:server:core",
@@ -18,14 +19,29 @@ const CONSOLE_DEBUG = [
     "sockethub:server:listener",
     "sockethub:server:janitor",
     "sockethub:server:rate-limiter",
-].join(",");
+];
 
-// Create a filter function using debug's enable/disable logic
-debug.enable(CONSOLE_DEBUG);
-const shouldShow = (namespace: string) => debug.enabled(namespace);
+function patternToRegExp(pattern: string): RegExp {
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`^${escaped.replace(/\*/g, ".*?")}$`);
+}
 
-// Extract namespace from debug output line
-// Format: "  sockethub:namespace message +0ms" (with optional ANSI colors)
+const includes = CONSOLE_FILTER.filter((p) => !p.startsWith("-")).map(
+    patternToRegExp,
+);
+const excludes = CONSOLE_FILTER.filter((p) => p.startsWith("-")).map((p) =>
+    patternToRegExp(p.slice(1)),
+);
+
+const shouldShow = (namespace: string): boolean => {
+    if (excludes.some((re) => re.test(namespace))) {
+        return false;
+    }
+    return includes.some((re) => re.test(namespace));
+};
+
+// Extract the sockethub namespace from a winston log line
+// (e.g. "2026-… debug: sockethub:server:core message", with optional ANSI colors)
 const namespaceRegex = /sockethub:[^\s\x1b]+/;
 function getNamespace(line: string): string | null {
     const match = line.match(namespaceRegex);
@@ -38,7 +54,7 @@ const timestamp = () => new Date().toISOString();
 logFile.write(`\n--- Sockethub started at ${timestamp()} ---\n`);
 
 const child = spawn("bun", ["run", join(dirname(import.meta.path), "sockethub")], {
-    env: { ...process.env, DEBUG: "sockethub:*", DEBUG_COLORS: "true" },
+    env: { ...process.env, LOG_LEVEL: "debug" },
     stdio: ["inherit", "pipe", "pipe"],
 });
 
@@ -46,7 +62,7 @@ function processLine(line: string, stream: "stdout" | "stderr") {
     // Always write to file
     logFile.write(`${line}\n`);
 
-    // Check if namespace passes DEBUG filter
+    // Check if namespace passes the console filter
     // Non-debug lines (console.log from init, errors) are always shown
     const namespace = getNamespace(line);
     const show = namespace

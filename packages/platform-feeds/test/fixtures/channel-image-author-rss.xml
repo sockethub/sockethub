@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Image Author Feed</title>
+    <link>https://example.com/feed</link>
+    <description>A feed with a channel-level image and author</description>
+    <author>editor@example.com (Jane Editor)</author>
+    <managingEditor>editor@example.com (Jane Editor)</managingEditor>
+    <image>
+      <url>https://example.com/logo.png</url>
+      <title>Image Author Feed</title>
+      <link>https://example.com/feed</link>
+    </image>
+    <item>
+      <title>First Post</title>
+      <description>Short body content</description>
+      <link>https://example.com/posts/1</link>
+      <guid isPermaLink="true">https://example.com/posts/1</guid>
+      <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

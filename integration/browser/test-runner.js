@@ -17,6 +17,11 @@ const configContent = `export default {
     nodeResolve: true,
     open: ${process.argv.includes("--open")},
     manual: ${process.argv.includes("--manual")},
+    // The browser job launches headless Chrome alongside a full docker stack
+    // (sockethub, prosody, ergo, redis), so a cold start can exceed the 30s
+    // default and fail with "unable to create and start a test page".
+    browserStartTimeout: 120000,
+    testsStartTimeout: 60000,
     testRunnerHtml: (testFramework) => \`
         <!DOCTYPE html>
         <html>

@@ -1,9 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as sinon from "sinon";
 import {
+    addPlatformContext,
+    addPlatformSchema,
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
+
+// A platform context with an outbound `responses` schema (only allows
+// type "collection"), used to exercise enforced outbound validation.
+const RESPONSES_CTX =
+    "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
+addPlatformSchema(
+    { required: ["type"], properties: { type: { enum: ["collection"] } } },
+    "respplat/responses",
+);
+addPlatformContext("respplat", RESPONSES_CTX);
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
@@ -17,7 +29,9 @@ describe("PlatformInstance", () => {
         socketMock = {
             emit: sandbox.spy(),
         };
-        getSocketFake = sinon.fake.resolves(socketMock);
+        // getSocket is a synchronous lookup that returns the socket or
+        // undefined when no socket is connected for the session.
+        getSocketFake = sinon.fake.returns(socketMock);
         forkFake = sandbox.fake();
     });
 
@@ -48,7 +62,7 @@ describe("PlatformInstance", () => {
     });
 
     describe("private instance per-actor", () => {
-        it("is set as non-global when an actor is provided", async () => {
+        test("is set as non-global when an actor is provided", async () => {
             const TestPlatformInstance = getTestPlatformInstanceClass();
             const pi = new TestPlatformInstance({
                 identifier: "id",
@@ -89,16 +103,16 @@ describe("PlatformInstance", () => {
             await pi.shutdown();
         });
 
-        it("has expected properties", () => {
+        test("has expected properties", () => {
             const TestPlatformInstance = getTestPlatformInstanceClass();
             expect(typeof TestPlatformInstance).toEqual("function");
         });
 
-        it("should have a platformInstances Map", () => {
+        test("should have a platformInstances Map", () => {
             expect(platformInstances instanceof Map).toEqual(true);
         });
 
-        it("has certain accessible properties", () => {
+        test("has certain accessible properties", () => {
             expect(pi.id).toEqual("platform identifier");
             expect(pi.name).toEqual("a platform name");
             expect(pi.parentId).toEqual("the parentId");
@@ -114,43 +128,35 @@ describe("PlatformInstance", () => {
         });
 
         describe("registerSession", () => {
-            beforeEach(() => {
-                pi.callbackFunction = sandbox.fake();
-            });
-
-            it("adds a close and message handler when a session is registered", () => {
+            test("tracks the session without adding process listeners", () => {
                 pi.registerSession("my session id");
-                expect(pi.callbackFunction.callCount).toEqual(2);
-                sandbox.assert.calledWith(
-                    pi.callbackFunction,
-                    "close",
-                    "my session id",
-                );
-                sandbox.assert.calledWith(
-                    pi.callbackFunction,
-                    "message",
-                    "my session id",
-                );
                 expect(pi.sessions.has("my session id")).toEqual(true);
+                // sessions no longer register per-session process listeners
+                sandbox.assert.notCalled(pi.process.on);
             });
 
-            it("is able to generate failure reports", async () => {
+            test("is able to generate failure reports", async () => {
                 pi.registerSession("my session id");
                 expect(pi.sessions.has("my session id")).toEqual(true);
                 pi.sendToClient = sandbox.stub();
                 pi.shutdown = sandbox.stub();
-                await pi.reportError("my session id", "an error message");
+                await pi.broadcastFatalError("an error message");
+                sandbox.assert.calledWith(
+                    pi.sendToClient,
+                    "my session id",
+                    sinon.match({ error: "an error message" }),
+                );
                 expect(pi.sessions.size).toEqual(0);
             });
         });
 
-        it("initializes the job queue", () => {
+        test("initializes the job queue", () => {
             expect(pi.queue).toBeUndefined();
             pi.initQueue("a secret");
             expect(pi.queue).toBeDefined();
         });
 
-        it("cleans up its references when shutdown", async () => {
+        test("cleans up its references when shutdown", async () => {
             pi.initQueue("a secret");
             expect(pi.queue).toBeDefined();
             expect(platformInstances.has("platform identifier")).toBeTrue();
@@ -159,14 +165,14 @@ describe("PlatformInstance", () => {
             expect(platformInstances.has("platform identifier")).toBeFalse();
         });
 
-        it("updates its identifier when changed", () => {
+        test("updates its identifier when changed", () => {
             pi.updateIdentifier("foo bar");
             expect(pi.id).toEqual("foo bar");
             expect(platformInstances.has("platform identifier")).toBeFalse();
             expect(platformInstances.has("foo bar")).toBeTrue();
         });
 
-        it("sends messages to client using socket session id", async () => {
+        test("sends messages to client using socket session id", async () => {
             await pi.sendToClient("my session id", {
                 foo: "this is a message object",
                 sessionSecret: "private data",
@@ -183,7 +189,7 @@ describe("PlatformInstance", () => {
             });
         });
 
-        it("injects platform-specific @context when contextUrl is set", async () => {
+        test("injects platform-specific @context when contextUrl is set", async () => {
             const testContextUrl =
                 "https://sockethub.org/ns/context/platform/dummy/v1.jsonld";
             pi.contextUrl = testContextUrl;
@@ -198,7 +204,7 @@ describe("PlatformInstance", () => {
             );
         });
 
-        it("strips legacy context field from outbound payloads", async () => {
+        test("strips legacy context field from outbound payloads", async () => {
             await pi.sendToClient("my session id", {
                 type: "echo",
                 context: "dummy",
@@ -209,12 +215,119 @@ describe("PlatformInstance", () => {
             expect(emittedMsg["@context"]).toBeDefined();
         });
 
-        it("broadcasts to peers", async () => {
+        test("broadcasts to peers", async () => {
             pi.sessions.add("other peer");
             pi.sessions.add("another peer");
             await pi.broadcastToSharedPeers("myself", { foo: "bar" });
             expect(getSocketFake.callCount).toEqual(2);
             sandbox.assert.calledWith(getSocketFake, "other peer");
+        });
+
+        test("skips delivery (no emit, no error) when the socket is not connected", () => {
+            // Simulate a disconnected session in the janitor grace window.
+            getSocketFake = sinon.fake.returns(undefined);
+            pi.getSocket = getSocketFake;
+            const errorSpy = sandbox.spy(pi.log, "error");
+
+            pi.sendToClient("disconnected session", { foo: "bar" });
+
+            sandbox.assert.calledOnce(getSocketFake);
+            sandbox.assert.notCalled(socketMock.emit);
+            sandbox.assert.notCalled(errorSpy);
+        });
+
+        test("broadcastToSharedPeers delivers only to connected peers", async () => {
+            // "live peer" is connected; "stale peer" is not (returns undefined).
+            const liveSocket = { emit: sandbox.spy() };
+            getSocketFake = sinon.fake((id) =>
+                id === "live peer" ? liveSocket : undefined,
+            );
+            pi.getSocket = getSocketFake;
+            const errorSpy = sandbox.spy(pi.log, "error");
+
+            pi.sessions.add("live peer");
+            pi.sessions.add("stale peer");
+            await pi.broadcastToSharedPeers("myself", {
+                type: "message",
+                actor: { id: "actor@dummy", type: "person" },
+            });
+
+            sandbox.assert.calledOnce(liveSocket.emit);
+            sandbox.assert.notCalled(errorSpy);
+        });
+
+        test("drops (no emit) an outbound message that violates the responses schema", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            pi.sendToClient("my session id", {
+                type: "page", // not allowed by respplat responses schema
+                actor: { id: "a@b", type: "feed" },
+            });
+            sandbox.assert.calledOnce(errorSpy);
+            sandbox.assert.notCalled(socketMock.emit); // enforced: dropped
+        });
+
+        test("delivers an outbound message that matches the responses schema", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            pi.sendToClient("my session id", {
+                type: "collection",
+                actor: { id: "a@b", type: "feed" },
+            });
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("exempts error envelopes from responses-schema validation", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            // `error` is not in respplat's responses enum, but error envelopes
+            // are exempt and must still be delivered.
+            pi.sendToClient("my session id", {
+                type: "error",
+                actor: { id: "a@b", type: "service" },
+                error: "boom",
+            });
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("injects a valid actor on actorless errors (global platform)", () => {
+            // pi is constructed without an `actor` (global), so the fallback is
+            // the platform name — never an undefined id.
+            pi.sendToClient("my session id", { type: "error", error: "boom" });
+            sandbox.assert.calledOnce(socketMock.emit);
+            expect(socketMock.emit.firstCall.args[1].actor).toEqual({
+                id: "a platform name",
+                type: "service",
+            });
+        });
+
+        test("exempts failure notifications (request echo + error) from validation", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            // A failed job echoes the original request (an inbound type, not in
+            // the responses enum) plus an `error` field; it must still deliver.
+            pi.sendToClient("my session id", {
+                type: "fetch", // inbound type, not a respplat response type
+                actor: { id: "a@b", type: "feed" },
+                error: "job failed",
+            });
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("broadcastFatalError emits a valid service actor for a global platform", async () => {
+            pi.sessions.add("my session id");
+            await pi.broadcastFatalError("boom");
+            sandbox.assert.calledOnce(socketMock.emit);
+            const emitted = socketMock.emit.firstCall.args[1];
+            expect(emitted.type).toEqual("error");
+            expect(emitted.actor).toEqual({
+                id: "a platform name",
+                type: "service",
+            });
+            expect(emitted.error).toEqual("boom");
         });
 
         describe("handleJobResult", () => {
@@ -224,7 +337,7 @@ describe("PlatformInstance", () => {
                 pi.config = { persist: false };
             });
 
-            it("broadcasts to peers when handling a completed job", async () => {
+            test("broadcasts to peers when handling a completed job", async () => {
                 pi.sessions.add("other peer");
                 await pi.handleJobResult(
                     "completed",
@@ -235,7 +348,7 @@ describe("PlatformInstance", () => {
                 expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
             });
 
-            it("appends completed result message when present", async () => {
+            test("appends completed result message when present", async () => {
                 await pi.handleJobResult(
                     "completed",
                     { sessionId: "a session id", msg: { foo: "bar" } },
@@ -250,7 +363,7 @@ describe("PlatformInstance", () => {
                 });
             });
 
-            it("appends failed result message when present", async () => {
+            test("appends failed result message when present", async () => {
                 await pi.handleJobResult(
                     "failed",
                     { sessionId: "a session id", msg: { foo: "bar" } },
@@ -267,77 +380,67 @@ describe("PlatformInstance", () => {
             });
         });
 
-        describe("callbackFunction", () => {
+        describe("process event handlers", () => {
             beforeEach(() => {
-                pi.reportError = sandbox.fake();
+                pi.broadcastFatalError = sandbox.fake();
                 pi.sendToClient = sandbox.fake();
                 pi.updateIdentifier = sandbox.fake();
             });
 
-            it("close events from platform thread are reported", async () => {
-                // Mock process as connected and not flagged for termination
-                pi.process.connected = true;
-                pi.flaggedForTermination = false;
-
-                const close = pi.callbackFunction("close", "my session id");
-                await close("error msg");
-                sandbox.assert.calledWith(
-                    pi.reportError,
-                    "my session id",
-                    "Error: session thread closed unexpectedly: error msg",
-                );
-            });
-
-            it("close events skip error reporting when process disconnected", async () => {
-                // Mock process as disconnected
+            test("unexpected close events are reported, regardless of process.connected", async () => {
+                // `connected` is already false by the time `close` fires in real
+                // usage (see the comment on handleProcessClose); the handler must
+                // rely on flaggedForTermination alone, not on `connected`.
                 pi.process.connected = false;
                 pi.flaggedForTermination = false;
                 pi.shutdown = sandbox.stub();
 
-                const close = pi.callbackFunction("close", "my session id");
-                await close("error msg");
-
-                // Should NOT attempt to report error
-                sandbox.assert.notCalled(pi.reportError);
-                // Should call shutdown
+                await pi.handleProcessClose("error msg");
+                sandbox.assert.calledWith(
+                    pi.broadcastFatalError,
+                    "Error: session thread closed unexpectedly: error msg",
+                );
                 sandbox.assert.called(pi.shutdown);
             });
 
-            it("close events skip error reporting when flagged for termination", async () => {
-                // Mock process as flagged for termination
-                pi.process.connected = true;
+            test("close events skip error reporting when flagged for termination", async () => {
+                pi.process.connected = false;
                 pi.flaggedForTermination = true;
                 pi.shutdown = sandbox.stub();
 
-                const close = pi.callbackFunction("close", "my session id");
-                await close("error msg");
+                await pi.handleProcessClose("error msg");
 
                 // Should NOT attempt to report error
-                sandbox.assert.notCalled(pi.reportError);
-                // Should call shutdown
+                sandbox.assert.notCalled(pi.broadcastFatalError);
+                // Should still shut down to clean up instance state
                 sandbox.assert.called(pi.shutdown);
             });
 
-            it("message events from platform thread are route based on command: error", () => {
-                const message = pi.callbackFunction("message", "my session id");
-                message(["error", "error message"]);
+            test("message events from platform thread are routed based on command: error", async () => {
+                await pi.handleProcessMessage(["error", "error message"]);
                 sandbox.assert.calledWith(
-                    pi.reportError,
-                    "my session id",
+                    pi.broadcastFatalError,
                     "error message",
                 );
             });
 
-            it("message events from platform thread are route based on command: updateActor", () => {
-                const message = pi.callbackFunction("message", "my session id");
-                message(["updateActor", undefined, { foo: "bar" }]);
+            test("message events from platform thread are routed based on command: updateActor", async () => {
+                await pi.handleProcessMessage([
+                    "updateActor",
+                    undefined,
+                    { foo: "bar" },
+                ]);
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
             });
 
-            it("message events from platform thread are route based on command: else", () => {
-                const message = pi.callbackFunction("message", "my session id");
-                message(["blah", { foo: "bar" }]);
-                sandbox.assert.calledWith(pi.sendToClient, "my session id", {
+            test("message events from platform thread are delivered to every registered session", async () => {
+                pi.sessions.add("session one");
+                pi.sessions.add("session two");
+                await pi.handleProcessMessage(["blah", { foo: "bar" }]);
+                sandbox.assert.calledWith(pi.sendToClient, "session one", {
+                    foo: "bar",
+                });
+                sandbox.assert.calledWith(pi.sendToClient, "session two", {
                     foo: "bar",
                 });
             });
@@ -366,7 +469,7 @@ describe("PlatformInstance", () => {
         });
 
         describe("POSITIVE: Platform initialized - credential failure should NOT terminate", () => {
-            it("should keep platform alive when credential job fails on initialized platform", async () => {
+            test("should keep platform alive when credential job fails on initialized platform", async () => {
                 const TestPlatformInstance = getTestPlatformInstanceClass();
                 pi = new TestPlatformInstance({
                     identifier: "test-platform-id",
@@ -418,7 +521,7 @@ describe("PlatformInstance", () => {
                 sinon.assert.called(pi.sendToClient);
             });
 
-            it("should allow subsequent jobs after non-fatal credential error", async () => {
+            test("should allow subsequent jobs after non-fatal credential error", async () => {
                 const TestPlatformInstance = getTestPlatformInstanceClass();
                 pi = new TestPlatformInstance({
                     identifier: "test-platform-id",
@@ -475,7 +578,7 @@ describe("PlatformInstance", () => {
         });
 
         describe("NEGATIVE: Platform NOT initialized - credential failure SHOULD terminate", () => {
-            it("should terminate platform when credential job fails on uninitialized platform", async () => {
+            test("should terminate platform when credential job fails on uninitialized platform", async () => {
                 const TestPlatformInstance = getTestPlatformInstanceClass();
                 pi = new TestPlatformInstance({
                     identifier: "test-platform-id",
@@ -525,7 +628,7 @@ describe("PlatformInstance", () => {
                 sinon.assert.called(pi.sendToClient);
             });
 
-            it("should pause queue when credential initialization fails", async () => {
+            test("should pause queue when credential initialization fails", async () => {
                 const TestPlatformInstance = getTestPlatformInstanceClass();
                 pi = new TestPlatformInstance({
                     identifier: "test-platform-id",

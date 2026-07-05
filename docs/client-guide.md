@@ -277,7 +277,9 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'fetch',
     '@context': sc.contextFor('feeds'),
-    actor: { id: 'https://example.com/feed.xml', type: 'feed' }
+    actor: { id: 'https://example.com/feed.xml', type: 'feed' },
+    // optional filters: entries published at/after `since`, at most `limit`
+    object: { since: '2024-01-01T00:00:00.000Z', limit: 10 }
 });
 ```
 
@@ -296,11 +298,14 @@ sc.socket.emit('message', {
 ## Client Features
 
 - **Schema-driven init**: `ready()` resolves when the server's schema registry is loaded
+- **Registry caching**: the registry is fetched once and cached; on reconnect the
+  client echoes a fingerprint so the server skips re-sending an unchanged registry
 - **Context composition**: `contextFor(platform)` builds canonical `@context` arrays
 - **Outbound queueing**: Messages sent before `ready()` are queued and flushed automatically
 - **Auto-replay**: Credentials and connections restored on reconnect
-- **ActivityStream helpers**: Normalization and property linting via `@sockethub/schemas`
-  (can be called explicitly, but also automatically by the client on send/receive)
+- **ActivityStream handling**: outbound messages are normalized and validated against
+  the platform's schema (via `@sockethub/schemas`) before sending; incoming messages
+  are normalized before delivery
 - **Connection state**: Check `sc.socket.connected` for status
 
 ## Reference

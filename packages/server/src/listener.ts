@@ -6,7 +6,7 @@ import { createLogger } from "@sockethub/logger";
 import bodyParser from "body-parser";
 import express, { type Express, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
-import { Server } from "socket.io";
+import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import routes from "./routes.js";
 
@@ -39,7 +39,7 @@ class Listener {
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
             cors: {
-                origin: "*",
+                origin: Listener.corsOrigin(),
                 methods: ["GET", "POST"],
             },
         });
@@ -126,6 +126,30 @@ class Listener {
         );
     }
 
+    /**
+     * Resolve the socket.io CORS origin from config. Accepts '*' (default,
+     * historical behavior), a single origin, or a comma-separated list.
+     * Public deployments should set an explicit origin: with '*' any
+     * website can connect visitors' browsers to this instance and use it
+     * as a relay.
+     */
+    private static corsOrigin(): string | Array<string> {
+        const configured = (
+            (config.get("sockethub:cors:origin") as string) || "*"
+        ).trim();
+        if (configured === "*" || configured === "") {
+            return "*";
+        }
+        const origins = configured
+            .split(",")
+            .map((origin) => origin.trim())
+            .filter((origin) => origin.length > 0);
+        if (origins.length === 0) {
+            return "*";
+        }
+        return origins.length === 1 ? origins[0] : origins;
+    }
+
     private startHttp() {
         this.http.listen(
             config.get("sockethub:port"),
@@ -153,23 +177,14 @@ class Listener {
 
 const listener = new Listener();
 
-type EmitFunction = (type: string, data: unknown) => void;
-
-export interface SocketInstance {
-    id: string;
-    emit: EmitFunction;
-}
-
-export async function getSocket(sessionId: string): Promise<SocketInstance> {
-    const sockets: Array<SocketInstance> = await listener.io.fetchSockets();
-    return new Promise((resolve, reject) => {
-        for (const socket of sockets) {
-            if (sessionId === socket.id) {
-                return resolve(socket);
-            }
-        }
-        return reject(`unable to find socket for sessionId ${sessionId}`);
-    });
+/**
+ * O(1) lookup of a connected socket by session id (== socket.id). Returns
+ * `undefined` when no such socket is connected (e.g. disconnected, awaiting
+ * reconnect). Single socket.io server, no adapter, so the local map is
+ * authoritative.
+ */
+export function getSocket(sessionId: string): Socket | undefined {
+    return listener.io.sockets.sockets.get(sessionId);
 }
 
 export default listener;

@@ -23,6 +23,197 @@ export const PlatformIrcSchema = {
                     "disconnect",
                 ],
             },
+            // Inbound object shapes the client may send (when present). Owned by
+            // this platform now that the base envelope no longer enumerates a
+            // global object vocabulary.
+            object: {
+                oneOf: [
+                    { $ref: "#/definitions/objectTypes/message" },
+                    { $ref: "#/definitions/objectTypes/topic" },
+                    { $ref: "#/definitions/objectTypes/address" },
+                    { $ref: "#/definitions/objectTypes/attendance" },
+                ],
+            },
+        },
+        definitions: {
+            objectTypes: {
+                message: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["message"] },
+                        content: { type: "string" },
+                    },
+                },
+                topic: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["topic"] },
+                        content: { type: "string" },
+                    },
+                },
+                address: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: { type: { enum: ["address"] } },
+                },
+                attendance: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: { type: { enum: ["attendance"] } },
+                },
+            },
+        },
+    },
+    // Outbound (platform -> client) via the irc2as translator. Strict: every
+    // message type, object type, and field is enumerated. Validated against the
+    // canonical irc2as output fixtures.
+    responses: {
+        type: "object",
+        required: ["type", "actor"],
+        additionalProperties: false,
+        properties: {
+            "@context": { type: "array", items: { type: "string" } },
+            id: { type: "string" },
+            published: { type: "string" },
+            type: {
+                enum: ["update", "send", "join", "leave", "add", "remove"],
+            },
+            actor: {
+                oneOf: [
+                    { $ref: "#/definitions/responses/person" },
+                    { $ref: "#/definitions/responses/service" },
+                ],
+            },
+            target: {
+                oneOf: [
+                    { $ref: "#/definitions/responses/person" },
+                    { $ref: "#/definitions/responses/room" },
+                    { $ref: "#/definitions/responses/service" },
+                ],
+            },
+            error: { type: "string" },
+            object: {
+                oneOf: [
+                    { $ref: "#/definitions/responses/message" },
+                    { $ref: "#/definitions/responses/me" },
+                    { $ref: "#/definitions/responses/presence" },
+                    { $ref: "#/definitions/responses/topic" },
+                    { $ref: "#/definitions/responses/address" },
+                    { $ref: "#/definitions/responses/relationship" },
+                ],
+            },
+        },
+        definitions: {
+            responses: {
+                person: {
+                    type: "object",
+                    required: ["id", "type"],
+                    additionalProperties: false,
+                    properties: {
+                        id: { type: "string" },
+                        type: { enum: ["person"] },
+                        name: { type: "string" },
+                    },
+                },
+                service: {
+                    type: "object",
+                    required: ["id", "type"],
+                    additionalProperties: false,
+                    properties: {
+                        id: { type: "string" },
+                        type: { enum: ["service"] },
+                        name: { type: "string" },
+                    },
+                },
+                room: {
+                    type: "object",
+                    required: ["id", "type"],
+                    additionalProperties: false,
+                    properties: {
+                        id: { type: "string" },
+                        type: { enum: ["room"] },
+                        name: { type: "string" },
+                    },
+                },
+                message: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["message"] },
+                        content: { type: "string" },
+                    },
+                },
+                me: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["me"] },
+                        content: { type: "string" },
+                    },
+                },
+                presence: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["presence"] },
+                        role: {
+                            enum: ["owner", "member", "participant", "admin"],
+                        },
+                    },
+                },
+                topic: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["topic"] },
+                        content: { type: "string" },
+                    },
+                },
+                address: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["address"] },
+                    },
+                },
+                relationship: {
+                    type: "object",
+                    required: ["type", "relationship"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["relationship"] },
+                        relationship: { enum: ["role"] },
+                        subject: {
+                            type: "object",
+                            required: ["type", "role"],
+                            additionalProperties: false,
+                            properties: {
+                                type: { enum: ["presence"] },
+                                role: {
+                                    enum: [
+                                        "owner",
+                                        "member",
+                                        "participant",
+                                        "admin",
+                                    ],
+                                },
+                            },
+                        },
+                        object: { $ref: "#/definitions/responses/room" },
+                    },
+                },
+            },
         },
     },
     credentials: {
@@ -112,6 +303,9 @@ export const PlatformIrcSchema = {
                     saslMechanism: {
                         type: "string",
                         enum: ["PLAIN", "OAUTHBEARER"],
+                    },
+                    allowInvalidCert: {
+                        type: "boolean",
                     },
                 },
             },

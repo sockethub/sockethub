@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { crypto } from "@sockethub/crypto";
 import {
     CredentialsStore,
     type JobDataDecrypted,
@@ -12,6 +11,7 @@ import {
     addPlatformContext,
     type CredentialsObject,
 } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = `redis://${REDIS_HOST}:6379`;

@@ -135,6 +135,12 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
 
     describe("metadata platform", () => {
         it("returns page object fields the examples metadata view expects", async () => {
+            // Fetch the fixture via the same base URL the rest of the suite uses.
+            // An earlier revision rewrote localhost -> 127.0.0.1 to satisfy the
+            // scraper's URL validator, but that broke when Sockethub binds only to
+            // IPv6 localhost (::1) — the IPv4 fetch was refused. The metadata
+            // platform now accepts TLD-less hosts, so localhost works everywhere.
+            const fixtureUrl = `${config.sockethub.url}/metadata-test.html`;
             const msg = await emitWithAck(
                 sc.socket,
                 "message",
@@ -143,7 +149,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
                     type: "fetch",
                     actor: {
                         type: "website",
-                        id: "https://sockethub.org",
+                        id: fixtureUrl,
                     },
                 },
                 { label: "metadata contract" },
@@ -155,9 +161,15 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
             expect(msg.actor).to.have.property("id").that.is.a("string");
             expect(msg.object).to.be.an("object");
             expect(msg.object).to.have.property("type", "page");
-            expect(msg.object).to.have.property("title");
-            expect(msg.object).to.have.property("url");
-            expect(msg.object).to.have.property("description");
+            expect(msg.object).to.have.property(
+                "title",
+                "Sockethub Metadata Test",
+            );
+            expect(msg.object).to.have.property("url", fixtureUrl);
+            expect(msg.object).to.have.property(
+                "description",
+                "Local metadata fixture for integration tests",
+            );
         });
     });
 });

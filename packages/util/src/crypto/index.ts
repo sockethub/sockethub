@@ -4,7 +4,6 @@ import {
     createHash,
     randomBytes,
 } from "node:crypto";
-import type { ActivityStream } from "@sockethub/schemas";
 import hash from "object-hash";
 import { SecretValidator } from "secure-store-redis";
 
@@ -17,9 +16,9 @@ export function getPlatformId(
     _crypto = crypto,
 ): string {
     if (actor) {
-        return _crypto.hash(platform + actor);
+        return _crypto.hashFull(platform + actor);
     }
-    return _crypto.hash(platform);
+    return _crypto.hashFull(platform);
 }
 
 export class Crypto {
@@ -33,7 +32,7 @@ export class Crypto {
         this.randomBytes = randomBytes;
     }
 
-    encrypt(json: ActivityStream, secret: string): string {
+    encrypt(json: unknown, secret: string): string {
         Crypto.ensureSecret(secret);
         const iv = this.randomBytes(IV_LENGTH);
         const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
@@ -43,7 +42,7 @@ export class Crypto {
         return `${iv.toString("hex")}:${encrypted.toString("hex")}`;
     }
 
-    decrypt(text: string, secret: string): ActivityStream {
+    decrypt(text: string, secret: string): unknown {
         Crypto.ensureSecret(secret);
         const parts = text.split(":");
         const iv = Buffer.from(parts.shift(), "hex");
@@ -58,6 +57,17 @@ export class Crypto {
         const SHASum = createHash("sha1");
         SHASum.update(text);
         return SHASum.digest("hex").substring(0, 7);
+    }
+
+    /**
+     * Full-length SHA-256 hex digest. Used where hash values act as
+     * identity keys (e.g. platform instance IDs): the truncated 28-bit
+     * `hash()` has a ~1% birthday-collision probability by ~2,400 distinct
+     * inputs, and a collision on a platform instance ID silently routes two
+     * different (platform, actor) pairs to the same instance.
+     */
+    hashFull(text: string): string {
+        return createHash("sha256").update(text).digest("hex");
     }
 
     objectHash(object: object): string {

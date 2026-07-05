@@ -1,12 +1,12 @@
 {
   "name": "@sockethub/examples",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.13",
   "type": "module",
   "files": [
     "build"
   ],
   "engines": {
-    "bun": ">=1.2.4"
+    "node": ">=20"
   },
   "keywords": [
     "sockethub",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@sockethub/client": "^5.0.0-alpha.12",
+    "@sockethub/client": "^5.0.0-alpha.13",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.0",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -62,5 +62,5 @@
     "vite": "^6.4.1",
     "vitest": "^3.2.4"
   },
-  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
+  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd"
 }

@@ -31,7 +31,9 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`
 
 Scopes (optional): package names (`client`, `server`, `data-layer`, `schemas`, `platform-irc`,
 `platform-xmpp`, `examples`, etc.) or components (`job-queue`, `credentials`, `session`,
-`middleware`, `config`). Omit scope for cross-cutting changes.
+`middleware`, `config`). Omit scope for cross-cutting changes. **PR titles with a scope must
+use a name that has a matching `scope:*` label** — see [`.github/LABELS.md`](.github/LABELS.md).
+Commit messages are not validated the same way; only PR titles trigger auto-label CI.
 
 Breaking changes: add `!` after type/scope (e.g. `feat(client)!: remove deprecated method`).
 
@@ -43,6 +45,13 @@ PR titles follow the same conventional format. The PR title becomes the squash c
 <type>(<scope>): <description>
 ```
 
+If you include a scope, it **must** match an existing GitHub label `scope:<scope>` or the
+**Auto Label PR** CI check fails (even when lint/build/tests pass). See
+[`.github/LABELS.md`](.github/LABELS.md) for the canonical list. Omit the scope for
+cross-cutting changes (including edits to this file or other repo-wide docs).
+
+Examples: `docs: add Cursor Cloud environment setup notes`, `fix(server): handle reconnect`
+
 ### Default Branch
 
 The default branch is `master` (not `main`).
@@ -51,8 +60,12 @@ The default branch is `master` (not `main`).
 
 ### Prerequisites
 
-- Bun >= 1.2.4 (runtime and package manager)
-- This is a Bun workspace monorepo managed by Lerna Lite
+- Node.js >= 20 — the **deployment runtime**. Sockethub is built and deployed to
+  run on Node.js; the published bins, Docker image, and CI release validation all
+  use Node.js.
+- Bun >= 1.2.4 — the **development toolchain** (package manager, builder, and unit
+  test runner). This is a Bun workspace monorepo managed by Lerna Lite. Bun is a
+  dev/build tool only; it is not a deployment target.
 
 ### Commands
 
@@ -125,7 +138,7 @@ using ActivityStreams as the uniform message format.
 
 - **TypeScript**: Use proper types from `@sockethub/schemas`. Avoid `any`.
 - **Linting**: Biome handles formatting and style. Don't comment on style.
-- **Testing**: Test files named `*.test.ts`. Use `describe` and `test` (not `it`).
+- **Testing**: Test files named `*.test.ts`. Use `describe` and `it` (not `test`).
   Mock external dependencies. Test error paths, not just happy paths.
 - **Error Handling**: Always propagate errors to the caller. Never silently swallow errors.
   Log errors with context (session ID, platform, action).
@@ -139,3 +152,52 @@ patterns including schema definitions, credential handling, client lifecycle, an
 
 See `docs/CONTRIBUTING.md` for the complete contributor guide including version bump rules,
 release process, and workflow details.
+
+## Cursor Cloud specific instructions
+
+The startup update script already runs `bun install`. Bun is installed under
+`~/.bun/bin` (on `PATH` via `~/.bashrc`); non-login shells may need the full path
+`~/.bun/bin/bun`.
+
+- **Redis is required** for anything touching the data layer (the server itself, and
+  the `process`/`rate-limiter`/`integration` tests). It is NOT auto-started. Start it
+  before running the app or those tests: `redis-server --daemonize yes` (verify with
+  `redis-cli ping` → `PONG`). Plain unit tests (`bun test`) do not need Redis.
+- **Run the app (dev):** `bun run dev` from the repo root. This rebuilds all packages
+  first, then starts the server with hot reload and the examples UI at
+  `http://localhost:10550` (WebSocket path `/sockethub`). A quick smoke test: open
+  `http://localhost:10550/dummy` and use the `echo` action.
+- **Examples must be built before serving.** `bun run dev` builds them for you, but if
+  you run the server bin directly with `--examples` and `packages/examples/build` is
+  missing, the server exits with an error. Run `bun run build` first in that case.
+- **Standard commands** (install/build/test/lint) are documented above under
+  `## Development`; use those rather than ad-hoc variants.
+- **The `dummy` platform works end-to-end with only Redis.** The `feeds` platform
+  also needs only Redis for public feed URLs, but fetching loopback or private
+  addresses (as in integration tests and the examples smoke test) requires
+  `SOCKETHUB_CONFIG=integration/sockethub.ci.config.json` to bypass the SSRF
+  guard — the same file `docker-compose.yml` mounts for the CI harness. Testing
+  the `irc` / `xmpp` platforms additionally needs the `ergo` (IRC, `:6667`) and
+  `prosody` (XMPP, `:5222`) containers.
+
+### Docker / IRC / XMPP integration testing
+
+Docker is available but the daemon is not auto-started. Start it with
+`sudo dockerd > /tmp/dockerd.log 2>&1 &` (the daemon is pre-configured for this VM:
+`fuse-overlayfs` storage driver with the `containerd-snapshotter` feature disabled — required
+for Docker 29 — and `iptables-legacy`; use `sudo` for all `docker` commands).
+
+- **Start the test servers.** Redis already runs natively on `:6379`, so start only the
+  chat servers rather than the full `docker:start:deps` (which would collide on Redis):
+  `sudo docker compose up prosody ergo -d`. This also starts `mock-oauth` (an `ergo`
+  dependency used by the IRC SASL/OAuth tests). Containers seed test account
+  `jimmy` / `passw0rd` on both servers; all integration params live in `integration/config.js`.
+- **Run the platform E2E tests** (need the sockethub server + Redis + prosody + ergo all
+  running): `bun run integration:browser` runs every XMPP and IRC browser suite. These
+  use `@web/test-runner` with headless Chrome (already installed) and are the canonical
+  end-to-end tests for IRC/XMPP.
+- **Gotcha: the examples IRC UI (`/irc`) hardcodes `secure: true`**, which forces TLS on
+  `:6697`; the `ergo` container only publishes plaintext `:6667`, so the browser examples
+  page cannot connect to the local IRC server. Use the `integration:browser:irc-*` tests
+  (which pass `secure: false`) to exercise IRC locally. The `/xmpp` examples page works
+  against local prosody.

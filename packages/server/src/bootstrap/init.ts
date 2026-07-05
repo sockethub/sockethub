@@ -160,6 +160,9 @@ export async function registerPlatforms(initObj: IInitObject): Promise<void> {
         if (schemas.messages !== undefined) {
             addPlatformSchema(schemas.messages, `${platform.id}/messages`);
         }
+        if (schemas.responses !== undefined) {
+            addPlatformSchema(schemas.responses, `${platform.id}/responses`);
+        }
     }
 }
 

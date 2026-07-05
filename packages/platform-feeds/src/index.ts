@@ -26,6 +26,12 @@ import type {
     PlatformSession,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
+import { errorMessage } from "@sockethub/util/error";
+import {
+    createGuardedDispatcher,
+    redactUrl,
+    safeFetch,
+} from "@sockethub/util/net";
 import htmlTags from "html-tags";
 import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
@@ -72,6 +78,7 @@ function isHtml(s: string): boolean {
 export default class Feeds implements PlatformInterface {
     id: string;
     private readonly log: Logger;
+    private dispatcher?: ReturnType<typeof createGuardedDispatcher>;
     config: PlatformConfig = {
         persist: false,
         connectTimeoutMs: 5000,
@@ -101,6 +108,11 @@ export default class Feeds implements PlatformInterface {
      * response to the original request with a complete ActivityStreams Collection
      * containing all feed items and metadata.
      *
+     * The request may carry an optional `object` with filtering parameters:
+     * `since` (RFC3339 date-time; only entries published at or after this
+     * instant, undated entries excluded) and `limit` (integer >= 1; cap on
+     * returned entries, applied after `since`, feed order preserved).
+     *
      * @param job - Activity streams object containing job data with actor.id as feed URL
      * @param done - Callback function that receives (error, ASCollection)
      * See the package README for canonical request and response payload
@@ -108,7 +120,8 @@ export default class Feeds implements PlatformInterface {
      */
     fetch(job: ActivityStream, done: PlatformCallback) {
         // ready to execute job
-        this.fetchFeed(job.actor.id, job.id)
+        const params = extractFetchParams(job.object);
+        this.fetchFeed(job.actor.id, job.id, params)
             .then((results) => {
                 return done(null, {
                     id: job.id || null,
@@ -127,20 +140,38 @@ export default class Feeds implements PlatformInterface {
 
     /**
      * Cleanup method called when platform instance is being shut down.
-     * Currently, no cleanup required for feeds platform.
      *
      * @param done - Callback function to signal completion
      */
     cleanup(done: PlatformCallback) {
+        // Release the guarded dispatcher's pooled connections on shutdown.
+        this.dispatcher?.close().catch(() => {});
         done();
     }
 
-    private async makeRequest(url: string): Promise<string> {
-        const opts: RequestInit = {};
-        if (this.config.connectTimeoutMs) {
-            opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
+    /**
+     * The SSRF-guarded undici dispatcher, created once per instance (its
+     * `allowPrivateAddresses` setting comes from packageConfig, fixed before the
+     * first job) and reused so connections/timers are pooled.
+     */
+    private getDispatcher(): ReturnType<typeof createGuardedDispatcher> {
+        if (!this.dispatcher) {
+            this.dispatcher = createGuardedDispatcher({
+                allowPrivateAddresses:
+                    this.config.allowPrivateAddresses === true,
+            });
         }
-        const res = await fetch(url, opts);
+        return this.dispatcher;
+    }
+
+    private async makeRequest(url: string): Promise<string> {
+        // safeFetch validates the scheme, routes through the guarded dispatcher
+        // (blocks private/loopback destinations at the connection layer on every
+        // redirect hop, caps the body), and throws on a non-2xx response.
+        const res = await safeFetch(url, {
+            dispatcher: this.getDispatcher(),
+            timeoutMs: this.config.connectTimeoutMs,
+        });
         return await res.text();
     }
 
@@ -149,6 +180,7 @@ export default class Feeds implements PlatformInterface {
     private async fetchFeed(
         url: string,
         id: string,
+        params: FeedFetchParams = {},
     ): Promise<Array<PlatformFeedsActivityStream>> {
         this.log.debug(`fetching ${url}`);
         const res = await this.makeRequest(url);
@@ -160,51 +192,93 @@ export default class Feeds implements PlatformInterface {
             try {
                 const article = buildFeedStruct(actor);
                 article.id = id;
-                article.object = buildFeedItem(item as FeedItem, url);
+                article.object = buildFeedItem(item, url);
                 articles.push(article);
             } catch (err) {
-                const detail = err instanceof Error ? err.message : String(err);
                 throw new Error(
-                    `Failed to parse feed entry ${index + 1} from ${url}: ${detail}`,
+                    `Failed to parse feed entry ${index + 1} from ${redactUrl(url)}: ${errorMessage(err)}`,
                     { cause: err },
                 );
             }
         }
-        this.log.debug(`fetched ${articles.length} articles`);
-        return articles;
+        const filtered = applyFetchFilters(articles, params);
+        this.log.debug(
+            `fetched ${articles.length} articles, returning ${filtered.length}`,
+        );
+        return filtered;
     }
 }
 
-interface FeedItem extends Episode {
-    meta?: Meta;
-    date?: string;
-    categories?: Array<string>;
-    media?: Array<unknown>;
-    source?: string;
+/**
+ * Optional parameters a client may attach to a `fetch` request `object`.
+ * Mirrors the strict `messages.object` schema; both must stay in sync.
+ */
+export interface FeedFetchParams {
+    since?: string;
+    limit?: number;
 }
 
-export function datesEqual(a: unknown, b: unknown): boolean {
-    if (a == null && b == null) {
-        return true;
+/**
+ * Extract the supported fetch parameters from a request `object`. Inbound
+ * messages are already validated against the strict `messages` schema on the
+ * server, so this only needs to read the recognized fields defensively (the
+ * platform may also be called directly, e.g. in tests).
+ */
+export function extractFetchParams(object: unknown): FeedFetchParams {
+    if (!object || typeof object !== "object") {
+        return {};
     }
-    if (a == null || b == null) {
-        return false;
+    const { since, limit } = object as Record<string, unknown>;
+    const params: FeedFetchParams = {};
+    if (typeof since === "string") {
+        params.since = since;
     }
-    // Prefer Date.getTime() for Date instances; String(date)+Date.parse loses ms.
-    const at = a instanceof Date ? a.getTime() : Date.parse(String(a));
-    const bt = b instanceof Date ? b.getTime() : Date.parse(String(b));
-    if (Number.isNaN(at) || Number.isNaN(bt)) {
-        return String(a) === String(b);
+    if (typeof limit === "number" && Number.isInteger(limit) && limit >= 1) {
+        params.limit = limit;
     }
-    return at === bt;
+    return params;
+}
+
+/**
+ * Apply the `since` and `limit` fetch parameters to built feed entries.
+ *
+ * - `since`: drop entries published before the given instant. Entries without a
+ *   parseable date (`datenum === 0`) are excluded when `since` is set, since we
+ *   cannot confirm they are recent enough. An unparseable `since` is ignored.
+ * - `limit`: return at most `limit` entries, preserving feed order.
+ */
+export function applyFetchFilters(
+    articles: Array<PlatformFeedsActivityStream>,
+    params: FeedFetchParams,
+): Array<PlatformFeedsActivityStream> {
+    let result = articles;
+    if (params.since) {
+        const sinceMs = Date.parse(params.since);
+        if (!Number.isNaN(sinceMs)) {
+            result = result.filter((article) => {
+                const datenum = article.object?.datenum;
+                // `datenum === 0` is the unparseable-date sentinel from
+                // buildFeedItem; exclude it even when `since` is the epoch.
+                return (
+                    typeof datenum === "number" &&
+                    datenum !== 0 &&
+                    datenum >= sinceMs
+                );
+            });
+        }
+    }
+    if (params.limit !== undefined && result.length > params.limit) {
+        result = result.slice(0, params.limit);
+    }
+    return result;
 }
 
 export function buildFeedItem(
-    item: FeedItem,
+    item: Episode,
     channelUrl: string,
 ): PlatformFeedsActivityObject {
     const dateNum = item.pubDate ? Date.parse(item.pubDate.toString()) : NaN;
-    const itemUrl = item.link || item.meta?.link;
+    const itemUrl = item.link;
     const idBase = itemUrl || channelUrl;
     const stableId =
         itemUrl ||
@@ -223,11 +297,7 @@ export function buildFeedItem(
         contentType: isHtml(item.description || "") ? "html" : "text",
         url: itemUrl || channelUrl,
         published: item.pubDate,
-        updated: datesEqual(item.pubDate, item.date) ? undefined : item.date,
         datenum: Number.isFinite(dateNum) ? dateNum : 0,
-        tags: item.categories,
-        media: item.media,
-        source: item.source,
     };
 }
 
@@ -241,7 +311,7 @@ function buildFeedStruct(
     };
 }
 
-function indexFallback(item: FeedItem): string {
+function indexFallback(item: Episode): string {
     return `${item.title || "item"}-${item.pubDate || "unknown"}`;
 }
 
@@ -252,9 +322,14 @@ function buildFeedChannel(url: string, meta: Meta): PlatformFeedsActivityActor {
         name: meta.title ? meta.title : meta.link ? meta.link : url,
         link: meta.link || url,
         description: meta.description ? meta.description : undefined,
-        image: meta.image ? meta.image : undefined,
+        image: meta.image?.url || undefined,
         categories: meta.category ? meta.category : [],
         language: meta.language ? meta.language : undefined,
-        author: meta.author ? meta.author : undefined,
+        // podparse's typings declare `author` as an object, but its RSS
+        // mapping emits the raw <author> text as a string; handle both shapes.
+        author:
+            (typeof meta.author === "string"
+                ? meta.author
+                : meta.author?.name) || undefined,
     };
 }
