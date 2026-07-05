@@ -588,6 +588,11 @@ export function registerHttpActionsRoutes(
                 unregisterHttpSession(platformId);
             }
             platformIds.clear();
+            // This session id is single-use; drop its credential namespace so
+            // it does not linger in Redis (SecureStore writes have no TTL).
+            // Runs after all jobs have completed or the request has timed out,
+            // so queued platform jobs have already read the credentials.
+            void credentialsStore.teardown?.();
             if (requestTimeoutId) {
                 clearTimeout(requestTimeoutId);
                 requestTimeoutId = undefined;

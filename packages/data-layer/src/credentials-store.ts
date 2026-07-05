@@ -86,6 +86,13 @@ export interface CredentialsStoreInterface {
         options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
+    /**
+     * Delete this session's entire credential namespace from Redis. Used by
+     * single-use sessions (e.g. HTTP actions requests) whose credentials are
+     * never read again once the request completes. Optional: long-lived socket
+     * sessions do not implement it.
+     */
+    teardown?(): Promise<void>;
 }
 
 export interface CredentialsValidationOptions {
@@ -270,5 +277,21 @@ export class CredentialsStore implements CredentialsStoreInterface {
             await this.store.connect();
         }
         return await this.store.save(actor, creds);
+    }
+
+    /**
+     * Delete this session's entire credential hash from Redis.
+     *
+     * `SecureStore` writes have no TTL and nothing else removes them, so a
+     * single-use session (an HTTP actions request mints a unique session id
+     * per request) would otherwise leave a permanent key. Best-effort and safe
+     * to call when nothing was stored — a missing key is a no-op.
+     */
+    async teardown(): Promise<void> {
+        try {
+            await this.store.client?.del(this.uid);
+        } catch (err) {
+            this.log.debug(`credential store teardown failed: ${err}`);
+        }
     }
 }

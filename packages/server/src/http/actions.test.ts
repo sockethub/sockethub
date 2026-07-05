@@ -155,10 +155,12 @@ function buildHandlers({
     configOverrides = {},
     fakeRedis,
     createMessageHandlersOverride,
+    onTeardown,
 }: {
     configOverrides?: ConfigOverrides;
     fakeRedis: FakeRedis;
     createMessageHandlersOverride?: (...args: Array<any>) => any;
+    onTeardown?: () => void;
 }) {
     const handlers: Record<string, any> = {};
     const app: any = {
@@ -194,6 +196,9 @@ function buildHandlers({
             createCredentialsStore: () => ({
                 save: async () => 1,
                 get: async () => undefined,
+                teardown: async () => {
+                    onTeardown?.();
+                },
             }),
             getIdempotencyRedisConnection: () => fakeRedis as any,
         },
@@ -224,6 +229,28 @@ describe("http actions", () => {
 
         expect(res.statusCode).toBe(200);
         expect(writes.length).toBe(1);
+    });
+
+    test("tears down the session credential store after completion", async () => {
+        const fakeRedis = new FakeRedis();
+        let teardowns = 0;
+        const handlers = buildHandlers({
+            fakeRedis,
+            onTeardown: () => {
+                teardowns += 1;
+            },
+        });
+
+        const { req, res } = createReqRes({
+            body: [singlePayload],
+            headers: { "x-request-id": "teardown-req" },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(res.ended).toBeTrue();
+        expect(teardowns).toBe(1);
     });
 
     test("streams results and caches for idempotent replay", async () => {

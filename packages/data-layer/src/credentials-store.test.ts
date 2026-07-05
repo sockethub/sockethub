@@ -21,16 +21,19 @@ describe("CredentialsStore", () => {
         MockSecureStore,
         MockStoreGet,
         MockStoreSave,
+        MockStoreDel,
         MockObjectHash;
     beforeEach(() => {
         MockStoreGet = sinon.stub().returns({
             object: { password: "credential foo" },
         });
         MockStoreSave = sinon.stub();
+        MockStoreDel = sinon.stub().resolves(1);
         MockObjectHash = sinon.stub();
         MockSecureStore = sinon.stub().returns({
             get: MockStoreGet,
             save: MockStoreSave,
+            client: { del: MockStoreDel },
             isConnected: true,
             connect: sinon.stub().resolves(),
         });
@@ -316,6 +319,20 @@ describe("CredentialsStore", () => {
             sinon.assert.calledWith(MockStoreSave, "an actor", creds);
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreGet);
+        });
+    });
+
+    describe("teardown", () => {
+        it("deletes the session's credential namespace", async () => {
+            await credentialsStore.teardown();
+            sinon.assert.calledOnce(MockStoreDel);
+            sinon.assert.calledWith(MockStoreDel, credentialsStore.uid);
+        });
+
+        it("swallows errors so cleanup never throws", async () => {
+            MockStoreDel.rejects(new Error("redis down"));
+            await credentialsStore.teardown();
+            sinon.assert.calledOnce(MockStoreDel);
         });
     });
 });
