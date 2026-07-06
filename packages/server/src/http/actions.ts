@@ -30,6 +30,7 @@ import express, {
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import config from "../config.js";
+import { parseCorsOrigins, resolveAllowedOrigin } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
 import type ProcessManager from "../process-manager.js";
 import {
@@ -241,44 +242,22 @@ function resolveConfigNumber(
 }
 
 /**
- * Resolve the `Access-Control-Allow-Origin` value for a request, using the same
- * `sockethub:cors:origin` config that governs socket.io. Returns `"*"` when any
- * origin is allowed, the request's own origin when it is in a configured
- * allow-list, or `undefined` when the origin is not allowed (the browser then
- * blocks the response).
- */
-export function resolveAllowedOrigin(
-    configuredOrigin: string | undefined,
-    requestOrigin: string | undefined,
-): string | undefined {
-    const configured = (configuredOrigin ?? "*").trim();
-    if (configured === "*" || configured === "") {
-        return "*";
-    }
-    const allowed = configured
-        .split(",")
-        .map((origin) => origin.trim())
-        .filter((origin) => origin.length > 0);
-    if (allowed.length === 0) {
-        return "*";
-    }
-    if (requestOrigin && allowed.includes(requestOrigin)) {
-        return requestOrigin;
-    }
-    return undefined;
-}
-
-/**
- * CORS middleware for the HTTP actions routes. Emits the allow headers and
- * answers preflight `OPTIONS` requests so browser clients on a configured
- * origin can call the endpoint.
+ * CORS middleware for the HTTP actions routes, honoring the same
+ * `sockethub:cors:origin` config that governs socket.io. Emits the allow
+ * headers and answers preflight `OPTIONS` requests so browser clients on a
+ * configured origin can call the endpoint.
  */
 function createCorsMiddleware(
     getConfig: (key: string) => unknown,
 ): RequestHandler {
+    // Parse the allow-list (and log any config warnings) once at route
+    // registration rather than on every request.
+    const allowedOrigins = parseCorsOrigins(
+        getConfig("sockethub:cors:origin") as string | undefined,
+    );
     return (req, res, next) => {
         const allowOrigin = resolveAllowedOrigin(
-            getConfig("sockethub:cors:origin") as string | undefined,
+            allowedOrigins,
             req.headers.origin,
         );
         if (allowOrigin) {

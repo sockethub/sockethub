@@ -185,13 +185,16 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
             cors: {
                 origin: {
                     doc:
-                        "Allowed CORS origin(s) for socket.io connections. " +
-                        "'*' allows any website to connect visitors' " +
-                        "browsers to this instance; public deployments " +
-                        "should set an explicit origin or comma-separated " +
-                        "list of origins.",
+                        "Allowed CORS origin(s) for socket.io connections " +
+                        "and the HTTP actions endpoint. '*' allows any " +
+                        "website to connect visitors' browsers to this " +
+                        "instance; public deployments should set an " +
+                        "explicit origin or comma-separated list of " +
+                        "origins.",
                     format: String,
                     default: "*",
+                    env: "SOCKETHUB_CORS_ORIGIN",
+                    arg: "cors.origin",
                 },
             },
         },
