@@ -55,12 +55,15 @@ for pkg_json in $PACKAGES; do
   # Check npm registry
   NPM_VERSION=$(npm view "$PKG_NAME@$CHECK_VERSION" version 2>/dev/null || echo "")
 
+  # Plain assignment, not ((VAR++)): under `set -e` an arithmetic command
+  # whose expression evaluates to 0 (the first post-increment from 0) exits
+  # the script on bash >= 4, so ((PUBLISHED++)) dies after the first package.
   if [ -n "$NPM_VERSION" ]; then
     echo "✅ $PKG_NAME@$CHECK_VERSION - published"
-    ((PUBLISHED++))
+    PUBLISHED=$((PUBLISHED + 1))
   else
     echo "❌ $PKG_NAME@$CHECK_VERSION - NOT published"
-    ((NOT_PUBLISHED++))
+    NOT_PUBLISHED=$((NOT_PUBLISHED + 1))
     FAILED=true
   fi
 done
