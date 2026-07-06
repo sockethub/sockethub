@@ -9,7 +9,40 @@ import type {
 import { toError } from "@sockethub/util/error";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
+import packageJson from "../package.json" with { type: "json" };
+import {
+    type FxTwitterStatus,
+    isRedditUrl,
+    resolveTwitterStatus,
+    tweetToPageObject,
+} from "./resolvers";
 import { PlatformMetadataSchema } from "./schema";
+
+/**
+ * Sent with every outbound request. Sites gate their scraper-facing
+ * behavior on the user agent, and many reject undici's default UA
+ * outright. Identify honestly as a bot; override per deployment via
+ * `packageConfig.userAgent`.
+ */
+const DEFAULT_USER_AGENT = `Mozilla/5.0 (compatible; SockethubBot/${packageJson.version}; +https://sockethub.org)`;
+
+/**
+ * Sent to sites that serve their Open Graph payload only to *recognized*
+ * embed crawlers — Reddit returns a page with no OG data (and 403s
+ * datacenter addresses) for anything it doesn't know. Presenting a
+ * link-preview crawler UA is the established practice for self-hosted
+ * preview fetchers; override per deployment via
+ * `packageConfig.compatUserAgent`.
+ */
+const COMPAT_USER_AGENT =
+    "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)";
+
+/**
+ * Cap on the FxTwitter API round-trip. The guarded dispatcher bounds
+ * response size but not time — without this, a stalled API request would
+ * also stall the scrape fallback.
+ */
+const TWEET_API_TIMEOUT_MS = 10_000;
 
 export default class Metadata implements PlatformInterface {
     private readonly log: Logger;
@@ -47,8 +80,76 @@ export default class Metadata implements PlatformInterface {
         return true;
     }
 
+    private userAgent(): string {
+        return typeof this.config.userAgent === "string" &&
+            this.config.userAgent
+            ? this.config.userAgent
+            : DEFAULT_USER_AGENT;
+    }
+
+    private compatUserAgent(): string {
+        return typeof this.config.compatUserAgent === "string" &&
+            this.config.compatUserAgent
+            ? this.config.compatUserAgent
+            : COMPAT_USER_AGENT;
+    }
+
     fetch(job: ActivityStream, cb: PlatformCallback) {
         this.log.debug(`fetching ${job.actor.id}`);
+        // X/Twitter never exposes a post's own media via Open Graph — it
+        // serves a generic site banner to every scraper — so status URLs
+        // resolve through FxTwitter's JSON API instead, which returns the
+        // tweet text plus direct photo/video URLs. Anything else (including
+        // an FxTwitter failure) goes through the regular OG scrape.
+        const tweetApiUrl = resolveTwitterStatus(job.actor.id);
+        if (tweetApiUrl) {
+            this.fetchTweet(tweetApiUrl, job, cb);
+            return;
+        }
+        this.scrape(job, cb);
+    }
+
+    private async fetchTweet(
+        apiUrl: string,
+        job: ActivityStream,
+        cb: PlatformCallback,
+    ) {
+        try {
+            const res = await globalThis.fetch(apiUrl, {
+                // biome-ignore lint/suspicious/noExplicitAny: undici fetch accepts a dispatcher
+                dispatcher: this.getDispatcher(),
+                headers: { "user-agent": this.userAgent() },
+                signal: AbortSignal.timeout(TWEET_API_TIMEOUT_MS),
+            } as any);
+            const status = (await res.json()) as FxTwitterStatus;
+            const page = tweetToPageObject(status);
+            if (page) {
+                job.actor.id = page.url || job.actor.id;
+                job.actor.name = page.name || job.actor.name || "";
+                job.object = page;
+                cb(null, job);
+                return;
+            }
+            this.log.debug(
+                `fxtwitter returned no usable data for ${job.actor.id} (code ${status?.code}); falling back to scrape`,
+            );
+        } catch (err) {
+            // The FxTwitter API being down must not break previews entirely —
+            // the plain scrape still yields the post text.
+            this.log.debug(
+                `fxtwitter fetch failed for ${job.actor.id}: ${String(err)}; falling back to scrape`,
+            );
+        }
+        this.scrape(job, cb);
+    }
+
+    private scrape(job: ActivityStream, cb: PlatformCallback) {
+        // Reddit serves its OG data (with the post's real preview image)
+        // only to recognized embed-crawler user agents — everything else
+        // gets a page without OG tags, or a 403.
+        const userAgent = isRedditUrl(job.actor.id)
+            ? this.compatUserAgent()
+            : this.userAgent();
         // The server fetches whatever URL a client puts in actor.id, so guard
         // it against SSRF and oversized responses. open-graph-scraper forwards
         // `fetchOptions` to its undici fetch; the guarded dispatcher refuses to
@@ -78,7 +179,10 @@ export default class Metadata implements PlatformInterface {
                 validate_length: true,
             },
             // biome-ignore lint/suspicious/noExplicitAny: ogs fetchOptions dispatcher
-            fetchOptions: { dispatcher } as any,
+            fetchOptions: {
+                dispatcher,
+                headers: { "user-agent": userAgent },
+            } as any,
         })
             .then((data) => {
                 const { result } = data;
@@ -92,7 +196,11 @@ export default class Metadata implements PlatformInterface {
                     description: result.ogDescription || "",
                     image: result.ogImage,
                     url: result.ogUrl,
-                    favicon: result.favicon,
+                    // Fall back to the conventional location when the page
+                    // declares no icon (vxreddit, many plain sites). It's
+                    // relative on purpose: clients resolve it against the
+                    // page URL, and a 404 just means no decoration.
+                    favicon: result.favicon || "/favicon.ico",
                     charset: result.charset,
                 };
                 cb(null, job);

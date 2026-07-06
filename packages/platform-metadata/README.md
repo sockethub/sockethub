@@ -77,9 +77,68 @@ The platform returns an ActivityStream object with extracted metadata:
 The platform extracts the following metadata when available:
 
 * **Open Graph data**: Title, description, images, site name, URL, locale
-* **Site information**: Favicon, character encoding
+* **Site information**: Favicon, character encoding — when a page declares no
+  icon, `favicon` falls back to the conventional relative `/favicon.ico` so
+  clients can resolve it against the page URL and decorate previews
 * **Canonical URLs**: Resolved and canonical page URLs
-* **Media**: Images with dimensions and type information
+* **Media**: Images with dimensions and type information; for X/Twitter posts,
+  a `video` object (direct media URL, poster `thumbnail`, dimensions, duration)
+
+## Site-Specific Handling
+
+Some large platforms don't expose a post's own media to Open Graph scrapers,
+so those URLs are resolved through preview services built for this purpose:
+
+* **X / Twitter status URLs** (`x.com`, `twitter.com`, incl. `/i/web/status/…`)
+  are fetched from the [FxTwitter API](https://github.com/FxEmbed/FxEmbed)
+  instead of scraped — X serves only a generic site banner to scrapers. The
+  response carries the post's text, its actual photo (or video + poster
+  thumbnail), and the canonical `x.com` URL. If the API is unavailable or the
+  post can't be resolved, the platform falls back to the regular scrape
+  (which still yields the post text).
+* **Reddit URLs** (`reddit.com` hosts and `redd.it` short links) are scraped
+  directly, but with a *compatibility user agent* — Reddit serves its Open
+  Graph data (including the post's real preview image) only to recognized
+  embed crawlers, and returns a page with no OG tags (or a 403) to anything
+  else. See `compatUserAgent` below.
+* **Facebook** remains best-effort: post text usually comes through, but
+  media requires authentication and no public preview service exists.
+
+### `userAgent`
+
+All outbound requests identify as
+`Mozilla/5.0 (compatible; SockethubBot/<version>; +https://sockethub.org)`.
+Sites gate scraper-facing behavior on the user agent — preview services serve
+their Open Graph payload to bot-like UAs, and many hosts reject undici's
+default UA. Override per deployment via `packageConfig`:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-metadata": {
+      "userAgent": "MyDeployment/1.0 (+https://my.example)"
+    }
+  }
+}
+```
+
+### `compatUserAgent`
+
+Sites that only serve Open Graph data to *recognized* embed crawlers (Reddit)
+are fetched with a link-preview crawler user agent instead — the established
+practice for self-hosted preview fetchers. Defaults to
+`Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)`;
+override via `packageConfig`:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-metadata": {
+      "compatUserAgent": "Mozilla/5.0 (compatible; TelegramBot/1.0)"
+    }
+  }
+}
+```
 
 ## Dependencies
 
