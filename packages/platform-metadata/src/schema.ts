@@ -58,13 +58,28 @@ export const PlatformMetadataSchema = {
                         name: { type: "string" },
                         description: { type: "string" },
                         image: { $ref: "#/definitions/responses/ogImage" },
+                        // Post video (populated for X/Twitter statuses via
+                        // FxTwitter): a direct media URL plus the poster
+                        // thumbnail and dimensions.
+                        video: {
+                            type: "object",
+                            required: ["url"],
+                            additionalProperties: false,
+                            properties: {
+                                url: { type: "string" },
+                                thumbnail: { type: "string" },
+                                width: { type: "number" },
+                                height: { type: "number" },
+                                duration: { type: "number" },
+                            },
+                        },
                         url: { type: "string" },
                         favicon: { type: "string" },
                         charset: { type: "string" },
                     },
                 },
                 // open-graph-scraper returns ogImage as an array of image
-                // objects (url + optional dimensions/type).
+                // objects (url + optional dimensions/type/alt text).
                 ogImage: {
                     type: "array",
                     items: {
@@ -76,6 +91,7 @@ export const PlatformMetadataSchema = {
                             type: { type: "string" },
                             width: { type: ["string", "number"] },
                             height: { type: ["string", "number"] },
+                            alt: { type: "string" },
                         },
                     },
                 },
