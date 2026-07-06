@@ -72,3 +72,31 @@ export function parseCorsOrigins(configured: unknown): "*" | Array<string> {
     }
     return origins;
 }
+
+/**
+ * Resolve the `Access-Control-Allow-Origin` value for a request against an
+ * allow-list already parsed by `parseCorsOrigins`. Returns `"*"` when any
+ * origin is allowed, the request's own origin when it is in the allow-list,
+ * or `undefined` when it is not allowed (the browser then blocks the
+ * response). The request origin is run through the same URL normalization as
+ * the configured entries, so matching never depends on the client sending
+ * the canonical serialization.
+ */
+export function resolveAllowedOrigin(
+    allowedOrigins: "*" | Array<string>,
+    requestOrigin: string | undefined,
+): string | undefined {
+    if (allowedOrigins === "*") {
+        return "*";
+    }
+    if (!requestOrigin) {
+        return undefined;
+    }
+    let normalized: string;
+    try {
+        normalized = new URL(requestOrigin).origin;
+    } catch {
+        return undefined;
+    }
+    return allowedOrigins.includes(normalized) ? requestOrigin : undefined;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { parseCorsOrigins } from "./cors.js";
+import { parseCorsOrigins, resolveAllowedOrigin } from "./cors.js";
 
 describe("parseCorsOrigins", () => {
     it("returns * when unset, empty, or configured as *", () => {
@@ -58,5 +58,69 @@ describe("parseCorsOrigins", () => {
     it("fails closed when a restrictive config has no valid origins", () => {
         expect(parseCorsOrigins(",,,")).toEqual([]);
         expect(parseCorsOrigins("not a url")).toEqual([]);
+    });
+});
+
+describe("resolveAllowedOrigin", () => {
+    it("returns * when any origin is allowed", () => {
+        expect(resolveAllowedOrigin("*", "https://app.example")).toBe("*");
+        expect(resolveAllowedOrigin("*", undefined)).toBe("*");
+    });
+
+    it("echoes a request origin that is in the allow-list", () => {
+        expect(
+            resolveAllowedOrigin(
+                ["https://a.example", "https://b.example"],
+                "https://b.example",
+            ),
+        ).toBe("https://b.example");
+    });
+
+    it("returns undefined for an origin not in the allow-list", () => {
+        expect(
+            resolveAllowedOrigin(["https://a.example"], "https://evil.example"),
+        ).toBeUndefined();
+    });
+
+    it("returns undefined for a restricted list when no origin is sent", () => {
+        expect(
+            resolveAllowedOrigin(["https://a.example"], undefined),
+        ).toBeUndefined();
+    });
+
+    it("normalizes the request origin before matching", () => {
+        expect(
+            resolveAllowedOrigin(
+                ["https://a.example"],
+                "https://A.example:443",
+            ),
+        ).toBe("https://A.example:443");
+    });
+
+    it("returns undefined for a malformed or opaque request origin", () => {
+        expect(
+            resolveAllowedOrigin(["https://a.example"], "not a url"),
+        ).toBeUndefined();
+        expect(
+            resolveAllowedOrigin(["https://a.example"], "null"),
+        ).toBeUndefined();
+    });
+
+    it("fails closed against an empty allow-list", () => {
+        expect(
+            resolveAllowedOrigin(
+                parseCorsOrigins(",,,"),
+                "https://app.example.com",
+            ),
+        ).toBeUndefined();
+    });
+
+    it("matches configured origins that needed normalizing", () => {
+        expect(
+            resolveAllowedOrigin(
+                parseCorsOrigins("https://App.Example.com/, https://b.example"),
+                "https://app.example.com",
+            ),
+        ).toBe("https://app.example.com");
     });
 });
