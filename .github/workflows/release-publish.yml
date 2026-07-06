@@ -478,7 +478,7 @@ jobs:
       # cache", e.g. run 28824982137). Both steps share this job's Buildx
       # builder, so the smoke build's amd64 layers are reused by the push
       # build without an external cache.
-      - name: Build image for smoke test
+      - name: Build candidate image (native arch)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
@@ -489,7 +489,7 @@ jobs:
           push: false
           tags: sockethub-smoke:candidate
 
-      - name: Smoke test image
+      - name: Smoke test candidate against Redis
         run: |
           docker network create smoke-net
           docker run -d --name smoke-redis --network smoke-net redis
@@ -497,28 +497,38 @@ jobs:
             -e REDIS_URL=redis://smoke-redis:6379 \
             -p 10550:10550 sockethub-smoke:candidate
 
+          # Dump logs and tear down on every exit path, so a failed check
+          # (which aborts the step under bash -e) still leaves the container
+          # logs in the Actions output for debugging.
+          cleanup() {
+            echo "--- sockethub container logs ---"
+            docker logs smoke-sockethub || true
+            docker rm -f smoke-sockethub smoke-redis >/dev/null 2>&1 || true
+            docker network rm smoke-net >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
           echo "Waiting for sockethub to listen on :10550..."
           for i in $(seq 1 30); do
             if nc -z localhost 10550; then break; fi
             sleep 2
           done
-          nc -zv localhost 10550
+          if ! nc -zv localhost 10550; then
+            echo "❌ sockethub never opened port 10550"
+            exit 1
+          fi
 
           # A crash while bootstrapping platforms happens after the port
           # opens; confirm the process survives startup.
           sleep 5
           if [ "$(docker inspect -f '{{.State.Running}}' smoke-sockethub)" != "true" ]; then
             echo "❌ Container exited after startup"
-            docker logs smoke-sockethub
             exit 1
           fi
 
-          docker logs smoke-sockethub
-          docker rm -f smoke-sockethub smoke-redis
-          docker network rm smoke-net
           echo "✅ Smoke test passed"
 
-      - name: Build and push image
+      - name: Build and push multi-arch image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
