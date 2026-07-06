@@ -37,6 +37,13 @@ const DEFAULT_USER_AGENT = `Mozilla/5.0 (compatible; SockethubBot/${packageJson.
 const COMPAT_USER_AGENT =
     "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)";
 
+/**
+ * Cap on the FxTwitter API round-trip. The guarded dispatcher bounds
+ * response size but not time — without this, a stalled API request would
+ * also stall the scrape fallback.
+ */
+const TWEET_API_TIMEOUT_MS = 10_000;
+
 export default class Metadata implements PlatformInterface {
     private readonly log: Logger;
     private dispatcher?: ReturnType<typeof createGuardedDispatcher>;
@@ -112,6 +119,7 @@ export default class Metadata implements PlatformInterface {
                 // biome-ignore lint/suspicious/noExplicitAny: undici fetch accepts a dispatcher
                 dispatcher: this.getDispatcher(),
                 headers: { "user-agent": this.userAgent() },
+                signal: AbortSignal.timeout(TWEET_API_TIMEOUT_MS),
             } as any);
             const status = (await res.json()) as FxTwitterStatus;
             const page = tweetToPageObject(status);

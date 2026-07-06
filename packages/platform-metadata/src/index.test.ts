@@ -17,6 +17,14 @@ mock.module("open-graph-scraper", () => ({
 
 const { default: Metadata } = await import("./index");
 
+/** The user-agent header the platform handed to open-graph-scraper. */
+function sentUserAgent(): string | undefined {
+    const fetchOptions = ogsOptions?.fetchOptions as
+        | { headers?: Record<string, string> }
+        | undefined;
+    return fetchOptions?.headers?.["user-agent"];
+}
+
 function makePlatform(config?: Record<string, unknown>) {
     // biome-ignore lint/suspicious/noExplicitAny: minimal fake session
     const platform = new Metadata({ log: { debug() {} } } as any);
@@ -92,22 +100,14 @@ describe("scrape user agent", () => {
 
     it("sends an identifiable bot user agent by default", async () => {
         await runFetch(makePlatform());
-        const fetchOptions = ogsOptions?.fetchOptions as
-            | { headers?: Record<string, string> }
-            | undefined;
-        expect(fetchOptions?.headers?.["user-agent"]).toMatch(
+        expect(sentUserAgent()).toMatch(
             /SockethubBot\/.+\+https:\/\/sockethub\.org/,
         );
     });
 
     it("honors a packageConfig userAgent override", async () => {
         await runFetch(makePlatform({ userAgent: "MyDeployment/1.0" }));
-        const fetchOptions = ogsOptions?.fetchOptions as
-            | { headers?: Record<string, string> }
-            | undefined;
-        expect(fetchOptions?.headers?.["user-agent"]).toEqual(
-            "MyDeployment/1.0",
-        );
+        expect(sentUserAgent()).toEqual("MyDeployment/1.0");
     });
 });
 
@@ -137,13 +137,6 @@ describe("reddit compatibility user agent", () => {
         ogsOptions = undefined;
         ogsBehavior = () => Promise.resolve({ result: {} });
     });
-
-    function sentUserAgent(): string | undefined {
-        const fetchOptions = ogsOptions?.fetchOptions as
-            | { headers?: Record<string, string> }
-            | undefined;
-        return fetchOptions?.headers?.["user-agent"];
-    }
 
     it("scrapes reddit posts with an embed-crawler user agent", async () => {
         await runFetch(
@@ -227,6 +220,9 @@ describe("twitter status resolution", () => {
         expect(headers["user-agent"]).toMatch(/SockethubBot/);
         // The guarded dispatcher rides along on the API call too.
         expect(fetchedInit?.dispatcher).toBeInstanceOf(Agent);
+        // And a per-request timeout, so a stalled API cannot stall the
+        // scrape fallback.
+        expect(fetchedInit?.signal).toBeInstanceOf(AbortSignal);
         // The OG scrape pipeline is bypassed entirely.
         expect(ogsOptions).toBeUndefined();
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
