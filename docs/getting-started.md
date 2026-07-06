@@ -135,7 +135,7 @@ All communication uses ActivityStreams 2.0 format:
 ## Production Usage
 
 Deploy on Node.js — install the published package (or use the Docker image,
-which builds and runs the server on Node.js):
+which installs the published npm packages and runs the server on Node.js):
 
 ```bash
 # Install and run on Node.js (examples disabled)

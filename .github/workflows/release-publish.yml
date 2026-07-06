@@ -391,13 +391,19 @@ jobs:
   # ============================================================
   # DOCKER IMAGE PUBLISH PHASE
   # Build and push a multi-arch image to ghcr.io once the release
-  # has been published to npm. Image tags mirror the npm dist-tags:
+  # has been published to npm. The image installs the *published npm
+  # packages* (Dockerfile.release) rather than building from source, so
+  # every release functionally verifies the artifacts users install —
+  # tarball contents, declared dependencies, bin wiring. A native-arch
+  # smoke test (boot against Redis, port check) gates the multi-arch
+  # push. Image tags mirror the npm dist-tags:
   #   - ghcr.io/sockethub/sockethub:<version>   (moving, points at latest build)
   #   - ghcr.io/sockethub/sockethub:<dist-tag>  (alpha|beta|next|latest)
   #   - ghcr.io/sockethub/sockethub:sha-<short> (immutable, traceable identity)
   # so :latest only ever points at a stable (non-prerelease) version, while the
-  # sha tag uniquely identifies the exact commit a build came from. To retry a
-  # failed build, re-run this job (tags are overwritten); no new release needed.
+  # sha tag uniquely identifies the exact release commit whose packages the
+  # image installs. To retry a failed build, re-run this job (tags are
+  # overwritten); no new release needed.
   # ============================================================
   docker-publish:
     needs: publish
@@ -411,6 +417,23 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.sha }}
+
+      # The publish job just pushed the packages, but the registry can lag
+      # before new versions are resolvable. The image build installs the
+      # released packages, so wait until every workspace package (checked at
+      # the versions recorded in this commit's package.json files) is visible.
+      - name: Wait for npm registry propagation
+        run: |
+          for attempt in $(seq 1 30); do
+            if ./scripts/verify-npm-publish.sh; then
+              echo "✅ All packages resolvable on npm"
+              exit 0
+            fi
+            echo "⏳ Registry not caught up yet (attempt $attempt/30); retrying in 20s..."
+            sleep 20
+          done
+          echo "❌ Packages still not resolvable after 10 minutes"
+          exit 1
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
@@ -445,10 +468,73 @@ jobs:
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
           echo "🐳 Image tags: $TAGS"
 
-      - name: Build and push image
+      # Build the native-arch image first and boot it against Redis before
+      # any multi-arch push — a broken published package set (missing tarball
+      # files, undeclared dependencies) fails here instead of shipping.
+      #
+      # No type=gha layer cache on these builds: the npm-install layer changes
+      # every release and GitHub evicts cache entries after 7 days, so it never
+      # hits — while writing it has failed whole releases ("failed to reserve
+      # cache", e.g. run 28824982137). Both steps share this job's Buildx
+      # builder, so the smoke build's amd64 layers are reused by the push
+      # build without an external cache.
+      - name: Build candidate image (native arch)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
+          file: Dockerfile.release
+          build-args: |
+            SOCKETHUB_VERSION=${{ needs.publish.outputs.version }}
+          load: true
+          push: false
+          tags: sockethub-smoke:candidate
+
+      - name: Smoke test candidate against Redis
+        run: |
+          docker network create smoke-net
+          docker run -d --name smoke-redis --network smoke-net redis
+          docker run -d --name smoke-sockethub --network smoke-net \
+            -e REDIS_URL=redis://smoke-redis:6379 \
+            -p 10550:10550 sockethub-smoke:candidate
+
+          # Dump logs and tear down on every exit path, so a failed check
+          # (which aborts the step under bash -e) still leaves the container
+          # logs in the Actions output for debugging.
+          cleanup() {
+            echo "--- sockethub container logs ---"
+            docker logs smoke-sockethub || true
+            docker rm -f smoke-sockethub smoke-redis >/dev/null 2>&1 || true
+            docker network rm smoke-net >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          echo "Waiting for sockethub to listen on :10550..."
+          for i in $(seq 1 30); do
+            if nc -z localhost 10550; then break; fi
+            sleep 2
+          done
+          if ! nc -zv localhost 10550; then
+            echo "❌ sockethub never opened port 10550"
+            exit 1
+          fi
+
+          # A crash while bootstrapping platforms happens after the port
+          # opens; confirm the process survives startup.
+          sleep 5
+          if [ "$(docker inspect -f '{{.State.Running}}' smoke-sockethub)" != "true" ]; then
+            echo "❌ Container exited after startup"
+            exit 1
+          fi
+
+          echo "✅ Smoke test passed"
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile.release
+          build-args: |
+            SOCKETHUB_VERSION=${{ needs.publish.outputs.version }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.tags.outputs.tags }}
@@ -457,5 +543,3 @@ jobs:
             org.opencontainers.image.version=${{ needs.publish.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
           provenance: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
