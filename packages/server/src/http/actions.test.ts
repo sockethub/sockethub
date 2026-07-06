@@ -669,4 +669,19 @@ describe("resolveAllowedOrigin", () => {
             resolveAllowedOrigin("https://a.example", undefined),
         ).toBeUndefined();
     });
+
+    it("matches configured origins that need normalizing", () => {
+        expect(
+            resolveAllowedOrigin(
+                "https://App.Example.com/, https://b.example",
+                "https://app.example.com",
+            ),
+        ).toBe("https://app.example.com");
+    });
+
+    it("fails closed when a restrictive config has no valid origins", () => {
+        expect(
+            resolveAllowedOrigin(",,,", "https://app.example.com"),
+        ).toBeUndefined();
+    });
 });

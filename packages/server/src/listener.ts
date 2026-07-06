@@ -12,6 +12,7 @@ import express, {
 import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
 import config from "./config.js";
+import { parseCorsOrigins } from "./cors.js";
 import routes from "./routes.js";
 
 const require = createRequire(import.meta.url);
@@ -162,20 +163,7 @@ class Listener {
      * as a relay.
      */
     private static corsOrigin(): string | Array<string> {
-        const configured = (
-            (config.get("sockethub:cors:origin") as string) || "*"
-        ).trim();
-        if (configured === "*" || configured === "") {
-            return "*";
-        }
-        const origins = configured
-            .split(",")
-            .map((origin) => origin.trim())
-            .filter((origin) => origin.length > 0);
-        if (origins.length === 0) {
-            return "*";
-        }
-        return origins.length === 1 ? origins[0] : origins;
+        return parseCorsOrigins(config.get("sockethub:cors:origin"));
     }
 
     private startHttp() {

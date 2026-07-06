@@ -76,10 +76,21 @@ Sockethub uses a JSON configuration file:
   "sockethub": {
     "port": 10550,          // Port Sockethub listens on
     "host": "localhost",    // Bind address
-    "path": "/sockethub"    // WebSocket endpoint path
+    "path": "/sockethub",   // WebSocket endpoint path
+    "cors": {
+      "origin": "https://app.example.com, https://admin.example.com"
+    }
   }
 }
 ```
+
+`sockethub:cors:origin` (default `"*"`) controls which web origins may connect
+— it governs both socket.io connections and the HTTP actions endpoint. It
+accepts `"*"`, a single origin, or a comma-separated list of origins; when a
+list is configured, the matching request origin is echoed back in
+`Access-Control-Allow-Origin`. See [CORS](#cors) for details. It can also be
+set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
+`--cors.origin` command-line flag.
 
 ### Public Settings
 
@@ -257,6 +268,14 @@ its origin is allowed:
 - A single origin or comma-separated list — only those origins are allowed;
   the matching origin is echoed in `Access-Control-Allow-Origin` (with
   `Vary: Origin`), and requests from other origins are blocked by the browser.
+
+Configured origins are normalized to the serialization browsers send in the
+`Origin` header (lowercase scheme/host, no trailing slash, default ports
+stripped), so `https://App.example.com/` matches requests from
+`https://app.example.com`. Entries that are not valid origins (missing scheme,
+containing only a path, etc.) are dropped with a logged warning. If a
+restrictive config yields no valid origins, all cross-origin requests are
+blocked (it does not fall back to `"*"`).
 
 Preflight `OPTIONS` requests are answered automatically, and the allowed request
 headers include `Content-Type`, `X-Request-Id`, and `X-Sockethub-Request-Id`.
@@ -492,6 +511,9 @@ Override configuration with environment variables:
 # Server settings
 export HOST=0.0.0.0
 export PORT=10550
+
+# Allowed CORS origin(s): '*', one origin, or a comma-separated list
+export SOCKETHUB_CORS_ORIGIN="https://app.example.com,https://admin.example.com"
 
 # Redis connection
 export REDIS_URL=redis://localhost:6379

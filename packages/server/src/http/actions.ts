@@ -30,6 +30,7 @@ import express, {
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import config from "../config.js";
+import { parseCorsOrigins } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
 import type ProcessManager from "../process-manager.js";
 import {
@@ -245,24 +246,19 @@ function resolveConfigNumber(
  * `sockethub:cors:origin` config that governs socket.io. Returns `"*"` when any
  * origin is allowed, the request's own origin when it is in a configured
  * allow-list, or `undefined` when the origin is not allowed (the browser then
- * blocks the response).
+ * blocks the response). Matching is case-insensitive: the allow-list is
+ * normalized to the lowercase browser Origin serialization by
+ * `parseCorsOrigins`.
  */
 export function resolveAllowedOrigin(
     configuredOrigin: string | undefined,
     requestOrigin: string | undefined,
 ): string | undefined {
-    const configured = (configuredOrigin ?? "*").trim();
-    if (configured === "*" || configured === "") {
+    const allowed = parseCorsOrigins(configuredOrigin);
+    if (allowed === "*") {
         return "*";
     }
-    const allowed = configured
-        .split(",")
-        .map((origin) => origin.trim())
-        .filter((origin) => origin.length > 0);
-    if (allowed.length === 0) {
-        return "*";
-    }
-    if (requestOrigin && allowed.includes(requestOrigin)) {
+    if (requestOrigin && allowed.includes(requestOrigin.toLowerCase())) {
         return requestOrigin;
     }
     return undefined;
