@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/server",
   "description": "A polyglot messaging service, server libraries",
-  "version": "5.0.0-alpha.13",
+  "version": "5.0.0-alpha.14",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -51,19 +51,19 @@
   "homepage": "https://sockethub.org",
   "dependencies": {
     "@sentry/node": "^10.36.0",
-    "@sockethub/client": "^5.0.0-alpha.13",
-    "@sockethub/data-layer": "^1.0.0-alpha.13",
-    "@sockethub/logger": "^1.0.0-alpha.13",
-    "@sockethub/schemas": "^3.0.0-alpha.13",
-    "@sockethub/util": "^1.0.0-alpha.1",
+    "@sockethub/client": "^5.0.0-alpha.14",
+    "@sockethub/data-layer": "^1.0.0-alpha.14",
+    "@sockethub/logger": "^1.0.0-alpha.14",
+    "@sockethub/schemas": "^3.0.0-alpha.14",
+    "@sockethub/util": "^1.0.0-alpha.2",
     "chalk": "^5.6.2",
     "convict": "^6.2.5",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "jquery": "^3.7.1",
-    "socket.io": "^4.8.3",
-    "rate-limit-redis": "^4.2.0"
+    "rate-limit-redis": "^4.2.0",
+    "socket.io": "^4.8.3"
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external",
@@ -86,13 +86,13 @@
     "web-streams-polyfill": "^3.3.3"
   },
   "optionalDependencies": {
-    "@sockethub/examples": "^1.0.0-alpha.13",
-    "@sockethub/platform-dummy": "^3.0.0-alpha.13",
-    "@sockethub/platform-feeds": "^4.0.0-alpha.13",
-    "@sockethub/platform-irc": "^4.0.0-alpha.13",
-    "@sockethub/platform-metadata": "^1.0.1-alpha.8",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.13"
+    "@sockethub/examples": "^1.0.0-alpha.14",
+    "@sockethub/platform-dummy": "^3.0.0-alpha.14",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.14",
+    "@sockethub/platform-irc": "^4.0.0-alpha.14",
+    "@sockethub/platform-metadata": "^1.0.1-alpha.9",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.14"
   },
-  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd",
+  "gitHead": "4bc8ffa00d29aa78e59e269ac6e5ea9859ec01a8",
   "types": "./dist/index.d.ts"
 }

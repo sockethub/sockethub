@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/platform-metadata",
-  "version": "1.0.1-alpha.8",
+  "version": "1.0.1-alpha.9",
   "description": "Fetch metadata from a given URL",
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -42,15 +42,15 @@
     "clean:deps": "rm -rf node_modules"
   },
   "dependencies": {
-    "@sockethub/util": "^1.0.0-alpha.1",
+    "@sockethub/util": "^1.0.0-alpha.2",
     "open-graph-scraper": "^6.11.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.13"
+    "@sockethub/schemas": "^3.0.0-alpha.14"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.13"
+    "@sockethub/server": "^5.0.0-alpha.14"
   },
-  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd",
+  "gitHead": "4bc8ffa00d29aa78e59e269ac6e5ea9859ec01a8",
   "types": "./dist/index.d.ts"
 }
