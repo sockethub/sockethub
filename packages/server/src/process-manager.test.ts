@@ -85,75 +85,104 @@ describe("ProcessManager", () => {
         platformInstances.clear();
     });
 
-    test("disabled cap (0) allows unbounded instance creation", () => {
+    test("disabled cap (0) allows unbounded instance creation", async () => {
         maxPlatformInstances = 0;
         for (let i = 0; i < 5; i++) {
-            expect(() =>
-                manager.get("fakeplatform", `actor-${i}`),
-            ).not.toThrow();
+            await manager.get("fakeplatform", `actor-${i}`);
         }
         expect(platformInstances.size).toEqual(5);
     });
 
-    test("blocks a new actor once the cap is reached", () => {
+    test("blocks a new actor once the cap is reached", async () => {
         maxPlatformInstances = 1;
-        manager.get("fakeplatform", "actor-a");
-        expect(() => manager.get("fakeplatform", "actor-b")).toThrow(
+        await manager.get("fakeplatform", "actor-a");
+        await expect(manager.get("fakeplatform", "actor-b")).rejects.toThrow(
             /platform instance limit reached/,
         );
         expect(platformInstances.size).toEqual(1);
     });
 
-    test("always allows reusing a live instance regardless of the cap", () => {
+    test("always allows reusing a live instance regardless of the cap", async () => {
         maxPlatformInstances = 1;
-        const first = manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a");
         setAlive(first, true);
-        const second = manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a");
         expect(second).toBe(first);
         expect(platformInstances.size).toEqual(1);
     });
 
-    test("allows the same actor to replace its own dead instance at the cap", () => {
+    test("allows the same actor to replace its own dead instance at the cap", async () => {
         maxPlatformInstances = 1;
-        const first = manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a");
         setAlive(first, false);
-        expect(() =>
-            manager.get("fakeplatform", "actor-a"),
-        ).not.toThrow();
+        await manager.get("fakeplatform", "actor-a");
         expect(platformInstances.size).toEqual(1);
     });
 
-    test("marks a dead instance as replaced before shutting it down", () => {
-        const first = manager.get("fakeplatform", "actor-a");
+    test("marks a dead instance as replaced before shutting it down", async () => {
+        const first = await manager.get("fakeplatform", "actor-a");
         setAlive(first, false);
         const markReplaced = sandbox.spy(first, "markReplaced");
         const shutdown = sandbox.stub(first, "shutdown").resolves();
-        const second = manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a");
         expect(second).not.toBe(first);
         sinon.assert.calledOnce(markReplaced);
         sinon.assert.calledOnce(shutdown);
         expect(markReplaced.calledBefore(shutdown)).toEqual(true);
     });
 
-    test("the dead instance's async teardown does not evict the replacement from the map", async () => {
-        const first = manager.get("fakeplatform", "actor-a");
+    test("the dead instance's teardown does not evict the replacement from the map", async () => {
+        const first = await manager.get("fakeplatform", "actor-a");
         setAlive(first, false);
-        const second = manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a");
         expect(second).not.toBe(first);
-        // ensureProcess fires the old instance's shutdown without awaiting
-        // it; let it finish, then verify the replacement still owns the slot
-        await new Promise((resolve) => setTimeout(resolve, 0));
         expect(platformInstances.get(second.id)).toBe(second);
     });
 
-    test("does not shut down a live instance when reusing it", () => {
-        const first = manager.get("fakeplatform", "actor-a");
+    test("does not shut down a live instance when reusing it", async () => {
+        const first = await manager.get("fakeplatform", "actor-a");
         setAlive(first, true);
         const markReplaced = sandbox.spy(first, "markReplaced");
         const shutdown = sandbox.stub(first, "shutdown").resolves();
-        const second = manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a");
         expect(second).toBe(first);
         sinon.assert.notCalled(markReplaced);
         sinon.assert.notCalled(shutdown);
+    });
+
+    test("waits for the dead instance's in-flight teardown before creating the replacement", async () => {
+        const first = await manager.get("fakeplatform", "actor-a");
+        setAlive(first, false);
+        let releaseTeardown: () => void;
+        const teardown = new Promise<void>((resolve) => {
+            releaseTeardown = resolve;
+        });
+        sandbox.stub(first, "shutdown").returns(teardown);
+        let second: PlatformInstance | undefined;
+        const pending = manager.get("fakeplatform", "actor-a").then((pi) => {
+            second = pi;
+            return pi;
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        // The replacement (and its queue, which shares the dead instance's
+        // Redis queue name) must not exist while the old teardown — which
+        // may be obliterating that queue — is still running; jobs added to
+        // the replacement's queue in that window would be destroyed.
+        expect(second).toBeUndefined();
+        releaseTeardown();
+        const replacement = await pending;
+        expect(replacement).not.toBe(first);
+        expect(platformInstances.get(replacement.id)).toBe(replacement);
+    });
+
+    test("concurrent requests for the same dead instance produce a single replacement", async () => {
+        const first = await manager.get("fakeplatform", "actor-a");
+        setAlive(first, false);
+        const [a, b] = await Promise.all([
+            manager.get("fakeplatform", "actor-a"),
+            manager.get("fakeplatform", "actor-a"),
+        ]);
+        expect(a).toBe(b);
+        expect(platformInstances.size).toEqual(1);
     });
 });
