@@ -147,9 +147,11 @@ export function createMessageHandlers(
                     );
                     return;
                 }
-                let platformInstance: ReturnType<ProcessManager["get"]>;
+                let platformInstance: Awaited<
+                    ReturnType<ProcessManager["get"]>
+                >;
                 try {
-                    platformInstance = processManager.get(
+                    platformInstance = await processManager.get(
                         platformId,
                         msg.actor.id,
                         platformSessionId,

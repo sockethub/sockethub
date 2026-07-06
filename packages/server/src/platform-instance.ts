@@ -88,6 +88,7 @@ export default class PlatformInstance {
     private heartbeatListener?: (message: MessageFromPlatform) => void;
     private heartbeatFailureHandled = false;
     private replaced = false;
+    private shutdownResult?: Promise<void>;
     private readonly actor?: string;
 
     constructor(params: PlatformInstanceParams) {
@@ -187,9 +188,23 @@ export default class PlatformInstance {
     }
 
     /**
-     * Destroys all references to this platform instance, internal listeners and controlled processes
+     * Destroys all references to this platform instance, internal listeners and controlled processes.
+     *
+     * Single-flight: every caller shares one teardown run. A crash-close
+     * teardown pauses and obliterates the Redis queue asynchronously, so a
+     * caller about to create a replacement (ProcessManager.ensureProcess)
+     * must be able to await the teardown *already in flight* — a second,
+     * independent run would resolve while the first is still obliterating
+     * the queue name the replacement is about to reuse.
      */
-    public async shutdown() {
+    public shutdown(): Promise<void> {
+        if (!this.shutdownResult) {
+            this.shutdownResult = this.teardown();
+        }
+        return this.shutdownResult;
+    }
+
+    private async teardown() {
         this.log.debug("platform process shutdown");
         this.flaggedForTermination = true;
 
