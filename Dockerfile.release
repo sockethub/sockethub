@@ -1,0 +1,29 @@
+# syntax=docker.io/docker/dockerfile:1.7-labs
+# Release image: installs sockethub from the published npm packages instead of
+# building from source, so the shipped image exercises the exact artifacts
+# users get from `npm install sockethub` — tarball contents, declared
+# dependencies, and bin wiring. Packaging bugs (files missing from a tarball,
+# dependencies masked by monorepo hoisting) surface here instead of in user
+# installs. Dev/CI builds from source via ./Dockerfile.
+ARG node_version=22
+
+# --- install stage: node + gyp toolchain for native-module compilation ------
+FROM node:${node_version}-slim AS install
+# The exact release version to install from npm, e.g. 5.0.0-alpha.14.
+ARG SOCKETHUB_VERSION
+RUN test -n "${SOCKETHUB_VERSION}" || { echo "SOCKETHUB_VERSION build-arg is required" >&2; exit 1; }
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+RUN npm install "sockethub@${SOCKETHUB_VERSION}"
+
+# --- prod stage: node runtime only ------------------------------------------
+# node:*-slim matches the install stage's glibc so any native modules compiled
+# during install stay ABI-compatible.
+FROM node:${node_version}-slim AS prod
+ARG LOG_LEVEL=info
+ENV LOG_LEVEL=${LOG_LEVEL}
+WORKDIR /app
+COPY --from=install /app/node_modules ./node_modules
+CMD ["node", "/app/node_modules/sockethub/bin/sockethub", "--host", "0.0.0.0"]
