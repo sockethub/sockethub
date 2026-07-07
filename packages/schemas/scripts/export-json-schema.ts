@@ -23,7 +23,13 @@ mkdirSync("./dist/schemas/json", { recursive: true });
 
 for (const [fileName, objName] of schemas) {
     const s = await import(`../src/schemas/${fileName}.ts`);
-    const schema = s[objName] as { $id: string };
+    const schema = s[objName] as { $id?: string };
+    // These scripts are not part of the tsc typecheck pass, so guard at
+    // runtime: a renamed/removed $id would otherwise silently publish an
+    // artifact whose canonical URL never gets versioned.
+    if (typeof schema?.$id !== "string") {
+        throw new Error(`${objName} is missing a string $id`);
+    }
     ajv.addSchema(schema);
     // Stamp the concrete version into $id only, rather than string-replacing
     // the serialized JSON, so nothing else can accidentally match "/v/".

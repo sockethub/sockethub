@@ -55,7 +55,7 @@ const mapsDir = resolve("./dist/maps");
 // these specific roots rather than all of ./dist so we don't clobber the JSON
 // schema artifacts written by export-json-schema.ts (dist/schemas/json/*),
 // which runs before this script.
-const outputRoots = [contextsDir, mapsDir, resolve("./dist/schemas/platform")];
+const outputRoots = [contextsDir, mapsDir, resolve(schemasDir, "platform")];
 for (const root of outputRoots) {
     // These directories are fully generated artifacts and are intentionally rebuilt from scratch.
     if (existsSync(root)) {
