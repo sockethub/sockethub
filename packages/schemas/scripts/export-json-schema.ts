@@ -1,6 +1,9 @@
-import { existsSync, mkdirSync, openSync, rmSync, writeSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import Ajv from "ajv";
 import packageJson from "../package.json" with { type: "json" };
+
+// NOTE: must run AFTER export-canonical-assets.ts, which clears and
+// recreates ./dist from scratch (it would wipe the files written here).
 
 const ajv = new Ajv();
 
@@ -17,10 +20,11 @@ if (existsSync("./dist/schemas/json")) {
 mkdirSync("./dist/schemas/json", { recursive: true });
 
 for (const [fileName, objName] of schemas) {
-    import(`../src/schemas/${fileName}.ts`).then((s) => {
-        ajv.addSchema(s[objName]);
-        const fd = openSync(`./dist/schemas/json/${fileName}.json`, "w+");
-        const jsonSchema = JSON.stringify(s[objName], null, "\t");
-        writeSync(fd, jsonSchema.replace("/v/", `/${packageJson.version}/`));
-    });
+    const s = await import(`../src/schemas/${fileName}.ts`);
+    ajv.addSchema(s[objName]);
+    const jsonSchema = JSON.stringify(s[objName], null, "\t");
+    writeFileSync(
+        `./dist/schemas/json/${fileName}.json`,
+        jsonSchema.replace("/v/", `/${packageJson.version}/`),
+    );
 }
