@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it, spyOn } from "bun:test";
 import {
     SockethubConfigSchemaId,
     validateSockethubConfig,
@@ -89,6 +89,24 @@ describe("write-config", () => {
     });
 
     describe("writeDefaultConfig", () => {
+        it("prints to stdout and writes no file for '-'", () => {
+            let written = "";
+            const spy = spyOn(process.stdout, "write").mockImplementation(
+                (chunk: string | Uint8Array) => {
+                    written += chunk.toString();
+                    return true;
+                },
+            );
+            try {
+                const message = writeDefaultConfig("-");
+                expect(message).toEqual("");
+            } finally {
+                spy.mockRestore();
+            }
+            // Round-trips: stdout carries the full valid config, not a path.
+            expect(validateSockethubConfig(JSON.parse(written))).toEqual("");
+        });
+
         it("writes the file and reports the resolved path", () => {
             const target = tmpTarget();
             const message = writeDefaultConfig(target);

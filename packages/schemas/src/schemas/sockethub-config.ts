@@ -1,4 +1,5 @@
 import packageJson from "../../package.json" with { type: "json" };
+import { versionedSchemaId } from "../schema-id.js";
 
 export const SockethubConfigSchema = {
     $id: "https://sockethub.org/schemas/v/sockethub-config.json",
@@ -346,7 +347,7 @@ export const SockethubConfigSchema = {
  * the build's version substitution. Suitable as the `$schema` value in
  * generated config files.
  */
-export const SockethubConfigSchemaId = SockethubConfigSchema.$id.replace(
-    "/v/",
-    `/${packageJson.version}/`,
+export const SockethubConfigSchemaId = versionedSchemaId(
+    SockethubConfigSchema.$id,
+    packageJson.version,
 );
