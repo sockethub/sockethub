@@ -47,9 +47,15 @@ type PlatformConstructor = new (
     schema: PlatformSchemaShape;
 };
 
-const outputRoots = [resolve("./dist")];
+const contextsDir = resolve("./dist/contexts");
+const schemasDir = resolve("./dist/schemas");
+const mapsDir = resolve("./dist/maps");
 
-// Stage 1: clear and recreate generated output roots.
+// Stage 1: clear and recreate the subtrees THIS script generates. We wipe
+// these specific roots rather than all of ./dist so we don't clobber the JSON
+// schema artifacts written by export-json-schema.ts (dist/schemas/json/*),
+// which runs before this script.
+const outputRoots = [contextsDir, mapsDir, resolve("./dist/schemas/platform")];
 for (const root of outputRoots) {
     // These directories are fully generated artifacts and are intentionally rebuilt from scratch.
     if (existsSync(root)) {
@@ -61,12 +67,7 @@ for (const root of outputRoots) {
 const packageJson = JSON.parse(readFileSync(resolve("./package.json"), "utf8"));
 const packagesRootDir = resolve("../../packages");
 
-const contextsDir = resolve("./dist/contexts");
-const schemasDir = resolve("./dist/schemas");
-const mapsDir = resolve("./dist/maps");
-mkdirSync(contextsDir, { recursive: true });
 mkdirSync(schemasDir, { recursive: true });
-mkdirSync(mapsDir, { recursive: true });
 
 /**
  * Discover all workspace platform packages and read their schema metadata.

@@ -2,8 +2,9 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import Ajv from "ajv";
 import packageJson from "../package.json" with { type: "json" };
 
-// NOTE: must run AFTER export-canonical-assets.ts, which clears and
-// recreates ./dist from scratch (it would wipe the files written here).
+// Runs BEFORE export-canonical-assets.ts. That script no longer wipes all of
+// ./dist (only the subtrees it owns), so the artifacts written here survive
+// the rest of the build.
 
 const ajv = new Ajv();
 
