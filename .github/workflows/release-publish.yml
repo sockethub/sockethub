@@ -543,3 +543,69 @@ jobs:
             org.opencontainers.image.version=${{ needs.publish.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
           provenance: false
+
+  # ============================================================
+  # SCHEMA ARTIFACT DEPLOY TRIGGER
+  # Once the packages are on npm, tell the website repo to publish the
+  # @sockethub/schemas artifacts at their canonical sockethub.org $id /
+  # @context URLs (issue #1185). We only *trigger* the cross-repo workflow;
+  # the sync + build + gh-pages deploy all run in website-sockethub.org using
+  # that repo's own GITHUB_TOKEN, so the token here is dispatch-scoped only.
+  #
+  # The schemas artifact version is the @sockethub/schemas package version
+  # (independent of the server release version). The website workflow is
+  # idempotent — a release where @sockethub/schemas did not bump ends up a
+  # no-op there. The website's sync step retries `npm pack` to ride out
+  # registry propagation, so no explicit wait is needed here.
+  #
+  # Requires repo secret WEBSITE_DISPATCH_TOKEN: a fine-grained PAT scoped to
+  # sockethub/website-sockethub.org with Contents: read & write (the minimum
+  # the repository_dispatch API accepts).
+  # ============================================================
+  deploy-schemas:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Resolve schemas version and channel
+        id: meta
+        env:
+          DIST_TAG: ${{ needs.publish.outputs.dist_tag }}
+        run: |
+          SCHEMAS_VERSION="$(node -p "require('./packages/schemas/package.json').version")"
+
+          # Map the npm dist-tag to a website release channel. Only alpha and
+          # stable exist on the site; other prerelease tags still deploy the
+          # schema artifacts but don't bump an advertised version.
+          case "$DIST_TAG" in
+            latest) CHANNEL="stable" ;;
+            alpha)  CHANNEL="alpha" ;;
+            *)      CHANNEL="" ;;
+          esac
+
+          echo "schemas_version=$SCHEMAS_VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "📦 @sockethub/schemas@$SCHEMAS_VERSION (channel: ${CHANNEL:-none})"
+
+      - name: Trigger website schema deploy
+        env:
+          GH_TOKEN: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
+          SCHEMAS_VERSION: ${{ steps.meta.outputs.schemas_version }}
+          RELEASE_VERSION: ${{ needs.publish.outputs.version }}
+          CHANNEL: ${{ steps.meta.outputs.channel }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::WEBSITE_DISPATCH_TOKEN secret is not set; cannot trigger schema deploy"
+            exit 1
+          fi
+          PAYLOAD="$(jq -nc \
+            --arg sv "$SCHEMAS_VERSION" \
+            --arg rv "$RELEASE_VERSION" \
+            --arg ch "$CHANNEL" \
+            '{event_type:"deploy-schemas",client_payload:{schemas_version:$sv,release_version:$rv,channel:$ch}}')"
+          echo "$PAYLOAD" | gh api repos/sockethub/website-sockethub.org/dispatches --input -
+          echo "✅ Dispatched deploy-schemas to website-sockethub.org"
