@@ -570,6 +570,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          # Read-only: this job only reads packages/schemas/package.json and
+          # never pushes, so don't persist GITHUB_TOKEN into .git/config.
+          persist-credentials: false
 
       - name: Resolve schemas version and channel
         id: meta

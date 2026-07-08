@@ -41,7 +41,10 @@ check_schema() {
   fi
   case "$ctype" in
     application/json*) echo "✅ $url" ;;
-    *) echo "⚠️  $url — served but content-type is '$ctype' (expected application/json)" ;;
+    *)
+      echo "❌ $url — served but content-type is '$ctype' (expected application/json)"
+      fail=1
+      ;;
   esac
 }
 
