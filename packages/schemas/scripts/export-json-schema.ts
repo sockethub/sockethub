@@ -1,6 +1,11 @@
-import { existsSync, mkdirSync, openSync, rmSync, writeSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import Ajv from "ajv";
 import packageJson from "../package.json" with { type: "json" };
+import { versionedSchemaId } from "../src/schema-id.ts";
+
+// Runs BEFORE export-canonical-assets.ts. That script no longer wipes all of
+// ./dist (only the subtrees it owns), so the artifacts written here survive
+// the rest of the build.
 
 const ajv = new Ajv();
 
@@ -17,10 +22,23 @@ if (existsSync("./dist/schemas/json")) {
 mkdirSync("./dist/schemas/json", { recursive: true });
 
 for (const [fileName, objName] of schemas) {
-    import(`../src/schemas/${fileName}.ts`).then((s) => {
-        ajv.addSchema(s[objName]);
-        const fd = openSync(`./dist/schemas/json/${fileName}.json`, "w+");
-        const jsonSchema = JSON.stringify(s[objName], null, "\t");
-        writeSync(fd, jsonSchema.replace("/v/", `/${packageJson.version}/`));
-    });
+    const s = await import(`../src/schemas/${fileName}.ts`);
+    const schema = s[objName] as { $id?: string };
+    // These scripts are not part of the tsc typecheck pass, so guard at
+    // runtime: a renamed/removed $id would otherwise silently publish an
+    // artifact whose canonical URL never gets versioned.
+    if (typeof schema?.$id !== "string") {
+        throw new Error(`${objName} is missing a string $id`);
+    }
+    ajv.addSchema(schema);
+    // Stamp the concrete version into $id only, rather than string-replacing
+    // the serialized JSON, so nothing else can accidentally match "/v/".
+    const versioned = {
+        ...schema,
+        $id: versionedSchemaId(schema.$id, packageJson.version),
+    };
+    writeFileSync(
+        `./dist/schemas/json/${fileName}.json`,
+        JSON.stringify(versioned, null, "\t"),
+    );
 }

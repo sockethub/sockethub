@@ -1,3 +1,6 @@
+import packageJson from "../../package.json" with { type: "json" };
+import { versionedSchemaId } from "../schema-id.js";
+
 export const SockethubConfigSchema = {
     $id: "https://sockethub.org/schemas/v/sockethub-config.json",
     description: "Sockethub Config Schema",
@@ -11,10 +14,13 @@ export const SockethubConfigSchema = {
         examples: {
             type: "boolean",
             default: true,
+            description:
+                "Enable the examples pages served at [host]:[port]/examples",
         },
         info: {
             type: "boolean",
             default: false,
+            description: "Display Sockethub runtime information",
         },
         logging: {
             type: "object",
@@ -41,6 +47,7 @@ export const SockethubConfigSchema = {
             items: {
                 type: "string",
             },
+            description: "Platform packages to load",
             default: [
                 "@sockethub/platform-dummy",
                 "@sockethub/platform-feeds",
@@ -54,6 +61,10 @@ export const SockethubConfigSchema = {
         // declared shape here are passed through unvalidated.
         packageConfig: {
             type: "object",
+            default: {},
+            description:
+                "Per-platform config keyed by package name, validated against " +
+                "each platform's config schema and forwarded to its child process",
             properties: {
                 "@sockethub/platform-dummy": {
                     type: "object",
@@ -170,6 +181,11 @@ export const SockethubConfigSchema = {
                     type: "number",
                     minimum: 0,
                     default: 0,
+                    description:
+                        "Maximum concurrent socket connections per client IP. " +
+                        "The per-event rate limiter is keyed by socket id, so " +
+                        "without a connection cap a client can bypass it by " +
+                        "opening more sockets. 0 disables the cap.",
                 },
             },
         },
@@ -181,6 +197,11 @@ export const SockethubConfigSchema = {
                     type: "number",
                     minimum: 0,
                     default: 0,
+                    description:
+                        "Upper bound on concurrently running platform instances " +
+                        "(child processes). Each persistent-platform actor forks " +
+                        "its own process, so an unbounded count is a resource " +
+                        "exhaustion risk on public instances. 0 disables the cap.",
                 },
             },
         },
@@ -247,6 +268,13 @@ export const SockethubConfigSchema = {
                         origin: {
                             type: "string",
                             default: "*",
+                            description:
+                                "Allowed CORS origin(s) for socket.io connections " +
+                                "and the HTTP actions endpoint. '*' allows any " +
+                                "website to connect visitors' browsers to this " +
+                                "instance; public deployments should set an " +
+                                "explicit origin or comma-separated list of " +
+                                "origins.",
                         },
                     },
                 },
@@ -259,6 +287,7 @@ export const SockethubConfigSchema = {
                 enabled: {
                     type: "boolean",
                     default: false,
+                    description: "Enable the HTTP actions endpoint",
                 },
                 path: {
                     type: "string",
@@ -311,3 +340,14 @@ export const SockethubConfigSchema = {
         },
     },
 };
+
+/**
+ * The versioned canonical URL of this schema, matching the `$id` written into
+ * the published JSON artifact (`dist/schemas/json/sockethub-config.json`) by
+ * the build's version substitution. Suitable as the `$schema` value in
+ * generated config files.
+ */
+export const SockethubConfigSchemaId = versionedSchemaId(
+    SockethubConfigSchema.$id,
+    packageJson.version,
+);

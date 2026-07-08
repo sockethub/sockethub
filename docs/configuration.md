@@ -9,6 +9,21 @@ Sockethub uses a JSON configuration file:
 - Development: `sockethub.config.json` in current working directory
 - Production: Specify via `--config` flag or `SOCKETHUB_CONFIG` environment variable
 
+### Generating a Config File
+
+`sockethub --write-config` writes a config file populated with every option
+set to its default value, including a `$schema` reference for editor
+validation and autocomplete:
+
+```bash
+sockethub --write-config                 # writes ./sockethub.config.json
+sockethub --write-config my-config.json  # writes to the given path
+sockethub --write-config -               # prints to stdout
+```
+
+It refuses to overwrite an existing file, and exits after writing (the server
+does not start).
+
 ### Default Configuration Structure
 
 ```json
@@ -623,7 +638,11 @@ The configuration file is validated against the schema on startup. An unknown
 key, or a value of the wrong type (e.g. a non-integer `port`, or a `logging.level`
 outside `error`/`warn`/`info`/`debug`), is a **hard error** — Sockethub will
 refuse to start rather than silently ignore it. Keep config files in sync with
-the schema (`packages/schemas/src/schemas/json/sockethub-config.json`).
+the schema (`packages/schemas/src/schemas/sockethub-config.ts`, published as
+`@sockethub/schemas/schemas/json/sockethub-config.json`). The schema is the
+single source of truth for defaults — the server derives its runtime
+(convict) configuration schema from it, and `sockethub --write-config`
+materializes it into a config file.
 
 ## Process Management
 
