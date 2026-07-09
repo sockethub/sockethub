@@ -59,7 +59,7 @@ const newActor = {
 
 const targetRoom = {
     type: "room",
-    id: "irc.example.com/a-room",
+    id: "a-room@irc.example.com",
     name: "#a-room",
 };
 
@@ -423,6 +423,25 @@ describe("Initialize IRC Platform", () => {
             );
         });
 
+        it("rejects a join with a bare (unqualified) channel target", (done) => {
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: {
+                        type: "room",
+                        id: "#bare-room",
+                        name: "#bare-room",
+                    },
+                },
+                (err) => {
+                    expect(err).toContain("server-qualified");
+                    done();
+                },
+            );
+        });
+
         describe("after join", () => {
             beforeEach((done) => {
                 platform.join(
@@ -598,7 +617,7 @@ describe("Initialize IRC Platform", () => {
                             actor: actor,
                             target: {
                                 type: "room",
-                                id: "irc.example.com/#a-room",
+                                id: "a-room@irc.example.com",
                             },
                             object: { type: "attendance" },
                         },
@@ -620,12 +639,12 @@ describe("Initialize IRC Platform", () => {
                             "@context": IRC_CONTEXT,
                             type: "query",
                             actor: actor,
-                            target: { type: "room", id: "irc.example.com/" },
+                            target: { type: "room", id: "irc.example.com" },
                             object: { type: "attendance" },
                         },
                         (err) => {
                             expect(err).toEqual(
-                                "cannot query attendance without a valid channel name",
+                                "IRC room targets must be server-qualified as 'channel@server'",
                             );
                             expect(rawCalls).toEqual([]);
                             done();

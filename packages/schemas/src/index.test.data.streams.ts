@@ -549,7 +549,7 @@ export default [
                 },
                 object: {
                     type: "room",
-                    id: "localhost/#Finnish",
+                    id: "Finnish@localhost",
                     name: "#Finnish",
                 },
             },
@@ -578,7 +578,7 @@ export default [
                 },
                 object: {
                     type: "room",
-                    id: "localhost/#Finnish",
+                    id: "Finnish@localhost",
                     name: "#Finnish",
                 },
             },

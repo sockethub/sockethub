@@ -11,20 +11,32 @@ interface Props {
     context: string;
     sockethubState: SockethubStateStore;
     room: string;
+    // For IRC, the connection server used to qualify the room id as
+    // `channel@server` (no leading `#`; XMPP rooms are already full JIDs).
+    server?: string;
 }
 
-let { actor, context, sockethubState, room }: Props = $props();
+let { actor, context, sockethubState, room, server }: Props = $props();
 
 let message = $state("");
 let sending = $state(false);
 
 async function sendMessage() {
     if (!message.trim()) return;
+    // IRC room targets must be server-qualified (`channel@server`); never fall
+    // back to a bare channel, which the platform rejects.
+    if (context === "irc" && !server) {
+        console.error("IRC sends require a server (channel@server)");
+        return;
+    }
 
     sending = true;
     const messageToSend = message.trim();
     console.log("send message: ", messageToSend);
 
+    // The platform's id omits the leading `#` (kept only in `name` for display).
+    const targetId =
+        context === "irc" ? `${room.replace(/^#/, "")}@${server}` : room;
     try {
         await send({
             "@context": await contextFor(context),
@@ -35,7 +47,7 @@ async function sendMessage() {
                 content: messageToSend,
             },
             target: {
-                id: room,
+                id: targetId,
                 name: room,
                 type: "room",
             },

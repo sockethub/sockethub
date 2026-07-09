@@ -65,7 +65,9 @@ describe(`Sockethub IRC SASL auth at ${config.sockethub.url}`, () => {
                 );
                 expect(msg.type).to.equal("join");
                 expect(platformIdFromContext(msg["@context"])).to.equal("irc");
-                expect(msg.target?.id).to.equal(config.irc.channel);
+                expect(msg.target?.id).to.equal(
+                    `${config.irc.channel.replace(/^#/, "")}@${config.irc.host}`,
+                );
             });
 
             it("sends a message to the channel", async () => {

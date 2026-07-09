@@ -12,9 +12,18 @@ interface Props {
     actor: ActorData;
     context: string;
     sockethubState: SockethubStateStore;
+    // For IRC, the connection server used to qualify the room id as
+    // `channel@server` (no leading `#`; XMPP rooms are already full JIDs).
+    server?: string;
 }
 
-let { room = $bindable(), actor, context, sockethubState }: Props = $props();
+let {
+    room = $bindable(),
+    actor,
+    context,
+    sockethubState,
+    server,
+}: Props = $props();
 
 let joining = $state(false);
 let lastJoinedRoom = $state("");
@@ -27,24 +36,42 @@ $effect(() => {
 });
 
 async function joinRoom(): Promise<void> {
+    // IRC room targets must be server-qualified (`channel@server`); never fall
+    // back to a bare channel, which the platform rejects.
+    if (context === "irc" && !server) {
+        console.error("IRC room joins require a server (channel@server)");
+        return;
+    }
     joining = true;
+    // The platform's id omits the leading `#` (kept only in `name` for display).
+    const targetId =
+        context === "irc" ? `${room.replace(/^#/, "")}@${server}` : room;
     return await send({
         "@context": await contextFor(context),
         type: "join",
         actor: actorAsObject(actor),
         target: {
-            id: room,
+            id: targetId,
             name: room,
             type: "room",
         },
     } as AnyActivityStream)
-        .catch(() => {
-            $sockethubState.joined = false;
-            joining = false;
-        })
         .then(() => {
             lastJoinedRoom = room;
             $sockethubState.joined = true;
+        })
+        .catch((err) => {
+            $sockethubState.joined = false;
+            console.error("joinRoom failed", {
+                action: "join",
+                platform: context,
+                room,
+                server,
+                err,
+            });
+            throw err;
+        })
+        .finally(() => {
             joining = false;
         });
 }
