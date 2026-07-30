@@ -12,6 +12,7 @@
         "@sockethub/client": "workspace:5.0.0-alpha.13",
         "@sockethub/data-layer": "workspace:1.0.0-alpha.13",
         "@sockethub/examples": "workspace:1.0.0-alpha.13",
+        "@sockethub/platform-caldav": "workspace:1.0.0-alpha.0",
         "@sockethub/schemas": "workspace:3.0.0-alpha.13",
         "@types/bun": "^1.3.8",
         "@types/mocha": "10.0.10",
@@ -122,6 +123,25 @@
       },
       "peerDependencies": {
         "@sockethub/server": "^5.0.0-alpha.13",
+      },
+      "optionalPeers": [
+        "@sockethub/server",
+      ],
+    },
+    "packages/platform-caldav": {
+      "name": "@sockethub/platform-caldav",
+      "version": "1.0.0-alpha.0",
+      "dependencies": {
+        "@sockethub/util": "^1.0.0-alpha.4",
+        "fast-xml-parser": "^5.2.5",
+      },
+      "devDependencies": {
+        "@sockethub/schemas": "^3.0.0-alpha.16",
+        "@types/bun": "latest",
+        "undici": "^7.19.0",
+      },
+      "peerDependencies": {
+        "@sockethub/server": "^5.0.0-alpha.16",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -247,6 +267,7 @@
       },
       "optionalDependencies": {
         "@sockethub/examples": "^1.0.0-alpha.13",
+        "@sockethub/platform-caldav": "^1.0.0-alpha.0",
         "@sockethub/platform-dummy": "^3.0.0-alpha.13",
         "@sockethub/platform-feeds": "^4.0.0-alpha.13",
         "@sockethub/platform-irc": "^4.0.0-alpha.13",
@@ -259,6 +280,7 @@
       "version": "5.0.0-alpha.13",
       "bin": "bin/sockethub",
       "dependencies": {
+        "@sockethub/platform-caldav": "^1.0.0-alpha.0",
         "@sockethub/platform-dummy": "^3.0.0-alpha.12",
         "@sockethub/platform-feeds": "^4.0.0-alpha.12",
         "@sockethub/platform-irc": "^4.0.0-alpha.12",
@@ -1083,6 +1105,8 @@
     "@sockethub/irc2as": ["@sockethub/irc2as@workspace:packages/irc2as"],
 
     "@sockethub/logger": ["@sockethub/logger@workspace:packages/logger"],
+
+    "@sockethub/platform-caldav": ["@sockethub/platform-caldav@workspace:packages/platform-caldav"],
 
     "@sockethub/platform-dummy": ["@sockethub/platform-dummy@workspace:packages/platform-dummy"],
 

@@ -1,0 +1,98 @@
+import { describe, expect, it } from "bun:test";
+import { buildICalendar, foldLine, parseICalendar } from "./ical.js";
+
+describe("iCalendar generation", () => {
+    it("creates a UTC VEVENT with escaped text", () => {
+        const result = buildICalendar(
+            {
+                type: "event",
+                uid: "event-1@example.test",
+                name: "Review, plan; ship",
+                content: "first\nsecond",
+                startTime: "2026-08-03T15:00:00+02:00",
+                endTime: "2026-08-03T15:30:00+02:00",
+            },
+            new Date("2026-08-01T10:00:00Z"),
+        );
+        expect(result.body).toContain("BEGIN:VEVENT\r\n");
+        expect(result.body).toContain("DTSTART:20260803T130000Z\r\n");
+        expect(result.body).toContain("DTEND:20260803T133000Z\r\n");
+        expect(result.body).toContain("SUMMARY:Review\\, plan\\; ship\r\n");
+        expect(result.body).toContain("DESCRIPTION:first\\nsecond\r\n");
+        expect(result.body.endsWith("\r\n")).toBeTrue();
+    });
+
+    it("creates an all-day event with an exclusive end date", () => {
+        const { body } = buildICalendar({
+            type: "event",
+            name: "Holiday",
+            startTime: "2026-08-03",
+            endTime: "2026-08-04",
+            allDay: true,
+        });
+        expect(body).toContain("DTSTART;VALUE=DATE:20260803");
+        expect(body).toContain("DTEND;VALUE=DATE:20260804");
+    });
+
+    it("creates a completed VTODO", () => {
+        const { body } = buildICalendar({
+            type: "task",
+            name: "Ship it",
+            due: "2026-08-03T15:00:00Z",
+            status: "completed",
+            completedTime: "2026-08-03T14:00:00Z",
+            percentComplete: 100,
+        });
+        expect(body).toContain("BEGIN:VTODO");
+        expect(body).toContain("DUE:20260803T150000Z");
+        expect(body).toContain("STATUS:COMPLETED");
+        expect(body).toContain("COMPLETED:20260803T140000Z");
+        expect(body).toContain("PERCENT-COMPLETE:100");
+    });
+
+    it("rejects invalid ranges and UID injection", () => {
+        expect(() => buildICalendar({ type: "event", name: "x", startTime: "2026-08-04", endTime: "2026-08-03", allDay: true })).toThrow();
+        expect(() => buildICalendar({ type: "task", uid: "bad\r\nUID:other", name: "x" })).toThrow();
+    });
+
+    it("folds UTF-8 lines at the byte limit", () => {
+        const folded = foldLine(`SUMMARY:${"é".repeat(50)}`);
+        const lines = folded.split("\r\n");
+        expect(Buffer.byteLength(lines[0], "utf8")).toBeLessThanOrEqual(75);
+        expect(Buffer.byteLength(lines[1], "utf8")).toBeLessThanOrEqual(75);
+        expect(lines[1].startsWith(" ")).toBeTrue();
+    });
+
+    it("supports named time zones, recurrence, people, reminders, and attachments", () => {
+        const result = buildICalendar({
+            type: "event", uid: "advanced@example.test", name: "Planning",
+            startTime: "2026-08-03T15:00:00", endTime: "2026-08-03T16:00:00",
+            timeZone: "Europe/Prague",
+            recurrence: { frequency: "weekly", count: 4, byDay: ["MO"] },
+            organizer: { email: "owner@example.test", name: "Owner" },
+            attendees: [{ email: "guest@example.test", role: "required", rsvp: true }],
+            reminders: [{ trigger: "-PT15M" }],
+            attachments: [{ url: "https://example.test/agenda.pdf", mediaType: "application/pdf" }],
+        });
+        expect(result.body).toContain("DTSTART;TZID=Europe/Prague:20260803T150000");
+        expect(result.body).toContain("RRULE:FREQ=WEEKLY;COUNT=4;BYDAY=MO");
+        expect(result.body).toContain("ORGANIZER;CN=Owner:mailto:owner@example.test");
+        expect(result.body).toContain("BEGIN:VALARM");
+        expect(result.body).toContain("ATTACH;FMTTYPE=application/pdf:https://example.test/agenda.pdf");
+        expect(parseICalendar(result.body, "https://calendar.example/item.ics")).toMatchObject({
+            timeZone: "Europe/Prague",
+            recurrence: { frequency: "weekly", count: 4, byDay: ["MO"] },
+            organizer: { email: "owner@example.test", name: "Owner" },
+            attendees: [{ email: "guest@example.test", role: "required", rsvp: true }],
+            reminders: [{ trigger: "-PT15M", action: "display" }],
+            attachments: [{ url: "https://example.test/agenda.pdf", mediaType: "application/pdf" }],
+        });
+    });
+
+    it("parses items returned by a CalDAV server", () => {
+        const generated = buildICalendar({ type: "task", uid: "task-1", name: "Do it", due: "2026-08-04", allDay: true });
+        expect(parseICalendar(generated.body, "https://calendar.example/tasks/task-1.ics", '"v1"')).toMatchObject({
+            id: "https://calendar.example/tasks/task-1.ics", etag: '"v1"', type: "task", uid: "task-1", name: "Do it", due: "2026-08-04",
+        });
+    });
+});

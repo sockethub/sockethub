@@ -37,6 +37,7 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
+    "@sockethub/platform-caldav": "^1.0.0-alpha.0",
     "@sockethub/platform-dummy": "^3.0.0-alpha.16",
     "@sockethub/platform-feeds": "^4.0.0-alpha.16",
     "@sockethub/platform-irc": "^4.0.0-alpha.16",

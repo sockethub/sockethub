@@ -36,6 +36,7 @@ does not start).
     "file": "sockethub.log"
   },
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc", 
@@ -129,6 +130,7 @@ Platforms are specified as an array of package names:
 ```json
 {
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
@@ -150,6 +152,10 @@ the platform default):
 ```json
 {
   "packageConfig": {
+    "@sockethub/platform-caldav": {
+      "connectTimeoutMs": 15000,
+      "concurrency": 10
+    },
     "@sockethub/platform-feeds": {
       "connectTimeoutMs": 5000
     }
@@ -609,6 +615,7 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
     "traceSampleRate": 0.1
   },
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",

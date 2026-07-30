@@ -53,6 +53,13 @@ services:
         command: [ "node", "server.js" ]
         networks:
             - sockethub-net
+    radicale:
+        build:
+            context: ./integration/radicale
+        ports:
+            - "5232:5232"
+        networks:
+            - sockethub-net
 
 networks:
     sockethub-net:
