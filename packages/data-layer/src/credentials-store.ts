@@ -12,6 +12,33 @@ import { buildCredentialsStoreId } from "./queue-id.js";
 import type { RedisConfig } from "./types.js";
 
 let sharedCredentialsRedisConnection: Redis | null = null;
+let sharedIdempotencyRedisConnection: Redis | null = null;
+let sharedRateLimitRedisConnection: Redis | null = null;
+
+function buildSharedRedisConnection(
+    config: RedisConfig,
+    opts: { enableOfflineQueue?: boolean } = {},
+): Redis {
+    return new IORedis(config.url, {
+        connectionName: config.connectionName,
+        // Credentials/idempotency fail fast when the socket isn't writable; the
+        // rate limiter enables the offline queue so its eager script load queues
+        // until the connection is ready instead of rejecting at construction.
+        enableOfflineQueue: opts.enableOfflineQueue ?? false,
+        maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
+        connectTimeout: config.connectTimeout ?? 10000,
+        disconnectTimeout: config.disconnectTimeout ?? 5000,
+        lazyConnect: false,
+        // Every shared connection must recover on its own after a Redis
+        // restart/failover: commands already fail fast while disconnected
+        // (offline queue disabled or used only for eager script loads), but if
+        // the retry strategy ever gives up, ioredis stops reconnecting and the
+        // connection stays dead until the process restarts. Keep retrying with
+        // a capped backoff.
+        retryStrategy: (times: number) =>
+            Math.min(2 ** Math.min(times - 1, 5) * 200, 5000),
+    });
+}
 
 /**
  * Creates or returns a shared Redis connection for CredentialsStore instances.
@@ -23,20 +50,34 @@ let sharedCredentialsRedisConnection: Redis | null = null;
  */
 export function createCredentialsRedisConnection(config: RedisConfig): Redis {
     if (!sharedCredentialsRedisConnection) {
-        sharedCredentialsRedisConnection = new IORedis(config.url, {
-            connectionName: config.connectionName,
-            enableOfflineQueue: false,
-            maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
-            connectTimeout: config.connectTimeout ?? 10000,
-            disconnectTimeout: config.disconnectTimeout ?? 5000,
-            lazyConnect: false,
-            retryStrategy: (times: number) => {
-                if (times > 3) return null;
-                return Math.min(2 ** (times - 1) * 200, 2000);
-            },
-        });
+        sharedCredentialsRedisConnection = buildSharedRedisConnection(config);
     }
     return sharedCredentialsRedisConnection;
+}
+
+/**
+ * Creates or returns a dedicated shared Redis connection for HTTP idempotency.
+ */
+export function createIdempotencyRedisConnection(config: RedisConfig): Redis {
+    if (!sharedIdempotencyRedisConnection) {
+        sharedIdempotencyRedisConnection = buildSharedRedisConnection(config);
+    }
+    return sharedIdempotencyRedisConnection;
+}
+
+/**
+ * Creates or returns a dedicated shared Redis connection for rate limiting.
+ * A dedicated connection keeps rate-limit traffic off the credentials and
+ * idempotency connections and lets a Redis-backed limiter share request budgets
+ * across instances.
+ */
+export function createRateLimitRedisConnection(config: RedisConfig): Redis {
+    if (!sharedRateLimitRedisConnection) {
+        sharedRateLimitRedisConnection = buildSharedRedisConnection(config, {
+            enableOfflineQueue: true,
+        });
+    }
+    return sharedRateLimitRedisConnection;
 }
 
 /**
@@ -53,6 +94,28 @@ export async function resetSharedCredentialsRedisConnection(): Promise<void> {
     }
 }
 
+export async function resetSharedIdempotencyRedisConnection(): Promise<void> {
+    if (sharedIdempotencyRedisConnection) {
+        try {
+            sharedIdempotencyRedisConnection.disconnect(false);
+        } catch (_err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedIdempotencyRedisConnection = null;
+    }
+}
+
+export async function resetSharedRateLimitRedisConnection(): Promise<void> {
+    if (sharedRateLimitRedisConnection) {
+        try {
+            sharedRateLimitRedisConnection.disconnect(false);
+        } catch (_err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedRateLimitRedisConnection = null;
+    }
+}
+
 export interface CredentialsStoreInterface {
     get(
         actor: string,
@@ -60,6 +123,24 @@ export interface CredentialsStoreInterface {
         options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
+    /**
+     * Delete this session's entire credential namespace from Redis. Used by
+     * single-use sessions (e.g. HTTP actions requests) whose credentials are
+     * never read again once the request completes. Optional: long-lived socket
+     * sessions do not implement it.
+     */
+    teardown?(): Promise<void>;
+}
+
+export interface CredentialsStoreOptions {
+    /**
+     * Sliding time-to-live in milliseconds applied to this session's
+     * credential key in Redis, refreshed on every save and read. A backstop
+     * against keys orphaned by crashes or ungraceful shutdowns where explicit
+     * teardown never runs — size it generously (idle sessions do not refresh
+     * it). Omit or 0 to disable expiry.
+     */
+    ttlMs?: number;
 }
 
 export interface CredentialsValidationOptions {
@@ -141,6 +222,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
         sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
+        options: CredentialsStoreOptions = {},
     ) {
         if (secret.length !== 32) {
             throw new Error(
@@ -158,7 +240,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
         this.uid = buildCredentialsStoreId(parentId, sessionId);
         // Keep full logger namespace for Redis connection naming
         redisConfig.connectionName = getLoggerNamespace(this.log);
-        this.initSecureStore(secret, redisConfig);
+        this.initSecureStore(secret, redisConfig, options.ttlMs);
         this.log.debug("initialized");
     }
 
@@ -166,13 +248,15 @@ export class CredentialsStore implements CredentialsStoreInterface {
         this.objectHash = crypto.objectHash;
     }
 
-    initSecureStore(secret: string, redisConfig: RedisConfig) {
+    initSecureStore(secret: string, redisConfig: RedisConfig, ttlMs?: number) {
         // Use shared Redis connection for connection pooling
         const sharedClient = createCredentialsRedisConnection(redisConfig);
         this.store = new SecureStore({
             uid: this.uid,
             secret: secret,
             redis: { client: sharedClient },
+            // Sliding expiry: refreshed by SecureStore on every save and get.
+            ...(ttlMs ? { ttl: ttlMs } : {}),
         });
     }
 
@@ -245,4 +329,79 @@ export class CredentialsStore implements CredentialsStoreInterface {
         }
         return await this.store.save(actor, creds);
     }
+
+    /**
+     * Delete this session's entire credential hash from Redis, promptly
+     * reclaiming the key instead of waiting for its TTL (if any) to lapse.
+     * Called when the session ends (socket disconnect, HTTP actions request
+     * cleanup). Best-effort and safe to call when nothing was stored — a
+     * missing key is a no-op.
+     */
+    async teardown(): Promise<void> {
+        try {
+            if (!this.store.isConnected) {
+                await this.store.connect();
+            }
+            await this.store.deleteAll();
+        } catch (err) {
+            this.log.debug(`credential store teardown failed: ${err}`);
+        }
+    }
+}
+
+/**
+ * Escape Redis glob special characters so a string is matched literally by
+ * SCAN's MATCH option. parentId is generated from a charset that includes
+ * `*` — unescaped, a hostile-luck token could make the purge pattern match
+ * (and delete) other instances' keys.
+ */
+function escapeRedisGlob(value: string): string {
+    return value.replace(/[\\*?[\]]/g, "\\$&");
+}
+
+/**
+ * Delete every credential-store key belonging to `parentId`. Called from
+ * server shutdown so an instance reclaims its own keys instead of stranding
+ * them under a parentId that no future boot will ever reference (each boot
+ * randomizes its parentId). Scoped strictly to the given parentId: Redis may
+ * be shared by multiple running instances, so keys under other parentIds are
+ * never touched. Returns the number of keys removed.
+ */
+export async function purgeCredentialsStoreKeys(
+    client: Redis,
+    parentId: string,
+): Promise<number> {
+    const pattern = `${escapeRedisGlob(buildCredentialsStoreId(parentId, ""))}*`;
+    let cursor = "0";
+    let removed = 0;
+    do {
+        const [nextCursor, keys] = await client.scan(
+            cursor,
+            "MATCH",
+            pattern,
+            "COUNT",
+            100,
+        );
+        cursor = nextCursor;
+        // Delete per key: a multi-key DEL would throw CROSSSLOT on a Redis
+        // Cluster, where these keys hash to different slots.
+        for (const key of keys) {
+            removed += await client.del(key);
+        }
+    } while (cursor !== "0");
+    return removed;
+}
+
+/**
+ * Convenience wrapper over {@link purgeCredentialsStoreKeys} using the shared
+ * credentials Redis connection.
+ */
+export async function purgeCredentialsStores(
+    parentId: string,
+    config: RedisConfig,
+): Promise<number> {
+    return purgeCredentialsStoreKeys(
+        createCredentialsRedisConnection(config),
+        parentId,
+    );
 }

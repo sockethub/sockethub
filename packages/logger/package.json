@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/logger",
   "description": "Winston-based logger for Sockethub packages",
-  "version": "1.0.0-alpha.13",
+  "version": "1.0.0-alpha.16",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -46,6 +46,6 @@
   "devDependencies": {
     "@types/bun": "latest"
   },
-  "gitHead": "745e85ac71f3c027f8ef8b8edc49398be8dbaccd",
+  "gitHead": "1a1a01ffe7b9d356aacfc4ae583d553e5df6f97d",
   "types": "./dist/index.d.ts"
 }

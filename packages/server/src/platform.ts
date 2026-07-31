@@ -68,6 +68,10 @@ async function startPlatformProcess() {
     const platformName = process.argv[3];
     let identifier = process.argv[4];
     const redisUrl = process.env.REDIS_URL;
+    // Forwarded by PlatformInstance; reads from this process then refresh the
+    // sliding expiry on the session's credential key. undefined disables TTL.
+    const credentialsTtlMs =
+        Number(process.env.SOCKETHUB_CREDENTIALS_TTL_MS) || undefined;
 
     // Set process-wide context for all loggers in this platform process
     setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
@@ -329,6 +333,7 @@ async function startPlatformProcess() {
                     {
                         url: redisUrl,
                     },
+                    { ttlMs: credentialsTtlMs },
                 );
                 delete job.msg.sessionSecret;
 

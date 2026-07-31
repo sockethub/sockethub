@@ -166,6 +166,21 @@ describe("PlatformInstance", () => {
             expect(platformInstances.has("platform identifier")).toBeFalse();
         });
 
+        test("shutdown is single-flight: repeated calls share one teardown", async () => {
+            pi.initQueue("a secret");
+            const queue = pi.queue;
+            const first = pi.shutdown();
+            const second = pi.shutdown();
+            // both callers must observe the same teardown run; a second,
+            // independent run would resolve while the first is still
+            // obliterating the shared Redis queue
+            expect(second).toBe(first);
+            await first;
+            sandbox.assert.calledOnce(queue.shutdown);
+            await pi.shutdown();
+            sandbox.assert.calledOnce(queue.shutdown);
+        });
+
         test("shutdown of a replaced instance disconnects the queue without obliterating it", async () => {
             pi.initQueue("a secret");
             const queue = pi.queue;

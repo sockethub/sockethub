@@ -121,6 +121,35 @@ export class Crypto {
         return SecretValidator.generate(len);
     }
 
+    /**
+     * Random alphanumeric identifier. Use this instead of randToken() for
+     * values that end up in Redis key names, logger namespaces, HTTP headers,
+     * or shell commands: randToken()'s charset includes `*?[]^@$#!`, which are
+     * Redis glob metacharacters and shell specials. randToken() remains the
+     * generator for secrets, where the wider charset adds entropy.
+     */
+    randId(len: number): string {
+        if (len > 32) {
+            throw new Error(
+                `crypto.randId supports a length param of up to 32, ${len} given`,
+            );
+        }
+        const chars =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        // Rejection sampling to avoid modulo bias
+        const maxValidByte = 256 - (256 % chars.length);
+        let id = "";
+        while (id.length < len) {
+            for (const byte of this.randomBytes(64)) {
+                if (byte < maxValidByte) {
+                    id += chars[byte % chars.length];
+                    if (id.length === len) break;
+                }
+            }
+        }
+        return id;
+    }
+
     private static ensureSecret(secret: string) {
         if (secret.length !== 32) {
             throw new Error(

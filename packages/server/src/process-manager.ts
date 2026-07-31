@@ -12,6 +12,8 @@ class ProcessManager {
     private readonly parentSecret1: string;
     private readonly parentSecret2: string;
     private init: IInitObject;
+    // per-identifier serialization of ensureProcess runs; see ensureProcess()
+    private readonly ensureChains = new Map<string, Promise<void>>();
 
     constructor(
         parentId: string,
@@ -25,22 +27,18 @@ class ProcessManager {
         this.init = init;
     }
 
-    get(
+    async get(
         platform: string,
         actorId: string,
         sessionId?: string,
         sessionIp?: string,
-    ): PlatformInstance {
+    ): Promise<PlatformInstance> {
         const platformDetails = this.init.platforms.get(platform);
-        let pi: PlatformInstance;
-
-        if (platformDetails.config.persist) {
-            // ensure process is started - one for each actor
-            pi = this.ensureProcess(platform, sessionId, actorId, sessionIp);
-        } else {
-            // ensure process is started - one for all jobs
-            pi = this.ensureProcess(platform);
-        }
+        const pi = platformDetails.config.persist
+            ? // ensure process is started - one for each actor
+              await this.ensureProcess(platform, sessionId, actorId, sessionIp)
+            : // ensure process is started - one for all jobs
+              await this.ensureProcess(platform);
         pi.config = platformDetails.config;
         pi.contextUrl = platformDetails.contextUrl;
         return pi;
@@ -70,13 +68,52 @@ class ProcessManager {
         return platformInstance;
     }
 
+    /**
+     * ensureProcessNow() yields the event loop while awaiting a dead
+     * predecessor's teardown, so two concurrent messages for the same
+     * identifier could otherwise both find no live instance and each fork
+     * a replacement child. Chain runs per identifier so only one is
+     * inspecting or creating that identifier's instance at a time.
+     */
     private ensureProcess(
         platform: string,
         sessionId?: string,
         actor?: string,
         sessionIp?: string,
-    ): PlatformInstance {
+    ): Promise<PlatformInstance> {
         const identifier = getPlatformId(platform, actor);
+        const prior = this.ensureChains.get(identifier) ?? Promise.resolve();
+        const run = prior.then(() =>
+            this.ensureProcessNow(
+                identifier,
+                platform,
+                sessionId,
+                actor,
+                sessionIp,
+            ),
+        );
+        // Park a settled (never-rejecting) copy for the next caller, and
+        // drop it once the chain drains so the map doesn't grow unboundedly.
+        const settled = run.then(
+            (): undefined => undefined,
+            (): undefined => undefined,
+        );
+        this.ensureChains.set(identifier, settled);
+        settled.then(() => {
+            if (this.ensureChains.get(identifier) === settled) {
+                this.ensureChains.delete(identifier);
+            }
+        });
+        return run;
+    }
+
+    private async ensureProcessNow(
+        identifier: string,
+        platform: string,
+        sessionId?: string,
+        actor?: string,
+        sessionIp?: string,
+    ): Promise<PlatformInstance> {
         const existing = platformInstances.get(identifier);
         const reusable = existing && this.isProcessAlive(existing);
         if (!reusable) {
@@ -85,11 +122,13 @@ class ProcessManager {
         if (existing && !reusable) {
             // The replacement created below shares `identifier` and the Redis
             // queue name derived from it. Mark the dead instance as replaced
-            // *before* starting its async teardown so that teardown can't
-            // obliterate the replacement's queue or evict it from
-            // platformInstances (#1166).
+            // *before* teardown so a teardown started here leaves the shared
+            // queue's jobs intact (#1166), and *await* the teardown so one
+            // already in flight — a crash-close teardown pauses and
+            // obliterates the queue — finishes before the replacement's
+            // queue exists to be damaged by it.
             existing.markReplaced();
-            void existing.shutdown();
+            await existing.shutdown();
         }
         const platformInstance = reusable
             ? existing

@@ -9,6 +9,21 @@ Sockethub uses a JSON configuration file:
 - Development: `sockethub.config.json` in current working directory
 - Production: Specify via `--config` flag or `SOCKETHUB_CONFIG` environment variable
 
+### Generating a Config File
+
+`sockethub --write-config` writes a config file populated with every option
+set to its default value, including a `$schema` reference for editor
+validation and autocomplete:
+
+```bash
+sockethub --write-config                 # writes ./sockethub.config.json
+sockethub --write-config my-config.json  # writes to the given path
+sockethub --write-config -               # prints to stdout
+```
+
+It refuses to overwrite an existing file, and exits after writing (the server
+does not start).
+
 ### Default Configuration Structure
 
 ```json
@@ -21,6 +36,7 @@ Sockethub uses a JSON configuration file:
     "file": "sockethub.log"
   },
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc", 
@@ -53,6 +69,16 @@ Sockethub uses a JSON configuration file:
     "port": 10550,
     "host": "localhost", 
     "path": "/sockethub"
+  },
+  "httpActions": {
+    "enabled": false,
+    "path": "/sockethub-http",
+    "requireRequestId": true,
+    "maxMessagesPerRequest": 20,
+    "maxPayloadBytes": 262144,
+    "idempotencyTtlMs": 300000,
+    "requestTimeoutMs": 30000,
+    "idleTimeoutMs": 15000
   }
 }
 ```
@@ -66,10 +92,21 @@ Sockethub uses a JSON configuration file:
   "sockethub": {
     "port": 10550,          // Port Sockethub listens on
     "host": "localhost",    // Bind address
-    "path": "/sockethub"    // WebSocket endpoint path
+    "path": "/sockethub",   // WebSocket endpoint path
+    "cors": {
+      "origin": "https://app.example.com, https://admin.example.com"
+    }
   }
 }
 ```
+
+`sockethub:cors:origin` (default `"*"`) controls which web origins may connect
+— it governs both socket.io connections and the HTTP actions endpoint. It
+accepts `"*"`, a single origin, or a comma-separated list of origins; when a
+list is configured, the matching request origin is echoed back in
+`Access-Control-Allow-Origin`. See [CORS](#cors) for details. It can also be
+set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
+`--cors.origin` command-line flag.
 
 ### Public Settings
 
@@ -90,9 +127,15 @@ For client connections and reverse proxy setups:
 
 Platforms are specified as an array of package names:
 
+CalDAV permits only public HTTPS targets by default. Its optional
+`packageConfig.allowInsecureHttp` and `packageConfig.allowPrivateAddresses`
+flags relax those checks for deployments whose administrator explicitly needs
+them. They cannot be supplied by browser clients.
+
 ```json
 {
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
@@ -114,6 +157,10 @@ the platform default):
 ```json
 {
   "packageConfig": {
+    "@sockethub/platform-caldav": {
+      "connectTimeoutMs": 15000,
+      "concurrency": 10
+    },
     "@sockethub/platform-feeds": {
       "connectTimeoutMs": 5000
     }
@@ -183,6 +230,184 @@ Configure how reconnect IP is read:
 
 Use `proxy` only when Sockethub is behind a trusted reverse proxy that sets and
 sanitizes forwarding headers.
+
+### HTTP Actions
+
+HTTP actions provide a one-shot HTTP interface for sending ActivityStreams
+messages without opening a WebSocket connection.
+
+This does **not** introduce a second platform execution path. After the HTTP
+request is parsed, each message goes through the same core routing pipeline:
+
+1. ActivityStreams validation middleware
+2. credential storage middleware (when sending credentials)
+3. Redis-backed job queue
+4. platform child process execution
+5. queue completion callback back to the caller
+
+The only differences from WebSocket transport are:
+
+- input/output transport (`POST` + streaming `NDJSON`)
+- optional idempotent replay (`requestId` + `GET`)
+- no long-lived socket session
+
+Stateless platform session behavior is unchanged. Session lifecycle tracking is
+only used for persistent platforms that need it.
+
+```json
+{
+  "httpActions": {
+    "enabled": true,
+    "path": "/sockethub-http",
+    "requireRequestId": true,
+    "maxMessagesPerRequest": 20,
+    "maxPayloadBytes": 262144,
+    "idempotencyTtlMs": 300000,
+    "requestTimeoutMs": 30000,
+    "idleTimeoutMs": 15000
+  }
+}
+```
+
+Configuration behavior:
+
+- `enabled`: turns HTTP actions on/off.
+- `path`: route path for `POST` and `GET`.
+- `requireRequestId`: if `true`, caller must provide a request id.
+- `maxMessagesPerRequest`: maximum message count in one HTTP request.
+- `maxPayloadBytes`: JSON body size limit enforced by Express body parser.
+- `idempotencyTtlMs`: how long replay data is kept in Redis.
+- `requestTimeoutMs`: maximum total request time.
+- `idleTimeoutMs`: maximum time between streamed result lines.
+- HTTP actions reuse the top-level `rateLimiter` settings (keyed by client IP).
+  The limiter is backed by Redis, so a client's request budget is shared across
+  all Sockethub instances behind a load balancer rather than counted per process.
+
+### CORS
+
+The HTTP actions endpoint is browser-facing and honors the same
+`sockethub:cors:origin` setting that governs socket.io connections. A browser
+app hosted on a different domain than Sockethub can call the endpoint only if
+its origin is allowed:
+
+- `"*"` (default) — any origin may call the endpoint.
+- A single origin or comma-separated list — only those origins are allowed;
+  the matching origin is echoed in `Access-Control-Allow-Origin` (with
+  `Vary: Origin`), and requests from other origins are blocked by the browser.
+
+Configured origins are normalized to the serialization browsers send in the
+`Origin` header (lowercase scheme/host, no trailing slash, default ports
+stripped), so `https://App.example.com/` matches requests from
+`https://app.example.com`. Entries that are not valid origins (missing scheme,
+containing only a path, etc.) are dropped with a logged warning. If a
+restrictive config yields no valid origins, all cross-origin requests are
+blocked (it does not fall back to `"*"`).
+
+Preflight `OPTIONS` requests are answered automatically, and the allowed request
+headers include `Content-Type`, `X-Request-Id`, and `X-Sockethub-Request-Id`.
+For a cross-origin deployment, set `sockethub:cors:origin` to your web app's
+origin so both the socket.io and HTTP actions transports accept it.
+
+Request id sources, in priority order:
+
+1. `X-Request-Id` header
+2. `X-Sockethub-Request-Id` header
+3. `requestId` field in JSON body
+
+> **Treat request ids as secrets.** A completed request's results can be
+> replayed by anyone who presents its `requestId` (via `GET` or a repeat
+> `POST`) for up to `idempotencyTtlMs` — there is no per-caller
+> authentication on replay. Use unguessable ids (e.g. UUIDs); never sequential
+> or otherwise predictable values, or one caller could read another's cached
+> results. The `12345` id used in the examples below is illustrative only.
+
+Conflict behavior:
+
+- same `requestId` + request still running: `409`
+- same `requestId` + request complete: cached results are replayed
+
+Example request:
+
+Messages use the same canonical `@context` ActivityStreams format as the
+WebSocket transport:
+
+```bash
+curl -N \
+  -H 'Content-Type: application/json' \
+  -H 'X-Request-Id: 12345' \
+  -d @- \
+  http://localhost:10550/sockethub-http <<'JSON'
+[
+  {
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
+    "type": "credentials",
+    "actor": { "id": "me@jabber.net", "type": "person" },
+    "object": {
+      "type": "credentials",
+      "userAddress": "me@jabber.net",
+      "password": "secret"
+    }
+  },
+  {
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
+    "type": "connect",
+    "actor": { "id": "me@jabber.net", "type": "person" }
+  },
+  {
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
+    "type": "join",
+    "actor": { "id": "me@jabber.net", "type": "person" },
+    "target": { "type": "room", "id": "room@muc.example.com" }
+  },
+  {
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
+    "type": "send",
+    "actor": { "id": "me@jabber.net", "type": "person" },
+    "target": { "type": "room", "id": "room@muc.example.com" },
+    "object": { "type": "message", "content": "hello" }
+  }
+]
+JSON
+```
+
+Response format: NDJSON (newline-delimited JSON). The endpoint streams one
+complete JSON object per line. If you send an array of actions, you receive one
+line per action result.
+
+Example streamed response (`@context` arrays abbreviated):
+
+```ndjson
+{"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
+{"type":"error","@context":["..."],"error":"invalid credentials"}
+```
+
+Replay results after an interrupted request:
+
+```bash
+curl -N http://localhost:10550/sockethub-http/12345
+```
+
+Replay using query parameter:
+
+```bash
+curl -N "http://localhost:10550/sockethub-http?requestId=12345"
+```
 
 ### Redis Configuration
 
@@ -313,6 +538,9 @@ Override configuration with environment variables:
 export HOST=0.0.0.0
 export PORT=10550
 
+# Allowed CORS origin(s): '*', one origin, or a comma-separated list
+export SOCKETHUB_CORS_ORIGIN="https://app.example.com,https://admin.example.com"
+
 # Redis connection
 export REDIS_URL=redis://localhost:6379
 
@@ -392,6 +620,7 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
     "traceSampleRate": 0.1
   },
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",
@@ -421,7 +650,11 @@ The configuration file is validated against the schema on startup. An unknown
 key, or a value of the wrong type (e.g. a non-integer `port`, or a `logging.level`
 outside `error`/`warn`/`info`/`debug`), is a **hard error** — Sockethub will
 refuse to start rather than silently ignore it. Keep config files in sync with
-the schema (`packages/schemas/src/schemas/json/sockethub-config.json`).
+the schema (`packages/schemas/src/schemas/sockethub-config.ts`, published as
+`@sockethub/schemas/schemas/json/sockethub-config.json`). The schema is the
+single source of truth for defaults — the server derives its runtime
+(convict) configuration schema from it, and `sockethub --write-config`
+materializes it into a config file.
 
 ## Process Management
 

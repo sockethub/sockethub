@@ -16,7 +16,10 @@ import {
 } from "./helpers/objects.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
-import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
+import {
+    SockethubConfigSchema,
+    SockethubConfigSchemaId,
+} from "./schemas/sockethub-config.js";
 import {
     addPlatformContext,
     addPlatformSchema,
@@ -57,6 +60,7 @@ export {
     PlatformSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
+    SockethubConfigSchemaId,
     ObjectTypesList,
     ObjectTypesSchema,
     InternalObjectTypesList,

@@ -1,191 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateSockethubConfig } from "@sockethub/schemas";
-import convict from "convict";
+import type convict from "convict";
 
+import { buildSchema, EMPTY_ENV_IS_UNSET_VARS } from "./config-schema.js";
 import { createWinstonLogger, type Logger } from "./logger-core.js";
 
 const defaultConfig = "sockethub.config.json";
-
-// Environment variables that map onto config keys. An empty-string value is
-// treated as "unset" so it falls back to the config file / default, preserving
-// the historical `process.env.X || <config>` behavior (convict would otherwise
-// apply the empty string as an override).
-const MAPPED_ENV_VARS = [
-    "HOST",
-    "PORT",
-    "REDIS_URL",
-    "LOG_LEVEL",
-    "LOG_FILE_LEVEL",
-    "LOG_FILE",
-    "SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS",
-    "SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS",
-] as const;
-
-const LOG_LEVELS = ["error", "warn", "info", "debug"] as const;
-
-/**
- * The convict configuration schema. Each key declares its format, default,
- * and (where applicable) the environment variable and/or command-line argument
- * that overrides it. Precedence, highest first: command-line arg, environment
- * variable, config file, schema default.
- */
-function buildSchema(): convict.Config<Record<string, unknown>> {
-    return convict({
-        $schema: { format: String, default: "" },
-        examples: {
-            doc: "Enable the examples pages served at [host]:[port]/examples",
-            format: Boolean,
-            default: true,
-            arg: "examples",
-        },
-        info: {
-            doc: "Display Sockethub runtime information",
-            format: Boolean,
-            default: false,
-            arg: "info",
-        },
-        logging: {
-            level: {
-                format: LOG_LEVELS,
-                default: "info",
-                env: "LOG_LEVEL",
-            },
-            fileLevel: {
-                format: LOG_LEVELS,
-                default: "debug",
-                env: "LOG_FILE_LEVEL",
-            },
-            file: {
-                format: String,
-                default: "sockethub.log",
-                env: "LOG_FILE",
-            },
-        },
-        platforms: {
-            doc: "Platform packages to load",
-            format: Array,
-            default: [
-                "@sockethub/platform-dummy",
-                "@sockethub/platform-feeds",
-                "@sockethub/platform-irc",
-                "@sockethub/platform-metadata",
-                "@sockethub/platform-xmpp",
-            ],
-        },
-        packageConfig: {
-            doc:
-                "Per-platform config keyed by package name, validated against " +
-                "each platform's config schema and forwarded to its child process",
-            format: Object,
-            default: {},
-        },
-        public: {
-            protocol: { format: String, default: "http" },
-            host: { format: String, default: "localhost" },
-            port: { format: "port", default: 10550 },
-            path: { format: String, default: "/" },
-        },
-        rateLimiter: {
-            windowMs: { format: "nat", default: 1000 },
-            maxRequests: { format: "nat", default: 100 },
-            blockDurationMs: { format: "nat", default: 5000 },
-            maxConnectionsPerIp: {
-                doc:
-                    "Maximum concurrent socket connections per client IP. " +
-                    "The per-event rate limiter is keyed by socket id, so " +
-                    "without a connection cap a client can bypass it by " +
-                    "opening more sockets. 0 disables the cap.",
-                format: "nat",
-                default: 0,
-            },
-        },
-        limits: {
-            maxPlatformInstances: {
-                doc:
-                    "Upper bound on concurrently running platform instances " +
-                    "(child processes). Each persistent-platform actor forks " +
-                    "its own process, so an unbounded count is a resource " +
-                    "exhaustion risk on public instances. 0 disables the cap.",
-                format: "nat",
-                default: 0,
-            },
-        },
-        credentialCheck: {
-            reconnectIpSource: {
-                format: ["socket", "proxy"],
-                default: "socket",
-            },
-            proxyHeader: { format: String, default: "x-forwarded-for" },
-        },
-        redis: {
-            url: {
-                format: String,
-                default: "redis://127.0.0.1:6379",
-                env: "REDIS_URL",
-                arg: "redis.url",
-            },
-            connectTimeout: {
-                format: "nat",
-                default: 10000,
-                doc: "Connection timeout in milliseconds",
-            },
-            disconnectTimeout: {
-                format: "nat",
-                default: 5000,
-                doc: "Disconnect timeout in milliseconds",
-            },
-            maxRetriesPerRequest: {
-                // number | null (null = BullMQ default)
-                format: "*",
-                default: null,
-            },
-        },
-        sentry: {
-            dsn: { format: String, default: "", arg: "sentry.dsn" },
-            traceSampleRate: { format: Number, default: 1.0 },
-        },
-        sockethub: {
-            port: {
-                format: "port",
-                default: 10550,
-                env: "PORT",
-                arg: "port",
-            },
-            host: {
-                format: String,
-                default: "localhost",
-                env: "HOST",
-                arg: "host",
-            },
-            path: { format: String, default: "/sockethub" },
-            cors: {
-                origin: {
-                    doc:
-                        "Allowed CORS origin(s) for socket.io connections. " +
-                        "'*' allows any website to connect visitors' " +
-                        "browsers to this instance; public deployments " +
-                        "should set an explicit origin or comma-separated " +
-                        "list of origins.",
-                    format: String,
-                    default: "*",
-                },
-            },
-        },
-        platformHeartbeat: {
-            intervalMs: {
-                format: "nat",
-                default: 5000,
-                env: "SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS",
-            },
-            timeoutMs: {
-                format: "nat",
-                default: 15000,
-                env: "SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS",
-            },
-        },
-    });
-}
 
 /**
  * Resolve the config file path. Precedence: the `--config`/`-c` command-line
@@ -231,7 +52,7 @@ export class Config {
         this.log.debug("initializing config");
 
         // Treat empty-string env vars as unset (historical `||` semantics).
-        for (const name of MAPPED_ENV_VARS) {
+        for (const name of EMPTY_ENV_IS_UNSET_VARS) {
             if (process.env[name] === "") {
                 delete process.env[name];
             }

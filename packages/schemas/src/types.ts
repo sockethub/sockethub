@@ -108,6 +108,8 @@ interface BasePlatformConfig {
     // feeds: allow fetching loopback/private destinations (SSRF escape hatch,
     // dev/test only). Set via packageConfig; see platform-feeds README.
     allowPrivateAddresses?: boolean;
+    /** CalDAV-only escape hatch for explicitly configured HTTP services. */
+    allowInsecureHttp?: boolean;
 }
 
 /** Configuration for stateless platforms that start/stop per-request */

@@ -286,6 +286,8 @@ bun test                    # Run unit tests across all packages
 bun run integration         # Run both Redis and browser integration tests
 bun run integration:redis   # Run Redis integration tests with Docker
 bun run integration:browser # Run browser integration tests with Docker
+bun run docker:start:caldav # Start the Radicale compatibility server
+bun run integration:caldav # Run the complete CalDAV lifecycle against Radicale
 
 # Performance & Stress Testing
 bun run stress:baseline     # Generate system performance baseline (first time)

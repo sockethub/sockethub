@@ -1,14 +1,36 @@
 import path from "node:path";
 import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
 import { toError } from "@sockethub/util/error";
-import config from "./config";
-import Sockethub from "./sockethub";
+import type SockethubType from "./sockethub";
+import { parseWriteConfigTarget, writeDefaultConfig } from "./write-config";
 
 let sentry: { readonly reportError: (err: Error) => void } = {
     reportError: (_err: Error) => {},
 };
 
 export async function server() {
+    // --write-config short-circuits startup: emit a default config file and
+    // exit. Handled before the config modules load so it works even when an
+    // existing config file in the working directory is invalid.
+    const writeConfigTarget = parseWriteConfigTarget(process.argv.slice(2));
+    if (writeConfigTarget !== undefined) {
+        try {
+            const message = writeDefaultConfig(writeConfigTarget);
+            if (message) {
+                console.log(message);
+            }
+            process.exit(0);
+        } catch (err) {
+            console.error(toError(err).message);
+            process.exit(1);
+        }
+    }
+
+    // Loaded lazily (not statically) so the import-time Config singleton
+    // doesn't run for the --write-config path above.
+    const { default: config } = await import("./config.js");
+    const { default: Sockethub } = await import("./sockethub.js");
+
     // Initialize global logger configuration
     const loggingConfig = config.get("logging");
     const logFile = loggingConfig.file
@@ -23,7 +45,7 @@ export async function server() {
     // Set process-wide context for all loggers
     setLoggerContext("sockethub");
 
-    let sockethub: Sockethub;
+    let sockethub: SockethubType;
     const log = createLogger("server:init");
 
     // conditionally initialize sentry
