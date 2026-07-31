@@ -101,6 +101,7 @@ example, an XMPP friend request can be modeled as `request-friend`,
 
 ### Included Platforms
 
+* **[CalDAV](packages/platform-caldav)** - Calendar and task synchronization
 * **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[IRC](packages/platform-irc)** - Internet Relay Chat protocol support
 * **[XMPP](packages/platform-xmpp)** - Extensible Messaging and Presence Protocol
@@ -172,6 +173,7 @@ For debugging and configuration options, see the [Server package documentation](
 ### Platform Implementations
 
 * **[@sockethub/platform-dummy](packages/platform-dummy)** - Example platform for development reference
+* **[@sockethub/platform-caldav](packages/platform-caldav)** - Calendar and task synchronization
 * **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support
 * **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction

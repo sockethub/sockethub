@@ -1,0 +1,561 @@
+import { randomUUID } from "node:crypto";
+import { timeZoneLines } from "./timezone.js";
+import type {
+    AttachmentInput,
+    CalendarItem,
+    CalendarObjectInput,
+    PersonInput,
+    RecurrenceInput,
+    ReminderInput,
+} from "./types.js";
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_TIME_WITH_ZONE =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
+const LOCAL_DATE_TIME =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?$/;
+const DURATION =
+    /^-?P(?=\d|T\d)(?:\d+W|(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+S)?)?)$/;
+
+function escapeText(value: string): string {
+    return value
+        .replaceAll("\\", "\\\\")
+        .replaceAll("\r\n", "\\n")
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "\\n")
+        .replaceAll(";", "\\;")
+        .replaceAll(",", "\\,");
+}
+
+function unescapeText(value: string): string {
+    return value.replaceAll(/\\([nN,;\\])/g, (_match, character: string) =>
+        character === "n" || character === "N" ? "\n" : character,
+    );
+}
+
+function encodeParameter(value: string): string {
+    const encoded = value
+        .replaceAll("^", "^^")
+        .replaceAll("\r\n", "^n")
+        .replaceAll(/[\r\n]/g, "^n")
+        .replaceAll('"', "^'");
+    return /[,:;\s]/.test(encoded) ? `"${encoded}"` : encoded;
+}
+
+function decodeParameter(value: string): string {
+    const unquoted =
+        value.startsWith('"') && value.endsWith('"')
+            ? value.slice(1, -1)
+            : value;
+    return unquoted.replaceAll(/\^(\^|'|n|N)/g, (_match, character: string) => {
+        if (character === "^") return "^";
+        if (character === "'") return '"';
+        return "\n";
+    });
+}
+
+function contentLineValue(value: string, field: string): string {
+    if (/[\r\n]/.test(value)) throw new Error(`invalid ${field}`);
+    return value;
+}
+
+function splitOutsideQuotes(value: string, separator: string): string[] {
+    const parts: string[] = [];
+    let start = 0;
+    let quoted = false;
+    for (let index = 0; index < value.length; index += 1) {
+        if (value[index] === '"') quoted = !quoted;
+        if (!quoted && value[index] === separator) {
+            parts.push(value.slice(start, index));
+            start = index + 1;
+        }
+    }
+    parts.push(value.slice(start));
+    return parts;
+}
+
+function parseContentLine(line: string):
+    | {
+          name: string;
+          params: Record<string, string>;
+          value: string;
+      }
+    | undefined {
+    let quoted = false;
+    let colon = -1;
+    for (let index = 0; index < line.length; index += 1) {
+        if (line[index] === '"') quoted = !quoted;
+        if (!quoted && line[index] === ":") {
+            colon = index;
+            break;
+        }
+    }
+    if (colon < 1) return undefined;
+    const [rawName, ...rawParams] = splitOutsideQuotes(
+        line.slice(0, colon),
+        ";",
+    );
+    const params: Record<string, string> = {};
+    for (const rawParam of rawParams) {
+        const equals = rawParam.indexOf("=");
+        if (equals < 1) continue;
+        params[rawParam.slice(0, equals).toUpperCase()] = decodeParameter(
+            rawParam.slice(equals + 1),
+        );
+    }
+    return {
+        name: rawName.toUpperCase(),
+        params,
+        value: line.slice(colon + 1),
+    };
+}
+
+function utcDateTime(value: string, field: string): string {
+    if (!DATE_TIME_WITH_ZONE.test(value))
+        throw new Error(`${field} must include a UTC offset`);
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) throw new Error(`invalid ${field}`);
+    return parsed
+        .toISOString()
+        .replaceAll("-", "")
+        .replaceAll(":", "")
+        .replace(/\.\d{3}Z$/, "Z");
+}
+
+function dateValue(value: string, field: string): string {
+    if (!DATE_ONLY.test(value)) throw new Error(`${field} must be YYYY-MM-DD`);
+    const parsed = new Date(`${value}T00:00:00Z`);
+    if (
+        Number.isNaN(parsed.getTime()) ||
+        parsed.toISOString().slice(0, 10) !== value
+    )
+        throw new Error(`invalid ${field}`);
+    return value.replaceAll("-", "");
+}
+
+function localDateTime(value: string, field: string): string {
+    if (!LOCAL_DATE_TIME.test(value))
+        throw new Error(
+            `${field} must be a local date-time when timeZone is used`,
+        );
+    return value
+        .replaceAll("-", "")
+        .replaceAll(":", "")
+        .replace(/\.\d{1,3}$/, "");
+}
+
+function validTimeZone(value: string): string {
+    try {
+        new Intl.DateTimeFormat("en", { timeZone: value }).format();
+        return value;
+    } catch {
+        throw new Error("invalid timeZone");
+    }
+}
+
+function temporalLine(
+    name: string,
+    value: string,
+    allDay: boolean,
+    timeZone?: string,
+): string {
+    if (allDay)
+        return `${name};VALUE=DATE:${dateValue(value, name.toLowerCase())}`;
+    if (timeZone)
+        return `${name};TZID=${validTimeZone(timeZone)}:${localDateTime(value, name.toLowerCase())}`;
+    return `${name}:${utcDateTime(value, name.toLowerCase())}`;
+}
+
+/** Fold one iCalendar content line at 75 UTF-8 octets (74 after continuation). */
+export function foldLine(line: string): string {
+    const output: string[] = [];
+    let current = "";
+    let limit = 75;
+    for (const character of line) {
+        if (Buffer.byteLength(current + character, "utf8") > limit && current) {
+            output.push(current);
+            current = character;
+            limit = 74;
+        } else current += character;
+    }
+    output.push(current);
+    return output.join("\r\n ");
+}
+
+function recurrenceLine(value: RecurrenceInput): string {
+    const parts = [`FREQ=${value.frequency.toUpperCase()}`];
+    if (value.interval) parts.push(`INTERVAL=${value.interval}`);
+    if (value.count) parts.push(`COUNT=${value.count}`);
+    if (value.until)
+        parts.push(`UNTIL=${utcDateTime(value.until, "recurrence.until")}`);
+    if (value.byDay?.length)
+        parts.push(`BYDAY=${value.byDay.join(",").toUpperCase()}`);
+    if (value.byMonthDay?.length)
+        parts.push(`BYMONTHDAY=${value.byMonthDay.join(",")}`);
+    if (value.count && value.until)
+        throw new Error("recurrence cannot contain both count and until");
+    return `RRULE:${parts.join(";")}`;
+}
+
+function personLine(
+    name: "ORGANIZER" | "ATTENDEE",
+    person: PersonInput,
+): string {
+    const email = contentLineValue(person.email, `${name.toLowerCase()}.email`);
+    const params: string[] = [];
+    if (person.name) params.push(`CN=${encodeParameter(person.name)}`);
+    if (name === "ATTENDEE") {
+        if (person.role) params.push(`ROLE=${person.role.toUpperCase()}`);
+        if (person.status)
+            params.push(`PARTSTAT=${person.status.toUpperCase()}`);
+        if (person.rsvp !== undefined)
+            params.push(`RSVP=${person.rsvp ? "TRUE" : "FALSE"}`);
+    }
+    return `${name}${params.length ? `;${params.join(";")}` : ""}:mailto:${email}`;
+}
+
+function alarmLines(reminder: ReminderInput): string[] {
+    const action = (reminder.action ?? "display").toUpperCase();
+    const relative = DURATION.test(reminder.trigger);
+    const trigger = relative
+        ? `TRIGGER:${reminder.trigger}`
+        : `TRIGGER;VALUE=DATE-TIME:${utcDateTime(reminder.trigger, "reminder.trigger")}`;
+    if (action === "EMAIL" && !reminder.recipients?.length)
+        throw new Error("email reminder requires recipients");
+    return [
+        "BEGIN:VALARM",
+        `ACTION:${action}`,
+        trigger,
+        `DESCRIPTION:${escapeText(reminder.description ?? "Reminder")}`,
+        ...(action === "EMAIL"
+            ? [
+                  "SUMMARY:Reminder",
+                  ...(reminder.recipients ?? []).map(
+                      (email) =>
+                          `ATTENDEE:mailto:${contentLineValue(email, "reminder.recipient")}`,
+                  ),
+              ]
+            : []),
+        "END:VALARM",
+    ];
+}
+
+function attachmentLine(attachment: AttachmentInput): string {
+    if ((attachment.url ? 1 : 0) + (attachment.data ? 1 : 0) !== 1)
+        throw new Error("attachment requires exactly one of url or data");
+    const params: string[] = [];
+    if (attachment.mediaType)
+        params.push(
+            `FMTTYPE=${contentLineValue(attachment.mediaType, "attachment.mediaType")}`,
+        );
+    if (attachment.filename)
+        params.push(`FILENAME=${encodeParameter(attachment.filename)}`);
+    if (attachment.data) params.push("ENCODING=BASE64", "VALUE=BINARY");
+    const value = contentLineValue(
+        attachment.url ?? attachment.data ?? "",
+        attachment.url ? "attachment.url" : "attachment.data",
+    );
+    return `ATTACH${params.length ? `;${params.join(";")}` : ""}:${value}`;
+}
+
+function compareTimes(
+    start: string | undefined,
+    end: string | undefined,
+    allDay: boolean,
+    timeZone?: string,
+) {
+    if (!start || !end) return;
+    const startValue = allDay
+        ? dateValue(start, "startTime")
+        : timeZone
+          ? localDateTime(start, "startTime")
+          : utcDateTime(start, "startTime");
+    const endValue = allDay
+        ? dateValue(end, "endTime")
+        : timeZone
+          ? localDateTime(end, "endTime")
+          : utcDateTime(end, "endTime");
+    if (endValue <= startValue)
+        throw new Error("end/due must be after startTime");
+}
+
+function timeZoneRange(
+    input: CalendarObjectInput,
+    fallbackYear: number,
+): [number, number] {
+    const years = [
+        input.startTime,
+        input.type === "event" ? input.endTime : input.due,
+        input.recurrence?.until,
+    ]
+        .filter((value) => value !== undefined)
+        .map((value) => Number(value.slice(0, 4)))
+        .filter(Number.isInteger);
+    const first = years.length ? Math.min(...years) : fallbackYear;
+    const last = years.length ? Math.max(...years) : fallbackYear;
+    return [first - 1, Math.max(last + 1, first + 30)];
+}
+
+export function buildICalendar(
+    input: CalendarObjectInput,
+    now = new Date(),
+): { uid: string; body: string } {
+    const uid = input.uid ?? `${randomUUID()}@sockethub`;
+    if (/[\r\n%/\\]/.test(uid)) throw new Error("invalid uid");
+    const allDay = input.allDay === true;
+    if (allDay && input.timeZone)
+        throw new Error("all-day objects cannot have timeZone");
+    compareTimes(
+        input.startTime,
+        input.type === "event" ? input.endTime : input.due,
+        allDay,
+        input.timeZone,
+    );
+    const component = input.type === "event" ? "VEVENT" : "VTODO";
+    const zoneRange = timeZoneRange(input, now.getUTCFullYear());
+    const lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "CALSCALE:GREGORIAN",
+        "PRODID:-//Sockethub//CalDAV Platform//EN",
+        ...(input.timeZone
+            ? timeZoneLines(
+                  validTimeZone(input.timeZone),
+                  zoneRange[0],
+                  zoneRange[1],
+              )
+            : []),
+        `BEGIN:${component}`,
+        `UID:${escapeText(uid)}`,
+        `DTSTAMP:${utcDateTime(now.toISOString(), "now")}`,
+        `SUMMARY:${escapeText(input.name)}`,
+    ];
+    if (input.content) lines.push(`DESCRIPTION:${escapeText(input.content)}`);
+    if (input.location) lines.push(`LOCATION:${escapeText(input.location)}`);
+    if (input.url) lines.push(`URL:${contentLineValue(input.url, "url")}`);
+    if (input.startTime)
+        lines.push(
+            temporalLine("DTSTART", input.startTime, allDay, input.timeZone),
+        );
+    if (input.type === "event" && input.endTime)
+        lines.push(
+            temporalLine("DTEND", input.endTime, allDay, input.timeZone),
+        );
+    if (input.type === "task" && input.due)
+        lines.push(temporalLine("DUE", input.due, allDay, input.timeZone));
+    if (input.type === "task" && input.status)
+        lines.push(`STATUS:${input.status.toUpperCase()}`);
+    if (input.type === "task" && input.completedTime)
+        lines.push(
+            `COMPLETED:${utcDateTime(input.completedTime, "completedTime")}`,
+        );
+    if (input.type === "task" && input.percentComplete !== undefined)
+        lines.push(`PERCENT-COMPLETE:${input.percentComplete}`);
+    if (input.sequence !== undefined) lines.push(`SEQUENCE:${input.sequence}`);
+    if (input.recurrence) lines.push(recurrenceLine(input.recurrence));
+    if (input.organizer) lines.push(personLine("ORGANIZER", input.organizer));
+    for (const attendee of input.attendees ?? [])
+        lines.push(personLine("ATTENDEE", attendee));
+    for (const attachment of input.attachments ?? [])
+        lines.push(attachmentLine(attachment));
+    for (const reminder of input.reminders ?? [])
+        lines.push(...alarmLines(reminder));
+    lines.push(`END:${component}`, "END:VCALENDAR");
+    return { uid, body: `${lines.map(foldLine).join("\r\n")}\r\n` };
+}
+
+function parseDate(value: string): string {
+    if (/^\d{8}$/.test(value))
+        return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+    if (/^\d{8}T\d{6}Z$/.test(value))
+        return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}Z`;
+    if (/^\d{8}T\d{6}$/.test(value))
+        return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}`;
+    return value;
+}
+
+/** Parse the interoperable item fields returned by CalDAV multiget/query responses. */
+export function parseICalendar(
+    body: string,
+    id: string,
+    etag?: string,
+): CalendarItem {
+    const unfolded = body.replace(/\r?\n[ \t]/g, "");
+    const component = /^BEGIN:VTODO\r?$/m.test(unfolded) ? "task" : "event";
+    const componentName = component === "task" ? "VTODO" : "VEVENT";
+    const section = unfolded.match(
+        new RegExp(
+            `BEGIN:${componentName}\\r?\\n([\\s\\S]*?)\\r?\\nEND:${componentName}`,
+        ),
+    )?.[1];
+    if (!section) throw new Error("invalid calendar data");
+    const alarmBlocks = [
+        ...section.matchAll(/BEGIN:VALARM\r?\n([\s\S]*?)\r?\nEND:VALARM/g),
+    ].map((match) => match[1]);
+    const componentSection = section.replace(
+        /BEGIN:VALARM\r?\n[\s\S]*?\r?\nEND:VALARM/g,
+        "",
+    );
+    const values = new Map<
+        string,
+        { params: Record<string, string>; value: string }[]
+    >();
+    for (const line of componentSection.split(/\r?\n/)) {
+        const parsed = parseContentLine(line);
+        if (!parsed) continue;
+        const list = values.get(parsed.name) ?? [];
+        list.push({ params: parsed.params, value: parsed.value });
+        values.set(parsed.name, list);
+    }
+    const first = (name: string) => values.get(name)?.[0];
+    const uid = first("UID")?.value;
+    const summary = first("SUMMARY")?.value;
+    if (!uid || !summary)
+        throw new Error("calendar item is missing UID or SUMMARY");
+    const start = first("DTSTART");
+    const end = first("DTEND");
+    const due = first("DUE");
+    const timeZone = start?.params.TZID;
+    const item: CalendarItem = {
+        id,
+        etag,
+        type: component,
+        uid: unescapeText(uid),
+        name: unescapeText(summary),
+        updateSupported: isUpdateSupported(body),
+    };
+    if (first("DESCRIPTION"))
+        item.content = unescapeText(first("DESCRIPTION")?.value ?? "");
+    if (first("LOCATION"))
+        item.location = unescapeText(first("LOCATION")?.value ?? "");
+    if (first("URL")) item.url = first("URL")?.value;
+    if (start) item.startTime = parseDate(start.value);
+    if (end) item.endTime = parseDate(end.value);
+    if (component === "task" && due) item.due = parseDate(due.value);
+    if (start?.params.VALUE === "DATE") item.allDay = true;
+    if (timeZone) item.timeZone = timeZone;
+    if (component === "task" && first("STATUS"))
+        item.status = first(
+            "STATUS",
+        )?.value.toLowerCase() as CalendarItem["status"];
+    if (component === "task" && first("COMPLETED"))
+        item.completedTime = parseDate(first("COMPLETED")?.value ?? "");
+    const percentComplete = Number(first("PERCENT-COMPLETE")?.value);
+    if (
+        component === "task" &&
+        Number.isInteger(percentComplete) &&
+        percentComplete >= 0 &&
+        percentComplete <= 100
+    )
+        item.percentComplete = percentComplete;
+    const sequence = Number(first("SEQUENCE")?.value);
+    if (Number.isInteger(sequence) && sequence >= 0) item.sequence = sequence;
+    const rule = first("RRULE")?.value;
+    if (rule) {
+        const parts = Object.fromEntries(
+            rule.split(";").map((part) => {
+                const [key, value] = part.split("=", 2);
+                return [key, value];
+            }),
+        );
+        if (parts.FREQ) {
+            item.recurrence = {
+                frequency:
+                    parts.FREQ.toLowerCase() as RecurrenceInput["frequency"],
+                ...(parts.INTERVAL ? { interval: Number(parts.INTERVAL) } : {}),
+                ...(parts.COUNT ? { count: Number(parts.COUNT) } : {}),
+                ...(parts.UNTIL ? { until: parseDate(parts.UNTIL) } : {}),
+                ...(parts.BYDAY ? { byDay: parts.BYDAY.split(",") } : {}),
+                ...(parts.BYMONTHDAY
+                    ? { byMonthDay: parts.BYMONTHDAY.split(",").map(Number) }
+                    : {}),
+            };
+        }
+    }
+    const parsePerson = ({
+        params,
+        value,
+    }: {
+        params: Record<string, string>;
+        value: string;
+    }): PersonInput => {
+        return {
+            email: value.replace(/^mailto:/i, ""),
+            ...(params.CN ? { name: params.CN } : {}),
+            ...(params.ROLE
+                ? { role: params.ROLE.toLowerCase() as PersonInput["role"] }
+                : {}),
+            ...(params.PARTSTAT
+                ? {
+                      status: params.PARTSTAT.toLowerCase() as PersonInput["status"],
+                  }
+                : {}),
+            ...(params.RSVP ? { rsvp: params.RSVP === "TRUE" } : {}),
+        };
+    };
+    if (first("ORGANIZER"))
+        item.organizer = parsePerson(
+            first("ORGANIZER") as {
+                params: Record<string, string>;
+                value: string;
+            },
+        );
+    if (values.get("ATTENDEE")?.length)
+        item.attendees = values.get("ATTENDEE")?.map(parsePerson);
+    if (values.get("ATTACH")?.length)
+        item.attachments = values.get("ATTACH")?.map(({ params, value }) => {
+            const binary = params.VALUE === "BINARY";
+            const mediaType = params.FMTTYPE;
+            const filename = params.FILENAME;
+            return {
+                ...(binary ? { data: value } : { url: value }),
+                ...(mediaType ? { mediaType } : {}),
+                ...(filename ? { filename } : {}),
+            };
+        });
+    if (alarmBlocks.length) {
+        const reminders = alarmBlocks.map((block) => {
+            const entries = block
+                .split(/\r?\n/)
+                .map(parseContentLine)
+                .filter((entry) => entry !== undefined);
+            const value = (name: string) =>
+                entries.find((entry) => entry.name === name)?.value;
+            const action = value("ACTION")?.toLowerCase();
+            const trigger = value("TRIGGER");
+            if (!trigger) return undefined;
+            const recipients = entries
+                .filter((entry) => entry.name === "ATTENDEE")
+                .map((entry) => entry.value.replace(/^mailto:/i, ""));
+            return {
+                trigger: DURATION.test(trigger) ? trigger : parseDate(trigger),
+                ...(action === "email"
+                    ? { action: "email" as const }
+                    : { action: "display" as const }),
+                ...(value("DESCRIPTION")
+                    ? { description: unescapeText(value("DESCRIPTION") ?? "") }
+                    : {}),
+                ...(recipients.length ? { recipients } : {}),
+            };
+        });
+        const present = reminders.filter((entry) => entry !== undefined);
+        if (present.length) item.reminders = present;
+    }
+    return item;
+}
+
+/** Whether rewriting this resource can preserve all recurrence semantics. */
+export function isUpdateSupported(body: string): boolean {
+    const unfolded = body.replace(/\r?\n[ \t]/g, "");
+    const components = [
+        ...unfolded.matchAll(
+            /^BEGIN:(VEVENT|VTODO)\r?\n([\s\S]*?)^END:\1\r?$/gm,
+        ),
+    ];
+    return (
+        components.length === 1 &&
+        !/^(?:RECURRENCE-ID|EXDATE|RDATE)(?:;|:)/m.test(
+            components[0]?.[2] ?? "",
+        )
+    );
+}

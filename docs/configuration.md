@@ -36,6 +36,7 @@ does not start).
     "file": "sockethub.log"
   },
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc", 
@@ -126,9 +127,15 @@ For client connections and reverse proxy setups:
 
 Platforms are specified as an array of package names:
 
+CalDAV permits only public HTTPS targets by default. Its optional
+`packageConfig.allowInsecureHttp` and `packageConfig.allowPrivateAddresses`
+flags relax those checks for deployments whose administrator explicitly needs
+them. They cannot be supplied by browser clients.
+
 ```json
 {
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
@@ -150,6 +157,10 @@ the platform default):
 ```json
 {
   "packageConfig": {
+    "@sockethub/platform-caldav": {
+      "connectTimeoutMs": 15000,
+      "concurrency": 10
+    },
     "@sockethub/platform-feeds": {
       "connectTimeoutMs": 5000
     }
@@ -609,6 +620,7 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
     "traceSampleRate": 0.1
   },
   "platforms": [
+    "@sockethub/platform-caldav",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",

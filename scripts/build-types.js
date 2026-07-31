@@ -31,6 +31,10 @@ const packages = [
         entries: ["src/index.ts"],
     },
     {
+        dir: "packages/platform-caldav",
+        entries: ["src/index.ts"],
+    },
+    {
         dir: "packages/platform-dummy",
         entries: ["src/index.ts"],
     },
