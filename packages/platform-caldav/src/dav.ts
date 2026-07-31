@@ -31,9 +31,20 @@ const queryBody = (query: QueryInput) => `<?xml version="1.0" encoding="utf-8"?>
 </c:calendar-query>`;
 
 export class CalDavFailure extends Error {
-    constructor(readonly code: string) {
-        super(code);
+    constructor(
+        readonly code: string,
+        cause?: unknown,
+    ) {
+        super(code, { cause });
     }
+}
+
+async function rejectResponse(
+    response: Response,
+    code: string,
+): Promise<never> {
+    await response.body?.cancel().catch(() => {});
+    throw new CalDavFailure(code);
 }
 
 function array<T>(value: T | T[] | undefined): T[] {
@@ -138,15 +149,21 @@ export class CalDavClient {
                 // Node's fetch accepts this undici extension.
                 dispatcher: this.dispatcher,
             } as RequestInit);
-        } catch {
-            throw new CalDavFailure("caldav:connection-failed");
+        } catch (error) {
+            throw new CalDavFailure("caldav:connection-failed", error);
         }
         if (response.status >= 300 && response.status < 400) {
-            if (redirects >= MAX_REDIRECTS)
-                throw new CalDavFailure("caldav:too-many-redirects");
             const location = response.headers.get("location");
             await response.body?.cancel().catch(() => {});
+            if (redirects >= MAX_REDIRECTS)
+                throw new CalDavFailure("caldav:too-many-redirects");
             if (!location) throw new CalDavFailure("caldav:invalid-response");
+            const method = (init.method ?? "GET").toUpperCase();
+            const writable = ["POST", "PUT", "PATCH", "DELETE"].includes(
+                method,
+            );
+            if (writable && ![307, 308].includes(response.status))
+                throw new CalDavFailure("caldav:unsafe-redirect");
             return this.request(new URL(location, url), init, redirects + 1);
         }
         if (response.status === 401 || response.status === 403) {
@@ -170,7 +187,7 @@ export class CalDavClient {
             body,
         });
         if (response.status === 404)
-            throw new CalDavFailure("caldav:not-found");
+            return rejectResponse(response, "caldav:not-found");
         if (response.status !== 207) {
             await response.body?.cancel().catch(() => {});
             throw new CalDavFailure("caldav:invalid-response");
@@ -291,10 +308,12 @@ export class CalDavClient {
             },
             body,
         });
-        if (response.status === 412) throw new CalDavFailure("caldav:conflict");
+        if (response.status === 412)
+            return rejectResponse(response, "caldav:conflict");
         if (response.status === 404)
-            throw new CalDavFailure("caldav:not-found");
-        if (!response.ok) throw new CalDavFailure("caldav:create-failed");
+            return rejectResponse(response, "caldav:not-found");
+        if (!response.ok)
+            return rejectResponse(response, "caldav:create-failed");
         await response.body?.cancel().catch(() => {});
         const location = response.headers.get("location");
         const finalUrl = location ? new URL(location, resource) : resource;
@@ -373,9 +392,11 @@ export class CalDavClient {
             method: "GET",
             headers: { "if-match": etag },
         });
-        if (current.status === 412) throw new CalDavFailure("caldav:conflict");
-        if (current.status === 404) throw new CalDavFailure("caldav:not-found");
-        if (!current.ok) throw new CalDavFailure("caldav:update-failed");
+        if (current.status === 412)
+            return rejectResponse(current, "caldav:conflict");
+        if (current.status === 404)
+            return rejectResponse(current, "caldav:not-found");
+        if (!current.ok) return rejectResponse(current, "caldav:update-failed");
         if (!isUpdateSupported(await current.text()))
             throw new CalDavFailure("caldav:unsupported-update");
         const response = await this.request(resource, {
@@ -386,10 +407,12 @@ export class CalDavClient {
             },
             body,
         });
-        if (response.status === 412) throw new CalDavFailure("caldav:conflict");
+        if (response.status === 412)
+            return rejectResponse(response, "caldav:conflict");
         if (response.status === 404)
-            throw new CalDavFailure("caldav:not-found");
-        if (!response.ok) throw new CalDavFailure("caldav:update-failed");
+            return rejectResponse(response, "caldav:not-found");
+        if (!response.ok)
+            return rejectResponse(response, "caldav:update-failed");
         await response.body?.cancel().catch(() => {});
         return {
             id: resource.href,
@@ -404,10 +427,12 @@ export class CalDavClient {
             method: "DELETE",
             headers: { "if-match": etag },
         });
-        if (response.status === 412) throw new CalDavFailure("caldav:conflict");
+        if (response.status === 412)
+            return rejectResponse(response, "caldav:conflict");
         if (response.status === 404)
-            throw new CalDavFailure("caldav:not-found");
-        if (!response.ok) throw new CalDavFailure("caldav:delete-failed");
+            return rejectResponse(response, "caldav:not-found");
+        if (!response.ok)
+            return rejectResponse(response, "caldav:delete-failed");
         await response.body?.cancel().catch(() => {});
     }
 }

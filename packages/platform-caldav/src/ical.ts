@@ -28,11 +28,9 @@ function escapeText(value: string): string {
 }
 
 function unescapeText(value: string): string {
-    return value
-        .replaceAll(/\\[nN]/g, "\n")
-        .replaceAll("\\,", ",")
-        .replaceAll("\\;", ";")
-        .replaceAll("\\\\", "\\");
+    return value.replaceAll(/\\([nN,;\\])/g, (_match, character: string) =>
+        character === "n" || character === "N" ? "\n" : character,
+    );
 }
 
 function encodeParameter(value: string): string {
@@ -49,10 +47,16 @@ function decodeParameter(value: string): string {
         value.startsWith('"') && value.endsWith('"')
             ? value.slice(1, -1)
             : value;
-    return unquoted
-        .replaceAll("^'", '"')
-        .replaceAll(/\^n/gi, "\n")
-        .replaceAll("^^", "^");
+    return unquoted.replaceAll(/\^(\^|'|n|N)/g, (_match, character: string) => {
+        if (character === "^") return "^";
+        if (character === "'") return '"';
+        return "\n";
+    });
+}
+
+function contentLineValue(value: string, field: string): string {
+    if (/[\r\n]/.test(value)) throw new Error(`invalid ${field}`);
+    return value;
 }
 
 function splitOutsideQuotes(value: string, separator: string): string[] {
@@ -197,6 +201,7 @@ function personLine(
     name: "ORGANIZER" | "ATTENDEE",
     person: PersonInput,
 ): string {
+    const email = contentLineValue(person.email, `${name.toLowerCase()}.email`);
     const params: string[] = [];
     if (person.name) params.push(`CN=${encodeParameter(person.name)}`);
     if (name === "ATTENDEE") {
@@ -206,7 +211,7 @@ function personLine(
         if (person.rsvp !== undefined)
             params.push(`RSVP=${person.rsvp ? "TRUE" : "FALSE"}`);
     }
-    return `${name}${params.length ? `;${params.join(";")}` : ""}:mailto:${person.email}`;
+    return `${name}${params.length ? `;${params.join(";")}` : ""}:mailto:${email}`;
 }
 
 function alarmLines(reminder: ReminderInput): string[] {
@@ -226,7 +231,8 @@ function alarmLines(reminder: ReminderInput): string[] {
             ? [
                   "SUMMARY:Reminder",
                   ...(reminder.recipients ?? []).map(
-                      (email) => `ATTENDEE:mailto:${email}`,
+                      (email) =>
+                          `ATTENDEE:mailto:${contentLineValue(email, "reminder.recipient")}`,
                   ),
               ]
             : []),
@@ -238,11 +244,18 @@ function attachmentLine(attachment: AttachmentInput): string {
     if ((attachment.url ? 1 : 0) + (attachment.data ? 1 : 0) !== 1)
         throw new Error("attachment requires exactly one of url or data");
     const params: string[] = [];
-    if (attachment.mediaType) params.push(`FMTTYPE=${attachment.mediaType}`);
+    if (attachment.mediaType)
+        params.push(
+            `FMTTYPE=${contentLineValue(attachment.mediaType, "attachment.mediaType")}`,
+        );
     if (attachment.filename)
         params.push(`FILENAME=${encodeParameter(attachment.filename)}`);
     if (attachment.data) params.push("ENCODING=BASE64", "VALUE=BINARY");
-    return `ATTACH${params.length ? `;${params.join(";")}` : ""}:${attachment.url ?? attachment.data}`;
+    const value = contentLineValue(
+        attachment.url ?? attachment.data ?? "",
+        attachment.url ? "attachment.url" : "attachment.data",
+    );
+    return `ATTACH${params.length ? `;${params.join(";")}` : ""}:${value}`;
 }
 
 function compareTimes(
@@ -319,7 +332,7 @@ export function buildICalendar(
     ];
     if (input.content) lines.push(`DESCRIPTION:${escapeText(input.content)}`);
     if (input.location) lines.push(`LOCATION:${escapeText(input.location)}`);
-    if (input.url) lines.push(`URL:${input.url}`);
+    if (input.url) lines.push(`URL:${contentLineValue(input.url, "url")}`);
     if (input.startTime)
         lines.push(
             temporalLine("DTSTART", input.startTime, allDay, input.timeZone),
@@ -418,18 +431,25 @@ export function parseICalendar(
     if (first("URL")) item.url = first("URL")?.value;
     if (start) item.startTime = parseDate(start.value);
     if (end) item.endTime = parseDate(end.value);
-    if (due) item.due = parseDate(due.value);
+    if (component === "task" && due) item.due = parseDate(due.value);
     if (start?.params.VALUE === "DATE") item.allDay = true;
     if (timeZone) item.timeZone = timeZone;
-    if (first("STATUS"))
+    if (component === "task" && first("STATUS"))
         item.status = first(
             "STATUS",
         )?.value.toLowerCase() as CalendarItem["status"];
-    if (first("COMPLETED"))
+    if (component === "task" && first("COMPLETED"))
         item.completedTime = parseDate(first("COMPLETED")?.value ?? "");
-    if (first("PERCENT-COMPLETE"))
-        item.percentComplete = Number(first("PERCENT-COMPLETE")?.value);
-    if (first("SEQUENCE")) item.sequence = Number(first("SEQUENCE")?.value);
+    const percentComplete = Number(first("PERCENT-COMPLETE")?.value);
+    if (
+        component === "task" &&
+        Number.isInteger(percentComplete) &&
+        percentComplete >= 0 &&
+        percentComplete <= 100
+    )
+        item.percentComplete = percentComplete;
+    const sequence = Number(first("SEQUENCE")?.value);
+    if (Number.isInteger(sequence) && sequence >= 0) item.sequence = sequence;
     const rule = first("RRULE")?.value;
     if (rule) {
         const parts = Object.fromEntries(
@@ -494,7 +514,7 @@ export function parseICalendar(
             };
         });
     if (alarmBlocks.length) {
-        item.reminders = alarmBlocks.map((block) => {
+        const reminders = alarmBlocks.map((block) => {
             const entries = block
                 .split(/\r?\n/)
                 .map(parseContentLine)
@@ -502,11 +522,13 @@ export function parseICalendar(
             const value = (name: string) =>
                 entries.find((entry) => entry.name === name)?.value;
             const action = value("ACTION")?.toLowerCase();
+            const trigger = value("TRIGGER");
+            if (!trigger) return undefined;
             const recipients = entries
                 .filter((entry) => entry.name === "ATTENDEE")
                 .map((entry) => entry.value.replace(/^mailto:/i, ""));
             return {
-                trigger: value("TRIGGER") ?? "-PT15M",
+                trigger: DURATION.test(trigger) ? trigger : parseDate(trigger),
                 ...(action === "email"
                     ? { action: "email" as const }
                     : { action: "display" as const }),
@@ -516,6 +538,8 @@ export function parseICalendar(
                 ...(recipients.length ? { recipients } : {}),
             };
         });
+        const present = reminders.filter((entry) => entry !== undefined);
+        if (present.length) item.reminders = present;
     }
     return item;
 }

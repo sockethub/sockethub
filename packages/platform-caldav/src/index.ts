@@ -138,9 +138,9 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as CalendarObjectInput;
-        Promise.resolve()
-            .then(() => {
-                this.assertResource(job.target?.id ?? "", input.id ?? "");
+        this.calendar(client, job.target?.id ?? "")
+            .then((calendar) => {
+                this.assertResource(calendar.id, input.id ?? "");
                 const generated = buildICalendar(input);
                 return client
                     .update(input.id ?? "", input.etag ?? "", generated.body)
@@ -170,9 +170,9 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as DeleteInput;
-        Promise.resolve()
-            .then(() => {
-                this.assertResource(job.target?.id ?? "", input.id);
+        this.calendar(client, job.target?.id ?? "")
+            .then((calendar) => {
+                this.assertResource(calendar.id, input.id);
                 return client.delete(input.id, input.etag);
             })
             .then(() =>
@@ -221,10 +221,21 @@ export default class CalDav implements PlatformInterface {
         } catch {
             throw new CalDavFailure("caldav:invalid-resource");
         }
-        const prefix = calendar.href.endsWith("/")
-            ? calendar.href
-            : `${calendar.href}/`;
-        if (!resource.href.startsWith(prefix) || resource.href === prefix)
+        if (
+            calendar.search ||
+            calendar.hash ||
+            resource.search ||
+            resource.hash
+        )
+            throw new CalDavFailure("caldav:invalid-resource");
+        const prefix = calendar.pathname.endsWith("/")
+            ? calendar.pathname
+            : `${calendar.pathname}/`;
+        if (
+            resource.origin !== calendar.origin ||
+            !resource.pathname.startsWith(prefix) ||
+            resource.pathname === prefix
+        )
             throw new CalDavFailure("caldav:invalid-resource");
     }
 
@@ -262,6 +273,9 @@ export default class CalDav implements PlatformInterface {
                 : `caldav:invalid-${job.type}: ${error instanceof Error ? error.message : String(error)}`;
         this.log.error(`CalDAV ${job.type} failed for actor ${job.actor.id}`, {
             code,
+            ...(error instanceof Error && error.cause instanceof Error
+                ? { cause: error.cause.message }
+                : {}),
         });
         done(code);
     }

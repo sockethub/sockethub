@@ -20,6 +20,10 @@ describe("iCalendar generation", () => {
         expect(result.body).toContain("SUMMARY:Review\\, plan\\; ship\r\n");
         expect(result.body).toContain("DESCRIPTION:first\\nsecond\r\n");
         expect(result.body.endsWith("\r\n")).toBeTrue();
+        expect(
+            parseICalendar(result.body, "https://calendar.example/item.ics")
+                .content,
+        ).toBe("first\nsecond");
     });
 
     it("creates an all-day event with an exclusive end date", () => {
@@ -104,7 +108,59 @@ describe("iCalendar generation", () => {
         expect(result.body).toContain("TRIGGER;VALUE=DATE-TIME:20260803T124500Z");
         expect(parseICalendar(result.body, "https://calendar.example/item.ics")).toMatchObject({
             attendees: [{ email: "guest@example.test", name: "Smith; John" }],
-            reminders: [{ trigger: "20260803T124500Z" }],
+            reminders: [{ trigger: "2026-08-03T12:45:00Z" }],
+        });
+    });
+
+    it("rejects content-line injection in direct values", () => {
+        expect(() =>
+            buildICalendar({
+                type: "event",
+                name: "Injected",
+                startTime: "2026-08-03T13:00:00Z",
+                attachments: [
+                    { data: "QUFB\r\nATTENDEE:mailto:evil@example.test" },
+                ],
+            }),
+        ).toThrow("invalid attachment.data");
+        expect(() =>
+            buildICalendar({
+                type: "event",
+                name: "Injected",
+                startTime: "2026-08-03T13:00:00Z",
+                attendees: [{ email: "safe@example.test\r\nBEGIN:VALARM" }],
+            }),
+        ).toThrow("invalid attendee.email");
+    });
+
+    it("skips malformed optional properties instead of fabricating values", () => {
+        const body = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nDTSTART:20260803T130000Z\r\nDUE:20260804T130000Z\r\nSTATUS:CONFIRMED\r\nSEQUENCE:nope\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        expect(
+            parseICalendar(body, "https://calendar.example/one.ics"),
+        ).toEqual({
+            id: "https://calendar.example/one.ics",
+            type: "event",
+            uid: "one",
+            name: "One",
+            startTime: "2026-08-03T13:00:00Z",
+            updateSupported: true,
+        });
+    });
+
+    it("round-trips literal text and parameter escape sequences", () => {
+        const generated = buildICalendar({
+            type: "event",
+            name: String.raw`literal \n and slash \\`,
+            startTime: "2026-08-03T13:00:00Z",
+            attendees: [{ email: "a@example.test", name: `caret ^ and "quote"` }],
+        });
+        expect(
+            parseICalendar(generated.body, "https://calendar.example/one.ics"),
+        ).toMatchObject({
+            name: String.raw`literal \n and slash \\`,
+            attendees: [
+                { email: "a@example.test", name: `caret ^ and "quote"` },
+            ],
         });
     });
 

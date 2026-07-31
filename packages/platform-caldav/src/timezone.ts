@@ -1,4 +1,7 @@
 const cache = new Map<string, string[]>();
+const MAX_CACHE_ENTRIES = 256;
+const MIN_YEAR = 1970;
+const MAX_YEAR = 2100;
 
 function formatter(timeZone: string) {
     return new Intl.DateTimeFormat("en-CA", {
@@ -65,12 +68,14 @@ export function timeZoneLines(
     firstYear: number,
     lastYear: number,
 ): string[] {
-    const cacheKey = `${timeZone}:${firstYear}:${lastYear}`;
+    const first = Math.min(Math.max(firstYear, MIN_YEAR), MAX_YEAR);
+    const last = Math.min(Math.max(lastYear, first), MAX_YEAR);
+    const cacheKey = `${timeZone}:${first}:${last}`;
     const existing = cache.get(cacheKey);
     if (existing) return existing;
     const format = formatter(timeZone);
-    const start = Date.UTC(firstYear, 0, 1);
-    const end = Date.UTC(lastYear + 1, 0, 1);
+    const start = Date.UTC(first, 0, 1);
+    const end = Date.UTC(last + 1, 0, 1);
     const step = 7 * 24 * 60 * 60 * 1000;
     let previousInstant = start;
     let previous = localParts(format, previousInstant);
@@ -108,7 +113,7 @@ export function timeZoneLines(
     if (transitions.length === 0) {
         lines.push(
             "BEGIN:STANDARD",
-            `DTSTART:${firstYear}0101T000000`,
+            `DTSTART:${first}0101T000000`,
             `TZOFFSETFROM:${offsetValue(previous.offset)}`,
             `TZOFFSETTO:${offsetValue(previous.offset)}`,
             ...(previous.name ? [`TZNAME:${previous.name}`] : []),
@@ -129,6 +134,10 @@ export function timeZoneLines(
         }
     }
     lines.push("END:VTIMEZONE");
+    if (cache.size >= MAX_CACHE_ENTRIES) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+    }
     cache.set(cacheKey, lines);
     return lines;
 }

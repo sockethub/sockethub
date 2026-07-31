@@ -81,6 +81,35 @@ describe("CalDAV client", () => {
         expect(calls).toBe(1);
     });
 
+    it("does not replay writes across non-preserving redirects", async () => {
+        let calls = 0;
+        globalThis.fetch = (async () => {
+            calls += 1;
+            return new Response(null, {
+                status: 303,
+                headers: { location: "/other/item.ics" },
+            });
+        }) as typeof fetch;
+        const client = new CalDavClient(
+            "https://calendar.example/dav/",
+            { username: "alice", password: "secret" },
+        );
+        await expect(
+            client.create(
+                {
+                    id: "https://calendar.example/calendars/alice/work/",
+                    type: "calendar",
+                    name: "Work",
+                    components: ["event"],
+                },
+                "one",
+                "data",
+            ),
+        ).rejects.toEqual(new CalDavFailure("caldav:unsafe-redirect"));
+        await client.close();
+        expect(calls).toBe(1);
+    });
+
     it("falls back to the standard well-known URL", async () => {
         const requests: string[] = [];
         globalThis.fetch = (async (url: URL | RequestInfo) => {

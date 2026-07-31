@@ -26,63 +26,77 @@ describe("CalDAV against Radicale", () => {
             15_000,
             { allowPrivateAddresses: true, allowInsecureHttp: true },
         );
-        const calendars = await client.discoverCalendars();
-        const calendar = calendars.find((item) => item.name === "Sockethub");
-        expect(calendar).toBeDefined();
-        if (!calendar) throw new Error("Radicale calendar was not discovered");
-        calendarId = calendar?.id ?? calendarId;
+        try {
+            const calendars = await client.discoverCalendars();
+            const calendar = calendars.find(
+                (item) => item.name === "Sockethub",
+            );
+            expect(calendar).toBeDefined();
+            if (!calendar)
+                throw new Error("Radicale calendar was not discovered");
+            calendarId = calendar?.id ?? calendarId;
 
-        const event = buildICalendar({
-            type: "event",
-            uid: "radicale-event",
-            name: "Radicale event",
-            startTime: "2026-08-03T15:00:00",
-            endTime: "2026-08-03T16:00:00",
-            timeZone: "Europe/Prague",
-            recurrence: { frequency: "weekly", count: 2 },
-            attendees: [{ email: "guest@example.test" }],
-            reminders: [{ trigger: "-PT10M" }],
-        });
-        const created = await client.create(calendar, event.uid, event.body);
-        const task = buildICalendar({
-            type: "task",
-            uid: "radicale-task",
-            name: "Radicale task",
-            due: "2026-08-04",
-            allDay: true,
-        });
-        const createdTask = await client.create(calendar, task.uid, task.body);
+            const event = buildICalendar({
+                type: "event",
+                uid: "radicale-event",
+                name: "Radicale event",
+                startTime: "2026-08-03T15:00:00",
+                endTime: "2026-08-03T16:00:00",
+                timeZone: "Europe/Prague",
+                recurrence: { frequency: "weekly", count: 2 },
+                attendees: [{ email: "guest@example.test" }],
+                reminders: [{ trigger: "-PT10M" }],
+            });
+            const created = await client.create(
+                calendar,
+                event.uid,
+                event.body,
+            );
+            const task = buildICalendar({
+                type: "task",
+                uid: "radicale-task",
+                name: "Radicale task",
+                due: "2026-08-04",
+                allDay: true,
+            });
+            const createdTask = await client.create(
+                calendar,
+                task.uid,
+                task.body,
+            );
 
-        const items = await client.query(calendar);
-        expect(items.map((item) => item.uid).sort()).toEqual([
-            "radicale-event",
-            "radicale-task",
-        ]);
-        const storedEvent = items.find((item) => item.uid === event.uid);
-        expect(storedEvent?.timeZone).toBe("Europe/Prague");
-        expect(storedEvent?.recurrence?.frequency).toBe("weekly");
+            const items = await client.query(calendar);
+            expect(items.map((item) => item.uid).sort()).toEqual([
+                "radicale-event",
+                "radicale-task",
+            ]);
+            const storedEvent = items.find((item) => item.uid === event.uid);
+            expect(storedEvent?.timeZone).toBe("Europe/Prague");
+            expect(storedEvent?.recurrence?.frequency).toBe("weekly");
 
-        if (!storedEvent) throw new Error("created event was not returned");
-        const updated = buildICalendar({
-            ...storedEvent,
-            name: "Updated event",
-            sequence: 1,
-        });
-        await client.update(
-            created.id,
-            storedEvent?.etag ?? created.etag ?? "",
-            updated.body,
-        );
-        const refreshed = await client.query(calendar, { type: "event" });
-        expect(refreshed[0]?.name).toBe("Updated event");
-        await client.delete(created.id, refreshed[0]?.etag ?? "");
-        await client.delete(
-            createdTask.id,
-            items.find((item) => item.uid === task.uid)?.etag ??
-                createdTask.etag ??
-                "",
-        );
-        expect(await client.query(calendar)).toHaveLength(0);
-        await client.close();
+            if (!storedEvent) throw new Error("created event was not returned");
+            const updated = buildICalendar({
+                ...storedEvent,
+                name: "Updated event",
+                sequence: 1,
+            });
+            await client.update(
+                created.id,
+                storedEvent?.etag ?? created.etag ?? "",
+                updated.body,
+            );
+            const refreshed = await client.query(calendar, { type: "event" });
+            expect(refreshed[0]?.name).toBe("Updated event");
+            await client.delete(created.id, refreshed[0]?.etag ?? "");
+            await client.delete(
+                createdTask.id,
+                items.find((item) => item.uid === task.uid)?.etag ??
+                    createdTask.etag ??
+                    "",
+            );
+            expect(await client.query(calendar)).toHaveLength(0);
+        } finally {
+            await client.close();
+        }
     });
 });

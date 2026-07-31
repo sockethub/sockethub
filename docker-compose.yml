@@ -56,8 +56,13 @@ services:
     radicale:
         build:
             context: ./integration/radicale
+        healthcheck:
+            test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5232/" ]
+            interval: 1s
+            timeout: 2s
+            retries: 20
         ports:
-            - "5232:5232"
+            - "127.0.0.1:5232:5232"
         networks:
             - sockethub-net
 
