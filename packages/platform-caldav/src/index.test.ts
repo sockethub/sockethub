@@ -15,6 +15,9 @@ describe("CalDAV resource membership", () => {
         for (const resource of [
             calendar,
             `${calendar}?delete=true`,
+            "https://evil.example/dav/alice/work/item.ics",
+            "https://calendar.example/dav/alice/work-other/item.ics",
+            `${calendar}item.ics#fragment`,
             `${calendar}..%2f..%2ffiles/item`,
             `${calendar}%2e%2e%2f%2e%2e%2ffiles/item`,
             `${calendar}%252e%252e%252ffiles/item`,
