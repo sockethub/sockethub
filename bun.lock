@@ -132,11 +132,11 @@
       "name": "@sockethub/platform-caldav",
       "version": "1.0.0-alpha.0",
       "dependencies": {
+        "@sockethub/schemas": "^3.0.0-alpha.16",
         "@sockethub/util": "^1.0.0-alpha.4",
         "fast-xml-parser": "^5.2.5",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.16",
         "@types/bun": "latest",
         "undici": "^7.19.0",
       },
