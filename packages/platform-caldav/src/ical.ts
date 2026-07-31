@@ -266,6 +266,23 @@ function compareTimes(
         throw new Error("end/due must be after startTime");
 }
 
+function timeZoneRange(
+    input: CalendarObjectInput,
+    fallbackYear: number,
+): [number, number] {
+    const years = [
+        input.startTime,
+        input.type === "event" ? input.endTime : input.due,
+        input.recurrence?.until,
+    ]
+        .filter((value) => value !== undefined)
+        .map((value) => Number(value.slice(0, 4)))
+        .filter(Number.isInteger);
+    const first = years.length ? Math.min(...years) : fallbackYear;
+    const last = years.length ? Math.max(...years) : fallbackYear;
+    return [first - 1, Math.max(last + 1, first + 30)];
+}
+
 export function buildICalendar(
     input: CalendarObjectInput,
     now = new Date(),
@@ -282,12 +299,19 @@ export function buildICalendar(
         input.timeZone,
     );
     const component = input.type === "event" ? "VEVENT" : "VTODO";
+    const zoneRange = timeZoneRange(input, now.getUTCFullYear());
     const lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
         "CALSCALE:GREGORIAN",
         "PRODID:-//Sockethub//CalDAV Platform//EN",
-        ...(input.timeZone ? timeZoneLines(validTimeZone(input.timeZone)) : []),
+        ...(input.timeZone
+            ? timeZoneLines(
+                  validTimeZone(input.timeZone),
+                  zoneRange[0],
+                  zoneRange[1],
+              )
+            : []),
         `BEGIN:${component}`,
         `UID:${escapeText(uid)}`,
         `DTSTAMP:${utcDateTime(now.toISOString(), "now")}`,
@@ -499,9 +523,15 @@ export function parseICalendar(
 /** Whether rewriting this resource can preserve all recurrence semantics. */
 export function isUpdateSupported(body: string): boolean {
     const unfolded = body.replace(/\r?\n[ \t]/g, "");
-    const components = unfolded.match(/^BEGIN:(?:VEVENT|VTODO)\r?$/gm) ?? [];
+    const components = [
+        ...unfolded.matchAll(
+            /^BEGIN:(VEVENT|VTODO)\r?\n([\s\S]*?)^END:\1\r?$/gm,
+        ),
+    ];
     return (
         components.length === 1 &&
-        !/^(?:RECURRENCE-ID|EXDATE|RDATE)(?:;|:)/m.test(unfolded)
+        !/^(?:RECURRENCE-ID|EXDATE|RDATE)(?:;|:)/m.test(
+            components[0]?.[2] ?? "",
+        )
     );
 }

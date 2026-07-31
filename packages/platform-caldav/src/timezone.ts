@@ -60,12 +60,17 @@ function transitionDateTime(instant: number, offset: number): string {
 }
 
 /** Build a self-contained VTIMEZONE from the runtime's current IANA tzdata. */
-export function timeZoneLines(timeZone: string): string[] {
-    const existing = cache.get(timeZone);
+export function timeZoneLines(
+    timeZone: string,
+    firstYear: number,
+    lastYear: number,
+): string[] {
+    const cacheKey = `${timeZone}:${firstYear}:${lastYear}`;
+    const existing = cache.get(cacheKey);
     if (existing) return existing;
     const format = formatter(timeZone);
-    const start = Date.UTC(1970, 0, 1);
-    const end = Date.UTC(2101, 0, 1);
+    const start = Date.UTC(firstYear, 0, 1);
+    const end = Date.UTC(lastYear + 1, 0, 1);
     const step = 7 * 24 * 60 * 60 * 1000;
     let previousInstant = start;
     let previous = localParts(format, previousInstant);
@@ -103,7 +108,7 @@ export function timeZoneLines(timeZone: string): string[] {
     if (transitions.length === 0) {
         lines.push(
             "BEGIN:STANDARD",
-            "DTSTART:19700101T000000",
+            `DTSTART:${firstYear}0101T000000`,
             `TZOFFSETFROM:${offsetValue(previous.offset)}`,
             `TZOFFSETTO:${offsetValue(previous.offset)}`,
             ...(previous.name ? [`TZNAME:${previous.name}`] : []),
@@ -124,6 +129,6 @@ export function timeZoneLines(timeZone: string): string[] {
         }
     }
     lines.push("END:VTIMEZONE");
-    cache.set(timeZone, lines);
+    cache.set(cacheKey, lines);
     return lines;
 }

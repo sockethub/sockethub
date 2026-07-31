@@ -77,6 +77,7 @@ describe("iCalendar generation", () => {
         expect(result.body).toContain("DTSTART;TZID=Europe/Prague:20260803T150000");
         expect(result.body).toContain("BEGIN:VTIMEZONE\r\n");
         expect(result.body).toContain("TZID:Europe/Prague\r\n");
+        expect(Buffer.byteLength(result.body)).toBeLessThan(10_000);
         expect(result.body).toContain("RRULE:FREQ=WEEKLY;COUNT=4;BYDAY=MO");
         expect(result.body).toContain("ORGANIZER;CN=Owner:mailto:owner@example.test");
         expect(result.body).toContain("BEGIN:VALARM");
@@ -113,6 +114,11 @@ describe("iCalendar generation", () => {
         expect(isUpdateSupported(simple.replace("SUMMARY:One", "EXDATE:20260804T100000Z\r\nSUMMARY:One"))).toBeFalse();
         expect(isUpdateSupported(simple.replace("END:VCALENDAR", "BEGIN:VEVENT\r\nUID:two\r\nSUMMARY:Two\r\nEND:VEVENT\r\nEND:VCALENDAR"))).toBeFalse();
         expect(parseICalendar(simple.replace("SUMMARY:One", "DESCRIPTION:BEGIN:VTODO\r\nSUMMARY:One"), "https://calendar.example/one.ics").type).toBe("event");
+        const withTimeZoneRDate = simple.replace(
+            "BEGIN:VEVENT",
+            "BEGIN:VTIMEZONE\r\nTZID:X\r\nBEGIN:STANDARD\r\nDTSTART:19700101T000000\r\nRDATE:19710101T000000\r\nTZOFFSETFROM:+0000\r\nTZOFFSETTO:+0000\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT",
+        );
+        expect(isUpdateSupported(withTimeZoneRDate)).toBeTrue();
     });
 
     it("parses items returned by a CalDAV server", () => {
