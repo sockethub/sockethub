@@ -57,6 +57,11 @@ describe("iCalendar generation", () => {
     it("rejects invalid ranges and UID injection", () => {
         expect(() => buildICalendar({ type: "event", name: "x", startTime: "2026-08-04", endTime: "2026-08-03", allDay: true })).toThrow();
         expect(() => buildICalendar({ type: "task", uid: "bad\r\nUID:other", name: "x" })).toThrow();
+        for (const uid of ["path/item", String.raw`path\item`, "%2F", "%252F"]) {
+            expect(() => buildICalendar({ type: "task", uid, name: "x" })).toThrow(
+                "invalid uid",
+            );
+        }
     });
 
     it("folds UTF-8 lines at the byte limit", () => {

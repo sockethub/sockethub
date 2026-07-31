@@ -135,6 +135,8 @@ Timed values use RFC 3339 with a UTC offset, or a local date-time plus an IANA
 `timeZone`. All-day values use `YYYY-MM-DD`; an event's end date is exclusive.
 Named time zones include a `VTIMEZONE` definition generated from the server's
 IANA timezone data.
+The optional `uid` field must not contain `%`, `/`, or `\`; omit it to let
+Sockethub generate a safe UID.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
 a `recipients` array. Tasks support `due`, `status`, `completedTime`, and
 `percentComplete`.

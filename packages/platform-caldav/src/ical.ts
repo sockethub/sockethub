@@ -301,7 +301,7 @@ export function buildICalendar(
     now = new Date(),
 ): { uid: string; body: string } {
     const uid = input.uid ?? `${randomUUID()}@sockethub`;
-    if (/\r|\n/.test(uid)) throw new Error("invalid uid");
+    if (/[\r\n%/\\]/.test(uid)) throw new Error("invalid uid");
     const allDay = input.allDay === true;
     if (allDay && input.timeZone)
         throw new Error("all-day objects cannot have timeZone");
