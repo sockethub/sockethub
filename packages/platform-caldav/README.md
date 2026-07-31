@@ -145,6 +145,8 @@ Update sends the complete event or task returned by `query`, including `id`,
 `uid`, and `etag`. Increment `sequence` when changing scheduling information.
 An update is rejected when `updateSupported` is false, which protects recurrence
 exceptions, exclusion dates, and multi-component resources from being lost.
+Properties outside Sockethub's item model, such as `CATEGORIES` and `X-`
+properties, are not preserved when an otherwise supported item is updated.
 
 ```json
 {
