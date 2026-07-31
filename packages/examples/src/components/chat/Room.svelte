@@ -13,7 +13,7 @@ interface Props {
     context: string;
     sockethubState: SockethubStateStore;
     // For IRC, the connection server used to qualify the room id as
-    // `channel@server` (no leading `#`; XMPP rooms are already full JIDs).
+    // `#channel@server` (XMPP rooms are already full JIDs).
     server?: string;
 }
 
@@ -36,16 +36,14 @@ $effect(() => {
 });
 
 async function joinRoom(): Promise<void> {
-    // IRC room targets must be server-qualified (`channel@server`); never fall
+    // IRC room targets must be server-qualified (`#channel@server`); never fall
     // back to a bare channel, which the platform rejects.
     if (context === "irc" && !server) {
-        console.error("IRC room joins require a server (channel@server)");
+        console.error("IRC room joins require a server (#channel@server)");
         return;
     }
     joining = true;
-    // The platform's id omits the leading `#` (kept only in `name` for display).
-    const targetId =
-        context === "irc" ? `${room.replace(/^#/, "")}@${server}` : room;
+    const targetId = context === "irc" ? `${room}@${server}` : room;
     return await send({
         "@context": await contextFor(context),
         type: "join",
@@ -90,10 +88,10 @@ async function joinRoom(): Promise<void> {
                 id="room" 
                 bind:value={room} 
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
-                placeholder="sockethub@irc.libera.chat, kosmos-random@kosmos.chat"
+                placeholder="#sockethub or kosmos-random@kosmos.chat"
             />
             <p class="text-gray-500 text-xs">
-                💡 IRC: channel@server (e.g. sockethub@irc.libera.chat); include # in name when sending (e.g. #sockethub) | XMPP: room@server.com
+                💡 IRC: enter a channel with its # (e.g. #sockethub); XMPP: room@server.com
             </p>
         </div>
         

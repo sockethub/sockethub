@@ -101,4 +101,16 @@ describe("IrcToActivityStreams", () => {
             );
         });
     });
+
+    it("preserves multiple channel sigils in room ids", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "##private@localhost",
+                name: "##private",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test PRIVMSG ##private :hello");
+    });
 });

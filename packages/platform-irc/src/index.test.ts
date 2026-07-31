@@ -59,7 +59,7 @@ const newActor = {
 
 const targetRoom = {
     type: "room",
-    id: "a-room@irc.example.com",
+    id: "#a-room@irc.example.com",
     name: "#a-room",
 };
 
@@ -442,6 +442,15 @@ describe("Initialize IRC Platform", () => {
             );
         });
 
+        it("preserves multiple channel sigils when resolving a room target", () => {
+            expect(
+                platform.resolveIrcTarget({
+                    type: "room",
+                    id: "##a-room@irc.example.com",
+                }),
+            ).toEqual("##a-room");
+        });
+
         describe("after join", () => {
             beforeEach((done) => {
                 platform.join(
@@ -617,7 +626,7 @@ describe("Initialize IRC Platform", () => {
                             actor: actor,
                             target: {
                                 type: "room",
-                                id: "a-room@irc.example.com",
+                                id: "#a-room@irc.example.com",
                             },
                             object: { type: "attendance" },
                         },
@@ -644,7 +653,7 @@ describe("Initialize IRC Platform", () => {
                         },
                         (err) => {
                             expect(err).toEqual(
-                                "IRC room targets must be server-qualified as 'channel@server'",
+                                "IRC room targets must be server-qualified as '#channel@server'",
                             );
                             expect(rawCalls).toEqual([]);
                             done();
