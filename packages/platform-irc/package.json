@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "4.0.0-alpha.16",
+  "version": "4.0.0-alpha.17",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -45,22 +45,22 @@
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
-    "@sockethub/irc2as": "^4.0.0-alpha.16",
+    "@sockethub/irc2as": "^4.0.0-alpha.17",
     "irc-socket-sasl": "^4.1.2"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.16",
+    "@sockethub/schemas": "^3.0.0-alpha.17",
     "@types/bun": "latest",
     "typedoc": "^0.28.14"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.16"
+    "@sockethub/server": "^5.0.0-alpha.17"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
   },
-  "gitHead": "1a1a01ffe7b9d356aacfc4ae583d553e5df6f97d",
+  "gitHead": "578a6432b9f09a8484832a7ff3e157c1d3898a7e",
   "types": "./dist/index.d.ts"
 }
