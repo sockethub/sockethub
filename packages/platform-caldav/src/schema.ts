@@ -112,6 +112,7 @@ const shared = {
     attendees: { type: "array", maxItems: 1000, items: person },
     reminders: { type: "array", maxItems: 100, items: reminder },
     attachments: { type: "array", maxItems: 100, items: attachment },
+    updateSupported: { type: "boolean" },
 };
 const eventObject = {
     type: "object",
@@ -277,7 +278,7 @@ export const PlatformCalDavSchema = {
                             url: {
                                 type: "string",
                                 format: "uri",
-                                pattern: "^https://",
+                                pattern: "^https?://",
                                 maxLength: 4096,
                             },
                             username: {
@@ -301,7 +302,7 @@ export const PlatformCalDavSchema = {
                             url: {
                                 type: "string",
                                 format: "uri",
-                                pattern: "^https://",
+                                pattern: "^https?://",
                                 maxLength: 4096,
                             },
                             token: {

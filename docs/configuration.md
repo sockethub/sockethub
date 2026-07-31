@@ -127,6 +127,11 @@ For client connections and reverse proxy setups:
 
 Platforms are specified as an array of package names:
 
+CalDAV permits only public HTTPS targets by default. Its optional
+`packageConfig.allowInsecureHttp` and `packageConfig.allowPrivateAddresses`
+flags relax those checks for deployments whose administrator explicitly needs
+them. They cannot be supplied by browser clients.
+
 ```json
 {
   "platforms": [

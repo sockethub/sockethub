@@ -1,10 +1,11 @@
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import { XMLParser } from "fast-xml-parser";
 import type { Agent } from "undici";
-import { parseICalendar } from "./ical.js";
+import { isUpdateSupported, parseICalendar } from "./ical.js";
 import type { CalendarDescription, CalendarItem, QueryInput } from "./types.js";
 
 const MAX_REDIRECTS = 5;
+const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
 const DAV_PROPS = `<?xml version="1.0" encoding="utf-8"?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
   <d:prop><d:current-user-principal/><c:calendar-home-set/></d:prop>
@@ -101,7 +102,7 @@ export class CalDavClient {
                 : `Basic ${Buffer.from(`${authentication.username}:${authentication.password}`, "utf8").toString("base64")}`;
         this.dispatcher = createGuardedDispatcher({
             allowPrivateAddresses: networkOptions.allowPrivateAddresses,
-            maxResponseBytes: 1024 * 1024,
+            maxResponseBytes: MAX_RESPONSE_BYTES,
         });
     }
 
@@ -368,6 +369,15 @@ export class CalDavClient {
     ): Promise<{ id: string; etag?: string }> {
         const resource = new URL(id);
         this.assertAllowed(resource);
+        const current = await this.request(resource, {
+            method: "GET",
+            headers: { "if-match": etag },
+        });
+        if (current.status === 412) throw new CalDavFailure("caldav:conflict");
+        if (current.status === 404) throw new CalDavFailure("caldav:not-found");
+        if (!current.ok) throw new CalDavFailure("caldav:update-failed");
+        if (!isUpdateSupported(await current.text()))
+            throw new CalDavFailure("caldav:unsupported-update");
         const response = await this.request(resource, {
             method: "PUT",
             headers: {

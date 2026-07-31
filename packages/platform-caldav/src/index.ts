@@ -26,6 +26,8 @@ export default class CalDav implements PlatformInterface {
         persist: false,
         requireCredentials: ["fetch", "query", "create", "update", "delete"],
         connectTimeoutMs: 15_000,
+        allowPrivateAddresses: false,
+        allowInsecureHttp: false,
         concurrency: 10,
     };
 
@@ -76,14 +78,8 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as CalendarObjectInput;
-        client
-            .discoverCalendars()
-            .then(async (calendars) => {
-                const target = calendars.find(
-                    (calendar) =>
-                        calendar.id === new URL(job.target?.id ?? "").href,
-                );
-                if (!target) throw new CalDavFailure("caldav:invalid-calendar");
+        this.calendar(client, job.target?.id ?? "")
+            .then(async (target) => {
                 if (!target.components.includes(input.type)) {
                     throw new CalDavFailure("caldav:unsupported-component");
                 }
@@ -142,11 +138,9 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as CalendarObjectInput;
-        this.calendar(client, job.target?.id ?? "")
-            .then((calendar) => {
-                this.assertResource(calendar.id, input.id ?? "");
-                if (!calendar.components.includes(input.type))
-                    throw new CalDavFailure("caldav:unsupported-component");
+        Promise.resolve()
+            .then(() => {
+                this.assertResource(job.target?.id ?? "", input.id ?? "");
                 const generated = buildICalendar(input);
                 return client
                     .update(input.id ?? "", input.etag ?? "", generated.body)
@@ -176,9 +170,9 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as DeleteInput;
-        this.calendar(client, job.target?.id ?? "")
-            .then((calendar) => {
-                this.assertResource(calendar.id, input.id);
+        Promise.resolve()
+            .then(() => {
+                this.assertResource(job.target?.id ?? "", input.id);
                 return client.delete(input.id, input.etag);
             })
             .then(() =>
@@ -197,6 +191,10 @@ export default class CalDav implements PlatformInterface {
             url,
             authentication,
             this.config.connectTimeoutMs,
+            {
+                allowPrivateAddresses: this.config.allowPrivateAddresses,
+                allowInsecureHttp: this.config.allowInsecureHttp,
+            },
         );
     }
 
@@ -261,7 +259,7 @@ export default class CalDav implements PlatformInterface {
         const code =
             error instanceof CalDavFailure
                 ? error.code
-                : `caldav:invalid-${job.type}`;
+                : `caldav:invalid-${job.type}: ${error instanceof Error ? error.message : String(error)}`;
         this.log.error(`CalDAV ${job.type} failed for actor ${job.actor.id}`, {
             code,
         });

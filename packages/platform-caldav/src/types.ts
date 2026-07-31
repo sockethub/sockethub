@@ -88,6 +88,7 @@ export interface CalendarItem extends CalendarObjectInput {
     id: string;
     uid: string;
     etag?: string;
+    updateSupported: boolean;
 }
 
 export interface QueryInput {

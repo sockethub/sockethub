@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { timeZoneLines } from "./timezone.js";
 import type {
     AttachmentInput,
     CalendarItem,
@@ -32,6 +33,77 @@ function unescapeText(value: string): string {
         .replaceAll("\\,", ",")
         .replaceAll("\\;", ";")
         .replaceAll("\\\\", "\\");
+}
+
+function encodeParameter(value: string): string {
+    const encoded = value
+        .replaceAll("^", "^^")
+        .replaceAll("\r\n", "^n")
+        .replaceAll(/[\r\n]/g, "^n")
+        .replaceAll('"', "^'");
+    return /[,:;\s]/.test(encoded) ? `"${encoded}"` : encoded;
+}
+
+function decodeParameter(value: string): string {
+    const unquoted =
+        value.startsWith('"') && value.endsWith('"')
+            ? value.slice(1, -1)
+            : value;
+    return unquoted
+        .replaceAll("^'", '"')
+        .replaceAll(/\^n/gi, "\n")
+        .replaceAll("^^", "^");
+}
+
+function splitOutsideQuotes(value: string, separator: string): string[] {
+    const parts: string[] = [];
+    let start = 0;
+    let quoted = false;
+    for (let index = 0; index < value.length; index += 1) {
+        if (value[index] === '"') quoted = !quoted;
+        if (!quoted && value[index] === separator) {
+            parts.push(value.slice(start, index));
+            start = index + 1;
+        }
+    }
+    parts.push(value.slice(start));
+    return parts;
+}
+
+function parseContentLine(line: string):
+    | {
+          name: string;
+          params: Record<string, string>;
+          value: string;
+      }
+    | undefined {
+    let quoted = false;
+    let colon = -1;
+    for (let index = 0; index < line.length; index += 1) {
+        if (line[index] === '"') quoted = !quoted;
+        if (!quoted && line[index] === ":") {
+            colon = index;
+            break;
+        }
+    }
+    if (colon < 1) return undefined;
+    const [rawName, ...rawParams] = splitOutsideQuotes(
+        line.slice(0, colon),
+        ";",
+    );
+    const params: Record<string, string> = {};
+    for (const rawParam of rawParams) {
+        const equals = rawParam.indexOf("=");
+        if (equals < 1) continue;
+        params[rawParam.slice(0, equals).toUpperCase()] = decodeParameter(
+            rawParam.slice(equals + 1),
+        );
+    }
+    return {
+        name: rawName.toUpperCase(),
+        params,
+        value: line.slice(colon + 1),
+    };
 }
 
 function utcDateTime(value: string, field: string): string {
@@ -126,7 +198,7 @@ function personLine(
     person: PersonInput,
 ): string {
     const params: string[] = [];
-    if (person.name) params.push(`CN=${escapeText(person.name)}`);
+    if (person.name) params.push(`CN=${encodeParameter(person.name)}`);
     if (name === "ATTENDEE") {
         if (person.role) params.push(`ROLE=${person.role.toUpperCase()}`);
         if (person.status)
@@ -139,15 +211,16 @@ function personLine(
 
 function alarmLines(reminder: ReminderInput): string[] {
     const action = (reminder.action ?? "display").toUpperCase();
-    const trigger = DURATION.test(reminder.trigger)
-        ? reminder.trigger
-        : utcDateTime(reminder.trigger, "reminder.trigger");
+    const relative = DURATION.test(reminder.trigger);
+    const trigger = relative
+        ? `TRIGGER:${reminder.trigger}`
+        : `TRIGGER;VALUE=DATE-TIME:${utcDateTime(reminder.trigger, "reminder.trigger")}`;
     if (action === "EMAIL" && !reminder.recipients?.length)
         throw new Error("email reminder requires recipients");
     return [
         "BEGIN:VALARM",
         `ACTION:${action}`,
-        `TRIGGER:${trigger}`,
+        trigger,
         `DESCRIPTION:${escapeText(reminder.description ?? "Reminder")}`,
         ...(action === "EMAIL"
             ? [
@@ -167,7 +240,7 @@ function attachmentLine(attachment: AttachmentInput): string {
     const params: string[] = [];
     if (attachment.mediaType) params.push(`FMTTYPE=${attachment.mediaType}`);
     if (attachment.filename)
-        params.push(`FILENAME=${escapeText(attachment.filename)}`);
+        params.push(`FILENAME=${encodeParameter(attachment.filename)}`);
     if (attachment.data) params.push("ENCODING=BASE64", "VALUE=BINARY");
     return `ATTACH${params.length ? `;${params.join(";")}` : ""}:${attachment.url ?? attachment.data}`;
 }
@@ -178,13 +251,17 @@ function compareTimes(
     allDay: boolean,
     timeZone?: string,
 ) {
-    if (!start || !end || timeZone) return;
+    if (!start || !end) return;
     const startValue = allDay
         ? dateValue(start, "startTime")
-        : utcDateTime(start, "startTime");
+        : timeZone
+          ? localDateTime(start, "startTime")
+          : utcDateTime(start, "startTime");
     const endValue = allDay
         ? dateValue(end, "endTime")
-        : utcDateTime(end, "endTime");
+        : timeZone
+          ? localDateTime(end, "endTime")
+          : utcDateTime(end, "endTime");
     if (endValue <= startValue)
         throw new Error("end/due must be after startTime");
 }
@@ -210,6 +287,7 @@ export function buildICalendar(
         "VERSION:2.0",
         "CALSCALE:GREGORIAN",
         "PRODID:-//Sockethub//CalDAV Platform//EN",
+        ...(input.timeZone ? timeZoneLines(validTimeZone(input.timeZone)) : []),
         `BEGIN:${component}`,
         `UID:${escapeText(uid)}`,
         `DTSTAMP:${utcDateTime(now.toISOString(), "now")}`,
@@ -266,7 +344,7 @@ export function parseICalendar(
     etag?: string,
 ): CalendarItem {
     const unfolded = body.replace(/\r?\n[ \t]/g, "");
-    const component = unfolded.includes("BEGIN:VTODO") ? "task" : "event";
+    const component = /^BEGIN:VTODO\r?$/m.test(unfolded) ? "task" : "event";
     const componentName = component === "task" ? "VTODO" : "VEVENT";
     const section = unfolded.match(
         new RegExp(
@@ -281,16 +359,16 @@ export function parseICalendar(
         /BEGIN:VALARM\r?\n[\s\S]*?\r?\nEND:VALARM/g,
         "",
     );
-    const values = new Map<string, { params: string; value: string }[]>();
+    const values = new Map<
+        string,
+        { params: Record<string, string>; value: string }[]
+    >();
     for (const line of componentSection.split(/\r?\n/)) {
-        const colon = line.indexOf(":");
-        if (colon < 1) continue;
-        const head = line.slice(0, colon);
-        const [rawName, ...params] = head.split(";");
-        const name = rawName.toUpperCase();
-        const list = values.get(name) ?? [];
-        list.push({ params: params.join(";"), value: line.slice(colon + 1) });
-        values.set(name, list);
+        const parsed = parseContentLine(line);
+        if (!parsed) continue;
+        const list = values.get(parsed.name) ?? [];
+        list.push({ params: parsed.params, value: parsed.value });
+        values.set(parsed.name, list);
     }
     const first = (name: string) => values.get(name)?.[0];
     const uid = first("UID")?.value;
@@ -300,13 +378,14 @@ export function parseICalendar(
     const start = first("DTSTART");
     const end = first("DTEND");
     const due = first("DUE");
-    const timeZone = start?.params.match(/(?:^|;)TZID=([^;]+)/i)?.[1];
+    const timeZone = start?.params.TZID;
     const item: CalendarItem = {
         id,
         etag,
         type: component,
         uid: unescapeText(uid),
         name: unescapeText(summary),
+        updateSupported: isUpdateSupported(body),
     };
     if (first("DESCRIPTION"))
         item.content = unescapeText(first("DESCRIPTION")?.value ?? "");
@@ -316,7 +395,7 @@ export function parseICalendar(
     if (start) item.startTime = parseDate(start.value);
     if (end) item.endTime = parseDate(end.value);
     if (due) item.due = parseDate(due.value);
-    if (start?.params.includes("VALUE=DATE")) item.allDay = true;
+    if (start?.params.VALUE === "DATE") item.allDay = true;
     if (timeZone) item.timeZone = timeZone;
     if (first("STATUS"))
         item.status = first(
@@ -353,62 +432,55 @@ export function parseICalendar(
         params,
         value,
     }: {
-        params: string;
+        params: Record<string, string>;
         value: string;
     }): PersonInput => {
-        const parameter = Object.fromEntries(
-            params
-                .split(";")
-                .filter(Boolean)
-                .map((part) => {
-                    const [key, entry] = part.split("=", 2);
-                    return [key.toUpperCase(), entry];
-                }),
-        );
         return {
             email: value.replace(/^mailto:/i, ""),
-            ...(parameter.CN ? { name: unescapeText(parameter.CN) } : {}),
-            ...(parameter.ROLE
-                ? { role: parameter.ROLE.toLowerCase() as PersonInput["role"] }
+            ...(params.CN ? { name: params.CN } : {}),
+            ...(params.ROLE
+                ? { role: params.ROLE.toLowerCase() as PersonInput["role"] }
                 : {}),
-            ...(parameter.PARTSTAT
+            ...(params.PARTSTAT
                 ? {
-                      status: parameter.PARTSTAT.toLowerCase() as PersonInput["status"],
+                      status: params.PARTSTAT.toLowerCase() as PersonInput["status"],
                   }
                 : {}),
-            ...(parameter.RSVP ? { rsvp: parameter.RSVP === "TRUE" } : {}),
+            ...(params.RSVP ? { rsvp: params.RSVP === "TRUE" } : {}),
         };
     };
     if (first("ORGANIZER"))
         item.organizer = parsePerson(
-            first("ORGANIZER") as { params: string; value: string },
+            first("ORGANIZER") as {
+                params: Record<string, string>;
+                value: string;
+            },
         );
     if (values.get("ATTENDEE")?.length)
         item.attendees = values.get("ATTENDEE")?.map(parsePerson);
     if (values.get("ATTACH")?.length)
         item.attachments = values.get("ATTACH")?.map(({ params, value }) => {
-            const binary = /(?:^|;)VALUE=BINARY(?:;|$)/i.test(params);
-            const mediaType = params.match(/(?:^|;)FMTTYPE=([^;]+)/i)?.[1];
-            const filename = params.match(/(?:^|;)FILENAME=([^;]+)/i)?.[1];
+            const binary = params.VALUE === "BINARY";
+            const mediaType = params.FMTTYPE;
+            const filename = params.FILENAME;
             return {
                 ...(binary ? { data: value } : { url: value }),
                 ...(mediaType ? { mediaType } : {}),
-                ...(filename ? { filename: unescapeText(filename) } : {}),
+                ...(filename ? { filename } : {}),
             };
         });
     if (alarmBlocks.length) {
         item.reminders = alarmBlocks.map((block) => {
-            const entries = block.split(/\r?\n/);
+            const entries = block
+                .split(/\r?\n/)
+                .map(parseContentLine)
+                .filter((entry) => entry !== undefined);
             const value = (name: string) =>
-                entries
-                    .find((line) => line.toUpperCase().startsWith(`${name}:`))
-                    ?.slice(name.length + 1);
+                entries.find((entry) => entry.name === name)?.value;
             const action = value("ACTION")?.toLowerCase();
             const recipients = entries
-                .filter((line) => line.toUpperCase().startsWith("ATTENDEE:"))
-                .map((line) =>
-                    line.slice("ATTENDEE:".length).replace(/^mailto:/i, ""),
-                );
+                .filter((entry) => entry.name === "ATTENDEE")
+                .map((entry) => entry.value.replace(/^mailto:/i, ""));
             return {
                 trigger: value("TRIGGER") ?? "-PT15M",
                 ...(action === "email"
@@ -422,4 +494,14 @@ export function parseICalendar(
         });
     }
     return item;
+}
+
+/** Whether rewriting this resource can preserve all recurrence semantics. */
+export function isUpdateSupported(body: string): boolean {
+    const unfolded = body.replace(/\r?\n[ \t]/g, "");
+    const components = unfolded.match(/^BEGIN:(?:VEVENT|VTODO)\r?$/gm) ?? [];
+    return (
+        components.length === 1 &&
+        !/^(?:RECURRENCE-ID|EXDATE|RDATE)(?:;|:)/m.test(unfolded)
+    );
 }

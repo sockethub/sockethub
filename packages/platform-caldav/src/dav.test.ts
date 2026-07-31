@@ -39,6 +39,15 @@ describe("CalDAV client", () => {
                     { username: "alice", password: "secret" },
                 ),
         ).toThrow(new CalDavFailure("caldav:https-required"));
+        expect(
+            () =>
+                new CalDavClient(
+                    "http://calendar.example/dav/",
+                    { username: "alice", password: "secret" },
+                    15_000,
+                    { allowInsecureHttp: true },
+                ),
+        ).not.toThrow();
     });
 
     it("discovers event and task calendars through the principal", async () => {
@@ -136,6 +145,9 @@ describe("CalDAV client", () => {
             if (init?.method === "REPORT") {
                 return new Response(`<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:response><d:href>/calendars/alice/work/item.ics</d:href><d:propstat><d:prop><d:getetag>&quot;v1&quot;</d:getetag><c:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:item-1\r\nSUMMARY:Item\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</c:calendar-data></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`, { status: 207 });
             }
+            if (init?.method === "GET") {
+                return new Response("BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:item-1\r\nSUMMARY:Item\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n", { status: 200 });
+            }
             return new Response(null, { status: init?.method === "DELETE" ? 204 : 200, headers: { etag: '"v2"' } });
         }) as typeof fetch;
         const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
@@ -144,8 +156,8 @@ describe("CalDAV client", () => {
         expect(await client.update(`${calendar.id}item.ics`, '"v1"', "data")).toMatchObject({ etag: '"v2"' });
         await client.delete(`${calendar.id}item.ics`, '"v2"');
         await client.close();
-        expect(methods.map((item) => item.method)).toEqual(["REPORT", "PUT", "DELETE"]);
-        expect(methods[1]?.match).toBe('"v1"');
-        expect(methods[2]?.match).toBe('"v2"');
+        expect(methods.map((item) => item.method)).toEqual(["REPORT", "GET", "PUT", "DELETE"]);
+        expect(methods[2]?.match).toBe('"v1"');
+        expect(methods[3]?.match).toBe('"v2"');
     });
 });

@@ -3,9 +3,12 @@
 Sockethub platform for discovering CalDAV calendars and reading, creating,
 updating, and deleting events (`VEVENT`) and tasks (`VTODO`).
 
-Production requests accept only public HTTPS services. Credentials and OAuth
-tokens are sent only to the configured origin. Every calendar and item target
-is checked against the authenticated account before it is used.
+Requests accept only public HTTPS services by default. Administrators can opt
+in to HTTP with `packageConfig.allowInsecureHttp` and private-network targets
+with `packageConfig.allowPrivateAddresses`; these are server settings and
+cannot be enabled by a connected client. Credentials and OAuth tokens are sent
+only to the configured origin. Every calendar and item target is checked
+against the authenticated account before it is used.
 
 ## Authentication
 
@@ -81,8 +84,9 @@ The collection contains calendar objects such as:
 }
 ```
 
-Each returned item contains its resource `id`, `uid`, and `etag`. Keep the ETag
-for later update or delete requests.
+Each returned item contains its resource `id`, `uid`, `etag`, and
+`updateSupported`. Keep the ETag for later update or delete requests. Use date
+ranges for large calendars; responses larger than 10 MiB are rejected.
 
 ### Create an event
 
@@ -129,6 +133,8 @@ for later update or delete requests.
 
 Timed values use RFC 3339 with a UTC offset, or a local date-time plus an IANA
 `timeZone`. All-day values use `YYYY-MM-DD`; an event's end date is exclusive.
+Named time zones include a `VTIMEZONE` definition generated from the server's
+IANA timezone data.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
 a `recipients` array. Tasks support `due`, `status`, `completedTime`, and
 `percentComplete`.
@@ -137,6 +143,8 @@ a `recipients` array. Tasks support `due`, `status`, `completedTime`, and
 
 Update sends the complete event or task returned by `query`, including `id`,
 `uid`, and `etag`. Increment `sequence` when changing scheduling information.
+An update is rejected when `updateSupported` is false, which protects recurrence
+exceptions, exclusion dates, and multi-component resources from being lost.
 
 ```json
 {
@@ -165,6 +173,9 @@ The integration suite exercises the complete event and VTODO lifecycle against
 Radicale. Provider-specific OAuth authorization and token refresh remain the
 calling application's responsibility, because Sockethub receives credentials
 only after authorization.
+
+Queries currently return calendar snapshots. CalDAV sync tokens (RFC 6578) are
+the intended follow-up for efficient incremental synchronization.
 
 Stable errors include `caldav:authentication-failed`,
 `caldav:connection-failed`, `caldav:invalid-calendar`,

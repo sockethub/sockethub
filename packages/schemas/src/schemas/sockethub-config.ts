@@ -72,6 +72,8 @@ export const SockethubConfigSchema = {
                     additionalProperties: false,
                     properties: {
                         connectTimeoutMs: { type: "number" },
+                        allowPrivateAddresses: { type: "boolean" },
+                        allowInsecureHttp: { type: "boolean" },
                         concurrency: { type: "integer", minimum: 1 },
                     },
                 },

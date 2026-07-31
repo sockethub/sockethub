@@ -14,13 +14,24 @@ describe("CalDAV schema", () => {
         expect(validatePlatformSchema(PlatformCalDavSchema)).toBe("");
     });
 
-    it("accepts HTTPS credentials", () => {
+    it("accepts HTTP and HTTPS credentials for server policy enforcement", () => {
         expect(
             validateCredentials({
                 actor: { id: "caldav:alice", type: "person" },
                 object: {
                     type: "credentials",
                     url: "https://calendar.example/dav/",
+                    username: "alice",
+                    password: "app-password",
+                },
+            }),
+        ).toBeTrue();
+        expect(
+            validateCredentials({
+                actor: { id: "caldav:alice", type: "person" },
+                object: {
+                    type: "credentials",
+                    url: "http://calendar.example/dav/",
                     username: "alice",
                     password: "app-password",
                 },

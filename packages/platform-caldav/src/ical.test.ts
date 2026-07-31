@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildICalendar, foldLine, parseICalendar } from "./ical.js";
+import { buildICalendar, foldLine, isUpdateSupported, parseICalendar } from "./ical.js";
 
 describe("iCalendar generation", () => {
     it("creates a UTC VEVENT with escaped text", () => {
@@ -75,6 +75,8 @@ describe("iCalendar generation", () => {
             attachments: [{ url: "https://example.test/agenda.pdf", mediaType: "application/pdf" }],
         });
         expect(result.body).toContain("DTSTART;TZID=Europe/Prague:20260803T150000");
+        expect(result.body).toContain("BEGIN:VTIMEZONE\r\n");
+        expect(result.body).toContain("TZID:Europe/Prague\r\n");
         expect(result.body).toContain("RRULE:FREQ=WEEKLY;COUNT=4;BYDAY=MO");
         expect(result.body).toContain("ORGANIZER;CN=Owner:mailto:owner@example.test");
         expect(result.body).toContain("BEGIN:VALARM");
@@ -87,6 +89,30 @@ describe("iCalendar generation", () => {
             reminders: [{ trigger: "-PT15M", action: "display" }],
             attachments: [{ url: "https://example.test/agenda.pdf", mediaType: "application/pdf" }],
         });
+    });
+
+    it("quotes parameters and preserves absolute alarm triggers", () => {
+        const result = buildICalendar({
+            type: "event",
+            name: "Review",
+            startTime: "2026-08-03T13:00:00Z",
+            attendees: [{ email: "guest@example.test", name: "Smith; John" }],
+            reminders: [{ trigger: "2026-08-03T12:45:00Z" }],
+        });
+        expect(result.body).toContain('ATTENDEE;CN="Smith; John":mailto:guest@example.test');
+        expect(result.body).toContain("TRIGGER;VALUE=DATE-TIME:20260803T124500Z");
+        expect(parseICalendar(result.body, "https://calendar.example/item.ics")).toMatchObject({
+            attendees: [{ email: "guest@example.test", name: "Smith; John" }],
+            reminders: [{ trigger: "20260803T124500Z" }],
+        });
+    });
+
+    it("marks resources unsafe to rewrite when recurrence data would be lost", () => {
+        const simple = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        expect(isUpdateSupported(simple)).toBeTrue();
+        expect(isUpdateSupported(simple.replace("SUMMARY:One", "EXDATE:20260804T100000Z\r\nSUMMARY:One"))).toBeFalse();
+        expect(isUpdateSupported(simple.replace("END:VCALENDAR", "BEGIN:VEVENT\r\nUID:two\r\nSUMMARY:Two\r\nEND:VEVENT\r\nEND:VCALENDAR"))).toBeFalse();
+        expect(parseICalendar(simple.replace("SUMMARY:One", "DESCRIPTION:BEGIN:VTODO\r\nSUMMARY:One"), "https://calendar.example/one.ics").type).toBe("event");
     });
 
     it("parses items returned by a CalDAV server", () => {
