@@ -37,7 +37,7 @@
   "dependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.16",
     "@sockethub/util": "^1.0.0-alpha.4",
-    "fast-xml-parser": "^5.2.5"
+    "fast-xml-parser": "^5.10.1"
   },
   "devDependencies": {
     "@types/bun": "latest",

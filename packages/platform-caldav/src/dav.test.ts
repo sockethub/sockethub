@@ -69,6 +69,37 @@ describe("CalDAV client", () => {
         expect(result).toEqual([{ id: "https://calendar.example/calendars/alice/work/", type: "calendar", name: "Work", components: ["event", "task"] }]);
     });
 
+    it("does not expand entities in untrusted XML responses", async () => {
+        const requests: string[] = [];
+        globalThis.fetch = (async (url: URL | RequestInfo) => {
+            requests.push(String(url));
+            return new Response(
+                `<?xml version="1.0"?>
+<!DOCTYPE multistatus [<!ENTITY principal "/principals/alice/">]>
+<d:multistatus xmlns:d="DAV:">
+ <d:response><d:propstat><d:prop>
+  <d:current-user-principal><d:href>&principal;</d:href></d:current-user-principal>
+ </d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>
+</d:multistatus>`,
+                { status: 207 },
+            );
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await expect(client.discoverCalendars()).rejects.toEqual(
+            new CalDavFailure("caldav:not-caldav"),
+        );
+        await client.close();
+        expect(requests).toEqual([
+            "https://calendar.example/dav/",
+            "https://calendar.example/dav/&principal;",
+            "https://calendar.example/.well-known/caldav",
+            "https://calendar.example/.well-known/&principal;",
+        ]);
+    });
+
     it("refuses cross-origin redirects without forwarding credentials", async () => {
         let calls = 0;
         globalThis.fetch = (async () => {

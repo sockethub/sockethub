@@ -197,6 +197,7 @@ export class CalDavClient {
             parsed = new XMLParser({
                 ignoreAttributes: false,
                 removeNSPrefix: true,
+                processEntities: false,
             }).parse(await response.text());
         } catch {
             throw new CalDavFailure("caldav:invalid-response");
@@ -348,6 +349,7 @@ export class CalDavClient {
                 parsed = new XMLParser({
                     ignoreAttributes: false,
                     removeNSPrefix: true,
+                    processEntities: false,
                 }).parse(await response.text());
             } catch {
                 throw new CalDavFailure("caldav:invalid-response");
