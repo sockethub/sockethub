@@ -20,6 +20,57 @@ import type {
 
 const CONTEXT = buildCanonicalContext(PlatformCalDavSchema.contextUrl);
 
+function safePathname(pathname: string): boolean {
+    if (pathname.includes("\\") || /%(?:2f|5c)/i.test(pathname)) return false;
+    for (const segment of pathname.split("/")) {
+        let decoded = segment;
+        try {
+            for (let pass = 0; pass < 3; pass += 1) {
+                const next = decodeURIComponent(decoded);
+                if (next === decoded) break;
+                decoded = next;
+            }
+        } catch {
+            return false;
+        }
+        if (decoded === "." || decoded === ".." || /[\\/]/.test(decoded))
+            return false;
+    }
+    return true;
+}
+
+export function assertCalendarResource(
+    calendarId: string,
+    resourceId: string,
+): void {
+    let calendar: URL;
+    let resource: URL;
+    try {
+        calendar = new URL(calendarId);
+        resource = new URL(resourceId);
+    } catch {
+        throw new CalDavFailure("caldav:invalid-resource");
+    }
+    if (
+        calendar.search ||
+        calendar.hash ||
+        resource.search ||
+        resource.hash ||
+        !safePathname(calendar.pathname) ||
+        !safePathname(resource.pathname)
+    )
+        throw new CalDavFailure("caldav:invalid-resource");
+    const prefix = calendar.pathname.endsWith("/")
+        ? calendar.pathname
+        : `${calendar.pathname}/`;
+    if (
+        resource.origin !== calendar.origin ||
+        !resource.pathname.startsWith(prefix) ||
+        resource.pathname === prefix
+    )
+        throw new CalDavFailure("caldav:invalid-resource");
+}
+
 export default class CalDav implements PlatformInterface {
     private readonly log: Logger;
     config: StatelessPlatformConfig = {
@@ -213,30 +264,7 @@ export default class CalDav implements PlatformInterface {
     }
 
     private assertResource(calendarId: string, resourceId: string): void {
-        let calendar: URL;
-        let resource: URL;
-        try {
-            calendar = new URL(calendarId);
-            resource = new URL(resourceId);
-        } catch {
-            throw new CalDavFailure("caldav:invalid-resource");
-        }
-        if (
-            calendar.search ||
-            calendar.hash ||
-            resource.search ||
-            resource.hash
-        )
-            throw new CalDavFailure("caldav:invalid-resource");
-        const prefix = calendar.pathname.endsWith("/")
-            ? calendar.pathname
-            : `${calendar.pathname}/`;
-        if (
-            resource.origin !== calendar.origin ||
-            !resource.pathname.startsWith(prefix) ||
-            resource.pathname === prefix
-        )
-            throw new CalDavFailure("caldav:invalid-resource");
+        assertCalendarResource(calendarId, resourceId);
     }
 
     private mutationResponse(
