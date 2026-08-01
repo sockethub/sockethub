@@ -5,6 +5,7 @@ import testCredentialsData from "./index.test.data.credentials";
 import testPlatformSchemaData from "./index.test.data.platform";
 import testActivityStreamsData from "./index.test.data.streams";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
+import { ObjectTypesSchema } from "./helpers/objects";
 import {
     addPlatformContext,
     addPlatformSchema,
@@ -158,6 +159,21 @@ const RESP_CTX = "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
 const NO_RESP_CTX = "https://sockethub.org/ns/context/platform/dood/v1.jsonld";
 
 describe("schemas/src/index.ts", () => {
+    describe("shared object schemas", () => {
+        it("constrains calendar targets and their supported components", () => {
+            expect(ObjectTypesSchema.calendar.properties.type).toEqual({
+                enum: ["calendar"],
+            });
+            expect(ObjectTypesSchema.calendar.properties.components).toEqual({
+                type: "array",
+                items: { enum: ["event", "task"] },
+            });
+            expect(ObjectTypesSchema.person.properties).not.toHaveProperty(
+                "components",
+            );
+        });
+    });
+
     describe("Platform schema validation", () => {
         it("returns an empty error for a valid schema", () => {
             const err = validatePlatformSchema(testPlatformSchemaData);

@@ -75,6 +75,7 @@ export default [
                 id: "https://calendar.example/calendars/alice/work/",
                 type: "calendar",
                 name: "Work",
+                components: ["event", "task"],
             },
             object: {
                 type: "message",

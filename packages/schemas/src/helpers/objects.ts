@@ -42,12 +42,6 @@ export const ObjectTypesSchema = {
             name: {
                 type: "string",
             },
-            components: {
-                type: "array",
-                items: {
-                    enum: ["event", "task"],
-                },
-            },
         },
     },
 
@@ -139,6 +133,12 @@ export const ObjectTypesSchema = {
             },
             name: {
                 type: "string",
+            },
+            components: {
+                type: "array",
+                items: {
+                    enum: ["event", "task"],
+                },
             },
         },
     },
