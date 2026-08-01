@@ -7,6 +7,7 @@ const navItems = [
     ["🔧", "Dummy", "/dummy", "Basic examples • Start here"],
     ["📰", "Feeds", "/feeds", "RSS/ATOM feed parsing"],
     ["🔍", "Metadata", "/metadata", "Web page metadata extraction"],
+    ["📅", "CalDAV", "/caldav", "Calendars and tasks"],
     ["💬", "IRC", "/irc", "Internet Relay Chat • Advanced"],
     ["📨", "XMPP", "/xmpp", "Extensible messaging • Advanced"],
 ];
