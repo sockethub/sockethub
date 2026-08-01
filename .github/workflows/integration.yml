@@ -22,7 +22,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
@@ -47,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
@@ -90,7 +90,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
@@ -229,7 +229,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
