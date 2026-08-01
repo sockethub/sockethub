@@ -1,4 +1,4 @@
-# syntax=docker.io/docker/dockerfile:1.7
+# syntax=docker.io/docker/dockerfile:1.25
 # Release image: installs sockethub from the published npm packages instead of
 # building from source, so the shipped image exercises the exact artifacts
 # users get from `npm install sockethub` — tarball contents, declared

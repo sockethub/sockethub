@@ -1,4 +1,4 @@
-# syntax=docker.io/docker/dockerfile:1.7-labs
+# syntax=docker.io/docker/dockerfile:1.25-labs
 # Sockethub runs on Node.js in production. Bun is used only as the build tool
 # (it produces node-target ESM output); the final runtime image is node-only.
 ARG LOG_LEVEL=info
