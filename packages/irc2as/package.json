@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/irc2as",
-  "version": "4.0.0-alpha.17",
+  "version": "4.0.0-alpha.18",
   "description": "IRC to ActivityStreams objects",
   "type": "module",
   "main": "dist/index.js",
@@ -45,8 +45,8 @@
     "fast-deep-equal": "^3.1.3"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.17"
+    "@sockethub/schemas": "^3.0.0-alpha.18"
   },
-  "gitHead": "578a6432b9f09a8484832a7ff3e157c1d3898a7e",
+  "gitHead": "c0a5b3b61f376651fc5184d1072a78c43f5ebb9e",
   "types": "./dist/index.d.ts"
 }

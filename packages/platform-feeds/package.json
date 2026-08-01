@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-feeds",
   "description": "A sockethub platform module implementing RSS/Atom functionality",
-  "version": "4.0.0-alpha.17",
+  "version": "4.0.0-alpha.18",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -46,23 +46,23 @@
     "clean:deps": "rm -rf node_modules"
   },
   "dependencies": {
-    "@sockethub/util": "^1.0.0-alpha.5",
+    "@sockethub/util": "^1.0.0-alpha.6",
     "html-tags": "^3.3.1",
     "htmlparser2": "^9.1.0",
     "podparse": "^1.6.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.17",
+    "@sockethub/schemas": "^3.0.0-alpha.18",
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "5.0.0-alpha.17"
+    "@sockethub/server": "5.0.0-alpha.18"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
   },
-  "gitHead": "578a6432b9f09a8484832a7ff3e157c1d3898a7e",
+  "gitHead": "c0a5b3b61f376651fc5184d1072a78c43f5ebb9e",
   "types": "./dist/index.d.ts"
 }
