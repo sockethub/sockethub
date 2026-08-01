@@ -119,6 +119,29 @@ export const ObjectTypesSchema = {
             },
         },
     },
+
+    calendar: {
+        required: ["id", "type"],
+        additionalProperties: true,
+        properties: {
+            id: {
+                type: "string",
+                format: "iri",
+            },
+            type: {
+                enum: ["calendar"],
+            },
+            name: {
+                type: "string",
+            },
+            components: {
+                type: "array",
+                items: {
+                    enum: ["event", "task"],
+                },
+            },
+        },
+    },
 };
 
 // Internal AS object types reserved for Sockethub IPC/housekeeping.
@@ -140,6 +163,7 @@ export const TargetTypesList = [
     "website",
     "platform",
     "address",
+    "calendar",
 ];
 export const validActorRefs = ActorTypesList.map((type) => ({
     $ref: `#/definitions/type/${type}`,

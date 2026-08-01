@@ -6,6 +6,10 @@
     },
     "@sockethub/platform-metadata": {
       "allowPrivateAddresses": true
+    },
+    "@sockethub/platform-caldav": {
+      "allowPrivateAddresses": true,
+      "allowInsecureHttp": true
     }
   }
 }
