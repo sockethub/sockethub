@@ -395,7 +395,7 @@ included in the response or cached idempotency results.
 Example streamed response (`@context` arrays abbreviated):
 
 ```ndjson
-{"type":"credentials-ack","actor":{"id":"me@jabber.net"}}
+{"@context":["https://www.w3.org/ns/activitystreams","https://sockethub.org/ns/context/v1.jsonld","https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld"],"type":"credentials-ack","actor":{"id":"sockethub-server","type":"service"}}
 {"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
 {"type":"error","@context":["..."],"error":"invalid credentials"}
 ```

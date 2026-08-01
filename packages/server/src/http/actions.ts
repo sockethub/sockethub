@@ -19,6 +19,7 @@ import type {
 import {
     buildCanonicalContext,
     ERROR_PLATFORM_CONTEXT_URL,
+    INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 import express, {
@@ -143,18 +144,17 @@ function buildServerError(message: string, requestId?: string) {
  * HTTP results may be cached for idempotent replay, so only explicitly safe
  * fields are copied from the submitted activity.
  */
-function buildCredentialsAck(
-    payload: ActivityStream,
-    result?: ActivityStream | Error,
-) {
+function buildCredentialsAck(result?: ActivityStream | Error) {
     if (result instanceof Error) {
         return result;
     }
 
-    const ack: Record<string, unknown> = {
+    const ack: ActivityStream = {
+        "@context": buildCanonicalContext(INTERNAL_PLATFORM_CONTEXT_URL),
         type: "credentials-ack",
         actor: {
-            id: payload.actor.id,
+            id: "sockethub-server",
+            type: "service",
         },
     };
     if (isObject(result) && typeof result.error === "string") {
@@ -931,12 +931,7 @@ export function registerHttpActionsRoutes(
                         handlers.credentials(
                             payload as ActivityStream,
                             (result) =>
-                                writeResult(
-                                    buildCredentialsAck(
-                                        payload as ActivityStream,
-                                        result,
-                                    ),
-                                ),
+                                writeResult(buildCredentialsAck(result)),
                         );
                         break;
                     case "message":
