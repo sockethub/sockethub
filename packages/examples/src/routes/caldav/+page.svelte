@@ -103,7 +103,7 @@ async function fetchCalendars(): Promise<void> {
             (item): item is AnyActivityStream & Calendar =>
                 item.type === "calendar" &&
                 typeof item.id === "string" &&
-                typeof item.name === "string" &&
+                typeof (item as unknown as Calendar).name === "string" &&
                 Array.isArray((item as unknown as Calendar).components),
         ) as Calendar[];
         selectedCalendarId = calendars[0]?.id ?? "";
