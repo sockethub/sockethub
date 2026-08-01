@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "ajv": "^8.17.1",
-    "ajv-formats": "^2.1.1",
+    "ajv-formats": "^3.0.0",
     "ajv-formats-draft2019": "^1.6.1"
   },
   "gitHead": "578a6432b9f09a8484832a7ff3e157c1d3898a7e",
