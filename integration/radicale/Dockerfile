@@ -1,4 +1,4 @@
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 RUN pip install --no-cache-dir Radicale==3.7.7
 RUN addgroup -S radicale && adduser -S -G radicale radicale && \
