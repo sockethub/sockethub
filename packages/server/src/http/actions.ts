@@ -138,6 +138,31 @@ function buildServerError(message: string, requestId?: string) {
     return payload;
 }
 
+/**
+ * Acknowledge credential storage without returning the credential object.
+ * HTTP results may be cached for idempotent replay, so only explicitly safe
+ * fields are copied from the submitted activity.
+ */
+function buildCredentialsAck(
+    payload: ActivityStream,
+    result?: ActivityStream | Error,
+) {
+    if (result instanceof Error) {
+        return result;
+    }
+
+    const ack: Record<string, unknown> = {
+        type: "credentials-ack",
+        actor: {
+            id: payload.actor.id,
+        },
+    };
+    if (isObject(result) && typeof result.error === "string") {
+        ack.error = result.error;
+    }
+    return ack;
+}
+
 function normalizeRequestId(value: unknown): RequestIdResolution {
     if (typeof value !== "string") {
         return {};
@@ -905,7 +930,13 @@ export function registerHttpActionsRoutes(
                     case "credentials":
                         handlers.credentials(
                             payload as ActivityStream,
-                            writeResult,
+                            (result) =>
+                                writeResult(
+                                    buildCredentialsAck(
+                                        payload as ActivityStream,
+                                        result,
+                                    ),
+                                ),
                         );
                         break;
                     case "message":

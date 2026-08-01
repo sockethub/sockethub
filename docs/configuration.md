@@ -388,11 +388,14 @@ JSON
 
 Response format: NDJSON (newline-delimited JSON). The endpoint streams one
 complete JSON object per line. If you send an array of actions, you receive one
-line per action result.
+line per action result. Successful credential submissions return a minimal
+`credentials-ack` containing only the actor ID. The credential object is never
+included in the response or cached idempotency results.
 
 Example streamed response (`@context` arrays abbreviated):
 
 ```ndjson
+{"type":"credentials-ack","actor":{"id":"me@jabber.net"}}
 {"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
 {"type":"error","@context":["..."],"error":"invalid credentials"}
 ```

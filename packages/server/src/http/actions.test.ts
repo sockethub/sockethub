@@ -283,6 +283,60 @@ describe("http actions", () => {
         expect(replay.writes.length).toBe(2);
     });
 
+    it("redacts credentials from streamed and cached acknowledgements", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            createMessageHandlersOverride: () => ({
+                credentials: (payload: unknown, cb: (data: unknown) => void) =>
+                    cb(payload),
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ type: "collection" }),
+            }),
+        });
+        const requestId = "credentials-redaction";
+        const credentials = {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/platform/caldav/v1.jsonld",
+            ],
+            type: "credentials",
+            actor: { id: "caldav:alice", type: "person" },
+            object: {
+                type: "credentials",
+                url: "https://calendar.example/alice/",
+                username: "alice",
+                password: "calendar-test-password",
+            },
+        };
+        const { req, res, writes } = createReqRes({
+            body: [credentials],
+            headers: { "x-request-id": requestId },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(writes).toEqual([
+            `${JSON.stringify({
+                type: "credentials-ack",
+                actor: { id: "caldav:alice" },
+            })}\n`,
+        ]);
+        const cached = fakeRedis.lists.get(
+            `sockethub:http-actions:results:${requestId}`,
+        );
+        expect(cached).toEqual([
+            JSON.stringify({
+                type: "credentials-ack",
+                actor: { id: "caldav:alice" },
+            }),
+        ]);
+        expect(JSON.stringify({ writes, cached })).not.toContain(
+            "calendar-test-password",
+        );
+    });
+
     it("serves cached results via GET", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
