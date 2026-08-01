@@ -327,7 +327,7 @@ describe("http actions", () => {
             `${JSON.stringify({
                 "@context": credentialsAckContext,
                 type: "credentials-ack",
-                actor: { id: "sockethub-server", type: "service" },
+                actor: { id: "caldav:alice", type: "person" },
             })}\n`,
         ]);
         const cached = fakeRedis.lists.get(
@@ -337,7 +337,7 @@ describe("http actions", () => {
             JSON.stringify({
                 "@context": credentialsAckContext,
                 type: "credentials-ack",
-                actor: { id: "sockethub-server", type: "service" },
+                actor: { id: "caldav:alice", type: "person" },
             }),
         ]);
         expect(JSON.stringify({ writes, cached })).not.toContain(
@@ -380,7 +380,7 @@ describe("http actions", () => {
         const expected = JSON.stringify({
             "@context": credentialsAckContext,
             type: "credentials-ack",
-            actor: { id: "sockethub-server", type: "service" },
+            actor: { id: "caldav:alice", type: "person" },
             error: "invalid credentials",
         });
         expect(writes).toEqual([`${expected}\n`]);

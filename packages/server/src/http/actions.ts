@@ -142,9 +142,13 @@ function buildServerError(message: string, requestId?: string) {
 /**
  * Acknowledge credential storage without returning the credential object.
  * HTTP results may be cached for idempotent replay, so only explicitly safe
- * fields are copied from the submitted activity.
+ * fields are copied from the submitted activity. The actor ID is retained so
+ * batched credential acknowledgements can be correlated with their inputs.
  */
-function buildCredentialsAck(result?: ActivityStream | Error) {
+function buildCredentialsAck(
+    payload: ActivityStream,
+    result?: ActivityStream | Error,
+) {
     if (result instanceof Error) {
         return result;
     }
@@ -153,8 +157,8 @@ function buildCredentialsAck(result?: ActivityStream | Error) {
         "@context": buildCanonicalContext(INTERNAL_PLATFORM_CONTEXT_URL),
         type: "credentials-ack",
         actor: {
-            id: "sockethub-server",
-            type: "service",
+            id: payload.actor.id,
+            type: "person",
         },
     };
     if (isObject(result) && typeof result.error === "string") {
@@ -931,7 +935,12 @@ export function registerHttpActionsRoutes(
                         handlers.credentials(
                             payload as ActivityStream,
                             (result) =>
-                                writeResult(buildCredentialsAck(result)),
+                                writeResult(
+                                    buildCredentialsAck(
+                                        payload as ActivityStream,
+                                        result,
+                                    ),
+                                ),
                         );
                         break;
                     case "message":
