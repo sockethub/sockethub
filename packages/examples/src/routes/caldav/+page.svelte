@@ -67,19 +67,21 @@ async function setCredentials(): Promise<void> {
                 password,
             },
         };
+        await new Promise<void>((resolve, reject) => {
+            sc.socket.emit(
+                "credentials",
+                credentials,
+                (response: SockethubResponse) => {
+                    if (response?.error) {
+                        reject(new Error(response.error));
+                        return;
+                    }
+                    resolve();
+                },
+            );
+        });
         credentialsSet = true;
         credentialSuccess = "Credentials set for this Sockethub session.";
-        sc.socket.emit(
-            "credentials",
-            credentials,
-            (response: SockethubResponse) => {
-                if (response?.error) {
-                    credentialsSet = false;
-                    credentialSuccess = null;
-                    credentialError = response.error;
-                }
-            },
-        );
     } catch (err) {
         credentialError = err instanceof Error ? err.message : String(err);
     } finally {
@@ -101,6 +103,7 @@ async function fetchCalendars(): Promise<void> {
             (item): item is AnyActivityStream & Calendar =>
                 item.type === "calendar" &&
                 typeof item.id === "string" &&
+                typeof item.name === "string" &&
                 Array.isArray((item as unknown as Calendar).components),
         ) as Calendar[];
         selectedCalendarId = calendars[0]?.id ?? "";
@@ -190,7 +193,7 @@ async function createItem(): Promise<void> {
                 buttonAction={setCredentials}
                 disabled={credentialsSet || busy || !actorId || !serviceUrl || !username || !password}
             >
-                {credentialsSet ? "Credentials Set" : "Set Credentials"}
+                {credentialsSet ? "Credentials Set" : busy ? "Setting Credentials…" : "Set Credentials"}
             </SockethubButton>
         </div>
         {#if credentialError}
