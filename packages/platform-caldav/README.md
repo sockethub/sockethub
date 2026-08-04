@@ -177,9 +177,10 @@ Query again, reconcile the change, and retry with the new ETag.
 The implementation follows WebDAV/CalDAV discovery, calendar-query REPORT,
 iCalendar content-line escaping/folding, and conditional PUT/DELETE semantics.
 The integration suite exercises the complete event and VTODO lifecycle against
-Radicale. Provider-specific OAuth authorization and token refresh remain the
-calling application's responsibility, because Sockethub receives credentials
-only after authorization.
+Radicale with Basic authentication and Baikal with Digest authentication.
+Provider-specific OAuth authorization and token refresh remain the calling
+application's responsibility, because Sockethub receives credentials only after
+authorization.
 
 Queries currently return calendar snapshots. CalDAV sync tokens (RFC 6578) are
 the intended follow-up for efficient incremental synchronization.

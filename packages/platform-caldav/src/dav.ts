@@ -53,6 +53,46 @@ function array<T>(value: T | T[] | undefined): T[] {
     return value === undefined ? [] : Array.isArray(value) ? value : [value];
 }
 
+function xmlText(value: string): string {
+    const predefined: Record<string, string> = {
+        amp: "&",
+        apos: "'",
+        gt: ">",
+        lt: "<",
+        quot: '"',
+    };
+    return value.replace(
+        /&(amp|apos|gt|lt|quot|#\d+|#x[\da-f]+);/gi,
+        (reference, entity: string) => {
+            if (entity.startsWith("#")) {
+                const hexadecimal = entity[1]?.toLowerCase() === "x";
+                const codePoint = Number.parseInt(
+                    entity.slice(hexadecimal ? 2 : 1),
+                    hexadecimal ? 16 : 10,
+                );
+                if (
+                    !Number.isSafeInteger(codePoint) ||
+                    codePoint <= 0 ||
+                    codePoint > 0x10ffff ||
+                    (codePoint >= 0xd800 && codePoint <= 0xdfff)
+                )
+                    return reference;
+                return String.fromCodePoint(codePoint);
+            }
+            return predefined[entity.toLowerCase()] ?? reference;
+        },
+    );
+}
+
+function xmlParser(): XMLParser {
+    return new XMLParser({
+        ignoreAttributes: false,
+        removeNSPrefix: true,
+        processEntities: false,
+        tagValueProcessor: (_tagName, value) => xmlText(value),
+    });
+}
+
 function successfulProps(
     response: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -337,11 +377,7 @@ export class CalDavClient {
         }
         let parsed: Record<string, unknown>;
         try {
-            parsed = new XMLParser({
-                ignoreAttributes: false,
-                removeNSPrefix: true,
-                processEntities: false,
-            }).parse(await response.text());
+            parsed = xmlParser().parse(await response.text());
         } catch {
             throw new CalDavFailure("caldav:invalid-response");
         }
@@ -489,11 +525,7 @@ export class CalDavClient {
             }
             let parsed: Record<string, unknown>;
             try {
-                parsed = new XMLParser({
-                    ignoreAttributes: false,
-                    removeNSPrefix: true,
-                    processEntities: false,
-                }).parse(await response.text());
+                parsed = xmlParser().parse(await response.text());
             } catch {
                 throw new CalDavFailure("caldav:invalid-response");
             }

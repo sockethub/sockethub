@@ -343,7 +343,9 @@ describe("CalDAV client", () => {
         }) as typeof fetch;
         const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
         const calendar = { id: "https://calendar.example/calendars/alice/work/", type: "calendar" as const, name: "Work", components: ["event" as const] };
-        expect(await client.query(calendar, { type: "event" })).toHaveLength(1);
+        const queried = await client.query(calendar, { type: "event" });
+        expect(queried).toHaveLength(1);
+        expect(queried[0]?.etag).toBe('"v1"');
         expect(await client.update(`${calendar.id}item.ics`, '"v1"', "data")).toMatchObject({ etag: '"v2"' });
         await client.delete(`${calendar.id}item.ics`, '"v2"');
         await client.close();
