@@ -70,13 +70,15 @@ function xmlText(value: string): string {
                     entity.slice(hexadecimal ? 2 : 1),
                     hexadecimal ? 16 : 10,
                 );
-                if (
-                    !Number.isSafeInteger(codePoint) ||
-                    codePoint <= 0 ||
-                    codePoint > 0x10ffff ||
-                    (codePoint >= 0xd800 && codePoint <= 0xdfff)
-                )
-                    return reference;
+                const isXmlCharacter =
+                    Number.isSafeInteger(codePoint) &&
+                    (codePoint === 0x9 ||
+                        codePoint === 0xa ||
+                        codePoint === 0xd ||
+                        (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+                        (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+                        (codePoint >= 0x10000 && codePoint <= 0x10ffff));
+                if (!isXmlCharacter) return reference;
                 return String.fromCodePoint(codePoint);
             }
             return predefined[entity.toLowerCase()] ?? reference;
@@ -139,18 +141,8 @@ function unquote(value: string): string {
     return value.slice(1, -1).replace(/\\(.)/g, "$1");
 }
 
-function digestChallenge(header: string): DigestChallenge | undefined {
-    const match = /(?:^|,\s*)Digest\s+/i.exec(header);
-    if (!match) return undefined;
+function parseDigestChallenge(parameters: string): DigestChallenge | undefined {
     const values = new Map<string, string>();
-    const remainder = header.slice(match.index + match[0].length);
-    const nextScheme =
-        /,\s*[!#$%&'*+.^_`|~\w-]+\s+(?=[!#$%&'*+.^_`|~\w-]+(?:\s|$))/.exec(
-            remainder,
-        );
-    const parameters = nextScheme
-        ? remainder.slice(0, nextScheme.index)
-        : remainder;
     for (const item of parameters.matchAll(
         /(?:^|,\s*)([!#$%&'*+.^_`|~\w-]+)\s*=\s*("(?:\\.|[^"\\])*"|[^,\s]+)/g,
     )) {
@@ -178,6 +170,21 @@ function digestChallenge(header: string): DigestChallenge | undefined {
         ...(qops ? { qop: "auth" as const } : {}),
         ...(values.has("opaque") ? { opaque: values.get("opaque") } : {}),
     };
+}
+
+function digestChallenge(header: string): DigestChallenge | undefined {
+    const challengePattern =
+        /(?:^|,\s*)([!#$%&'*+.^_`|~\w-]+)\s+(?=[!#$%&'*+.^_`|~\w-]+\s*=)/g;
+    const matches = [...header.matchAll(challengePattern)];
+    for (let index = 0; index < matches.length; index += 1) {
+        const match = matches[index];
+        if (match[1]?.toLowerCase() !== "digest") continue;
+        const start = (match.index ?? 0) + match[0].length;
+        const end = matches[index + 1]?.index ?? header.length;
+        const challenge = parseDigestChallenge(header.slice(start, end));
+        if (challenge) return challenge;
+    }
+    return undefined;
 }
 
 function quote(value: string): string {

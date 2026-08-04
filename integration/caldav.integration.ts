@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { CalDavClient } from "../packages/platform-caldav/src/dav.js";
 import { buildICalendar } from "../packages/platform-caldav/src/ical.js";
+import type { CalendarDescription } from "../packages/platform-caldav/src/types.js";
 
 const radicaleRoot = "http://127.0.0.1:5232/alice/";
 const baikalRoot = "http://127.0.0.1:5233/dav.php/";
@@ -24,22 +25,25 @@ async function exerciseLifecycle(
     calendarName: string,
     uidPrefix: string,
 ): Promise<void> {
+    const runPrefix = `${uidPrefix}-${crypto.randomUUID()}`;
+    const runUids = new Set([`${runPrefix}-event`, `${runPrefix}-task`]);
     const client = new CalDavClient(
         root,
         { username: "alice", password: "calendar-test-password" },
         15_000,
         { allowPrivateAddresses: true, allowInsecureHttp: true },
     );
+    let calendar: CalendarDescription | undefined;
     try {
         const calendars = await client.discoverCalendars();
-        const calendar = calendars.find((item) => item.name === calendarName);
+        calendar = calendars.find((item) => item.name === calendarName);
         expect(calendar).toBeDefined();
         if (!calendar)
             throw new Error(`${calendarName} calendar was not discovered`);
 
         const event = buildICalendar({
             type: "event",
-            uid: `${uidPrefix}-event`,
+            uid: `${runPrefix}-event`,
             name: `${calendarName} event`,
             startTime: "2026-08-03T15:00:00",
             endTime: "2026-08-03T16:00:00",
@@ -51,7 +55,7 @@ async function exerciseLifecycle(
         const created = await client.create(calendar, event.uid, event.body);
         const task = buildICalendar({
             type: "task",
-            uid: `${uidPrefix}-task`,
+            uid: `${runPrefix}-task`,
             name: `${calendarName} task`,
             due: "2026-08-04",
             allDay: true,
@@ -59,9 +63,12 @@ async function exerciseLifecycle(
         const createdTask = await client.create(calendar, task.uid, task.body);
 
         const items = await client.query(calendar);
-        expect(items.map((item) => item.uid).sort()).toEqual(
-            [`${uidPrefix}-event`, `${uidPrefix}-task`].sort(),
-        );
+        expect(
+            items
+                .filter((item) => runUids.has(item.uid))
+                .map((item) => item.uid)
+                .sort(),
+        ).toEqual([...runUids].sort());
         const storedEvent = items.find((item) => item.uid === event.uid);
         expect(storedEvent?.timeZone).toBe("Europe/Prague");
         expect(storedEvent?.recurrence?.frequency).toBe("weekly");
@@ -78,17 +85,42 @@ async function exerciseLifecycle(
             updated.body,
         );
         const refreshed = await client.query(calendar, { type: "event" });
-        expect(refreshed[0]?.name).toBe("Updated event");
-        await client.delete(created.id, refreshed[0]?.etag ?? "");
+        const refreshedEvent = refreshed.find((item) => item.uid === event.uid);
+        expect(refreshedEvent?.name).toBe("Updated event");
+        await client.delete(created.id, refreshedEvent?.etag ?? "");
         await client.delete(
             createdTask.id,
             items.find((item) => item.uid === task.uid)?.etag ??
                 createdTask.etag ??
                 "",
         );
-        expect(await client.query(calendar)).toHaveLength(0);
+        expect(
+            (await client.query(calendar)).filter((item) =>
+                runUids.has(item.uid),
+            ),
+        ).toHaveLength(0);
     } finally {
-        await client.close();
+        try {
+            if (calendar) {
+                const remaining = (await client.query(calendar)).filter(
+                    (item) => runUids.has(item.uid),
+                );
+                for (const item of remaining) {
+                    expect(
+                        item.etag,
+                        `cleanup ETag missing for ${item.uid}`,
+                    ).toBeDefined();
+                    if (item.etag) await client.delete(item.id, item.etag);
+                }
+                expect(
+                    (await client.query(calendar)).filter((item) =>
+                        runUids.has(item.uid),
+                    ),
+                ).toHaveLength(0);
+            }
+        } finally {
+            await client.close();
+        }
     }
 }
 
