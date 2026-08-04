@@ -13,7 +13,10 @@ against the authenticated account before it is used.
 ## Authentication
 
 Send credentials using either a username and password (normally an app
-password) or an OAuth access token obtained by the application. Sockethub uses
+password) or an OAuth access token obtained by the application. Username and
+password credentials negotiate HTTP Digest (MD5 or SHA-256, including the
+`-sess` variants) or Basic authentication from the server's challenge. Digest
+supports `qop=auth`; unsupported challenge modes are rejected. Sockethub uses
 the token as an HTTP Bearer token; it does not run an OAuth authorization UI.
 
 ```json
@@ -182,6 +185,7 @@ Queries currently return calendar snapshots. CalDAV sync tokens (RFC 6578) are
 the intended follow-up for efficient incremental synchronization.
 
 Stable errors include `caldav:authentication-failed`,
+`caldav:unsupported-authentication`,
 `caldav:connection-failed`, `caldav:invalid-calendar`,
 `caldav:invalid-resource`, `caldav:unsupported-component`,
 `caldav:conflict`, and `caldav:not-found`.

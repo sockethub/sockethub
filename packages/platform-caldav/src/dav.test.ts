@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
+import { createHash } from "node:crypto";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 
 const originalFetch = globalThis.fetch;
@@ -195,6 +196,136 @@ describe("CalDAV client", () => {
         await expect(client.discoverCalendars()).rejects.toEqual(new CalDavFailure("caldav:not-caldav"));
         await client.close();
         expect(authorization).toBe("Bearer access-token");
+    });
+
+    it("negotiates Digest authentication for username credentials", async () => {
+        const authorizations: Array<string | null> = [];
+        globalThis.fetch = (async (url: URL | RequestInfo, init?: RequestInit) => {
+            const authorization = new Headers(init?.headers).get("authorization");
+            authorizations.push(authorization);
+            if (!authorization) {
+                return new Response(null, {
+                    status: 401,
+                    headers: {
+                        "www-authenticate":
+                            'Digest realm="BaikalDAV", nonce="server-nonce", algorithm=MD5, qop="auth", opaque="opaque-value"',
+                    },
+                });
+            }
+            const value = String(url);
+            const body = value.includes("principals")
+                ? principal
+                : value.includes("calendars")
+                  ? calendars
+                  : discovery;
+            return new Response(body, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await client.discoverCalendars();
+        await client.close();
+
+        const authorization = authorizations[1] ?? "";
+        const cnonce = /cnonce="([^"]+)"/.exec(authorization)?.[1];
+        expect(cnonce).toBeTruthy();
+        const hash = (value: string) =>
+            createHash("md5").update(value, "utf8").digest("hex");
+        const expected = hash(
+            `${hash("alice:BaikalDAV:secret")}:server-nonce:00000001:${cnonce}:auth:${hash("PROPFIND:/dav/")}`,
+        );
+        expect(authorizations[0]).toBeNull();
+        expect(authorization).toContain('username="alice"');
+        expect(authorization).toContain('uri="/dav/"');
+        expect(authorization).toContain(`response="${expected}"`);
+        expect(authorization).toContain('opaque="opaque-value"');
+        expect(authorizations[2]).toContain('uri="/principals/alice/"');
+    });
+
+    it("falls back to Basic when that is the supported challenge", async () => {
+        const authorizations: Array<string | null> = [];
+        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+            const authorization = new Headers(init?.headers).get("authorization");
+            authorizations.push(authorization);
+            if (!authorization) {
+                return new Response(null, {
+                    status: 401,
+                    headers: { "www-authenticate": 'Basic realm="Calendar"' },
+                });
+            }
+            return new Response(discovery, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await expect(client.discoverCalendars()).rejects.toEqual(
+            new CalDavFailure("caldav:not-caldav"),
+        );
+        await client.close();
+        expect(authorizations[0]).toBeNull();
+        expect(authorizations[1]).toBe(
+            `Basic ${Buffer.from("alice:secret", "utf8").toString("base64")}`,
+        );
+    });
+
+    it("refreshes a stale Digest nonce once", async () => {
+        const authorizations: Array<string | null> = [];
+        globalThis.fetch = (async (url: URL | RequestInfo, init?: RequestInit) => {
+            const authorization = new Headers(init?.headers).get("authorization");
+            authorizations.push(authorization);
+            if (authorizations.length === 1) {
+                return new Response(null, {
+                    status: 401,
+                    headers: {
+                        "www-authenticate":
+                            'Digest realm="BaikalDAV", nonce="old", qop="auth"',
+                    },
+                });
+            }
+            if (authorizations.length === 2) {
+                return new Response(null, {
+                    status: 401,
+                    headers: {
+                        "www-authenticate":
+                            'Digest realm="BaikalDAV", nonce="fresh", qop="auth", stale=true',
+                    },
+                });
+            }
+            const value = String(url);
+            const body = value.includes("principals")
+                ? principal
+                : value.includes("calendars")
+                  ? calendars
+                  : discovery;
+            return new Response(body, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await client.discoverCalendars();
+        await client.close();
+        expect(authorizations[1]).toContain('nonce="old"');
+        expect(authorizations[2]).toContain('nonce="fresh"');
+        expect(authorizations[2]).toContain("nc=00000001");
+    });
+
+    it("reports unsupported authentication challenges", async () => {
+        globalThis.fetch = (async () =>
+            new Response(null, {
+                status: 401,
+                headers: { "www-authenticate": "Negotiate" },
+            })) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await expect(client.discoverCalendars()).rejects.toEqual(
+            new CalDavFailure("caldav:unsupported-authentication"),
+        );
+        await client.close();
     });
 
     it("queries, updates, and deletes resources with ETag guards", async () => {
