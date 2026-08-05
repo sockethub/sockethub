@@ -65,6 +65,18 @@ services:
             - "127.0.0.1:5232:5232"
         networks:
             - sockethub-net
+    baikal:
+        build:
+            context: ./integration/baikal
+        healthcheck:
+            test: [ "CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);" ]
+            interval: 1s
+            timeout: 2s
+            retries: 20
+        ports:
+            - "127.0.0.1:5233:80"
+        networks:
+            - sockethub-net
 
 networks:
     sockethub-net:

@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import { XMLParser } from "fast-xml-parser";
 import type { Agent } from "undici";
@@ -6,6 +7,7 @@ import type { CalendarDescription, CalendarItem, QueryInput } from "./types.js";
 
 const MAX_REDIRECTS = 5;
 const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
+const MAX_AUTH_ATTEMPTS = 2;
 const DAV_PROPS = `<?xml version="1.0" encoding="utf-8"?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
   <d:prop><d:current-user-principal/><c:calendar-home-set/></d:prop>
@@ -51,6 +53,48 @@ function array<T>(value: T | T[] | undefined): T[] {
     return value === undefined ? [] : Array.isArray(value) ? value : [value];
 }
 
+function xmlText(value: string): string {
+    const predefined: Record<string, string> = {
+        amp: "&",
+        apos: "'",
+        gt: ">",
+        lt: "<",
+        quot: '"',
+    };
+    return value.replace(
+        /&(amp|apos|gt|lt|quot|#\d+|#x[\da-f]+);/gi,
+        (reference, entity: string) => {
+            if (entity.startsWith("#")) {
+                const hexadecimal = entity[1]?.toLowerCase() === "x";
+                const codePoint = Number.parseInt(
+                    entity.slice(hexadecimal ? 2 : 1),
+                    hexadecimal ? 16 : 10,
+                );
+                const isXmlCharacter =
+                    Number.isSafeInteger(codePoint) &&
+                    (codePoint === 0x9 ||
+                        codePoint === 0xa ||
+                        codePoint === 0xd ||
+                        (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+                        (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+                        (codePoint >= 0x10000 && codePoint <= 0x10ffff));
+                if (!isXmlCharacter) return reference;
+                return String.fromCodePoint(codePoint);
+            }
+            return predefined[entity.toLowerCase()] ?? reference;
+        },
+    );
+}
+
+function xmlParser(): XMLParser {
+    return new XMLParser({
+        ignoreAttributes: false,
+        removeNSPrefix: true,
+        processEntities: false,
+        tagValueProcessor: (_tagName, value) => xmlText(value),
+    });
+}
+
 function successfulProps(
     response: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -82,9 +126,77 @@ function propertyHref(value: unknown): string | undefined {
     return href(value);
 }
 
+type PasswordAuthentication = { username: string; password: string };
+type DigestAlgorithm = "MD5" | "MD5-sess" | "SHA-256" | "SHA-256-sess";
+type DigestChallenge = {
+    realm: string;
+    nonce: string;
+    algorithm: DigestAlgorithm;
+    qop?: "auth";
+    opaque?: string;
+};
+
+function unquote(value: string): string {
+    if (!value.startsWith('"')) return value;
+    return value.slice(1, -1).replace(/\\(.)/g, "$1");
+}
+
+function parseDigestChallenge(parameters: string): DigestChallenge | undefined {
+    const values = new Map<string, string>();
+    for (const item of parameters.matchAll(
+        /(?:^|,\s*)([!#$%&'*+.^_`|~\w-]+)\s*=\s*("(?:\\.|[^"\\])*"|[^,\s]+)/g,
+    )) {
+        values.set(item[1].toLowerCase(), unquote(item[2]));
+    }
+    const realm = values.get("realm");
+    const nonce = values.get("nonce");
+    if (!realm || !nonce) return undefined;
+    const algorithmValue = (values.get("algorithm") ?? "MD5").toUpperCase();
+    const algorithm = algorithmValue.endsWith("-SESS")
+        ? `${algorithmValue.slice(0, -5)}-sess`
+        : algorithmValue;
+    if (!["MD5", "MD5-sess", "SHA-256", "SHA-256-sess"].includes(algorithm))
+        return undefined;
+    if (values.get("userhash")?.toLowerCase() === "true") return undefined;
+    const qops = values
+        .get("qop")
+        ?.split(",")
+        .map((value) => value.trim().toLowerCase());
+    if (qops && !qops.includes("auth")) return undefined;
+    return {
+        realm,
+        nonce,
+        algorithm: algorithm as DigestAlgorithm,
+        ...(qops ? { qop: "auth" as const } : {}),
+        ...(values.has("opaque") ? { opaque: values.get("opaque") } : {}),
+    };
+}
+
+function digestChallenge(header: string): DigestChallenge | undefined {
+    const challengePattern =
+        /(?:^|,\s*)([!#$%&'*+.^_`|~\w-]+)\s+(?=[!#$%&'*+.^_`|~\w-]+\s*=)/g;
+    const matches = [...header.matchAll(challengePattern)];
+    for (let index = 0; index < matches.length; index += 1) {
+        const match = matches[index];
+        if (match[1]?.toLowerCase() !== "digest") continue;
+        const start = (match.index ?? 0) + match[0].length;
+        const end = matches[index + 1]?.index ?? header.length;
+        const challenge = parseDigestChallenge(header.slice(start, end));
+        if (challenge) return challenge;
+    }
+    return undefined;
+}
+
+function quote(value: string): string {
+    return `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
+}
+
 export class CalDavClient {
     private readonly dispatcher: Agent;
-    private readonly authorization: string;
+    private readonly authentication: PasswordAuthentication | { token: string };
+    private authenticationScheme?: "basic" | "digest";
+    private challenge?: DigestChallenge;
+    private nonceCount = 0;
     readonly serviceUrl: URL;
 
     constructor(
@@ -107,10 +219,7 @@ export class CalDavClient {
         }
         this.serviceUrl.username = "";
         this.serviceUrl.password = "";
-        this.authorization =
-            "token" in authentication
-                ? `Bearer ${authentication.token}`
-                : `Basic ${Buffer.from(`${authentication.username}:${authentication.password}`, "utf8").toString("base64")}`;
+        this.authentication = authentication;
         this.dispatcher = createGuardedDispatcher({
             allowPrivateAddresses: networkOptions.allowPrivateAddresses,
             maxResponseBytes: MAX_RESPONSE_BYTES,
@@ -137,15 +246,20 @@ export class CalDavClient {
         url: URL,
         init: RequestInit,
         redirects = 0,
+        authAttempts = 0,
     ): Promise<Response> {
         this.assertAllowed(url);
         let response: Response;
         try {
+            const authorization = this.authorization(url, init);
             response = await fetch(url, {
                 ...init,
                 redirect: "manual",
                 signal: AbortSignal.timeout(this.timeoutMs),
-                headers: { ...init.headers, authorization: this.authorization },
+                headers: {
+                    ...init.headers,
+                    ...(authorization ? { authorization } : {}),
+                },
                 // Node's fetch accepts this undici extension.
                 dispatcher: this.dispatcher,
             } as RequestInit);
@@ -164,13 +278,89 @@ export class CalDavClient {
             );
             if (writable && ![307, 308].includes(response.status))
                 throw new CalDavFailure("caldav:unsafe-redirect");
-            return this.request(new URL(location, url), init, redirects + 1);
+            return this.request(
+                new URL(location, url),
+                init,
+                redirects + 1,
+                authAttempts,
+            );
+        }
+        if (
+            response.status === 401 &&
+            "username" in this.authentication &&
+            authAttempts < MAX_AUTH_ATTEMPTS
+        ) {
+            const authenticate = response.headers.get("www-authenticate") ?? "";
+            const challenge = digestChallenge(authenticate);
+            const basic = /(?:^|,\s*)Basic(?:\s|,|$)/i.test(authenticate);
+            await response.body?.cancel().catch(() => {});
+            if (challenge) {
+                const stale = /(?:^|,\s*)stale\s*=\s*(?:true|"true")/i.test(
+                    authenticate,
+                );
+                if (authAttempts > 0 && !stale)
+                    throw new CalDavFailure("caldav:authentication-failed");
+                this.authenticationScheme = "digest";
+                this.challenge = challenge;
+                this.nonceCount = 0;
+                return this.request(url, init, redirects, authAttempts + 1);
+            }
+            if (basic && authAttempts === 0) {
+                this.authenticationScheme = "basic";
+                return this.request(url, init, redirects, authAttempts + 1);
+            }
+            if (authAttempts > 0)
+                throw new CalDavFailure("caldav:authentication-failed");
+            throw new CalDavFailure("caldav:unsupported-authentication");
         }
         if (response.status === 401 || response.status === 403) {
             await response.body?.cancel().catch(() => {});
             throw new CalDavFailure("caldav:authentication-failed");
         }
         return response;
+    }
+
+    private authorization(url: URL, init: RequestInit): string | undefined {
+        if ("token" in this.authentication)
+            return `Bearer ${this.authentication.token}`;
+        if (this.authenticationScheme === "basic") {
+            return `Basic ${Buffer.from(`${this.authentication.username}:${this.authentication.password}`, "utf8").toString("base64")}`;
+        }
+        if (this.authenticationScheme !== "digest" || !this.challenge)
+            return undefined;
+        const challenge = this.challenge;
+        const hashName = challenge.algorithm.startsWith("SHA-256")
+            ? "sha256"
+            : "md5";
+        const hash = (value: string) =>
+            createHash(hashName).update(value, "utf8").digest("hex");
+        const method = (init.method ?? "GET").toUpperCase();
+        const uri = `${url.pathname}${url.search}`;
+        const cnonce = randomBytes(16).toString("hex");
+        const nc = (++this.nonceCount).toString(16).padStart(8, "0");
+        let ha1 = hash(
+            `${this.authentication.username}:${challenge.realm}:${this.authentication.password}`,
+        );
+        if (challenge.algorithm.endsWith("-sess"))
+            ha1 = hash(`${ha1}:${challenge.nonce}:${cnonce}`);
+        const ha2 = hash(`${method}:${uri}`);
+        const response = challenge.qop
+            ? hash(`${ha1}:${challenge.nonce}:${nc}:${cnonce}:auth:${ha2}`)
+            : hash(`${ha1}:${challenge.nonce}:${ha2}`);
+        const values = [
+            `username=${quote(this.authentication.username)}`,
+            `realm=${quote(challenge.realm)}`,
+            `nonce=${quote(challenge.nonce)}`,
+            `uri=${quote(uri)}`,
+            `algorithm=${challenge.algorithm}`,
+            `response=${quote(response)}`,
+        ];
+        if (challenge.opaque !== undefined)
+            values.push(`opaque=${quote(challenge.opaque)}`);
+        if (challenge.qop) values.push("qop=auth", `nc=${nc}`);
+        if (challenge.qop || challenge.algorithm.endsWith("-sess"))
+            values.push(`cnonce=${quote(cnonce)}`);
+        return `Digest ${values.join(", ")}`;
     }
 
     private async propfind(
@@ -194,11 +384,7 @@ export class CalDavClient {
         }
         let parsed: Record<string, unknown>;
         try {
-            parsed = new XMLParser({
-                ignoreAttributes: false,
-                removeNSPrefix: true,
-                processEntities: false,
-            }).parse(await response.text());
+            parsed = xmlParser().parse(await response.text());
         } catch {
             throw new CalDavFailure("caldav:invalid-response");
         }
@@ -346,11 +532,7 @@ export class CalDavClient {
             }
             let parsed: Record<string, unknown>;
             try {
-                parsed = new XMLParser({
-                    ignoreAttributes: false,
-                    removeNSPrefix: true,
-                    processEntities: false,
-                }).parse(await response.text());
+                parsed = xmlParser().parse(await response.text());
             } catch {
                 throw new CalDavFailure("caldav:invalid-response");
             }
