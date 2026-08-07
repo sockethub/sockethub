@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
+import { createHash } from "node:crypto";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 
 const originalFetch = globalThis.fetch;
@@ -100,6 +101,29 @@ describe("CalDAV client", () => {
         ]);
     });
 
+    it("only decodes numeric references allowed by XML 1.0", async () => {
+        const calendarResponse = calendars.replace(
+            ">Work<",
+            ">Valid&#x1F600;&#1;&#xB;&#xFFFE;&#xFFFF;<",
+        );
+        globalThis.fetch = (async (url: URL | RequestInfo) => {
+            const value = String(url);
+            const body = value.endsWith("/dav/")
+                ? discovery
+                : value.includes("principals")
+                  ? principal
+                  : calendarResponse;
+            return new Response(body, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        const result = await client.discoverCalendars();
+        await client.close();
+        expect(result[0]?.name).toBe("Valid😀&#1;&#xB;&#xFFFE;&#xFFFF;");
+    });
+
     it("refuses cross-origin redirects without forwarding credentials", async () => {
         let calls = 0;
         globalThis.fetch = (async () => {
@@ -197,6 +221,186 @@ describe("CalDAV client", () => {
         expect(authorization).toBe("Bearer access-token");
     });
 
+    for (const algorithm of [
+        "MD5",
+        "MD5-sess",
+        "SHA-256",
+        "SHA-256-sess",
+    ] as const) {
+        it(`negotiates Digest ${algorithm} authentication`, async () => {
+            const authorizations: Array<string | null> = [];
+            globalThis.fetch = (async (
+                url: URL | RequestInfo,
+                init?: RequestInit,
+            ) => {
+                const authorization = new Headers(init?.headers).get(
+                    "authorization",
+                );
+                authorizations.push(authorization);
+                if (!authorization) {
+                    return new Response(null, {
+                        status: 401,
+                        headers: {
+                            "www-authenticate": `Digest realm="BaikalDAV", nonce="server-nonce", algorithm=${algorithm}, qop="auth", opaque="opaque-value"`,
+                        },
+                    });
+                }
+                const value = String(url);
+                const body = value.includes("principals")
+                    ? principal
+                    : value.includes("calendars")
+                      ? calendars
+                      : discovery;
+                return new Response(body, { status: 207 });
+            }) as typeof fetch;
+            const client = new CalDavClient(
+                "https://calendar.example/dav/",
+                { username: "alice", password: "secret" },
+            );
+            await client.discoverCalendars();
+            await client.close();
+
+            const authorization = authorizations[1] ?? "";
+            const cnonce = /cnonce="([^"]+)"/.exec(authorization)?.[1];
+            expect(cnonce).toBeTruthy();
+            const hashName = algorithm.startsWith("SHA-256")
+                ? "sha256"
+                : "md5";
+            const hash = (value: string) =>
+                createHash(hashName).update(value, "utf8").digest("hex");
+            let ha1 = hash("alice:BaikalDAV:secret");
+            if (algorithm.endsWith("-sess"))
+                ha1 = hash(`${ha1}:server-nonce:${cnonce}`);
+            const expected = hash(
+                `${ha1}:server-nonce:00000001:${cnonce}:auth:${hash("PROPFIND:/dav/")}`,
+            );
+            expect(authorizations[0]).toBeNull();
+            expect(authorization).toContain('username="alice"');
+            expect(authorization).toContain(`algorithm=${algorithm}`);
+            expect(authorization).toContain('uri="/dav/"');
+            expect(authorization).toContain(`response="${expected}"`);
+            expect(authorization).toContain('opaque="opaque-value"');
+            expect(authorizations[2]).toContain(
+                'uri="/principals/alice/"',
+            );
+        });
+    }
+
+    it("selects the first supported ordered Digest challenge", async () => {
+        let authorization: string | null = null;
+        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+            authorization = new Headers(init?.headers).get("authorization");
+            if (!authorization) {
+                return new Response(null, {
+                    status: 401,
+                    headers: {
+                        "www-authenticate":
+                            'Digest realm="Preferred", nonce="sha-nonce", algorithm=SHA-256, qop="auth", Digest realm="Fallback", nonce="md5-nonce", algorithm=MD5, qop="auth"',
+                    },
+                });
+            }
+            return new Response(discovery, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await expect(client.discoverCalendars()).rejects.toEqual(
+            new CalDavFailure("caldav:not-caldav"),
+        );
+        await client.close();
+        expect(authorization).toContain('realm="Preferred"');
+        expect(authorization).toContain('nonce="sha-nonce"');
+        expect(authorization).toContain("algorithm=SHA-256");
+        expect(authorization).not.toContain("Fallback");
+        expect(authorization).not.toContain("md5-nonce");
+    });
+
+    it("falls back to Basic when that is the supported challenge", async () => {
+        const authorizations: Array<string | null> = [];
+        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+            const authorization = new Headers(init?.headers).get("authorization");
+            authorizations.push(authorization);
+            if (!authorization) {
+                return new Response(null, {
+                    status: 401,
+                    headers: { "www-authenticate": 'Basic realm="Calendar"' },
+                });
+            }
+            return new Response(discovery, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await expect(client.discoverCalendars()).rejects.toEqual(
+            new CalDavFailure("caldav:not-caldav"),
+        );
+        await client.close();
+        expect(authorizations[0]).toBeNull();
+        expect(authorizations[1]).toBe(
+            `Basic ${Buffer.from("alice:secret", "utf8").toString("base64")}`,
+        );
+    });
+
+    it("refreshes a stale Digest nonce once", async () => {
+        const authorizations: Array<string | null> = [];
+        globalThis.fetch = (async (url: URL | RequestInfo, init?: RequestInit) => {
+            const authorization = new Headers(init?.headers).get("authorization");
+            authorizations.push(authorization);
+            if (authorizations.length === 1) {
+                return new Response(null, {
+                    status: 401,
+                    headers: {
+                        "www-authenticate":
+                            'Digest realm="BaikalDAV", nonce="old", qop="auth"',
+                    },
+                });
+            }
+            if (authorizations.length === 2) {
+                return new Response(null, {
+                    status: 401,
+                    headers: {
+                        "www-authenticate":
+                            'Digest realm="BaikalDAV", nonce="fresh", qop="auth", stale=true',
+                    },
+                });
+            }
+            const value = String(url);
+            const body = value.includes("principals")
+                ? principal
+                : value.includes("calendars")
+                  ? calendars
+                  : discovery;
+            return new Response(body, { status: 207 });
+        }) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await client.discoverCalendars();
+        await client.close();
+        expect(authorizations[1]).toContain('nonce="old"');
+        expect(authorizations[2]).toContain('nonce="fresh"');
+        expect(authorizations[2]).toContain("nc=00000001");
+    });
+
+    it("reports unsupported authentication challenges", async () => {
+        globalThis.fetch = (async () =>
+            new Response(null, {
+                status: 401,
+                headers: { "www-authenticate": "Negotiate" },
+            })) as typeof fetch;
+        const client = new CalDavClient("https://calendar.example/dav/", {
+            username: "alice",
+            password: "secret",
+        });
+        await expect(client.discoverCalendars()).rejects.toEqual(
+            new CalDavFailure("caldav:unsupported-authentication"),
+        );
+        await client.close();
+    });
+
     it("queries, updates, and deletes resources with ETag guards", async () => {
         const methods: Array<{ method?: string; match: string | null }> = [];
         globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
@@ -212,7 +416,9 @@ describe("CalDAV client", () => {
         }) as typeof fetch;
         const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
         const calendar = { id: "https://calendar.example/calendars/alice/work/", type: "calendar" as const, name: "Work", components: ["event" as const] };
-        expect(await client.query(calendar, { type: "event" })).toHaveLength(1);
+        const queried = await client.query(calendar, { type: "event" });
+        expect(queried).toHaveLength(1);
+        expect(queried[0]?.etag).toBe('"v1"');
         expect(await client.update(`${calendar.id}item.ics`, '"v1"', "data")).toMatchObject({ etag: '"v2"' });
         await client.delete(`${calendar.id}item.ics`, '"v2"');
         await client.close();

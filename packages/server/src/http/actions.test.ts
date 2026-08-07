@@ -95,6 +95,12 @@ const singlePayload = {
     actor: { id: "me" },
 };
 
+const credentialsAckContext = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld",
+];
+
 function createReqRes({
     body,
     headers = {},
@@ -281,6 +287,114 @@ describe("http actions", () => {
         await handlers["/sockethub-http"](replay.req, replay.res);
         expect(replay.res.headers["x-idempotent-replay"]).toBe("true");
         expect(replay.writes.length).toBe(2);
+    });
+
+    it("redacts credentials from streamed and cached acknowledgements", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            createMessageHandlersOverride: () => ({
+                credentials: (payload: unknown, cb: (data: unknown) => void) =>
+                    cb(payload),
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ type: "collection" }),
+            }),
+        });
+        const requestId = "credentials-redaction";
+        const credentials = {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/platform/caldav/v1.jsonld",
+            ],
+            type: "credentials",
+            actor: { id: "caldav:alice", type: "person" },
+            object: {
+                type: "credentials",
+                url: "https://calendar.example/alice/",
+                username: "alice",
+                password: "calendar-test-password",
+            },
+        };
+        const { req, res, writes } = createReqRes({
+            body: [credentials],
+            headers: { "x-request-id": requestId },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(writes).toEqual([
+            `${JSON.stringify({
+                "@context": credentialsAckContext,
+                type: "credentials-ack",
+                actor: { id: "caldav:alice", type: "person" },
+            })}\n`,
+        ]);
+        const cached = fakeRedis.lists.get(
+            `sockethub:http-actions:results:${requestId}`,
+        );
+        expect(cached).toEqual([
+            JSON.stringify({
+                "@context": credentialsAckContext,
+                type: "credentials-ack",
+                actor: { id: "caldav:alice", type: "person" },
+            }),
+        ]);
+        expect(JSON.stringify({ writes, cached })).not.toContain(
+            "calendar-test-password",
+        );
+    });
+
+    it("redacts credentials from handler error acknowledgements", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            createMessageHandlersOverride: () => ({
+                credentials: (
+                    payload: Record<string, unknown>,
+                    cb: (data: unknown) => void,
+                ) => cb({ ...payload, error: "invalid credentials" }),
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ type: "collection" }),
+            }),
+        });
+        const requestId = "credentials-error-redaction";
+        const credentials = {
+            "@context": credentialsAckContext,
+            type: "credentials",
+            actor: { id: "caldav:alice", type: "person" },
+            object: {
+                type: "credentials",
+                username: "alice",
+                password: "calendar-test-password",
+            },
+        };
+        const { req, res, writes } = createReqRes({
+            body: [credentials],
+            headers: { "x-request-id": requestId },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const expected = JSON.stringify({
+            "@context": credentialsAckContext,
+            type: "credentials-ack",
+            actor: { id: "caldav:alice", type: "person" },
+            error: "invalid credentials",
+        });
+        expect(writes).toEqual([`${expected}\n`]);
+        expect(
+            fakeRedis.lists.get(
+                `sockethub:http-actions:results:${requestId}`,
+            ),
+        ).toEqual([expected]);
+        expect(JSON.stringify({ writes, cached: fakeRedis.lists })).not.toContain(
+            "calendar-test-password",
+        );
+        expect(JSON.stringify({ writes, cached: fakeRedis.lists })).not.toContain(
+            '"username"',
+        );
     });
 
     it("serves cached results via GET", async () => {

@@ -19,6 +19,7 @@ import type {
 import {
     buildCanonicalContext,
     ERROR_PLATFORM_CONTEXT_URL,
+    INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 import express, {
@@ -136,6 +137,34 @@ function buildServerError(message: string, requestId?: string) {
         payload.requestId = requestId;
     }
     return payload;
+}
+
+/**
+ * Acknowledge credential storage without returning the credential object.
+ * HTTP results may be cached for idempotent replay, so only explicitly safe
+ * fields are copied from the submitted activity. The actor ID is retained so
+ * batched credential acknowledgements can be correlated with their inputs.
+ */
+function buildCredentialsAck(
+    payload: ActivityStream,
+    result?: ActivityStream | Error,
+) {
+    if (result instanceof Error) {
+        return result;
+    }
+
+    const ack: ActivityStream = {
+        "@context": buildCanonicalContext(INTERNAL_PLATFORM_CONTEXT_URL),
+        type: "credentials-ack",
+        actor: {
+            id: payload.actor.id,
+            type: "person",
+        },
+    };
+    if (isObject(result) && typeof result.error === "string") {
+        ack.error = result.error;
+    }
+    return ack;
 }
 
 function normalizeRequestId(value: unknown): RequestIdResolution {
@@ -905,7 +934,13 @@ export function registerHttpActionsRoutes(
                     case "credentials":
                         handlers.credentials(
                             payload as ActivityStream,
-                            writeResult,
+                            (result) =>
+                                writeResult(
+                                    buildCredentialsAck(
+                                        payload as ActivityStream,
+                                        result,
+                                    ),
+                                ),
                         );
                         break;
                     case "message":

@@ -50,4 +50,32 @@ test.describe("examples smoke against sockethub --examples", () => {
         );
         expect(relevantErrors).toEqual([]);
     });
+
+    test("caldav page exposes the simple create flow", async ({ page }) => {
+        await page.goto("/caldav");
+        await expect(
+            page.getByRole("heading", { name: "CalDAV Platform Example" }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("button", { name: "Fetch Calendars" }),
+        ).toBeDisabled();
+        await expect(
+            page.getByRole("button", { name: "Add Event" }),
+        ).toBeDisabled();
+
+        await page
+            .getByLabel("CalDAV URL")
+            .fill("https://calendar.example/dav/");
+        await page.getByLabel("Username").fill("alice");
+        await page.getByLabel("Password").fill("app-password");
+        await page.getByRole("button", { name: "Set Credentials" }).click();
+        await expect(
+            page.getByRole("button", { name: "Credentials Set" }),
+        ).toBeDisabled();
+
+        await page.getByLabel("Username").fill("alice-changed");
+        await expect(
+            page.getByRole("button", { name: "Set Credentials" }),
+        ).toBeEnabled();
+    });
 });
