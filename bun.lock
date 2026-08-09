@@ -9,11 +9,13 @@
         "@esm-bundle/chai": "^4.3.4-fix.0",
         "@lerna-lite/cli": "4.9.0",
         "@lerna-lite/publish": "4.9.0",
-        "@sockethub/client": "workspace:5.0.0-alpha.13",
-        "@sockethub/data-layer": "workspace:1.0.0-alpha.13",
-        "@sockethub/examples": "workspace:1.0.0-alpha.13",
-        "@sockethub/platform-caldav": "workspace:1.0.0-alpha.0",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.13",
+        "@sockethub/client": "workspace:5.0.0-alpha.19",
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.19",
+        "@sockethub/dav": "workspace:1.0.0-alpha.0",
+        "@sockethub/examples": "workspace:1.0.0-alpha.19",
+        "@sockethub/platform-caldav": "workspace:1.0.0-alpha.3",
+        "@sockethub/platform-carddav": "workspace:1.0.0-alpha.0",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.19",
         "@types/bun": "^1.3.8",
         "@types/mocha": "10.0.10",
         "@types/winston": "^2.4.4",
@@ -34,9 +36,9 @@
     },
     "packages/client": {
       "name": "@sockethub/client",
-      "version": "5.0.0-alpha.13",
+      "version": "5.0.0-alpha.19",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
         "eventemitter3": "^5.0.4",
       },
       "devDependencies": {
@@ -50,11 +52,11 @@
     },
     "packages/data-layer": {
       "name": "@sockethub/data-layer",
-      "version": "1.0.0-alpha.13",
+      "version": "1.0.0-alpha.19",
       "dependencies": {
-        "@sockethub/logger": "^1.0.0-alpha.13",
-        "@sockethub/schemas": "^3.0.0-alpha.13",
-        "@sockethub/util": "^1.0.0-alpha.1",
+        "@sockethub/logger": "^1.0.0-alpha.19",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
+        "@sockethub/util": "^1.0.0-alpha.7",
         "bullmq": "^5.66.5",
         "ioredis": "^5.9.2",
         "secure-store-redis": "^4.2.0",
@@ -69,12 +71,24 @@
         "winston": "^3.19.0",
       },
     },
+    "packages/dav": {
+      "name": "@sockethub/dav",
+      "version": "1.0.0-alpha.0",
+      "dependencies": {
+        "@sockethub/util": "^1.0.0-alpha.7",
+        "fast-xml-parser": "^5.10.1",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "undici": "^7.19.0",
+      },
+    },
     "packages/examples": {
       "name": "@sockethub/examples",
-      "version": "1.0.0-alpha.13",
+      "version": "1.0.0-alpha.19",
       "devDependencies": {
         "@playwright/test": "^1.57.0",
-        "@sockethub/client": "^5.0.0-alpha.13",
+        "@sockethub/client": "^5.0.0-alpha.19",
         "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.50.0",
         "@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -96,17 +110,17 @@
     },
     "packages/irc2as": {
       "name": "@sockethub/irc2as",
-      "version": "4.0.0-alpha.13",
+      "version": "4.0.0-alpha.19",
       "dependencies": {
         "fast-deep-equal": "^3.1.3",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
       },
     },
     "packages/logger": {
       "name": "@sockethub/logger",
-      "version": "1.0.0-alpha.13",
+      "version": "1.0.0-alpha.19",
       "dependencies": {
         "winston": "^3.19.0",
       },
@@ -114,26 +128,12 @@
         "@types/bun": "latest",
       },
     },
-    "packages/platform-dummy": {
-      "name": "@sockethub/platform-dummy",
-      "version": "3.0.0-alpha.13",
-      "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
-        "@types/bun": "latest",
-      },
-      "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.13",
-      },
-      "optionalPeers": [
-        "@sockethub/server",
-      ],
-    },
     "packages/platform-caldav": {
       "name": "@sockethub/platform-caldav",
-      "version": "1.0.0-alpha.0",
+      "version": "1.0.0-alpha.3",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.16",
-        "@sockethub/util": "^1.0.0-alpha.4",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
+        "@sockethub/util": "^1.0.0-alpha.7",
         "fast-xml-parser": "^5.10.1",
       },
       "devDependencies": {
@@ -141,7 +141,38 @@
         "undici": "^7.19.0",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.16",
+        "@sockethub/server": "^5.0.0-alpha.19",
+      },
+      "optionalPeers": [
+        "@sockethub/server",
+      ],
+    },
+    "packages/platform-carddav": {
+      "name": "@sockethub/platform-carddav",
+      "version": "1.0.0-alpha.0",
+      "dependencies": {
+        "@sockethub/dav": "^1.0.0-alpha.0",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "@sockethub/server": "^5.0.0-alpha.19",
+      },
+      "optionalPeers": [
+        "@sockethub/server",
+      ],
+    },
+    "packages/platform-dummy": {
+      "name": "@sockethub/platform-dummy",
+      "version": "3.0.0-alpha.19",
+      "devDependencies": {
+        "@sockethub/schemas": "^3.0.0-alpha.19",
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "@sockethub/server": "^5.0.0-alpha.19",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -149,19 +180,19 @@
     },
     "packages/platform-feeds": {
       "name": "@sockethub/platform-feeds",
-      "version": "4.0.0-alpha.13",
+      "version": "4.0.0-alpha.19",
       "dependencies": {
-        "@sockethub/util": "^1.0.0-alpha.1",
+        "@sockethub/util": "^1.0.0-alpha.7",
         "html-tags": "^3.3.1",
         "htmlparser2": "^9.1.0",
         "podparse": "^1.6.0",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "@sockethub/server": "5.0.0-alpha.13",
+        "@sockethub/server": "5.0.0-alpha.19",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -169,18 +200,18 @@
     },
     "packages/platform-irc": {
       "name": "@sockethub/platform-irc",
-      "version": "4.0.0-alpha.13",
+      "version": "4.0.0-alpha.19",
       "dependencies": {
-        "@sockethub/irc2as": "^4.0.0-alpha.13",
+        "@sockethub/irc2as": "^4.0.0-alpha.19",
         "irc-socket-sasl": "^4.1.2",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
         "@types/bun": "latest",
         "typedoc": "^0.28.14",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.13",
+        "@sockethub/server": "^5.0.0-alpha.19",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -188,28 +219,28 @@
     },
     "packages/platform-metadata": {
       "name": "@sockethub/platform-metadata",
-      "version": "1.0.1-alpha.8",
+      "version": "1.0.1-alpha.14",
       "dependencies": {
-        "@sockethub/util": "^1.0.0-alpha.1",
+        "@sockethub/util": "^1.0.0-alpha.7",
         "open-graph-scraper": "^6.11.0",
         "undici": "^7.16.0",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.13",
+        "@sockethub/server": "^5.0.0-alpha.19",
       },
     },
     "packages/platform-xmpp": {
       "name": "@sockethub/platform-xmpp",
-      "version": "5.0.0-alpha.13",
+      "version": "5.0.0-alpha.19",
       "dependencies": {
-        "@sockethub/util": "^1.0.0-alpha.1",
+        "@sockethub/util": "^1.0.0-alpha.7",
         "@xmpp/client": "^0.13.6",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.13",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
         "@types/bun": "latest",
         "@xmpp/xml": "^0.13.2",
         "ajv": "^8.17.1",
@@ -217,7 +248,7 @@
         "typedoc": "^0.28.14",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.13",
+        "@sockethub/server": "^5.0.0-alpha.19",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -225,7 +256,7 @@
     },
     "packages/schemas": {
       "name": "@sockethub/schemas",
-      "version": "3.0.0-alpha.13",
+      "version": "3.0.0-alpha.19",
       "dependencies": {
         "ajv": "^8.17.1",
         "ajv-formats": "^2.1.1",
@@ -237,15 +268,15 @@
     },
     "packages/server": {
       "name": "@sockethub/server",
-      "version": "5.0.0-alpha.13",
+      "version": "5.0.0-alpha.19",
       "bin": "bin/sockethub",
       "dependencies": {
         "@sentry/node": "^10.36.0",
-        "@sockethub/client": "^5.0.0-alpha.13",
-        "@sockethub/data-layer": "^1.0.0-alpha.13",
-        "@sockethub/logger": "^1.0.0-alpha.13",
-        "@sockethub/schemas": "^3.0.0-alpha.13",
-        "@sockethub/util": "^1.0.0-alpha.1",
+        "@sockethub/client": "^5.0.0-alpha.19",
+        "@sockethub/data-layer": "^1.0.0-alpha.19",
+        "@sockethub/logger": "^1.0.0-alpha.19",
+        "@sockethub/schemas": "^3.0.0-alpha.19",
+        "@sockethub/util": "^1.0.0-alpha.7",
         "chalk": "^5.6.2",
         "convict": "^6.2.5",
         "ejs": "^3.1.10",
@@ -267,31 +298,33 @@
         "web-streams-polyfill": "^3.3.3",
       },
       "optionalDependencies": {
-        "@sockethub/examples": "^1.0.0-alpha.13",
-        "@sockethub/platform-caldav": "^1.0.0-alpha.0",
-        "@sockethub/platform-dummy": "^3.0.0-alpha.13",
-        "@sockethub/platform-feeds": "^4.0.0-alpha.13",
-        "@sockethub/platform-irc": "^4.0.0-alpha.13",
-        "@sockethub/platform-metadata": "^1.0.1-alpha.8",
-        "@sockethub/platform-xmpp": "^5.0.0-alpha.13",
+        "@sockethub/examples": "^1.0.0-alpha.19",
+        "@sockethub/platform-caldav": "^1.0.0-alpha.3",
+        "@sockethub/platform-carddav": "^1.0.0-alpha.0",
+        "@sockethub/platform-dummy": "^3.0.0-alpha.19",
+        "@sockethub/platform-feeds": "^4.0.0-alpha.19",
+        "@sockethub/platform-irc": "^4.0.0-alpha.19",
+        "@sockethub/platform-metadata": "^1.0.1-alpha.14",
+        "@sockethub/platform-xmpp": "^5.0.0-alpha.19",
       },
     },
     "packages/sockethub": {
       "name": "sockethub",
-      "version": "5.0.0-alpha.13",
+      "version": "5.0.0-alpha.19",
       "bin": "bin/sockethub",
       "dependencies": {
-        "@sockethub/platform-caldav": "^1.0.0-alpha.0",
-        "@sockethub/platform-dummy": "^3.0.0-alpha.12",
-        "@sockethub/platform-feeds": "^4.0.0-alpha.12",
-        "@sockethub/platform-irc": "^4.0.0-alpha.12",
-        "@sockethub/platform-xmpp": "^5.0.0-alpha.12",
-        "@sockethub/server": "^5.0.0-alpha.12",
+        "@sockethub/platform-caldav": "^1.0.0-alpha.3",
+        "@sockethub/platform-carddav": "^1.0.0-alpha.0",
+        "@sockethub/platform-dummy": "^3.0.0-alpha.19",
+        "@sockethub/platform-feeds": "^4.0.0-alpha.19",
+        "@sockethub/platform-irc": "^4.0.0-alpha.19",
+        "@sockethub/platform-xmpp": "^5.0.0-alpha.19",
+        "@sockethub/server": "^5.0.0-alpha.19",
       },
     },
     "packages/util": {
       "name": "@sockethub/util",
-      "version": "1.0.0-alpha.1",
+      "version": "1.0.0-alpha.7",
       "dependencies": {
         "object-hash": "^3.0.0",
         "secure-store-redis": "^4.2.0",
@@ -645,7 +678,7 @@
 
     "@inquirer/type": ["@inquirer/type@3.0.8", "", { "peerDependencies": { "@types/node": ">=18" }, "optionalPeers": ["@types/node"] }, "sha512-lg9Whz8onIHRthWaN1Q9EGLa/0LFJjyM8mEUbL1eTi6yMGvBf8gvyDLtxSXztQsxMvhxxNpJYrwa1YHdq+w4Jw=="],
 
-    "@ioredis/commands": ["@ioredis/commands@1.5.0", "", {}, "sha512-eUgLqrMf8nJkZxT24JvVRrQya1vZkQh8BBeYNwGDqa5I0VUi8ACx7uFvAaLxintokpTenkK6DASvo/bvNbBGow=="],
+    "@ioredis/commands": ["@ioredis/commands@1.10.0", "", {}, "sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q=="],
 
     "@isaacs/balanced-match": ["@isaacs/balanced-match@4.0.1", "", {}, "sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ=="],
 
@@ -1103,6 +1136,8 @@
 
     "@sockethub/data-layer": ["@sockethub/data-layer@workspace:packages/data-layer"],
 
+    "@sockethub/dav": ["@sockethub/dav@workspace:packages/dav"],
+
     "@sockethub/examples": ["@sockethub/examples@workspace:packages/examples"],
 
     "@sockethub/irc2as": ["@sockethub/irc2as@workspace:packages/irc2as"],
@@ -1110,6 +1145,8 @@
     "@sockethub/logger": ["@sockethub/logger@workspace:packages/logger"],
 
     "@sockethub/platform-caldav": ["@sockethub/platform-caldav@workspace:packages/platform-caldav"],
+
+    "@sockethub/platform-carddav": ["@sockethub/platform-carddav@workspace:packages/platform-carddav"],
 
     "@sockethub/platform-dummy": ["@sockethub/platform-dummy@workspace:packages/platform-dummy"],
 
@@ -1733,7 +1770,7 @@
 
     "clsx": ["clsx@2.1.1", "", {}, "sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA=="],
 
-    "cluster-key-slot": ["cluster-key-slot@1.1.2", "", {}, "sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA=="],
+    "cluster-key-slot": ["cluster-key-slot@1.1.1", "", {}, "sha512-rwHwUfXL40Chm1r08yrhU3qpUvdVlgkKNeyeGPOxnW8/SyVDvgRaed/Uz54AqWNaTCAThlj6QAs3TZcKI0xDEw=="],
 
     "cmd-shim": ["cmd-shim@7.0.0", "", {}, "sha512-rtpaCbr164TPPh+zFdkWpCyZuKkjpAzODfaZCf/SVJZzJN+4bHQb/LP3Jzq5/+84um3XXY8r548XiWKSborwVw=="],
 
@@ -2355,7 +2392,7 @@
 
     "internal-slot": ["internal-slot@1.1.0", "", { "dependencies": { "es-errors": "^1.3.0", "hasown": "^2.0.2", "side-channel": "^1.1.0" } }, "sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw=="],
 
-    "ioredis": ["ioredis@5.9.2", "", { "dependencies": { "@ioredis/commands": "1.5.0", "cluster-key-slot": "^1.1.0", "debug": "^4.3.4", "denque": "^2.1.0", "lodash.defaults": "^4.2.0", "lodash.isarguments": "^3.1.0", "redis-errors": "^1.2.0", "redis-parser": "^3.0.0", "standard-as-callback": "^2.1.0" } }, "sha512-tAAg/72/VxOUW7RQSX1pIxJVucYKcjFjfvj60L57jrZpYCHC3XN0WCQ3sNYL4Gmvv+7GPvTAjc+KSdeNuE8oWQ=="],
+    "ioredis": ["ioredis@5.11.1", "", { "dependencies": { "@ioredis/commands": "1.10.0", "cluster-key-slot": "1.1.1", "debug": "4.4.3", "denque": "2.1.0", "redis-errors": "1.2.0", "redis-parser": "3.0.0", "standard-as-callback": "2.1.0" } }, "sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A=="],
 
     "ip-address": ["ip-address@10.0.1", "", {}, "sha512-NWv9YLW4PoW2B7xtzaS3NCot75m6nK7Icdv0o3lfMceJVRfSoQwqD4wEH5rLwoKJwUiZ/rfpiVBhnaF0FK4HoA=="],
 
@@ -3961,6 +3998,8 @@
 
     "@sockethub/data-layer/@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
+    "@sockethub/dav/@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
+
     "@sockethub/examples/globals": ["globals@15.15.0", "", {}, "sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg=="],
 
     "@sockethub/examples/socket.io-client": ["socket.io-client@4.8.3", "", { "dependencies": { "@socket.io/component-emitter": "~3.1.0", "debug": "~4.4.1", "engine.io-client": "~6.6.1", "socket.io-parser": "~4.2.4" } }, "sha512-uP0bpjWrjQmUt5DTHq9RuoCBdFJF10cdX9X+a368j/Ft0wmaVgxlrjvK3kjvgCODOMMOz9lcaRzxmso0bTWZ/g=="],
@@ -3968,6 +4007,10 @@
     "@sockethub/examples/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@sockethub/logger/@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
+
+    "@sockethub/platform-caldav/@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
+
+    "@sockethub/platform-carddav/@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
     "@sockethub/platform-dummy/@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
@@ -4535,8 +4578,6 @@
 
     "sass-lookup/commander": ["commander@12.1.0", "", {}, "sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA=="],
 
-    "secure-store-redis/ioredis": ["ioredis@5.11.1", "", { "dependencies": { "@ioredis/commands": "1.10.0", "cluster-key-slot": "1.1.1", "debug": "4.4.3", "denque": "2.1.0", "redis-errors": "1.2.0", "redis-parser": "3.0.0", "standard-as-callback": "2.1.0" } }, "sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A=="],
-
     "sinon/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 
     "sinon-as-promised/sinon": ["sinon@17.0.1", "", { "dependencies": { "@sinonjs/commons": "^3.0.0", "@sinonjs/fake-timers": "^11.2.2", "@sinonjs/samsam": "^8.0.0", "diff": "^5.1.0", "nise": "^5.1.5", "supports-color": "^7.2.0" } }, "sha512-wmwE19Lie0MLT+ZYNpDymasPHUKTaZHUH/pKEubRXIzySv9Atnlw+BUMGCzWgV7b7wO+Hw6f1TEOr0IUnmU8/g=="],
@@ -4863,7 +4904,13 @@
 
     "@sockethub/data-layer/@types/bun/bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
 
+    "@sockethub/dav/@types/bun/bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
+
     "@sockethub/logger/@types/bun/bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
+
+    "@sockethub/platform-caldav/@types/bun/bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
+
+    "@sockethub/platform-carddav/@types/bun/bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
 
     "@sockethub/platform-dummy/@types/bun/bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
 
@@ -4968,6 +5015,10 @@
     "body-parser/type-is/media-typer": ["media-typer@0.3.0", "", {}, "sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ=="],
 
     "body-parser/type-is/mime-types": ["mime-types@2.1.35", "", { "dependencies": { "mime-db": "1.52.0" } }, "sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw=="],
+
+    "bullmq/ioredis/@ioredis/commands": ["@ioredis/commands@1.5.0", "", {}, "sha512-eUgLqrMf8nJkZxT24JvVRrQya1vZkQh8BBeYNwGDqa5I0VUi8ACx7uFvAaLxintokpTenkK6DASvo/bvNbBGow=="],
+
+    "bullmq/ioredis/cluster-key-slot": ["cluster-key-slot@1.1.2", "", {}, "sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA=="],
 
     "cache-content-type/mime-types/mime-db": ["mime-db@1.52.0", "", {}, "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg=="],
 
@@ -5188,10 +5239,6 @@
     "resolve-path/http-errors/setprototypeof": ["setprototypeof@1.1.0", "", {}, "sha512-BvE/TwpZX4FXExxOxZyRGQQv651MSwmWKZGqvmPcRIjDqWub67kTKuIMx43cZZrS/cBBzwBcNDWoFxt2XEFIpQ=="],
 
     "resolve-path/http-errors/statuses": ["statuses@1.5.0", "", {}, "sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA=="],
-
-    "secure-store-redis/ioredis/@ioredis/commands": ["@ioredis/commands@1.10.0", "", {}, "sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q=="],
-
-    "secure-store-redis/ioredis/cluster-key-slot": ["cluster-key-slot@1.1.1", "", {}, "sha512-rwHwUfXL40Chm1r08yrhU3qpUvdVlgkKNeyeGPOxnW8/SyVDvgRaed/Uz54AqWNaTCAThlj6QAs3TZcKI0xDEw=="],
 
     "sinon-as-promised/sinon/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 

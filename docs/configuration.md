@@ -36,6 +36,7 @@ does not start).
     "file": "sockethub.log"
   },
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
@@ -135,6 +136,7 @@ them. They cannot be supplied by browser clients.
 ```json
 {
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
@@ -157,6 +159,10 @@ the platform default):
 ```json
 {
   "packageConfig": {
+    "@sockethub/platform-carddav": {
+      "connectTimeoutMs": 15000,
+      "concurrency": 10
+    },
     "@sockethub/platform-caldav": {
       "connectTimeoutMs": 15000,
       "concurrency": 10
@@ -624,6 +630,7 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
     "traceSampleRate": 0.1
   },
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
