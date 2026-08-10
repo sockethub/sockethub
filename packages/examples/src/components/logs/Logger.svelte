@@ -10,9 +10,12 @@ type LogEntries = Record<
     ]
 >;
 const Logs = writable({} as LogEntries);
-const LogMeta = writable(
-    {} as Record<string, { timestamp: number; sortKey: number }>,
-);
+type LogMetadata = {
+    timestamp: number;
+    sortKey: number;
+    requestId?: string;
+};
+const LogMeta = writable({} as Record<string, LogMetadata>);
 let counter = 0;
 
 type ObjectType = "SEND" | "RESP";
@@ -21,6 +24,7 @@ export function addObject(
     type: ObjectType,
     obj: AnyActivityStream,
     isBatch = false,
+    requestId?: string,
 ): AnyActivityStream {
     let index: string;
     const sortKey = ++counter;
@@ -40,7 +44,7 @@ export function addObject(
     const now = Date.now();
     LogMeta.update((meta) => {
         if (!meta[index]) {
-            meta[index] = { timestamp: now, sortKey };
+            meta[index] = { timestamp: now, sortKey, requestId };
         }
         return meta;
     });
@@ -59,6 +63,18 @@ export function addObject(
         return currentLogs;
     });
     return obj;
+}
+
+export function resolveLogDetails(
+    logs: LogEntries,
+    meta: Record<string, LogMetadata>,
+    id: string,
+) {
+    const requestId = meta[id]?.requestId ?? id;
+    return {
+        sent: logs[requestId]?.[0],
+        response: logs[id]?.[1],
+    };
 }
 
 export type SchemaLogType = "schemas" | "ready" | "init_error";
@@ -98,7 +114,7 @@ export { SchemaLogs };
         | { kind: "schema"; sortKey: number; entry: SchemaLogEntry };
 
     let logs: LogEntries = $state({} as LogEntries);
-    let meta: Record<string, { timestamp: number; sortKey: number }> = $state({});
+    let meta: Record<string, LogMetadata> = $state({});
     let schemaLogs: SchemaLogEntry[] = $state([]);
     let logModalState = $state(false);
     let jsonSend = $state("");
@@ -108,7 +124,7 @@ export { SchemaLogs };
     Logs.subscribe((data: LogEntries) => {
         logs = data;
     });
-    LogMeta.subscribe((data: Record<string, { timestamp: number; sortKey: number }>) => {
+    LogMeta.subscribe((data: Record<string, LogMetadata>) => {
         meta = data;
     });
     SchemaLogs.subscribe((data: SchemaLogEntry[]) => {
@@ -130,20 +146,13 @@ export { SchemaLogs };
 
     function showLog(uid: string) {
         return () => {
-            let indexSend = uid;
-            let indexResp = uid;
-            if (uid.includes("-")) {
-                indexSend = uid.split("-")[0];
-            }
-            console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
-            console.log("logs: ", logs);
+            const { sent, response } = resolveLogDetails(logs, meta, uid);
             modalTitle = "ActivityStreams Data Exchange";
             logModalState = true;
-            jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
-            const resp = logs[indexResp]?.[1];
+            jsonSend = sent ? JSON.stringify(sent, null, 2) : "";
             jsonResp =
-                resp && Object.keys(resp as object).length > 0
-                    ? JSON.stringify(resp, null, 2)
+                response && Object.keys(response as object).length > 0
+                    ? JSON.stringify(response, null, 2)
                     : "";
         };
     }
