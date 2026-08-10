@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveLogDetails } from "./Logger.svelte";
+import { resolveLogDetails } from "./log-details";
 
 describe("activity log details", () => {
     it("associates a URL-shaped batch response with its originating request", () => {

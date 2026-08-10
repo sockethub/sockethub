@@ -1,6 +1,7 @@
 <script lang="ts" module>
 import type { AnyActivityStream } from "$lib/sockethub";
 import { writable } from "svelte/store";
+import { resolveLogDetails, type LogMetadata } from "./log-details";
 
 type LogEntries = Record<
     string,
@@ -10,11 +11,6 @@ type LogEntries = Record<
     ]
 >;
 const Logs = writable({} as LogEntries);
-type LogMetadata = {
-    timestamp: number;
-    sortKey: number;
-    requestId?: string;
-};
 const LogMeta = writable({} as Record<string, LogMetadata>);
 let counter = 0;
 
@@ -63,18 +59,6 @@ export function addObject(
         return currentLogs;
     });
     return obj;
-}
-
-export function resolveLogDetails(
-    logs: LogEntries,
-    meta: Record<string, LogMetadata>,
-    id: string,
-) {
-    const requestId = meta[id]?.requestId ?? id;
-    return {
-        sent: logs[requestId]?.[0],
-        response: logs[id]?.[1],
-    };
 }
 
 export type SchemaLogType = "schemas" | "ready" | "init_error";
