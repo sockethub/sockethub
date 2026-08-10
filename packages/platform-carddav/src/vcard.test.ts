@@ -50,4 +50,74 @@ describe("vCard", () => {
         );
         expect(result.body).not.toContain("aGVsbG8=");
     });
+
+    it("accepts trailing blank lines and preserves astral characters when folding", () => {
+        const name = `${"a".repeat(68)}😀 tail`;
+        const built = buildVCard({ type: "person", uid: "alice-1", name });
+        expect(built.body).toContain("😀");
+        expect(built.body).not.toContain("�");
+        expect(
+            parseVCard(
+                `${built.body}\r\n`,
+                "https://dav.example/alice.vcf",
+            ).name,
+        ).toBe(name);
+    });
+
+    it("rejects malformed cards", () => {
+        expect(() =>
+            parseVCard("NOPE", "https://dav.example/a.vcf"),
+        ).toThrow("not a vCard");
+        expect(() =>
+            parseVCard(
+                "BEGIN:VCARD\r\nVERSION:4.0\r\n",
+                "https://dav.example/a.vcf",
+            ),
+        ).toThrow("unterminated vCard");
+        expect(() =>
+            parseVCard(
+                "BEGIN:VCARD\r\nVERSION:4.0\r\nEND:VCARD\r\n",
+                "https://dav.example/a.vcf",
+            ),
+        ).toThrow("vCard requires VERSION, UID, and FN");
+    });
+
+    it("rejects unsafe UIDs, raw values, parameters, and preserved properties", () => {
+        expect(() =>
+            buildVCard({ type: "person", uid: "a/b", name: "Alice" }),
+        ).toThrow("unsafe vCard UID");
+        expect(() =>
+            buildVCard({
+                type: "person",
+                uid: "alice-1",
+                name: "Alice",
+                urls: [{ value: "https://example.test/\r\nX-INJECT:1" }],
+            }),
+        ).toThrow("invalid vCard URL");
+        expect(() =>
+            buildVCard({
+                type: "person",
+                uid: "alice-1",
+                name: "Alice",
+                emails: [{ value: "alice@example.test", types: ["work;PREF=1"] }],
+            }),
+        ).toThrow("invalid vCard type parameter");
+        expect(() =>
+            buildVCard({ type: "person", uid: "alice-1", name: "Alice" }, [
+                { raw: "X-BAD:one\r\nX-INJECT:two" },
+            ]),
+        ).toThrow("invalid preserved vCard property");
+    });
+
+    it("normalizes carriage returns in text values without adding content lines", () => {
+        const built = buildVCard({
+            type: "person",
+            uid: "alice-1",
+            name: "Alice\rX-INJECT:1",
+            note: "one\r\ntwo",
+        });
+        expect(built.body).toContain("FN:Alice\\nX-INJECT:1");
+        expect(built.body).toContain("NOTE:one\\ntwo");
+        expect(built.body).not.toContain("\rX-INJECT:1");
+    });
 });

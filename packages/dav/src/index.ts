@@ -74,6 +74,7 @@ export function parseDavXml(xml: string): Record<string, unknown> {
         removeNSPrefix: true,
         processEntities: false,
         tagValueProcessor: (_tagName, value) => xmlText(value),
+        attributeValueProcessor: (_attributeName, value) => xmlText(value),
     }).parse(xml);
 }
 
@@ -85,7 +86,7 @@ export function successfulProps(
             | Record<string, unknown>
             | Record<string, unknown>[],
     )) {
-        if (String(item.status ?? "").includes(" 200 "))
+        if (/\s200(?:\s|$)/.test(String(item.status ?? "")))
             return (item.prop as Record<string, unknown>) ?? {};
     }
     return {};
@@ -232,7 +233,11 @@ export class DavClient {
         private readonly timeoutMs = 15_000,
         networkOptions: DavNetworkOptions = {},
     ) {
-        this.serviceUrl = new URL(url);
+        try {
+            this.serviceUrl = new URL(url);
+        } catch (error) {
+            throw new DavFailure(`${errorPrefix}:invalid-url`, error);
+        }
         if (
             this.serviceUrl.protocol !== "https:" &&
             !networkOptions.allowInsecureHttp
@@ -264,6 +269,7 @@ export class DavClient {
         init: RequestInit,
         redirects = 0,
         authAttempts = 0,
+        signal: AbortSignal = AbortSignal.timeout(this.timeoutMs),
     ): Promise<Response> {
         this.assertAllowed(url);
         let response: Response;
@@ -272,7 +278,7 @@ export class DavClient {
             response = await fetch(url, {
                 ...init,
                 redirect: "manual",
-                signal: AbortSignal.timeout(this.timeoutMs),
+                signal,
                 headers: {
                     ...init.headers,
                     ...(authorization ? { authorization } : {}),
@@ -303,6 +309,7 @@ export class DavClient {
                 init,
                 redirects + 1,
                 authAttempts,
+                signal,
             );
         }
         if (
@@ -325,11 +332,23 @@ export class DavClient {
                 this.authenticationScheme = "digest";
                 this.challenge = challenge;
                 this.nonceCount = 0;
-                return this.request(url, init, redirects, authAttempts + 1);
+                return this.request(
+                    url,
+                    init,
+                    redirects,
+                    authAttempts + 1,
+                    signal,
+                );
             }
             if (basic && authAttempts === 0) {
                 this.authenticationScheme = "basic";
-                return this.request(url, init, redirects, authAttempts + 1);
+                return this.request(
+                    url,
+                    init,
+                    redirects,
+                    authAttempts + 1,
+                    signal,
+                );
             }
             throw new DavFailure(
                 `${this.errorPrefix}:${authAttempts > 0 ? "authentication-failed" : "unsupported-authentication"}`,

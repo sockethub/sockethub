@@ -24,7 +24,7 @@ const CALENDAR_PROPS = `<?xml version="1.0" encoding="utf-8"?>
 const calDavTime = (value: string) => {
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime()))
-        throw new DavFailure("caldav:invalid-query");
+        throw new CalDavFailure("caldav:invalid-query");
     return parsed
         .toISOString()
         .replaceAll("-", "")

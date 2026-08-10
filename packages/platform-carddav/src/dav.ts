@@ -188,10 +188,7 @@ export class CardDavClient extends DavClient {
     ): Promise<{ id: string; uid: string; etag?: string }> {
         // Preservation data is accepted only from the authoritative card
         // fetched during update, never from a connected client during create.
-        const card = buildVCard(
-            { ...input, preservedProperties: undefined },
-            [],
-        );
+        const card = buildVCard(input, []);
         const resource = new URL(
             `${encodeURIComponent(card.uid)}.vcf`,
             book.id.endsWith("/") ? book.id : `${book.id}/`,
@@ -245,7 +242,7 @@ export class CardDavClient extends DavClient {
         }
         if (stored.uid !== input.uid)
             throw new DavFailure("carddav:uid-mismatch");
-        const card = buildVCard(input, stored.preservedProperties);
+        const card = buildVCard(input, stored.preservedProperties ?? []);
         const response = await this.request(resource, {
             method: "PUT",
             headers: {

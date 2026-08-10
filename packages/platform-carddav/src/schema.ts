@@ -28,7 +28,12 @@ const typedValue = {
             type: "array",
             uniqueItems: true,
             maxItems: 32,
-            items: { type: "string", minLength: 1, maxLength: 64 },
+            items: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+                pattern: "^[A-Za-z0-9-]+$",
+            },
         },
         preferred: { type: "boolean" },
     },
@@ -85,23 +90,16 @@ const shared = {
         items: {
             type: "string",
             format: "uri",
-            pattern: "^https?://",
+            pattern: "^https?://[^\\r\\n]+$",
             maxLength: 4096,
         },
     },
     note: { type: "string", maxLength: 65536 },
-    birthday: { type: "string", minLength: 4, maxLength: 32 },
-    preservedProperties: {
-        type: "array",
-        maxItems: 1000,
-        items: {
-            type: "object",
-            required: ["raw"],
-            additionalProperties: false,
-            properties: {
-                raw: { type: "string", minLength: 1, maxLength: 65536 },
-            },
-        },
+    birthday: {
+        type: "string",
+        minLength: 4,
+        maxLength: 32,
+        pattern: "^[^\\r\\n]+$",
     },
     vcardVersion: { enum: ["3.0", "4.0"] },
     updateSupported: { type: "boolean" },

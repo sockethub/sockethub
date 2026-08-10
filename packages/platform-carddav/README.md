@@ -22,6 +22,11 @@ Use `sc.contextFor("carddav")` as the request context.
 
 ```json
 {
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/carddav/v1.jsonld"
+  ],
   "type": "fetch",
   "actor": { "id": "carddav:alice", "type": "person" }
 }
@@ -31,6 +36,11 @@ Use `sc.contextFor("carddav")` as the request context.
 
 ```json
 {
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/carddav/v1.jsonld"
+  ],
   "type": "query",
   "actor": { "id": "carddav:alice", "type": "person" },
   "target": {
@@ -50,6 +60,11 @@ Use `sc.contextFor("carddav")` as the request context.
 
 ```json
 {
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/carddav/v1.jsonld"
+  ],
   "type": "create",
   "actor": { "id": "carddav:alice", "type": "person" },
   "target": {

@@ -200,9 +200,10 @@ export default class CardDav implements PlatformInterface {
         const code =
             error instanceof CardDavFailure
                 ? error.code
-                : `carddav:invalid-${job.type}: ${error instanceof Error ? error.message : String(error)}`;
+                : `carddav:invalid-${job.type}`;
         this.log.error(`CardDAV ${job.type} failed for actor ${job.actor.id}`, {
             code,
+            error: error instanceof Error ? error.message : String(error),
         });
         done(code);
     }

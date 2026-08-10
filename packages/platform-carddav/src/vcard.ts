@@ -65,6 +65,7 @@ const unescapeText = (value: string) =>
         .replace(/\\\\/g, "\\");
 const escapeText = (value: string) =>
     value
+        .replace(/\r\n?/g, "\n")
         .replaceAll("\\", "\\\\")
         .replaceAll("\n", "\\n")
         .replaceAll(";", "\\;")
@@ -123,10 +124,12 @@ function typedValue(
 }
 
 export function parseVCard(body: string, id: string, etag?: string): Contact {
-    const lines = unfold(body).filter(
-        (line, index, all) =>
-            line.length > 0 || (index > 0 && index < all.length - 1),
-    );
+    const all = unfold(body);
+    let first = 0;
+    let last = all.length - 1;
+    while (first <= last && all[first].length === 0) first += 1;
+    while (last >= first && all[last].length === 0) last -= 1;
+    const lines = all.slice(first, last + 1);
     if (lines[0]?.toUpperCase() !== "BEGIN:VCARD")
         throw new Error("not a vCard");
     if (lines.at(-1)?.toUpperCase() !== "END:VCARD")
@@ -256,6 +259,8 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
 
 function params(value: ContactValue | ContactAddress): string {
     const result: string[] = [];
+    if (value.types?.some((type) => !/^[A-Za-z0-9-]+$/.test(type)))
+        throw new Error("invalid vCard type parameter");
     if (value.types?.length)
         result.push(
             `TYPE=${value.types.map((type) => type.toLowerCase()).join(",")}`,
@@ -270,6 +275,9 @@ function fold(line: string): string {
     while (Buffer.byteLength(rest, "utf8") > 75) {
         let end = Math.min(75, rest.length);
         while (Buffer.byteLength(rest.slice(0, end), "utf8") > 75) end -= 1;
+        const preceding = rest.charCodeAt(end - 1);
+        if (preceding >= 0xd800 && preceding <= 0xdbff) end -= 1;
+        if (end <= 0) throw new Error("unable to fold vCard content line");
         chunks.push(rest.slice(0, end));
         rest = rest.slice(end);
     }
@@ -279,10 +287,14 @@ function fold(line: string): string {
 
 export function buildVCard(
     input: ContactInput,
-    preserved: PreservedVCardProperty[] = input.preservedProperties ?? [],
+    preserved: PreservedVCardProperty[] = [],
 ): { uid: string; body: string } {
     const uid = input.uid ?? crypto.randomUUID();
     if (/[\r\n/%\\]/.test(uid)) throw new Error("unsafe vCard UID");
+    const assertRawValue = (value: string, field: string) => {
+        if (/[\r\n]/.test(value)) throw new Error(`invalid vCard ${field}`);
+        return value;
+    };
     const n = [
         input.familyName,
         input.givenName,
@@ -321,11 +333,12 @@ export function buildVCard(
     if (input.title) lines.push(`TITLE:${escapeText(input.title)}`);
     if (input.role) lines.push(`ROLE:${escapeText(input.role)}`);
     for (const url of input.urls ?? [])
-        lines.push(`URL${params(url)}:${url.value}`);
+        lines.push(`URL${params(url)}:${assertRawValue(url.value, "URL")}`);
     for (const photo of input.photoUrls ?? [])
-        lines.push(`PHOTO;VALUE=uri:${photo}`);
+        lines.push(`PHOTO;VALUE=uri:${assertRawValue(photo, "photo URL")}`);
     if (input.note) lines.push(`NOTE:${escapeText(input.note)}`);
-    if (input.birthday) lines.push(`BDAY:${input.birthday}`);
+    if (input.birthday)
+        lines.push(`BDAY:${assertRawValue(input.birthday, "birthday")}`);
     const replacePhotos = input.photoUrls !== undefined;
     for (const property of preserved) {
         if (/[\r\n]/.test(property.raw))

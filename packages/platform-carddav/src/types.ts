@@ -61,7 +61,6 @@ export interface ContactInput {
     photoUrls?: string[];
     note?: string;
     birthday?: string;
-    preservedProperties?: PreservedVCardProperty[];
 }
 
 export interface Contact extends ContactInput {
@@ -70,6 +69,8 @@ export interface Contact extends ContactInput {
     etag?: string;
     vcardVersion: "3.0" | "4.0";
     updateSupported: boolean;
+    /** Internal non-enumerable data reloaded from the authoritative resource. */
+    preservedProperties?: PreservedVCardProperty[];
 }
 
 export interface ContactQuery {
