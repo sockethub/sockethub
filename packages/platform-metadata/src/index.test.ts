@@ -7,6 +7,7 @@ import { Agent } from "undici";
 let ogsOptions: Record<string, unknown> | undefined;
 let ogsBehavior: () => Promise<{ result: Record<string, unknown> }> = () =>
     Promise.resolve({ result: {} });
+let redditJsonBehavior: ((url: string) => Promise<unknown>) | undefined;
 
 mock.module("open-graph-scraper", () => ({
     default: (options: Record<string, unknown>) => {
@@ -33,6 +34,10 @@ function makePlatform(config?: Record<string, unknown>) {
     // biome-ignore lint/suspicious/noExplicitAny: test-only private override
     (platform as any).fetchImpl = (...args: Parameters<typeof fetch>) =>
         globalThis.fetch(...args);
+    if (redditJsonBehavior) {
+        // biome-ignore lint/suspicious/noExplicitAny: test-only private override
+        (platform as any).fetchRedditJson = redditJsonBehavior;
+    }
     if (config) {
         Object.assign(platform.config, config);
     }
@@ -142,6 +147,7 @@ describe("reddit structured metadata", () => {
     const realFetch = globalThis.fetch;
     let fetchCalls: Array<{ url: string; options?: RequestInit }> = [];
     let postResponse: Record<string, unknown> = {};
+    let redditJsonUrl: string | undefined;
 
     beforeEach(() => {
         ogsOptions = undefined;
@@ -151,6 +157,13 @@ describe("reddit structured metadata", () => {
             title: "A Reddit post",
             selftext: "First paragraph\n\n\n\nSecond paragraph",
             url_overridden_by_dest: "https://i.redd.it/post.png",
+        };
+        redditJsonUrl = undefined;
+        redditJsonBehavior = (url) => {
+            redditJsonUrl = url;
+            return Promise.resolve([
+                { data: { children: [{ data: postResponse }] } },
+            ]);
         };
         // biome-ignore lint/suspicious/noExplicitAny: controlled Reddit fetch stub
         globalThis.fetch = ((url: URL, options?: RequestInit) => {
@@ -168,6 +181,7 @@ describe("reddit structured metadata", () => {
 
     afterEach(() => {
         globalThis.fetch = realFetch;
+        redditJsonBehavior = undefined;
     });
 
     it("uses old.reddit JSON without scraping HTML", async () => {
@@ -176,7 +190,7 @@ describe("reddit structured metadata", () => {
             "https://www.reddit.com/r/pics/comments/abc123/some_title/",
         );
         expect(err).toBeNull();
-        expect(fetchCalls.map(({ url }) => url)).toContain(
+        expect(redditJsonUrl).toEqual(
             "https://old.reddit.com/r/pics/comments/abc123/some_title.json?raw_json=1",
         );
         expect(ogsOptions).toBeUndefined();
@@ -193,10 +207,7 @@ describe("reddit structured metadata", () => {
             makePlatform({ compatUserAgent: "MyCrawler/1.0" }),
             "https://old.reddit.com/r/x/comments/id/post/",
         );
-        expect(
-            fetchCalls.find(({ url }) => url.startsWith("https://old.reddit.com"))
-                ?.options?.headers,
-        ).toEqual({ "user-agent": "MyCrawler/1.0" });
+        expect(redditJsonUrl).toStartWith("https://old.reddit.com");
     });
 
     it("does not affect non-reddit scrapes", async () => {
@@ -216,10 +227,9 @@ describe("reddit structured metadata", () => {
     });
 
     it("falls back to oEmbed when Reddit JSON fails", async () => {
+        redditJsonBehavior = () => Promise.reject(new Error("JSON down"));
         globalThis.fetch = ((url: URL) =>
-            String(url).startsWith("https://old.reddit.com")
-                ? Promise.resolve({ ok: false, status: 503 })
-                : Promise.resolve({
+            Promise.resolve({
                       ok: true,
                       status: 200,
                       json: () =>

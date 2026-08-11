@@ -1,3 +1,4 @@
+import { request as httpsRequest } from "node:https";
 import type {
     ActivityStream,
     Logger,
@@ -55,6 +56,8 @@ const TWEET_API_TIMEOUT_MS = 10_000;
 const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
 const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
+const REDDIT_JSON_TIMEOUT_MS = 2_500;
+const REDDIT_JSON_MAX_BYTES = 1_000_000;
 
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
 export function withDeadline<T>(
@@ -189,20 +192,22 @@ export default class Metadata implements PlatformInterface {
 
     private async fetchReddit(job: ActivityStream, cb: PlatformCallback) {
         const jsonUrl = resolveRedditJson(job.actor.id);
+        // Start the title fallback immediately. If the richer post JSON fails,
+        // this has usually completed already and does not extend the response
+        // budget by another network timeout.
+        const embedPromise = withDeadline(
+            this.fetchRedditEmbed(job.actor.id),
+            REDDIT_JSON_TIMEOUT_MS,
+        ).catch(() => undefined);
         if (jsonUrl) {
             try {
                 this.log.debug(`reddit JSON started for ${job.actor.id}`);
-                const res = await this.fetchImpl(jsonUrl, {
-                    dispatcher: this.getDispatcher(),
-                    headers: { "user-agent": this.compatUserAgent() },
-                    signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
-                } as RequestInit & {
-                    dispatcher: ReturnType<typeof createGuardedDispatcher>;
-                });
-                if (!res.ok) {
-                    throw new Error(`Reddit JSON returned HTTP ${res.status}`);
-                }
-                const post = parseRedditPost(await res.json());
+                const post = parseRedditPost(
+                    await withDeadline(
+                        this.fetchRedditJson(jsonUrl),
+                        REDDIT_JSON_TIMEOUT_MS,
+                    ),
+                );
                 if (!post)
                     throw new Error("Reddit JSON returned an invalid payload");
                 job.actor.name = "reddit";
@@ -225,7 +230,7 @@ export default class Metadata implements PlatformInterface {
             }
         }
 
-        const embed = await this.fetchRedditEmbed(job.actor.id);
+        const embed = await embedPromise;
         if (embed?.title) {
             job.actor.name = embed.provider_name || "reddit";
             job.object = {
@@ -241,6 +246,61 @@ export default class Metadata implements PlatformInterface {
             return;
         }
         cb(new Error(`No Reddit metadata available for ${job.actor.id}`));
+    }
+
+    /**
+     * Fetch Reddit's fixed-host JSON endpoint without the Undici dispatcher.
+     * The platform child runtime has exhibited stuck Undici requests even when
+     * AbortSignal fires. node:https gives us an independently enforced socket
+     * timeout; the outer withDeadline still guarantees callback completion.
+     */
+    private fetchRedditJson(url: string): Promise<unknown> {
+        return new Promise((resolve, reject) => {
+            const req = httpsRequest(
+                url,
+                {
+                    headers: { "user-agent": this.compatUserAgent() },
+                },
+                (res) => {
+                    if (res.statusCode !== 200) {
+                        res.resume();
+                        reject(
+                            new Error(
+                                `Reddit JSON returned HTTP ${res.statusCode}`,
+                            ),
+                        );
+                        return;
+                    }
+                    let bytes = 0;
+                    const chunks: Buffer[] = [];
+                    res.on("data", (chunk: Buffer) => {
+                        bytes += chunk.length;
+                        if (bytes > REDDIT_JSON_MAX_BYTES) {
+                            req.destroy(
+                                new Error("Reddit JSON response too large"),
+                            );
+                            return;
+                        }
+                        chunks.push(chunk);
+                    });
+                    res.on("end", () => {
+                        try {
+                            resolve(
+                                JSON.parse(Buffer.concat(chunks).toString()),
+                            );
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                    res.on("error", reject);
+                },
+            );
+            req.setTimeout(REDDIT_JSON_TIMEOUT_MS, () => {
+                req.destroy(new Error("Reddit JSON request timed out"));
+            });
+            req.on("error", reject);
+            req.end();
+        });
     }
 
     private async fetchRedditEmbed(
