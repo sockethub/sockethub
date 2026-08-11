@@ -273,7 +273,7 @@ describe("description normalization", () => {
 describe("scrape deadline", () => {
     it("rejects even when the underlying request never settles", async () => {
         const stalled = new Promise<never>(() => {});
-        expect(withDeadline(stalled, 5)).rejects.toThrow(
+        await expect(withDeadline(stalled, 5)).rejects.toThrow(
             "metadata scrape timed out after 5ms",
         );
     });
