@@ -22,7 +22,14 @@ function fetchMetadata(platform: Metadata, url: string): Promise<unknown> {
     });
 }
 
+let requestCount = 0;
 const server = createServer((_req, res) => {
+    requestCount++;
+    if (requestCount === 1) {
+        res.writeHead(500, { "content-type": "text/plain" });
+        res.end("controlled failure");
+        return;
+    }
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     res.end(
         '<html><head><meta property="og:title" content="Repeated"></head></html>',
@@ -58,6 +65,12 @@ platform.config.allowPrivateAddresses = true;
 const url = `http://127.0.0.1:${address.port}/post`;
 
 try {
+    try {
+        await fetchMetadata(platform, url);
+        throw new Error("controlled fetch unexpectedly succeeded");
+    } catch (err) {
+        if (!String(err).includes("500 Internal Server Error")) throw err;
+    }
     const first = await fetchMetadata(platform, url);
     const second = await fetchMetadata(platform, url);
     // biome-ignore lint/suspicious/noExplicitAny: platform callback shape
@@ -68,7 +81,7 @@ try {
     if ((second as any).object.title !== "Repeated") {
         throw new Error("second fetch returned unexpected metadata");
     }
-    console.log("sequential fetches completed");
+    console.log("failure recovery and sequential fetches completed");
 } finally {
     await new Promise<void>((resolve) => platform.cleanup(() => resolve()));
     await new Promise<void>((resolve, reject) =>

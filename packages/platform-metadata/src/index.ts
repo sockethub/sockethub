@@ -15,8 +15,11 @@ import {
     type FxTwitterStatus,
     isRedditUrl,
     normalizeDescription,
+    parseRedditOEmbed,
     type RedditOEmbed,
     redditOEmbedImage,
+    redditPostImages,
+    resolveRedditEmbed,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -187,7 +190,12 @@ export default class Metadata implements PlatformInterface {
         // Reddit HTML response cannot add its deadline to the oEmbed deadline
         // and exceed the parent HTTP action's idle timeout.
         const embed = this.fetchRedditEmbed(job.actor.id);
-        this.scrape(job, cb, embed);
+        this.scrape(
+            job,
+            cb,
+            embed,
+            resolveRedditEmbed(job.actor.id) ?? job.actor.id,
+        );
     }
 
     private async fetchRedditEmbed(
@@ -207,7 +215,9 @@ export default class Metadata implements PlatformInterface {
             if (!res.ok) {
                 throw new Error(`Reddit oEmbed returned HTTP ${res.status}`);
             }
-            const embed = (await res.json()) as RedditOEmbed;
+            const embed = parseRedditOEmbed(await res.json());
+            if (!embed)
+                throw new Error("Reddit oEmbed returned an invalid payload");
             const image = redditOEmbedImage(embed);
             this.log.debug(
                 `reddit oEmbed completed for ${postUrl} (${image ? "thumbnail" : "no thumbnail"})`,
@@ -225,6 +235,7 @@ export default class Metadata implements PlatformInterface {
         job: ActivityStream,
         cb: PlatformCallback,
         redditEmbed?: Promise<RedditOEmbed | undefined>,
+        scrapeUrl = job.actor.id,
     ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
@@ -239,9 +250,9 @@ export default class Metadata implements PlatformInterface {
         // redirect hops) and caps the response body. The escape hatch is set
         // via packageConfig — see the package README.
         const dispatcher = this.getDispatcher();
-        this.log.debug(`scrape started for ${job.actor.id}`);
+        this.log.debug(`scrape started for ${job.actor.id} via ${scrapeUrl}`);
         const scrape = ogs({
-            url: job.actor.id,
+            url: scrapeUrl,
             // Keep the complete Reddit oEmbed + scrape pipeline within the
             // HTTP action request deadline. OGS uses this for its Undici
             // request signal; spelling it out avoids relying on its default.
@@ -276,14 +287,17 @@ export default class Metadata implements PlatformInterface {
             .then(async (data) => {
                 const { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
-                job.actor.id = result.ogUrl || job.actor.id;
-                job.actor.name = result.ogSiteName || job.actor.name || "";
                 const reddit = isRedditUrl(job.actor.id);
+                const embed = reddit ? await redditEmbed : undefined;
+                if (!reddit) job.actor.id = result.ogUrl || job.actor.id;
+                job.actor.name = reddit
+                    ? (embed?.provider_name ?? "reddit")
+                    : (result.ogSiteName ?? job.actor.name ?? "");
                 job.object = {
                     type: "page",
                     language: result.ogLocale,
-                    title: result.ogTitle,
-                    name: result.ogSiteName,
+                    title: embed?.title ?? result.ogTitle,
+                    name: embed?.provider_name ?? result.ogSiteName,
                     description: normalizeDescription(
                         result.ogDescription || "",
                     ),
@@ -291,9 +305,10 @@ export default class Metadata implements PlatformInterface {
                     // OG image. Its optional official oEmbed thumbnail is the
                     // only image we accept for Reddit; absence means text-only.
                     image: reddit
-                        ? redditOEmbedImage((await redditEmbed) ?? {})
+                        ? (redditPostImages(result.ogImage) ??
+                          redditOEmbedImage(embed ?? {}))
                         : result.ogImage,
-                    url: result.ogUrl,
+                    url: reddit ? job.actor.id : result.ogUrl,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
                     // relative on purpose: clients resolve it against the

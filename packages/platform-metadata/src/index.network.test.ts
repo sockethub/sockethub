@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 describe("metadata sequential network fetches", () => {
-    it("completes the same URL twice with one pooled dispatcher", async () => {
+    it("recovers from failure and reuses one pooled dispatcher", async () => {
         // Run outside this test process because index.test.ts intentionally
         // installs a process-wide open-graph-scraper mock.
         const child = Bun.spawn(
@@ -21,6 +21,8 @@ describe("metadata sequential network fetches", () => {
             new Response(child.stderr).text(),
         ]);
         expect(exitCode, stderr).toEqual(0);
-        expect(stdout).toContain("sequential fetches completed");
+        expect(stdout).toContain(
+            "failure recovery and sequential fetches completed",
+        );
     });
 });

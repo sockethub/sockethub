@@ -2,7 +2,10 @@ import { describe, expect, it } from "bun:test";
 import {
     isRedditUrl,
     normalizeDescription,
+    parseRedditOEmbed,
     redditOEmbedImage,
+    redditPostImages,
+    resolveRedditEmbed,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -55,6 +58,25 @@ describe("resolveTwitterStatus", () => {
     });
 });
 
+describe("resolveRedditEmbed", () => {
+    it("maps Reddit posts to the official media-enabled embed", () => {
+        expect(
+            resolveRedditEmbed(
+                "https://www.reddit.com/r/pics/comments/abc123/title/?share=1",
+            ),
+        ).toEqual(
+            "https://embed.reddit.com/r/pics/comments/abc123/title/?embed=true&showmedia=true",
+        );
+    });
+
+    it("ignores non-post, short, lookalike, and invalid URLs", () => {
+        expect(resolveRedditEmbed("https://reddit.com/r/pics")).toBeNull();
+        expect(resolveRedditEmbed("https://redd.it/abc123")).toBeNull();
+        expect(resolveRedditEmbed("https://notreddit.com/r/x/comments/1/x")).toBeNull();
+        expect(resolveRedditEmbed("not a url")).toBeNull();
+    });
+});
+
 describe("redditOEmbedImage", () => {
     it("maps a post thumbnail with its dimensions", () => {
         expect(
@@ -80,6 +102,40 @@ describe("redditOEmbedImage", () => {
         expect(
             redditOEmbedImage({ thumbnail_url: "not a URL" }),
         ).toBeUndefined();
+    });
+});
+
+describe("parseRedditOEmbed", () => {
+    it("accepts the consumed fields and ignores valid upstream extras", () => {
+        expect(
+            parseRedditOEmbed({
+                title: "Post",
+                provider_name: "reddit",
+                thumbnail_url: "https://preview.redd.it/post.png",
+                thumbnail_width: 640,
+                html: "<blockquote>upstream field</blockquote>",
+            }),
+        ).toMatchObject({ title: "Post", thumbnail_width: 640 });
+    });
+
+    it("rejects malformed external payloads", () => {
+        expect(parseRedditOEmbed(null)).toBeNull();
+        expect(parseRedditOEmbed([])).toBeNull();
+        expect(parseRedditOEmbed({ title: 42 })).toBeNull();
+        expect(parseRedditOEmbed({ thumbnail_width: -1 })).toBeNull();
+        expect(parseRedditOEmbed({ thumbnail_height: Number.NaN })).toBeNull();
+    });
+});
+
+describe("redditPostImages", () => {
+    it("keeps post media and removes generic Reddit images", () => {
+        expect(
+            redditPostImages([
+                { url: "https://redditstatic.com/generic-hero.png" },
+                { url: "https://share.redd.it/preview/post/abc123" },
+                { url: "https://preview.redd.it/post.png?width=640" },
+            ]),
+        ).toEqual([{ url: "https://preview.redd.it/post.png?width=640" }]);
     });
 });
 

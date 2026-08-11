@@ -78,6 +78,26 @@ export function isRedditUrl(url: string): boolean {
     return REDDIT_HOSTS.has(host) || host === "redd.it";
 }
 
+/** Map a canonical Reddit post URL to Reddit's official media-enabled embed. */
+export function resolveRedditEmbed(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    if (!REDDIT_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    if (
+        !/^\/(?:r|user)\/[^/]+\/comments\/[^/]+(?:\/|$)/.test(parsed.pathname)
+    ) {
+        return null;
+    }
+    const embed = new URL(parsed.pathname, "https://embed.reddit.com");
+    embed.searchParams.set("embed", "true");
+    embed.searchParams.set("showmedia", "true");
+    return embed.href;
+}
+
 /** Subset of Reddit's oEmbed response used for link previews. */
 export interface RedditOEmbed {
     title?: string;
@@ -86,6 +106,34 @@ export interface RedditOEmbed {
     thumbnail_url?: string;
     thumbnail_width?: number;
     thumbnail_height?: number;
+}
+
+/** Validate the subset of Reddit's untrusted oEmbed JSON that we consume. */
+export function parseRedditOEmbed(value: unknown): RedditOEmbed | null {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+        return null;
+    const embed = value as Record<string, unknown>;
+    for (const key of [
+        "title",
+        "author_name",
+        "provider_name",
+        "thumbnail_url",
+    ]) {
+        if (embed[key] !== undefined && typeof embed[key] !== "string") {
+            return null;
+        }
+    }
+    for (const key of ["thumbnail_width", "thumbnail_height"]) {
+        if (
+            embed[key] !== undefined &&
+            (typeof embed[key] !== "number" ||
+                !Number.isFinite(embed[key]) ||
+                embed[key] < 0)
+        ) {
+            return null;
+        }
+    }
+    return embed as RedditOEmbed;
 }
 
 /**
@@ -115,6 +163,25 @@ export function redditOEmbedImage(
             height: embed.thumbnail_height,
         },
     ];
+}
+
+/** Keep only Reddit-hosted post media, excluding branding/share-card images. */
+export function redditPostImages(
+    images: PageObject["image"],
+): PageObject["image"] | undefined {
+    const allowedHosts = new Set([
+        "i.redd.it",
+        "preview.redd.it",
+        "external-preview.redd.it",
+    ]);
+    const filtered = images?.filter((image) => {
+        try {
+            return allowedHosts.has(new URL(image.url).hostname.toLowerCase());
+        } catch {
+            return false;
+        }
+    });
+    return filtered?.length ? filtered : undefined;
 }
 
 /**
