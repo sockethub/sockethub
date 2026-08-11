@@ -15,7 +15,7 @@ mock.module("open-graph-scraper", () => ({
     },
 }));
 
-const { default: Metadata } = await import("./index");
+const { default: Metadata, withDeadline } = await import("./index");
 
 /** The user-agent header the platform handed to open-graph-scraper. */
 function sentUserAgent(): string | undefined {
@@ -69,7 +69,7 @@ describe("metadata fetch SSRF hardening", () => {
             | { dispatcher?: unknown }
             | undefined;
         expect(fetchOptions?.dispatcher).toBeInstanceOf(Agent);
-        expect(ogsOptions?.timeout).toEqual(6);
+        expect(ogsOptions?.timeout).toEqual(5);
     });
 
     it("still passes a dispatcher when the escape hatch is enabled", async () => {
@@ -261,6 +261,26 @@ describe("reddit compatibility user agent", () => {
         });
         expect((await result).err).toBeNull();
     });
+
+    it("returns oEmbed metadata when the HTML scrape fails", async () => {
+        embedResponse = {
+            title: "A Reddit post",
+            provider_name: "reddit",
+        };
+        ogsBehavior = () => Promise.reject(new Error("scrape timed out"));
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/words/comments/abc123/post/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            type: "page",
+            title: "A Reddit post",
+            name: "reddit",
+            image: undefined,
+        });
+    });
 });
 
 describe("description normalization", () => {
@@ -276,6 +296,15 @@ describe("description normalization", () => {
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object.description).toEqual(
             "First line\n\nSecond line",
+        );
+    });
+});
+
+describe("scrape deadline", () => {
+    it("rejects even when the underlying request never settles", async () => {
+        const stalled = new Promise<never>(() => {});
+        expect(withDeadline(stalled, 5)).rejects.toThrow(
+            "metadata scrape timed out after 5ms",
         );
     });
 });

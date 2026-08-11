@@ -80,6 +80,9 @@ export function isRedditUrl(url: string): boolean {
 
 /** Subset of Reddit's oEmbed response used for link previews. */
 export interface RedditOEmbed {
+    title?: string;
+    author_name?: string;
+    provider_name?: string;
     thumbnail_url?: string;
     thumbnail_width?: number;
     thumbnail_height?: number;

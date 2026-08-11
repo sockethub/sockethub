@@ -49,7 +49,33 @@ const COMPAT_USER_AGENT =
 const TWEET_API_TIMEOUT_MS = 10_000;
 const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
 const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
-const SCRAPE_TIMEOUT_SECONDS = 6;
+const SCRAPE_TIMEOUT_MS = 5_000;
+
+/** Enforce a deadline independently of a dependency's AbortSignal handling. */
+export function withDeadline<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(
+            () =>
+                reject(
+                    new Error(`metadata scrape timed out after ${timeoutMs}ms`),
+                ),
+            timeoutMs,
+        );
+        promise.then(
+            (value) => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            (err) => {
+                clearTimeout(timer);
+                reject(err);
+            },
+        );
+    });
+}
 
 export default class Metadata implements PlatformInterface {
     private readonly log: Logger;
@@ -160,13 +186,13 @@ export default class Metadata implements PlatformInterface {
         // These requests are independent. Run them concurrently so a slow
         // Reddit HTML response cannot add its deadline to the oEmbed deadline
         // and exceed the parent HTTP action's idle timeout.
-        const image = this.fetchRedditImage(job.actor.id);
-        this.scrape(job, cb, image);
+        const embed = this.fetchRedditEmbed(job.actor.id);
+        this.scrape(job, cb, embed);
     }
 
-    private async fetchRedditImage(
+    private async fetchRedditEmbed(
         postUrl: string,
-    ): Promise<ReturnType<typeof redditOEmbedImage>> {
+    ): Promise<RedditOEmbed | undefined> {
         try {
             const apiUrl = new URL(REDDIT_OEMBED_URL);
             apiUrl.searchParams.set("url", postUrl);
@@ -181,11 +207,12 @@ export default class Metadata implements PlatformInterface {
             if (!res.ok) {
                 throw new Error(`Reddit oEmbed returned HTTP ${res.status}`);
             }
-            const image = redditOEmbedImage((await res.json()) as RedditOEmbed);
+            const embed = (await res.json()) as RedditOEmbed;
+            const image = redditOEmbedImage(embed);
             this.log.debug(
                 `reddit oEmbed completed for ${postUrl} (${image ? "thumbnail" : "no thumbnail"})`,
             );
-            return image;
+            return embed;
         } catch (err) {
             this.log.debug(
                 `reddit oEmbed fetch failed for ${postUrl}: ${String(err)}; returning a text-only scrape`,
@@ -197,7 +224,7 @@ export default class Metadata implements PlatformInterface {
     private scrape(
         job: ActivityStream,
         cb: PlatformCallback,
-        redditImage?: Promise<ReturnType<typeof redditOEmbedImage>>,
+        redditEmbed?: Promise<RedditOEmbed | undefined>,
     ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
@@ -213,12 +240,12 @@ export default class Metadata implements PlatformInterface {
         // via packageConfig — see the package README.
         const dispatcher = this.getDispatcher();
         this.log.debug(`scrape started for ${job.actor.id}`);
-        ogs({
+        const scrape = ogs({
             url: job.actor.id,
             // Keep the complete Reddit oEmbed + scrape pipeline within the
             // HTTP action request deadline. OGS uses this for its Undici
             // request signal; spelling it out avoids relying on its default.
-            timeout: SCRAPE_TIMEOUT_SECONDS,
+            timeout: SCRAPE_TIMEOUT_MS / 1_000,
             // open-graph-scraper *replaces* (does not merge) the default URL
             // validator settings, so we restate the defaults and only relax
             // require_tld. This lets the scraper accept TLD-less hosts such as
@@ -244,7 +271,8 @@ export default class Metadata implements PlatformInterface {
             } as RequestInit & {
                 dispatcher: ReturnType<typeof createGuardedDispatcher>;
             },
-        })
+        });
+        withDeadline(scrape, SCRAPE_TIMEOUT_MS)
             .then(async (data) => {
                 const { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
@@ -262,7 +290,9 @@ export default class Metadata implements PlatformInterface {
                     // Reddit increasingly returns a generic site hero as its
                     // OG image. Its optional official oEmbed thumbnail is the
                     // only image we accept for Reddit; absence means text-only.
-                    image: reddit ? await redditImage : result.ogImage,
+                    image: reddit
+                        ? redditOEmbedImage((await redditEmbed) ?? {})
+                        : result.ogImage,
                     url: result.ogUrl,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
@@ -273,7 +303,7 @@ export default class Metadata implements PlatformInterface {
                 };
                 cb(null, job);
             })
-            .catch((data) => {
+            .catch(async (data) => {
                 // open-graph-scraper rejects with { error, result }, but a
                 // dispatcher/abort failure can reject with a plain Error. Handle
                 // both so the real error is reported rather than throwing a
@@ -282,6 +312,26 @@ export default class Metadata implements PlatformInterface {
                 this.log.debug(
                     `scrape failed for ${job.actor.id}: ${String(err)}`,
                 );
+                if (isRedditUrl(job.actor.id)) {
+                    const embed = await redditEmbed;
+                    if (embed?.title) {
+                        job.actor.name = embed.provider_name || "reddit";
+                        job.object = {
+                            type: "page",
+                            title: embed.title,
+                            name: embed.provider_name || "reddit",
+                            description: "",
+                            image: redditOEmbedImage(embed),
+                            url: job.actor.id,
+                            favicon: "/favicon.ico",
+                        };
+                        this.log.debug(
+                            `using reddit oEmbed fallback for ${job.actor.id}`,
+                        );
+                        cb(null, job);
+                        return;
+                    }
+                }
                 cb(err);
             });
     }
