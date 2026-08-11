@@ -78,6 +78,192 @@ export function isRedditUrl(url: string): boolean {
     return REDDIT_HOSTS.has(host) || host === "redd.it";
 }
 
+/** Map a canonical Reddit post URL to Reddit's official media-enabled embed. */
+export function resolveRedditEmbed(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    if (!REDDIT_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    if (
+        !/^\/(?:r|user)\/[^/]+\/comments\/[^/]+(?:\/|$)/.test(parsed.pathname)
+    ) {
+        return null;
+    }
+    const embed = new URL(parsed.pathname, "https://embed.reddit.com");
+    embed.searchParams.set("embed", "true");
+    embed.searchParams.set("showmedia", "true");
+    return embed.href;
+}
+
+/** Map a canonical Reddit post URL to old.reddit.com's public JSON endpoint. */
+export function resolveRedditJson(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    if (!REDDIT_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    const match = parsed.pathname.match(
+        /^\/(?:r|user)\/[^/]+\/comments\/[^/]+(?:\/[^/]*)?\/?$/,
+    );
+    if (!match) return null;
+    const json = new URL(
+        `${parsed.pathname.replace(/\/$/, "")}.json`,
+        "https://old.reddit.com",
+    );
+    json.searchParams.set("raw_json", "1");
+    return json.href;
+}
+
+export interface RedditPost {
+    title: string;
+    selftext?: string;
+    url?: string;
+    url_overridden_by_dest?: string;
+}
+
+/** Validate and extract the post object from Reddit's listing response. */
+export function parseRedditPost(value: unknown): RedditPost | null {
+    if (!Array.isArray(value)) return null;
+    const post = (
+        value[0] as { data?: { children?: Array<{ data?: unknown }> } }
+    )?.data?.children?.[0]?.data;
+    if (!post || typeof post !== "object" || Array.isArray(post)) return null;
+    const data = post as Record<string, unknown>;
+    if (typeof data.title !== "string" || !data.title) return null;
+    for (const key of ["selftext", "url", "url_overridden_by_dest"]) {
+        if (data[key] !== undefined && typeof data[key] !== "string")
+            return null;
+    }
+    return data as unknown as RedditPost;
+}
+
+/** Select only a direct Reddit-hosted image belonging to the post. */
+export function redditPostImage(post: RedditPost): PageObject["image"] {
+    for (const candidate of [post.url_overridden_by_dest, post.url]) {
+        if (!candidate) continue;
+        try {
+            const url = new URL(candidate);
+            if (
+                ["i.redd.it", "preview.redd.it"].includes(
+                    url.hostname.toLowerCase(),
+                )
+            ) {
+                return [{ url: url.href }];
+            }
+        } catch {
+            // Try the next candidate.
+        }
+    }
+    return undefined;
+}
+
+/** Subset of Reddit's oEmbed response used for link previews. */
+export interface RedditOEmbed {
+    title?: string;
+    author_name?: string;
+    provider_name?: string;
+    thumbnail_url?: string;
+    thumbnail_width?: number;
+    thumbnail_height?: number;
+}
+
+/** Validate the subset of Reddit's untrusted oEmbed JSON that we consume. */
+export function parseRedditOEmbed(value: unknown): RedditOEmbed | null {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+        return null;
+    const embed = value as Record<string, unknown>;
+    for (const key of [
+        "title",
+        "author_name",
+        "provider_name",
+        "thumbnail_url",
+    ]) {
+        if (embed[key] !== undefined && typeof embed[key] !== "string") {
+            return null;
+        }
+    }
+    for (const key of ["thumbnail_width", "thumbnail_height"]) {
+        if (
+            embed[key] !== undefined &&
+            (typeof embed[key] !== "number" ||
+                !Number.isFinite(embed[key]) ||
+                embed[key] < 0)
+        ) {
+            return null;
+        }
+    }
+    return embed as RedditOEmbed;
+}
+
+/**
+ * Convert Reddit's optional oEmbed thumbnail into the platform image shape.
+ * A missing or malformed thumbnail deliberately means "no image": Reddit's
+ * scraped Open Graph image may be a generic site hero rather than post media.
+ */
+export function redditOEmbedImage(
+    embed: RedditOEmbed,
+): PageObject["image"] | undefined {
+    if (!embed?.thumbnail_url) {
+        return undefined;
+    }
+    let url: URL;
+    try {
+        url = new URL(embed.thumbnail_url);
+    } catch {
+        return undefined;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+        return undefined;
+    }
+    return [
+        {
+            url: url.href,
+            width: embed.thumbnail_width,
+            height: embed.thumbnail_height,
+        },
+    ];
+}
+
+/** Keep only Reddit-hosted post media, excluding branding/share-card images. */
+export function redditPostImages(
+    images: PageObject["image"],
+): PageObject["image"] | undefined {
+    const allowedHosts = new Set([
+        "i.redd.it",
+        "preview.redd.it",
+        "external-preview.redd.it",
+    ]);
+    const filtered = images?.filter((image) => {
+        try {
+            return allowedHosts.has(new URL(image.url).hostname.toLowerCase());
+        } catch {
+            return false;
+        }
+    });
+    return filtered?.length ? filtered : undefined;
+}
+
+/**
+ * Make scraped plain text readable without flattening intentional structure.
+ * Preserve line breaks and paragraphs, but remove HTML indentation and cap
+ * excessive vertical whitespace at one blank line.
+ */
+export function normalizeDescription(value: string): string {
+    return value
+        .replace(/\r\n?/g, "\n")
+        .replace(/\u00a0/g, " ")
+        .split("\n")
+        .map((line) => line.replace(/[\t\p{Zs}]+/gu, " ").trim())
+        .join("\n")
+        .replace(/^\n+|\n+$/g, "")
+        .replace(/\n{3,}/g, "\n\n");
+}
+
 /** Subset of the FxTwitter status API response the platform consumes. */
 export interface FxTwitterStatus {
     code: number;
@@ -154,7 +340,7 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         type: "page",
         title,
         name: "X (formerly Twitter)",
-        description: tweet.text ?? "",
+        description: normalizeDescription(tweet.text ?? ""),
         url: tweet.url,
         // The API bypasses the page scrape, so no favicon comes back with
         // it — supply the canonical one so clients can decorate the card.

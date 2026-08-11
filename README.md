@@ -145,7 +145,7 @@ for the full workflow.
 
 ```bash
 bun install        # install workspace dependencies
-bun run dev        # dev server with examples + hot reload
+bun run dev        # dev server with examples, HTTP actions, and hot reload
 ```
 
 Open `http://localhost:10550` for the interactive examples.
