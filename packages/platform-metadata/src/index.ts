@@ -251,7 +251,7 @@ export default class Metadata implements PlatformInterface {
         // via packageConfig — see the package README.
         const dispatcher = this.getDispatcher();
         this.log.debug(`scrape started for ${job.actor.id} via ${scrapeUrl}`);
-        const scrape = ogs({
+        const options = {
             url: scrapeUrl,
             // Keep the complete Reddit oEmbed + scrape pipeline within the
             // HTTP action request deadline. OGS uses this for its Undici
@@ -282,7 +282,27 @@ export default class Metadata implements PlatformInterface {
             } as RequestInit & {
                 dispatcher: ReturnType<typeof createGuardedDispatcher>;
             },
-        });
+        };
+        // OGS's internal fetch can remain pending under the platform's Bun
+        // development runtime even after its AbortSignal fires. Reddit is the
+        // path where this is reproducible, so fetch that HTML with the same
+        // explicit Undici client used by oEmbed and let OGS only parse it.
+        const scrape = isRedditUrl(job.actor.id)
+            ? this.fetchImpl(scrapeUrl, {
+                  dispatcher,
+                  headers: { "user-agent": userAgent },
+                  signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+              } as RequestInit & {
+                  dispatcher: ReturnType<typeof createGuardedDispatcher>;
+              }).then(async (res) => {
+                  if (!res.ok) {
+                      throw new Error(
+                          `metadata scrape returned HTTP ${res.status}`,
+                      );
+                  }
+                  return ogs({ html: await res.text() });
+              })
+            : ogs(options);
         withDeadline(scrape, SCRAPE_TIMEOUT_MS)
             .then(async (data) => {
                 const { result } = data;

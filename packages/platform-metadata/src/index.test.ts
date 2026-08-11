@@ -140,21 +140,22 @@ describe("favicon fallback", () => {
 
 describe("reddit compatibility user agent", () => {
     const realFetch = globalThis.fetch;
-    let fetchedUrl: string | undefined;
+    let fetchCalls: Array<{ url: string; options?: RequestInit }> = [];
     let embedResponse: Record<string, unknown> = {};
 
     beforeEach(() => {
         ogsOptions = undefined;
         ogsBehavior = () => Promise.resolve({ result: {} });
-        fetchedUrl = undefined;
+        fetchCalls = [];
         embedResponse = {};
         // biome-ignore lint/suspicious/noExplicitAny: fetch stub for Reddit oEmbed
-        globalThis.fetch = ((url: URL) => {
-            fetchedUrl = String(url);
+        globalThis.fetch = ((url: URL, options?: RequestInit) => {
+            fetchCalls.push({ url: String(url), options });
             return Promise.resolve({
                 ok: true,
                 status: 200,
                 json: () => Promise.resolve(embedResponse),
+                text: () => Promise.resolve("<html></html>"),
             });
         }) as any;
     });
@@ -168,18 +169,24 @@ describe("reddit compatibility user agent", () => {
             makePlatform(),
             "https://www.reddit.com/r/pics/comments/abc123/some_title/",
         );
-        expect(ogsOptions?.url).toEqual(
+        expect(fetchCalls.map(({ url }) => url)).toContain(
             "https://embed.reddit.com/r/pics/comments/abc123/some_title/?embed=true&showmedia=true",
         );
-        expect(fetchedUrl).toEqual(
+        expect(fetchCalls.map(({ url }) => url)).toContain(
             "https://www.reddit.com/oembed?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpics%2Fcomments%2Fabc123%2Fsome_title%2F",
         );
-        expect(sentUserAgent()).toMatch(/Discordbot/);
+        expect(
+            fetchCalls.find(({ url }) => url.startsWith("https://embed.reddit.com"))
+                ?.options?.headers,
+        ).toEqual({ "user-agent": expect.stringMatching(/Discordbot/) });
     });
 
     it("covers redd.it short links", async () => {
         await runFetch(makePlatform(), "https://redd.it/abc123");
-        expect(sentUserAgent()).toMatch(/Discordbot/);
+        expect(
+            fetchCalls.find(({ url }) => url === "https://redd.it/abc123")
+                ?.options?.headers,
+        ).toEqual({ "user-agent": expect.stringMatching(/Discordbot/) });
     });
 
     it("honors a packageConfig compatUserAgent override", async () => {
@@ -187,7 +194,10 @@ describe("reddit compatibility user agent", () => {
             makePlatform({ compatUserAgent: "MyCrawler/2.0" }),
             "https://old.reddit.com/r/x/comments/id/",
         );
-        expect(sentUserAgent()).toEqual("MyCrawler/2.0");
+        expect(
+            fetchCalls.find(({ url }) => url.startsWith("https://embed.reddit.com"))
+                ?.options?.headers,
+        ).toEqual({ "user-agent": "MyCrawler/2.0" });
     });
 
     it("does not affect non-reddit scrapes", async () => {
@@ -240,19 +250,25 @@ describe("reddit compatibility user agent", () => {
     it("starts the HTML scrape without waiting for oEmbed", async () => {
         let resolveEmbed: ((value: unknown) => void) | undefined;
         // biome-ignore lint/suspicious/noExplicitAny: controlled fetch stub
-        globalThis.fetch = (() =>
-            new Promise((resolve) => {
-                resolveEmbed = resolve;
-            })) as any;
+        globalThis.fetch = ((url: URL) => {
+            if (String(url).startsWith("https://www.reddit.com/oembed?")) {
+                return new Promise((resolve) => {
+                    resolveEmbed = resolve;
+                });
+            }
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                text: () => Promise.resolve("<html></html>"),
+            });
+        }) as any;
 
         const result = runFetch(
             makePlatform(),
             "https://reddit.com/r/words/comments/abc123/post/",
         );
         await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(ogsOptions?.url).toEqual(
-            "https://embed.reddit.com/r/words/comments/abc123/post/?embed=true&showmedia=true",
-        );
+        expect(ogsOptions?.html).toEqual("<html></html>");
 
         resolveEmbed?.({
             ok: true,
@@ -283,7 +299,14 @@ describe("reddit compatibility user agent", () => {
     });
 
     it("falls back to a text-only scrape when oEmbed rejects", async () => {
-        globalThis.fetch = (() => Promise.reject(new Error("oEmbed down"))) as any;
+        globalThis.fetch = ((url: URL) =>
+            String(url).startsWith("https://www.reddit.com/oembed?")
+                ? Promise.reject(new Error("oEmbed down"))
+                : Promise.resolve({
+                      ok: true,
+                      status: 200,
+                      text: () => Promise.resolve("<html></html>"),
+                  })) as any;
         ogsBehavior = () =>
             Promise.resolve({
                 result: {
@@ -305,8 +328,14 @@ describe("reddit compatibility user agent", () => {
 
     it("falls back to a text-only scrape for a non-OK oEmbed response", async () => {
         // biome-ignore lint/suspicious/noExplicitAny: controlled fetch stub
-        globalThis.fetch = (() =>
-            Promise.resolve({ ok: false, status: 503 })) as any;
+        globalThis.fetch = ((url: URL) =>
+            String(url).startsWith("https://www.reddit.com/oembed?")
+                ? Promise.resolve({ ok: false, status: 503 })
+                : Promise.resolve({
+                      ok: true,
+                      status: 200,
+                      text: () => Promise.resolve("<html></html>"),
+                  })) as any;
         ogsBehavior = () =>
             Promise.resolve({
                 result: {
