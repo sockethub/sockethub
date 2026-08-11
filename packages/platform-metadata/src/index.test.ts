@@ -69,7 +69,7 @@ describe("metadata fetch SSRF hardening", () => {
             | { dispatcher?: unknown }
             | undefined;
         expect(fetchOptions?.dispatcher).toBeInstanceOf(Agent);
-        expect(ogsOptions?.timeout).toEqual(8);
+        expect(ogsOptions?.timeout).toEqual(6);
     });
 
     it("still passes a dispatcher when the escape hatch is enabled", async () => {
@@ -235,6 +235,31 @@ describe("reddit compatibility user agent", () => {
         );
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object.image).toBeUndefined();
+    });
+
+    it("starts the HTML scrape without waiting for oEmbed", async () => {
+        let resolveEmbed: ((value: unknown) => void) | undefined;
+        // biome-ignore lint/suspicious/noExplicitAny: controlled fetch stub
+        globalThis.fetch = (() =>
+            new Promise((resolve) => {
+                resolveEmbed = resolve;
+            })) as any;
+
+        const result = runFetch(
+            makePlatform(),
+            "https://reddit.com/r/words/comments/abc123/post/",
+        );
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(ogsOptions?.url).toEqual(
+            "https://reddit.com/r/words/comments/abc123/post/",
+        );
+
+        resolveEmbed?.({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({}),
+        });
+        expect((await result).err).toBeNull();
     });
 });
 

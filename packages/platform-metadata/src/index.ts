@@ -49,7 +49,7 @@ const COMPAT_USER_AGENT =
 const TWEET_API_TIMEOUT_MS = 10_000;
 const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
 const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
-const SCRAPE_TIMEOUT_SECONDS = 8;
+const SCRAPE_TIMEOUT_SECONDS = 6;
 
 export default class Metadata implements PlatformInterface {
     private readonly log: Logger;
@@ -156,12 +156,21 @@ export default class Metadata implements PlatformInterface {
         this.scrape(job, cb);
     }
 
-    private async fetchReddit(job: ActivityStream, cb: PlatformCallback) {
-        let image: ReturnType<typeof redditOEmbedImage>;
+    private fetchReddit(job: ActivityStream, cb: PlatformCallback) {
+        // These requests are independent. Run them concurrently so a slow
+        // Reddit HTML response cannot add its deadline to the oEmbed deadline
+        // and exceed the parent HTTP action's idle timeout.
+        const image = this.fetchRedditImage(job.actor.id);
+        this.scrape(job, cb, image);
+    }
+
+    private async fetchRedditImage(
+        postUrl: string,
+    ): Promise<ReturnType<typeof redditOEmbedImage>> {
         try {
             const apiUrl = new URL(REDDIT_OEMBED_URL);
-            apiUrl.searchParams.set("url", job.actor.id);
-            this.log.debug(`reddit oEmbed started for ${job.actor.id}`);
+            apiUrl.searchParams.set("url", postUrl);
+            this.log.debug(`reddit oEmbed started for ${postUrl}`);
             const res = await this.fetchImpl(apiUrl, {
                 dispatcher: this.getDispatcher(),
                 headers: { "user-agent": this.userAgent() },
@@ -172,22 +181,23 @@ export default class Metadata implements PlatformInterface {
             if (!res.ok) {
                 throw new Error(`Reddit oEmbed returned HTTP ${res.status}`);
             }
-            image = redditOEmbedImage((await res.json()) as RedditOEmbed);
+            const image = redditOEmbedImage((await res.json()) as RedditOEmbed);
             this.log.debug(
-                `reddit oEmbed completed for ${job.actor.id} (${image ? "thumbnail" : "no thumbnail"})`,
+                `reddit oEmbed completed for ${postUrl} (${image ? "thumbnail" : "no thumbnail"})`,
             );
+            return image;
         } catch (err) {
             this.log.debug(
-                `reddit oEmbed fetch failed for ${job.actor.id}: ${String(err)}; returning a text-only scrape`,
+                `reddit oEmbed fetch failed for ${postUrl}: ${String(err)}; returning a text-only scrape`,
             );
+            return undefined;
         }
-        this.scrape(job, cb, image);
     }
 
     private scrape(
         job: ActivityStream,
         cb: PlatformCallback,
-        redditImage?: ReturnType<typeof redditOEmbedImage>,
+        redditImage?: Promise<ReturnType<typeof redditOEmbedImage>>,
     ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
@@ -235,7 +245,7 @@ export default class Metadata implements PlatformInterface {
                 dispatcher: ReturnType<typeof createGuardedDispatcher>;
             },
         })
-            .then((data) => {
+            .then(async (data) => {
                 const { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
                 job.actor.id = result.ogUrl || job.actor.id;
@@ -252,7 +262,7 @@ export default class Metadata implements PlatformInterface {
                     // Reddit increasingly returns a generic site hero as its
                     // OG image. Its optional official oEmbed thumbnail is the
                     // only image we accept for Reddit; absence means text-only.
-                    image: reddit ? redditImage : result.ogImage,
+                    image: reddit ? await redditImage : result.ogImage,
                     url: result.ogUrl,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
