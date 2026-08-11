@@ -9,6 +9,7 @@ import type {
 import { toError } from "@sockethub/util/error";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
+import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
 import {
     type FxTwitterStatus,
@@ -47,10 +48,12 @@ const COMPAT_USER_AGENT =
  */
 const TWEET_API_TIMEOUT_MS = 10_000;
 const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
-const REDDIT_OEMBED_TIMEOUT_MS = 10_000;
+const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
+const SCRAPE_TIMEOUT_SECONDS = 8;
 
 export default class Metadata implements PlatformInterface {
     private readonly log: Logger;
+    private readonly fetchImpl = undiciFetch;
     private dispatcher?: ReturnType<typeof createGuardedDispatcher>;
     config: PlatformConfig = {
         persist: false,
@@ -124,7 +127,7 @@ export default class Metadata implements PlatformInterface {
         cb: PlatformCallback,
     ) {
         try {
-            const res = await globalThis.fetch(apiUrl, {
+            const res = await this.fetchImpl(apiUrl, {
                 dispatcher: this.getDispatcher(),
                 headers: { "user-agent": this.userAgent() },
                 signal: AbortSignal.timeout(TWEET_API_TIMEOUT_MS),
@@ -158,7 +161,8 @@ export default class Metadata implements PlatformInterface {
         try {
             const apiUrl = new URL(REDDIT_OEMBED_URL);
             apiUrl.searchParams.set("url", job.actor.id);
-            const res = await globalThis.fetch(apiUrl, {
+            this.log.debug(`reddit oEmbed started for ${job.actor.id}`);
+            const res = await this.fetchImpl(apiUrl, {
                 dispatcher: this.getDispatcher(),
                 headers: { "user-agent": this.userAgent() },
                 signal: AbortSignal.timeout(REDDIT_OEMBED_TIMEOUT_MS),
@@ -169,6 +173,9 @@ export default class Metadata implements PlatformInterface {
                 throw new Error(`Reddit oEmbed returned HTTP ${res.status}`);
             }
             image = redditOEmbedImage((await res.json()) as RedditOEmbed);
+            this.log.debug(
+                `reddit oEmbed completed for ${job.actor.id} (${image ? "thumbnail" : "no thumbnail"})`,
+            );
         } catch (err) {
             this.log.debug(
                 `reddit oEmbed fetch failed for ${job.actor.id}: ${String(err)}; returning a text-only scrape`,
@@ -195,8 +202,13 @@ export default class Metadata implements PlatformInterface {
         // redirect hops) and caps the response body. The escape hatch is set
         // via packageConfig — see the package README.
         const dispatcher = this.getDispatcher();
+        this.log.debug(`scrape started for ${job.actor.id}`);
         ogs({
             url: job.actor.id,
+            // Keep the complete Reddit oEmbed + scrape pipeline within the
+            // HTTP action request deadline. OGS uses this for its Undici
+            // request signal; spelling it out avoids relying on its default.
+            timeout: SCRAPE_TIMEOUT_SECONDS,
             // open-graph-scraper *replaces* (does not merge) the default URL
             // validator settings, so we restate the defaults and only relax
             // require_tld. This lets the scraper accept TLD-less hosts such as
@@ -225,6 +237,7 @@ export default class Metadata implements PlatformInterface {
         })
             .then((data) => {
                 const { result } = data;
+                this.log.debug(`scrape completed for ${job.actor.id}`);
                 job.actor.id = result.ogUrl || job.actor.id;
                 job.actor.name = result.ogSiteName || job.actor.name || "";
                 const reddit = isRedditUrl(job.actor.id);
@@ -255,13 +268,20 @@ export default class Metadata implements PlatformInterface {
                 // dispatcher/abort failure can reject with a plain Error. Handle
                 // both so the real error is reported rather than throwing a
                 // TypeError on `result.error`.
-                cb(toError(data?.result?.error ?? data));
+                const err = toError(data?.result?.error ?? data);
+                this.log.debug(
+                    `scrape failed for ${job.actor.id}: ${String(err)}`,
+                );
+                cb(err);
             });
     }
 
     cleanup(cb: PlatformCallback) {
         // Release the guarded dispatcher's pooled connections on shutdown.
-        this.dispatcher?.close().catch(() => {});
+        const close = this.dispatcher?.close;
+        if (typeof close === "function") {
+            close.call(this.dispatcher).catch(() => {});
+        }
         cb();
     }
 }

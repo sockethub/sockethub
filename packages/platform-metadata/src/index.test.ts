@@ -28,6 +28,11 @@ function sentUserAgent(): string | undefined {
 function makePlatform(config?: Record<string, unknown>) {
     // biome-ignore lint/suspicious/noExplicitAny: minimal fake session
     const platform = new Metadata({ log: { debug() {} } } as any);
+    // Production uses Undici explicitly. Route it through the replaceable
+    // global in unit tests so both remote stages remain deterministic.
+    // biome-ignore lint/suspicious/noExplicitAny: test-only private override
+    (platform as any).fetchImpl = (...args: Parameters<typeof fetch>) =>
+        globalThis.fetch(...args);
     if (config) {
         Object.assign(platform.config, config);
     }
@@ -64,6 +69,7 @@ describe("metadata fetch SSRF hardening", () => {
             | { dispatcher?: unknown }
             | undefined;
         expect(fetchOptions?.dispatcher).toBeInstanceOf(Agent);
+        expect(ogsOptions?.timeout).toEqual(8);
     });
 
     it("still passes a dispatcher when the escape hatch is enabled", async () => {
