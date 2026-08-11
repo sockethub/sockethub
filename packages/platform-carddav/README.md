@@ -8,6 +8,29 @@ in to HTTP or private-network services with `allowInsecureHttp` and
 `allowPrivateAddresses`. Authentication supports Basic, Digest, or a
 caller-provided Bearer token through the standard Sockethub credentials flow.
 
+## Authentication
+
+Send credentials before performing CardDAV actions. Use either a username and
+password (normally an app password) or a Bearer token obtained by the
+application.
+
+```json
+{
+  "type": "credentials",
+  "actor": { "id": "carddav:alice", "type": "person" },
+  "object": {
+    "type": "credentials",
+    "url": "https://contacts.example/dav/",
+    "username": "alice",
+    "password": "app-password"
+  }
+}
+```
+
+For Bearer authentication, replace `username` and `password` with `token`. The
+URL may be a service root; Sockethub discovers the account's address books from
+that endpoint.
+
 ## Actions
 
 - `fetch`: discover address books.
