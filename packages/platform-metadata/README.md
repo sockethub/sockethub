@@ -96,11 +96,12 @@ so those URLs are resolved through preview services built for this purpose:
   thumbnail), and the canonical `x.com` URL. If the API is unavailable or the
   post can't be resolved, the platform falls back to the regular scrape
   (which still yields the post text).
-* **Reddit URLs** (`reddit.com` hosts and `redd.it` short links) are scraped
-  directly, but with a *compatibility user agent* — Reddit serves its Open
-  Graph data (including the post's real preview image) only to recognized
-  embed crawlers, and returns a page with no OG tags (or a 403) to anything
-  else. See `compatUserAgent` below.
+* **Reddit URLs** (`reddit.com` hosts and `redd.it` short links) use Reddit's
+  official oEmbed thumbnail when the post has one, while text and other page
+  metadata come from the regular scrape with a *compatibility user agent*.
+  Reddit's scraped Open Graph image is ignored because it may be a generic
+  site hero; a post without an oEmbed thumbnail intentionally has no image.
+  See `compatUserAgent` below.
 * **Facebook** remains best-effort: post text usually comes through, but
   media requires authentication and no public preview service exists.
 

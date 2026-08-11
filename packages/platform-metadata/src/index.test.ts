@@ -133,9 +133,28 @@ describe("favicon fallback", () => {
 });
 
 describe("reddit compatibility user agent", () => {
+    const realFetch = globalThis.fetch;
+    let fetchedUrl: string | undefined;
+    let embedResponse: Record<string, unknown> = {};
+
     beforeEach(() => {
         ogsOptions = undefined;
         ogsBehavior = () => Promise.resolve({ result: {} });
+        fetchedUrl = undefined;
+        embedResponse = {};
+        // biome-ignore lint/suspicious/noExplicitAny: fetch stub for Reddit oEmbed
+        globalThis.fetch = ((url: URL) => {
+            fetchedUrl = String(url);
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve(embedResponse),
+            });
+        }) as any;
+    });
+
+    afterEach(() => {
+        globalThis.fetch = realFetch;
     });
 
     it("scrapes reddit posts with an embed-crawler user agent", async () => {
@@ -145,6 +164,9 @@ describe("reddit compatibility user agent", () => {
         );
         expect(ogsOptions?.url).toEqual(
             "https://www.reddit.com/r/pics/comments/abc123/some_title/",
+        );
+        expect(fetchedUrl).toEqual(
+            "https://www.reddit.com/oembed?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpics%2Fcomments%2Fabc123%2Fsome_title%2F",
         );
         expect(sentUserAgent()).toMatch(/Discordbot/);
     });
@@ -166,6 +188,64 @@ describe("reddit compatibility user agent", () => {
         await runFetch(makePlatform(), "https://example.com/article");
         expect(ogsOptions?.url).toEqual("https://example.com/article");
         expect(sentUserAgent()).toMatch(/SockethubBot/);
+    });
+
+    it("uses the official oEmbed thumbnail instead of Reddit's OG hero", async () => {
+        embedResponse = {
+            thumbnail_url: "https://preview.redd.it/post.jpg",
+            thumbnail_width: 800,
+            thumbnail_height: 600,
+        };
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogImage: [{ url: "https://redditstatic.com/generic-hero.png" }],
+                },
+            });
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/pics/comments/abc123/post/",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "https://preview.redd.it/post.jpg",
+                width: 800,
+                height: 600,
+            },
+        ]);
+    });
+
+    it("returns no image for text posts instead of Reddit's OG hero", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogImage: [{ url: "https://redditstatic.com/generic-hero.png" }],
+                },
+            });
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/words/comments/abc123/post/",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toBeUndefined();
+    });
+});
+
+describe("description normalization", () => {
+    it("keeps paragraphs but removes pathological whitespace", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogDescription:
+                        "  First\tline  \r\n\r\n\r\n\r\n Second\u00a0 line ",
+                },
+            });
+        const { result } = await runFetch(makePlatform());
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.description).toEqual(
+            "First line\n\nSecond line",
+        );
     });
 });
 

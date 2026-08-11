@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
     isRedditUrl,
+    normalizeDescription,
+    redditOEmbedImage,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -50,6 +52,50 @@ describe("resolveTwitterStatus", () => {
             resolveTwitterStatus("https://notx.com/u/status/123"),
         ).toBeNull();
         expect(resolveTwitterStatus("not a url")).toBeNull();
+    });
+});
+
+describe("redditOEmbedImage", () => {
+    it("maps a post thumbnail with its dimensions", () => {
+        expect(
+            redditOEmbedImage({
+                thumbnail_url: "https://preview.redd.it/post.jpg",
+                thumbnail_width: 640,
+                thumbnail_height: 480,
+            }),
+        ).toEqual([
+            {
+                url: "https://preview.redd.it/post.jpg",
+                width: 640,
+                height: 480,
+            },
+        ]);
+    });
+
+    it("returns no image for text posts or unsafe thumbnail URLs", () => {
+        expect(redditOEmbedImage({})).toBeUndefined();
+        expect(
+            redditOEmbedImage({ thumbnail_url: "javascript:alert(1)" }),
+        ).toBeUndefined();
+        expect(
+            redditOEmbedImage({ thumbnail_url: "not a URL" }),
+        ).toBeUndefined();
+    });
+});
+
+describe("normalizeDescription", () => {
+    it("caps blank lines and normalizes horizontal whitespace", () => {
+        expect(
+            normalizeDescription(
+                "\r\n  First\t paragraph  \r\n\r\n \r\n\r\n Second\u00a0  paragraph \r\n",
+            ),
+        ).toEqual("First paragraph\n\nSecond paragraph");
+    });
+
+    it("preserves meaningful line and paragraph boundaries", () => {
+        expect(normalizeDescription("one\ntwo\n\nthree")).toEqual(
+            "one\ntwo\n\nthree",
+        );
     });
 });
 

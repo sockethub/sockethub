@@ -13,6 +13,9 @@ import packageJson from "../package.json" with { type: "json" };
 import {
     type FxTwitterStatus,
     isRedditUrl,
+    normalizeDescription,
+    type RedditOEmbed,
+    redditOEmbedImage,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -43,6 +46,8 @@ const COMPAT_USER_AGENT =
  * also stall the scrape fallback.
  */
 const TWEET_API_TIMEOUT_MS = 10_000;
+const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
+const REDDIT_OEMBED_TIMEOUT_MS = 10_000;
 
 export default class Metadata implements PlatformInterface {
     private readonly log: Logger;
@@ -106,6 +111,10 @@ export default class Metadata implements PlatformInterface {
             this.fetchTweet(tweetApiUrl, job, cb);
             return;
         }
+        if (isRedditUrl(job.actor.id)) {
+            this.fetchReddit(job, cb);
+            return;
+        }
         this.scrape(job, cb);
     }
 
@@ -116,11 +125,12 @@ export default class Metadata implements PlatformInterface {
     ) {
         try {
             const res = await globalThis.fetch(apiUrl, {
-                // biome-ignore lint/suspicious/noExplicitAny: undici fetch accepts a dispatcher
                 dispatcher: this.getDispatcher(),
                 headers: { "user-agent": this.userAgent() },
                 signal: AbortSignal.timeout(TWEET_API_TIMEOUT_MS),
-            } as any);
+            } as RequestInit & {
+                dispatcher: ReturnType<typeof createGuardedDispatcher>;
+            });
             const status = (await res.json()) as FxTwitterStatus;
             const page = tweetToPageObject(status);
             if (page) {
@@ -143,7 +153,35 @@ export default class Metadata implements PlatformInterface {
         this.scrape(job, cb);
     }
 
-    private scrape(job: ActivityStream, cb: PlatformCallback) {
+    private async fetchReddit(job: ActivityStream, cb: PlatformCallback) {
+        let image: ReturnType<typeof redditOEmbedImage>;
+        try {
+            const apiUrl = new URL(REDDIT_OEMBED_URL);
+            apiUrl.searchParams.set("url", job.actor.id);
+            const res = await globalThis.fetch(apiUrl, {
+                dispatcher: this.getDispatcher(),
+                headers: { "user-agent": this.userAgent() },
+                signal: AbortSignal.timeout(REDDIT_OEMBED_TIMEOUT_MS),
+            } as RequestInit & {
+                dispatcher: ReturnType<typeof createGuardedDispatcher>;
+            });
+            if (!res.ok) {
+                throw new Error(`Reddit oEmbed returned HTTP ${res.status}`);
+            }
+            image = redditOEmbedImage((await res.json()) as RedditOEmbed);
+        } catch (err) {
+            this.log.debug(
+                `reddit oEmbed fetch failed for ${job.actor.id}: ${String(err)}; returning a text-only scrape`,
+            );
+        }
+        this.scrape(job, cb, image);
+    }
+
+    private scrape(
+        job: ActivityStream,
+        cb: PlatformCallback,
+        redditImage?: ReturnType<typeof redditOEmbedImage>,
+    ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
         // gets a page without OG tags, or a 403.
@@ -178,23 +216,30 @@ export default class Metadata implements PlatformInterface {
                 require_valid_protocol: true,
                 validate_length: true,
             },
-            // biome-ignore lint/suspicious/noExplicitAny: ogs fetchOptions dispatcher
             fetchOptions: {
                 dispatcher,
                 headers: { "user-agent": userAgent },
-            } as any,
+            } as RequestInit & {
+                dispatcher: ReturnType<typeof createGuardedDispatcher>;
+            },
         })
             .then((data) => {
                 const { result } = data;
                 job.actor.id = result.ogUrl || job.actor.id;
                 job.actor.name = result.ogSiteName || job.actor.name || "";
+                const reddit = isRedditUrl(job.actor.id);
                 job.object = {
                     type: "page",
                     language: result.ogLocale,
                     title: result.ogTitle,
                     name: result.ogSiteName,
-                    description: result.ogDescription || "",
-                    image: result.ogImage,
+                    description: normalizeDescription(
+                        result.ogDescription || "",
+                    ),
+                    // Reddit increasingly returns a generic site hero as its
+                    // OG image. Its optional official oEmbed thumbnail is the
+                    // only image we accept for Reddit; absence means text-only.
+                    image: reddit ? redditImage : result.ogImage,
                     url: result.ogUrl,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
