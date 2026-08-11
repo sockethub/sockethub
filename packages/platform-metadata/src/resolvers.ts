@@ -98,6 +98,70 @@ export function resolveRedditEmbed(url: string): string | null {
     return embed.href;
 }
 
+/** Map a canonical Reddit post URL to old.reddit.com's public JSON endpoint. */
+export function resolveRedditJson(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    if (!REDDIT_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    const match = parsed.pathname.match(
+        /^\/(?:r|user)\/[^/]+\/comments\/[^/]+(?:\/[^/]*)?\/?$/,
+    );
+    if (!match) return null;
+    const json = new URL(
+        `${parsed.pathname.replace(/\/$/, "")}.json`,
+        "https://old.reddit.com",
+    );
+    json.searchParams.set("raw_json", "1");
+    return json.href;
+}
+
+export interface RedditPost {
+    title: string;
+    selftext?: string;
+    url?: string;
+    url_overridden_by_dest?: string;
+}
+
+/** Validate and extract the post object from Reddit's listing response. */
+export function parseRedditPost(value: unknown): RedditPost | null {
+    if (!Array.isArray(value)) return null;
+    const post = (
+        value[0] as { data?: { children?: Array<{ data?: unknown }> } }
+    )?.data?.children?.[0]?.data;
+    if (!post || typeof post !== "object" || Array.isArray(post)) return null;
+    const data = post as Record<string, unknown>;
+    if (typeof data.title !== "string" || !data.title) return null;
+    for (const key of ["selftext", "url", "url_overridden_by_dest"]) {
+        if (data[key] !== undefined && typeof data[key] !== "string")
+            return null;
+    }
+    return data as unknown as RedditPost;
+}
+
+/** Select only a direct Reddit-hosted image belonging to the post. */
+export function redditPostImage(post: RedditPost): PageObject["image"] {
+    for (const candidate of [post.url_overridden_by_dest, post.url]) {
+        if (!candidate) continue;
+        try {
+            const url = new URL(candidate);
+            if (
+                ["i.redd.it", "preview.redd.it"].includes(
+                    url.hostname.toLowerCase(),
+                )
+            ) {
+                return [{ url: url.href }];
+            }
+        } catch {
+            // Try the next candidate.
+        }
+    }
+    return undefined;
+}
+
 /** Subset of Reddit's oEmbed response used for link previews. */
 export interface RedditOEmbed {
     title?: string;

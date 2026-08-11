@@ -138,24 +138,30 @@ describe("favicon fallback", () => {
     });
 });
 
-describe("reddit compatibility user agent", () => {
+describe("reddit structured metadata", () => {
     const realFetch = globalThis.fetch;
     let fetchCalls: Array<{ url: string; options?: RequestInit }> = [];
-    let embedResponse: Record<string, unknown> = {};
+    let postResponse: Record<string, unknown> = {};
 
     beforeEach(() => {
         ogsOptions = undefined;
         ogsBehavior = () => Promise.resolve({ result: {} });
         fetchCalls = [];
-        embedResponse = {};
-        // biome-ignore lint/suspicious/noExplicitAny: fetch stub for Reddit oEmbed
+        postResponse = {
+            title: "A Reddit post",
+            selftext: "First paragraph\n\n\n\nSecond paragraph",
+            url_overridden_by_dest: "https://i.redd.it/post.png",
+        };
+        // biome-ignore lint/suspicious/noExplicitAny: controlled Reddit fetch stub
         globalThis.fetch = ((url: URL, options?: RequestInit) => {
             fetchCalls.push({ url: String(url), options });
             return Promise.resolve({
                 ok: true,
                 status: 200,
-                json: () => Promise.resolve(embedResponse),
-                text: () => Promise.resolve("<html></html>"),
+                json: () =>
+                    Promise.resolve([
+                        { data: { children: [{ data: postResponse }] } },
+                    ]),
             });
         }) as any;
     });
@@ -164,40 +170,33 @@ describe("reddit compatibility user agent", () => {
         globalThis.fetch = realFetch;
     });
 
-    it("scrapes reddit posts with an embed-crawler user agent", async () => {
-        await runFetch(
+    it("uses old.reddit JSON without scraping HTML", async () => {
+        const { err, result } = await runFetch(
             makePlatform(),
             "https://www.reddit.com/r/pics/comments/abc123/some_title/",
         );
+        expect(err).toBeNull();
         expect(fetchCalls.map(({ url }) => url)).toContain(
-            "https://embed.reddit.com/r/pics/comments/abc123/some_title/?embed=true&showmedia=true",
+            "https://old.reddit.com/r/pics/comments/abc123/some_title.json?raw_json=1",
         );
-        expect(fetchCalls.map(({ url }) => url)).toContain(
-            "https://www.reddit.com/oembed?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpics%2Fcomments%2Fabc123%2Fsome_title%2F",
-        );
-        expect(
-            fetchCalls.find(({ url }) => url.startsWith("https://embed.reddit.com"))
-                ?.options?.headers,
-        ).toEqual({ "user-agent": expect.stringMatching(/Discordbot/) });
+        expect(ogsOptions).toBeUndefined();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "A Reddit post",
+            description: "First paragraph\n\nSecond paragraph",
+            image: [{ url: "https://i.redd.it/post.png" }],
+        });
     });
 
-    it("covers redd.it short links", async () => {
-        await runFetch(makePlatform(), "https://redd.it/abc123");
-        expect(
-            fetchCalls.find(({ url }) => url === "https://redd.it/abc123")
-                ?.options?.headers,
-        ).toEqual({ "user-agent": expect.stringMatching(/Discordbot/) });
-    });
-
-    it("honors a packageConfig compatUserAgent override", async () => {
+    it("uses the configured compatibility user agent", async () => {
         await runFetch(
-            makePlatform({ compatUserAgent: "MyCrawler/2.0" }),
-            "https://old.reddit.com/r/x/comments/id/",
+            makePlatform({ compatUserAgent: "MyCrawler/1.0" }),
+            "https://old.reddit.com/r/x/comments/id/post/",
         );
         expect(
-            fetchCalls.find(({ url }) => url.startsWith("https://embed.reddit.com"))
+            fetchCalls.find(({ url }) => url.startsWith("https://old.reddit.com"))
                 ?.options?.headers,
-        ).toEqual({ "user-agent": "MyCrawler/2.0" });
+        ).toEqual({ "user-agent": "MyCrawler/1.0" });
     });
 
     it("does not affect non-reddit scrapes", async () => {
@@ -206,39 +205,8 @@ describe("reddit compatibility user agent", () => {
         expect(sentUserAgent()).toMatch(/SockethubBot/);
     });
 
-    it("uses the official oEmbed thumbnail instead of Reddit's OG hero", async () => {
-        embedResponse = {
-            thumbnail_url: "https://preview.redd.it/post.jpg",
-            thumbnail_width: 800,
-            thumbnail_height: 600,
-        };
-        ogsBehavior = () =>
-            Promise.resolve({
-                result: {
-                    ogImage: [{ url: "https://redditstatic.com/generic-hero.png" }],
-                },
-            });
-        const { result } = await runFetch(
-            makePlatform(),
-            "https://reddit.com/r/pics/comments/abc123/post/",
-        );
-        // biome-ignore lint/suspicious/noExplicitAny: test result shape
-        expect((result as any).object.image).toEqual([
-            {
-                url: "https://preview.redd.it/post.jpg",
-                width: 800,
-                height: 600,
-            },
-        ]);
-    });
-
-    it("returns no image for text posts instead of Reddit's OG hero", async () => {
-        ogsBehavior = () =>
-            Promise.resolve({
-                result: {
-                    ogImage: [{ url: "https://redditstatic.com/generic-hero.png" }],
-                },
-            });
+    it("returns no image for text posts", async () => {
+        postResponse = { title: "Text only", selftext: "Body" };
         const { result } = await runFetch(
             makePlatform(),
             "https://reddit.com/r/words/comments/abc123/post/",
@@ -247,43 +215,19 @@ describe("reddit compatibility user agent", () => {
         expect((result as any).object.image).toBeUndefined();
     });
 
-    it("starts the HTML scrape without waiting for oEmbed", async () => {
-        let resolveEmbed: ((value: unknown) => void) | undefined;
-        // biome-ignore lint/suspicious/noExplicitAny: controlled fetch stub
-        globalThis.fetch = ((url: URL) => {
-            if (String(url).startsWith("https://www.reddit.com/oembed?")) {
-                return new Promise((resolve) => {
-                    resolveEmbed = resolve;
-                });
-            }
-            return Promise.resolve({
-                ok: true,
-                status: 200,
-                text: () => Promise.resolve("<html></html>"),
-            });
-        }) as any;
-
-        const result = runFetch(
-            makePlatform(),
-            "https://reddit.com/r/words/comments/abc123/post/",
-        );
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(ogsOptions?.html).toEqual("<html></html>");
-
-        resolveEmbed?.({
-            ok: true,
-            status: 200,
-            json: () => Promise.resolve({}),
-        });
-        expect((await result).err).toBeNull();
-    });
-
-    it("returns oEmbed metadata when the HTML scrape fails", async () => {
-        embedResponse = {
-            title: "A Reddit post",
-            provider_name: "reddit",
-        };
-        ogsBehavior = () => Promise.reject(new Error("scrape timed out"));
+    it("falls back to oEmbed when Reddit JSON fails", async () => {
+        globalThis.fetch = ((url: URL) =>
+            String(url).startsWith("https://old.reddit.com")
+                ? Promise.resolve({ ok: false, status: 503 })
+                : Promise.resolve({
+                      ok: true,
+                      status: 200,
+                      json: () =>
+                          Promise.resolve({
+                              title: "Fallback title",
+                              provider_name: "reddit",
+                          }),
+                  })) as any;
         const { err, result } = await runFetch(
             makePlatform(),
             "https://reddit.com/r/words/comments/abc123/post/",
@@ -292,77 +236,10 @@ describe("reddit compatibility user agent", () => {
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object).toMatchObject({
             type: "page",
-            title: "A Reddit post",
+            title: "Fallback title",
             name: "reddit",
             image: undefined,
         });
-    });
-
-    it("falls back to a text-only scrape when oEmbed rejects", async () => {
-        globalThis.fetch = ((url: URL) =>
-            String(url).startsWith("https://www.reddit.com/oembed?")
-                ? Promise.reject(new Error("oEmbed down"))
-                : Promise.resolve({
-                      ok: true,
-                      status: 200,
-                      text: () => Promise.resolve("<html></html>"),
-                  })) as any;
-        ogsBehavior = () =>
-            Promise.resolve({
-                result: {
-                    ogTitle: "Scraped title",
-                    ogImage: [{ url: "https://redditstatic.com/generic.png" }],
-                },
-            });
-        const { err, result } = await runFetch(
-            makePlatform(),
-            "https://reddit.com/r/words/comments/abc123/post/",
-        );
-        expect(err).toBeNull();
-        // biome-ignore lint/suspicious/noExplicitAny: test result shape
-        expect((result as any).object).toMatchObject({
-            title: "Scraped title",
-            image: undefined,
-        });
-    });
-
-    it("falls back to a text-only scrape for a non-OK oEmbed response", async () => {
-        // biome-ignore lint/suspicious/noExplicitAny: controlled fetch stub
-        globalThis.fetch = ((url: URL) =>
-            String(url).startsWith("https://www.reddit.com/oembed?")
-                ? Promise.resolve({ ok: false, status: 503 })
-                : Promise.resolve({
-                      ok: true,
-                      status: 200,
-                      text: () => Promise.resolve("<html></html>"),
-                  })) as any;
-        ogsBehavior = () =>
-            Promise.resolve({
-                result: {
-                    ogTitle: "Scraped title",
-                    ogImage: [{ url: "https://redditstatic.com/generic.png" }],
-                },
-            });
-        const { err, result } = await runFetch(
-            makePlatform(),
-            "https://reddit.com/r/words/comments/abc123/post/",
-        );
-        expect(err).toBeNull();
-        // biome-ignore lint/suspicious/noExplicitAny: test result shape
-        expect((result as any).object.image).toBeUndefined();
-    });
-
-    it("rejects malformed oEmbed JSON and keeps the scrape fallback", async () => {
-        embedResponse = { title: 42, thumbnail_url: ["not", "a", "url"] };
-        ogsBehavior = () =>
-            Promise.resolve({ result: { ogTitle: "Scraped title" } });
-        const { err, result } = await runFetch(
-            makePlatform(),
-            "https://reddit.com/r/words/comments/abc123/post/",
-        );
-        expect(err).toBeNull();
-        // biome-ignore lint/suspicious/noExplicitAny: test result shape
-        expect((result as any).object.title).toEqual("Scraped title");
     });
 });
 

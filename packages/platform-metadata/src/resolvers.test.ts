@@ -3,9 +3,12 @@ import {
     isRedditUrl,
     normalizeDescription,
     parseRedditOEmbed,
+    parseRedditPost,
     redditOEmbedImage,
+    redditPostImage,
     redditPostImages,
     resolveRedditEmbed,
+    resolveRedditJson,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -74,6 +77,45 @@ describe("resolveRedditEmbed", () => {
         expect(resolveRedditEmbed("https://redd.it/abc123")).toBeNull();
         expect(resolveRedditEmbed("https://notreddit.com/r/x/comments/1/x")).toBeNull();
         expect(resolveRedditEmbed("not a url")).toBeNull();
+    });
+});
+
+describe("Reddit JSON metadata", () => {
+    it("maps canonical posts to old.reddit JSON", () => {
+        expect(
+            resolveRedditJson(
+                "https://www.reddit.com/r/pics/comments/abc123/title/",
+            ),
+        ).toEqual(
+            "https://old.reddit.com/r/pics/comments/abc123/title.json?raw_json=1",
+        );
+        expect(resolveRedditJson("https://reddit.com/r/pics")).toBeNull();
+    });
+
+    it("validates a listing and selects only direct Reddit post media", () => {
+        const post = parseRedditPost([
+            {
+                data: {
+                    children: [
+                        {
+                            data: {
+                                title: "Post",
+                                selftext: "Body",
+                                url: "https://i.redd.it/post.png",
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+        expect(post).not.toBeNull();
+        expect(redditPostImage(post!)).toEqual([
+            { url: "https://i.redd.it/post.png" },
+        ]);
+        expect(parseRedditPost([{ data: { children: [{ data: { title: 1 } }] } }])).toBeNull();
+        expect(
+            redditPostImage({ title: "Link", url: "https://example.com/a.png" }),
+        ).toBeUndefined();
     });
 });
 

@@ -96,11 +96,11 @@ so those URLs are resolved through preview services built for this purpose:
   thumbnail), and the canonical `x.com` URL. If the API is unavailable or the
   post can't be resolved, the platform falls back to the regular scrape
   (which still yields the post text).
-* **Reddit URLs** (`reddit.com` hosts and `redd.it` short links) use Reddit's
-  official oEmbed metadata plus its media-enabled embed page. Images are
-  accepted only from Reddit's post-media hosts; generic share cards and site
-  branding are ignored. If the embed page stalls, the platform returns the
-  oEmbed title as a text-only preview. See `compatUserAgent` below.
+* **Reddit post URLs** use `old.reddit.com`'s structured JSON response, avoiding
+  Reddit's unreliable HTML and Open Graph crawler behavior. The post title,
+  self-text, and direct `i.redd.it` image are mapped into the preview; text posts
+  intentionally have no image. oEmbed remains a title-only failure fallback.
+  See `compatUserAgent` below.
 * **Facebook** remains best-effort: post text usually comes through, but
   media requires authentication and no public preview service exists.
 
@@ -124,7 +124,7 @@ default UA. Override per deployment via `packageConfig`:
 
 ### `compatUserAgent`
 
-Sites that only serve Open Graph data to *recognized* embed crawlers (Reddit)
+Sites that only serve metadata to *recognized* embed crawlers (Reddit)
 are fetched with a link-preview crawler user agent instead — the established
 practice for self-hosted preview fetchers. Defaults to
 `Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)`;

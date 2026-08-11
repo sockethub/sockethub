@@ -16,10 +16,12 @@ import {
     isRedditUrl,
     normalizeDescription,
     parseRedditOEmbed,
+    parseRedditPost,
     type RedditOEmbed,
     redditOEmbedImage,
+    redditPostImage,
     redditPostImages,
-    resolveRedditEmbed,
+    resolveRedditJson,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -185,17 +187,60 @@ export default class Metadata implements PlatformInterface {
         this.scrape(job, cb);
     }
 
-    private fetchReddit(job: ActivityStream, cb: PlatformCallback) {
-        // These requests are independent. Run them concurrently so a slow
-        // Reddit HTML response cannot add its deadline to the oEmbed deadline
-        // and exceed the parent HTTP action's idle timeout.
-        const embed = this.fetchRedditEmbed(job.actor.id);
-        this.scrape(
-            job,
-            cb,
-            embed,
-            resolveRedditEmbed(job.actor.id) ?? job.actor.id,
-        );
+    private async fetchReddit(job: ActivityStream, cb: PlatformCallback) {
+        const jsonUrl = resolveRedditJson(job.actor.id);
+        if (jsonUrl) {
+            try {
+                this.log.debug(`reddit JSON started for ${job.actor.id}`);
+                const res = await this.fetchImpl(jsonUrl, {
+                    dispatcher: this.getDispatcher(),
+                    headers: { "user-agent": this.compatUserAgent() },
+                    signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+                } as RequestInit & {
+                    dispatcher: ReturnType<typeof createGuardedDispatcher>;
+                });
+                if (!res.ok) {
+                    throw new Error(`Reddit JSON returned HTTP ${res.status}`);
+                }
+                const post = parseRedditPost(await res.json());
+                if (!post)
+                    throw new Error("Reddit JSON returned an invalid payload");
+                job.actor.name = "reddit";
+                job.object = {
+                    type: "page",
+                    title: post.title,
+                    name: "reddit",
+                    description: normalizeDescription(post.selftext ?? ""),
+                    image: redditPostImage(post),
+                    url: job.actor.id,
+                    favicon: "/favicon.ico",
+                };
+                this.log.debug(`reddit JSON completed for ${job.actor.id}`);
+                cb(null, job);
+                return;
+            } catch (err) {
+                this.log.debug(
+                    `reddit JSON failed for ${job.actor.id}: ${String(err)}; falling back to oEmbed`,
+                );
+            }
+        }
+
+        const embed = await this.fetchRedditEmbed(job.actor.id);
+        if (embed?.title) {
+            job.actor.name = embed.provider_name || "reddit";
+            job.object = {
+                type: "page",
+                title: embed.title,
+                name: embed.provider_name || "reddit",
+                description: "",
+                image: redditOEmbedImage(embed),
+                url: job.actor.id,
+                favicon: "/favicon.ico",
+            };
+            cb(null, job);
+            return;
+        }
+        cb(new Error(`No Reddit metadata available for ${job.actor.id}`));
     }
 
     private async fetchRedditEmbed(
