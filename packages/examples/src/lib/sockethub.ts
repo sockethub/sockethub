@@ -115,25 +115,22 @@ export async function send(obj: AnyActivityStream) {
     console.log("sending ->", obj);
 
     return new Promise<AnyActivityStream>((resolve, reject) => {
-        sc.socket.emit(
-            "message",
-            addObject("SEND", obj),
-            (resp: AnyActivityStream) => {
-                console.log("received <-", resp);
-                addObject("RESP", resp);
-                if (resp.totalItems && resp.items) {
-                    for (const item of resp.items.reverse()) {
-                        addObject("RESP", item, true);
-                    }
+        const request = addObject("SEND", obj);
+        sc.socket.emit("message", request, (resp: AnyActivityStream) => {
+            console.log("received <-", resp);
+            addObject("RESP", resp);
+            if (resp.totalItems && resp.items) {
+                for (const item of resp.items.reverse()) {
+                    addObject("RESP", item, true, request.id);
                 }
-                displayMessage(resp, true);
-                if (resp.error) {
-                    reject(resp.error);
-                } else {
-                    resolve(resp);
-                }
-            },
-        );
+            }
+            displayMessage(resp, true);
+            if (resp.error) {
+                reject(resp.error);
+            } else {
+                resolve(resp);
+            }
+        });
     });
 }
 
