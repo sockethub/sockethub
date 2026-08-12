@@ -213,18 +213,16 @@ export function validatePlatformSchema(schema: Schema): string {
             if (!value || typeof value !== "object" || Array.isArray(value))
                 return;
             const node = value as Record<string, unknown>;
-            const nodeProperties = node.properties as
-                | Record<string, unknown>
-                | undefined;
-            const type = nodeProperties?.type as
-                | Record<string, unknown>
-                | undefined;
-            if (typeof type?.const === "string") result.add(type.const);
-            if (Array.isArray(type?.enum)) {
-                for (const item of type.enum) {
+            if (typeof node.const === "string") result.add(node.const);
+            if (Array.isArray(node.enum)) {
+                for (const item of node.enum) {
                     if (typeof item === "string") result.add(item);
                 }
             }
+            const nodeProperties = node.properties as
+                | Record<string, unknown>
+                | undefined;
+            visit(nodeProperties?.type);
             for (const keyword of ["allOf", "anyOf", "oneOf"] as const) {
                 const branches = node[keyword];
                 if (Array.isArray(branches)) branches.forEach(visit);

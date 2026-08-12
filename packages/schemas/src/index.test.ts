@@ -228,6 +228,28 @@ describe("schemas/src/index.ts", () => {
                 "platform schema actor types are not registered in the shared ActivityStreams envelope: unregistered-actor",
             );
         });
+        it("rejects an unregistered type nested in a type composition", () => {
+            const err = validatePlatformSchema({
+                ...testPlatformSchemaData,
+                messages: {
+                    properties: {
+                        target: {
+                            properties: {
+                                type: {
+                                    oneOf: [
+                                        { const: "addressBook" },
+                                        { const: "unregistered-nested" },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            expect(err).toEqual(
+                "platform schema target types are not registered in the shared ActivityStreams envelope: unregistered-nested",
+            );
+        });
     });
 
     describe("Adding a PlatformSchema", () => {
