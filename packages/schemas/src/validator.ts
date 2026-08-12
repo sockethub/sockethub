@@ -15,6 +15,7 @@ import {
 import getErrorMessage, {
     type ValidationErrorOptions,
 } from "./helpers/error-parser.js";
+import { ActorTypesList, TargetTypesList } from "./helpers/objects.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
@@ -200,6 +201,48 @@ export function validatePlatformSchema(schema: Schema): string {
             message += `: ${validationError.params.additionalProperty}`;
         }
         return `platform schema failed to validate: ${message}`;
+    }
+    const platform = schema as Record<string, unknown>;
+    const messages = platform.messages as Record<string, unknown> | undefined;
+    const properties = messages?.properties as
+        | Record<string, unknown>
+        | undefined;
+    const declaredTypes = (root: unknown): Set<string> => {
+        const result = new Set<string>();
+        const visit = (value: unknown): void => {
+            if (!value || typeof value !== "object" || Array.isArray(value))
+                return;
+            const node = value as Record<string, unknown>;
+            const nodeProperties = node.properties as
+                | Record<string, unknown>
+                | undefined;
+            const type = nodeProperties?.type as
+                | Record<string, unknown>
+                | undefined;
+            if (typeof type?.const === "string") result.add(type.const);
+            if (Array.isArray(type?.enum)) {
+                for (const item of type.enum) {
+                    if (typeof item === "string") result.add(item);
+                }
+            }
+            for (const keyword of ["allOf", "anyOf", "oneOf"] as const) {
+                const branches = node[keyword];
+                if (Array.isArray(branches)) branches.forEach(visit);
+            }
+        };
+        visit(root);
+        return result;
+    };
+    for (const [property, allowed] of [
+        ["actor", ActorTypesList],
+        ["target", TargetTypesList],
+    ] as const) {
+        const unsupported = [...declaredTypes(properties?.[property])].filter(
+            (type) => !allowed.includes(type),
+        );
+        if (unsupported.length > 0) {
+            return `platform schema ${property} types are not registered in the shared ActivityStreams envelope: ${unsupported.join(", ")}`;
+        }
     }
     return "";
 }

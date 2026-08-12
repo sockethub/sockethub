@@ -1,5 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { validatePlatformSchema } from "@sockethub/schemas";
+import {
+    addPlatformContext,
+    addPlatformSchema,
+    buildCanonicalContext,
+    validateActivityStream,
+    validatePlatformSchema,
+} from "@sockethub/schemas";
 import Ajv from "ajv";
 import { PlatformCardDavSchema } from "./schema.js";
 
@@ -42,6 +48,57 @@ describe("CardDAV schema", () => {
             },
         ]) {
             expect(validateObject(object)).toBeFalse();
+        }
+    });
+
+    it("accepts complete activities through the shared and platform schemas", () => {
+        addPlatformContext("carddav", PlatformCardDavSchema.contextUrl);
+        addPlatformSchema(PlatformCardDavSchema.messages, "carddav/messages");
+        const actor = { id: "carddav:alice", type: "person" };
+        const target = {
+            id: "https://contacts.example/addressbooks/alice/personal/",
+            type: "addressBook",
+        };
+        const contact = { type: "person", name: "Alice" };
+        const activities = [
+            { type: "fetch", actor },
+            {
+                type: "query",
+                actor,
+                target,
+                object: { type: "contactQuery", text: "Alice" },
+            },
+            { type: "create", actor, target, object: contact },
+            {
+                type: "update",
+                actor,
+                target,
+                object: {
+                    ...contact,
+                    id: `${target.id}alice.vcf`,
+                    uid: "alice",
+                    etag: '"one"',
+                },
+            },
+            {
+                type: "delete",
+                actor,
+                target,
+                object: {
+                    type: "person",
+                    id: `${target.id}alice.vcf`,
+                    etag: '"one"',
+                },
+            },
+        ];
+
+        for (const activity of activities) {
+            expect(
+                validateActivityStream({
+                    "@context": buildCanonicalContext("carddav"),
+                    ...activity,
+                }),
+            ).toBe("");
         }
     });
 });
