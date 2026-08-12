@@ -435,10 +435,10 @@ describe("SockethubClient", () => {
                 },
                 platforms: [
                     {
-                        id: "carddav",
+                        id: "carddav-client-test",
                         version: "1.0.0-alpha.0",
                         contextUrl:
-                            "https://sockethub.org/ns/context/platform/carddav/v1.jsonld",
+                            "https://sockethub.org/ns/context/platform/carddav-client-test/v1.jsonld",
                         contextVersion: "1",
                         schemaVersion: "1",
                         types: ["query"],
@@ -461,7 +461,7 @@ describe("SockethubClient", () => {
                 ],
             });
             const activity = {
-                "@context": sc.contextFor("carddav"),
+                "@context": sc.contextFor("carddav-client-test"),
                 type: "query",
                 actor: { id: "carddav:alice", type: "person" },
                 target: {
