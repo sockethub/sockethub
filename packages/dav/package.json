@@ -1,0 +1,40 @@
+{
+  "name": "@sockethub/dav",
+  "description": "Shared WebDAV transport, authentication, and XML utilities for Sockethub platforms",
+  "version": "1.0.0-alpha.0",
+  "type": "module",
+  "private": false,
+  "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
+    "test": "bun test src/"
+  },
+  "dependencies": {
+    "@sockethub/util": "^1.0.0-alpha.7",
+    "fast-xml-parser": "^5.10.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "undici": "^7.19.0"
+  }
+}

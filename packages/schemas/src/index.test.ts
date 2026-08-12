@@ -194,6 +194,62 @@ describe("schemas/src/index.ts", () => {
                 "platform schema failed to validate:  must NOT have additional properties: unexpected",
             );
         });
+        it("rejects platform target types missing from the shared envelope", () => {
+            const err = validatePlatformSchema({
+                ...testPlatformSchemaData,
+                messages: {
+                    properties: {
+                        target: {
+                            properties: {
+                                type: { enum: ["unregistered-target"] },
+                            },
+                        },
+                    },
+                },
+            });
+            expect(err).toEqual(
+                "platform schema target types are not registered in the shared ActivityStreams envelope: unregistered-target",
+            );
+        });
+        it("rejects platform actor types missing from the shared envelope", () => {
+            const err = validatePlatformSchema({
+                ...testPlatformSchemaData,
+                messages: {
+                    properties: {
+                        actor: {
+                            properties: {
+                                type: { const: "unregistered-actor" },
+                            },
+                        },
+                    },
+                },
+            });
+            expect(err).toEqual(
+                "platform schema actor types are not registered in the shared ActivityStreams envelope: unregistered-actor",
+            );
+        });
+        it("rejects an unregistered type nested in a type composition", () => {
+            const err = validatePlatformSchema({
+                ...testPlatformSchemaData,
+                messages: {
+                    properties: {
+                        target: {
+                            properties: {
+                                type: {
+                                    oneOf: [
+                                        { const: "addressBook" },
+                                        { const: "unregistered-nested" },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            expect(err).toEqual(
+                "platform schema target types are not registered in the shared ActivityStreams envelope: unregistered-nested",
+            );
+        });
     });
 
     describe("Adding a PlatformSchema", () => {

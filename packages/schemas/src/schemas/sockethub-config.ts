@@ -49,6 +49,7 @@ export const SockethubConfigSchema = {
             },
             description: "Platform packages to load",
             default: [
+                "@sockethub/platform-carddav",
                 "@sockethub/platform-caldav",
                 "@sockethub/platform-dummy",
                 "@sockethub/platform-feeds",
@@ -67,6 +68,16 @@ export const SockethubConfigSchema = {
                 "Per-platform config keyed by package name, validated against " +
                 "each platform's config schema and forwarded to its child process",
             properties: {
+                "@sockethub/platform-carddav": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        connectTimeoutMs: { type: "integer", minimum: 1 },
+                        allowPrivateAddresses: { type: "boolean" },
+                        allowInsecureHttp: { type: "boolean" },
+                        concurrency: { type: "integer", minimum: 1 },
+                    },
+                },
                 "@sockethub/platform-caldav": {
                     type: "object",
                     additionalProperties: false,

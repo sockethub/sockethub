@@ -12,6 +12,7 @@
     "file": "sockethub.log"
   },
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",

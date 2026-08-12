@@ -86,6 +86,7 @@
     "web-streams-polyfill": "^3.3.3"
   },
   "optionalDependencies": {
+    "@sockethub/platform-carddav": "^1.0.0-alpha.0",
     "@sockethub/examples": "^1.0.0-alpha.19",
     "@sockethub/platform-caldav": "^1.0.0-alpha.3",
     "@sockethub/platform-dummy": "^3.0.0-alpha.19",

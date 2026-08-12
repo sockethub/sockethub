@@ -425,6 +425,116 @@ describe("SockethubClient", () => {
             expect(socket.emit.calledWithMatch("message")).to.equal(false);
         });
 
+        it("emits a CardDAV query with an addressBook target", (done) => {
+            (sc.validateActivity as any).restore();
+            socket.emit("schemas", {
+                version: "5.0.0-alpha.19",
+                contexts: {
+                    as: "https://www.w3.org/ns/activitystreams",
+                    sockethub: "https://sockethub.org/ns/context/v1.jsonld",
+                },
+                platforms: [
+                    {
+                        id: "carddav-client-test",
+                        version: "1.0.0-alpha.0",
+                        contextUrl:
+                            "https://sockethub.org/ns/context/platform/carddav-client-test/v1.jsonld",
+                        contextVersion: "1",
+                        schemaVersion: "1",
+                        types: ["query"],
+                        schemas: {
+                            messages: {
+                                required: ["type", "actor", "target"],
+                                properties: {
+                                    type: { const: "query" },
+                                    target: {
+                                        required: ["id", "type"],
+                                        properties: {
+                                            id: { type: "string" },
+                                            type: { const: "addressBook" },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                ],
+            });
+            const activity = {
+                "@context": sc.contextFor("carddav-client-test"),
+                type: "query",
+                actor: { id: "carddav:alice", type: "person" },
+                target: {
+                    id: "https://contacts.example/addressbooks/alice/",
+                    type: "addressBook",
+                },
+            };
+
+            socket.once("message", (emitted: unknown) => {
+                expect(emitted).to.eql(activity);
+                done();
+            });
+            sc.socket.emit("message", activity, done);
+        });
+
+        it("rejects a CardDAV query with an incomplete addressBook target", () => {
+            (sc.validateActivity as any).restore();
+            socket.emit("schemas", {
+                version: "5.0.0-alpha.19",
+                contexts: {
+                    as: "https://www.w3.org/ns/activitystreams",
+                    sockethub: "https://sockethub.org/ns/context/v1.jsonld",
+                },
+                platforms: [
+                    {
+                        id: "carddav-client-test",
+                        version: "1.0.0-alpha.0",
+                        contextUrl:
+                            "https://sockethub.org/ns/context/platform/carddav-client-test/v1.jsonld",
+                        contextVersion: "1",
+                        schemaVersion: "1",
+                        types: ["query"],
+                        schemas: {
+                            messages: {
+                                required: ["type", "actor", "target"],
+                                properties: {
+                                    type: { const: "query" },
+                                    target: {
+                                        required: ["id", "type"],
+                                        properties: {
+                                            id: { type: "string" },
+                                            type: { const: "addressBook" },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                ],
+            });
+            socket.emit.resetHistory();
+            const callback = sandbox.spy();
+
+            sc.socket.emit(
+                "message",
+                {
+                    "@context": sc.contextFor("carddav-client-test"),
+                    type: "query",
+                    actor: { id: "carddav:alice", type: "person" },
+                    target: {
+                        id: "https://contacts.example/addressbooks/alice/",
+                    },
+                },
+                callback,
+            );
+
+            expect(callback.calledOnce).to.equal(true);
+            expect(callback.firstCall.args[0]?.error).to.contain(
+                "SockethubClient validation failed",
+            );
+            expect(socket.emit.calledWithMatch("message")).to.equal(false);
+        });
+
         it("message", (done) => {
             sc.socket.connected = true;
             const callback = () => {};

@@ -142,6 +142,20 @@ export const ObjectTypesSchema = {
             },
         },
     },
+
+    addressBook: {
+        required: ["id", "type"],
+        additionalProperties: false,
+        properties: {
+            id: {
+                type: "string",
+                format: "iri",
+            },
+            type: {
+                enum: ["addressBook"],
+            },
+        },
+    },
 };
 
 // Internal AS object types reserved for Sockethub IPC/housekeeping.
@@ -164,6 +178,7 @@ export const TargetTypesList = [
     "platform",
     "address",
     "calendar",
+    "addressBook",
 ];
 export const validActorRefs = ActorTypesList.map((type) => ({
     $ref: `#/definitions/type/${type}`,
