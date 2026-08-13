@@ -45,6 +45,9 @@ class Listener {
         this.http = new HTTP.Server(app);
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
+            maxHttpBufferSize: config.get(
+                "sockethub:maxPayloadBytes",
+            ) as number,
             cors: {
                 origin: Listener.corsOrigin(),
                 methods: ["GET", "POST"],

@@ -49,6 +49,15 @@ describe("config", () => {
         expect(config.get("sockethub:host")).toEqual(hostname);
     });
 
+    it("bounds Socket.IO messages and accepts an environment override", () => {
+        const defaults = new Config();
+        expect(defaults.get("sockethub:maxPayloadBytes")).toBe(262144);
+
+        process.env.SOCKETHUB_MAX_PAYLOAD_BYTES = "131072";
+        const overridden = new Config();
+        expect(overridden.get("sockethub:maxPayloadBytes")).toBe(131072);
+    });
+
     it("defaults to redis config", () => {
         process.env.REDIS_URL = "";
         const config = new Config();

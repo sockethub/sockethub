@@ -76,6 +76,11 @@ const OVERLAY: Record<string, OverlayEntry> = {
         arg: "port",
     },
     "sockethub.host": { env: "HOST", emptyEnvIsUnset: true, arg: "host" },
+    "sockethub.maxPayloadBytes": {
+        format: "nat",
+        env: "SOCKETHUB_MAX_PAYLOAD_BYTES",
+        emptyEnvIsUnset: true,
+    },
     "sockethub.cors.origin": {
         env: "SOCKETHUB_CORS_ORIGIN",
         arg: "cors.origin",
