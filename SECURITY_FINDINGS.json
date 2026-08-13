@@ -1,0 +1,79 @@
+[
+  {
+    "severity": "MEDIUM",
+    "location": "packages/util/src/crypto/index.ts",
+    "title": "Modulo bias in deriveSecret reduces effective key entropy",
+    "description": "The `deriveSecret()` method maps SHA-256 output bytes (0-255) to a 70-character alphabet using `bytes[i] % 70`. Since 256 is not divisible by 70 (256 mod 70 = 46), the first 46 characters in the charset have a 4/256 chance of selection per position while the remaining 24 have a 3/256 chance — a ~9.5% relative bias. Over 32 positions this reduces the effective entropy from the theoretical ~195 bits (log2(70^32)) to roughly ~191 bits. While this doesn't make brute-force practical, it weakens the derived secret below what the design intends and violates the principle of using cryptographic material correctly. The `randId()` method on the same class already uses rejection sampling to avoid this exact issue, demonstrating awareness of the problem.",
+    "impact": "Derived credentials-store encryption secrets have measurably less entropy than intended. An attacker with access to many derived secrets (e.g., from a Redis dump) could exploit the non-uniform distribution to narrow brute-force search space. The bias also means some secrets are more likely to be generated than others, increasing collision probability in multi-tenant deployments.",
+    "attack_path": "1. Attacker obtains encrypted credential ciphertexts from Redis (via network access to an unprotected Redis instance, or a compromised backup). 2. Attacker observes that the encryption key was derived via `deriveSecret()`, which uses modulo-biased byte-to-character mapping. 3. Attacker builds a weighted brute-force dictionary that prioritizes the over-represented characters in each position. 4. The search space is reduced by the cumulative bias, accelerating key recovery compared to a uniform distribution assumption.",
+    "evidence": [
+      "packages/util/src/crypto/index.ts:99 — `result += chars[bytes[i] % charsLength]` with charsLength=70, producing modulo bias",
+      "packages/util/src/crypto/index.ts:140-145 — `randId()` on the same class uses rejection sampling (`maxValidByte = 256 - (256 % chars.length)`) to avoid the same bias, proving the developers are aware of the issue"
+    ],
+    "remediation": "Apply the same rejection-sampling technique used in `randId()` to `deriveSecret()`. Replace the modulo mapping with: compute `maxValidByte = 256 - (256 % charsLength)`, skip any byte >= maxValidByte, and draw additional bytes from a second SHA-256 pass (e.g., HKDF-Expand) when the 32 hash bytes are insufficient after rejection. Alternatively, switch to HKDF (RFC 5869) which is the standard construction for deriving cryptographic keys.",
+    "poc_video_notes": "Generate 10 million derived secrets and plot character-frequency histograms per position. The first 46 charset characters will appear ~33% more often than the remaining 24, confirming non-uniform distribution."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "packages/data-layer/src/credentials-store.ts",
+    "title": "Hardcoded secret in verifySecureStore leaks key material into source code",
+    "description": "The `verifySecureStore()` function uses a hardcoded 32-character secret string `aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s` to instantiate a SecureStore connection test. This secret is committed to the public repository and reused across all Sockethub deployments. While it only creates a transient verification store under the `data-layer:verify` namespace, the hardcoded secret is used with the same shared Redis connection that production credential stores use. If the verification store's key is not cleaned up (the code calls connect/disconnect but never deletes stored data), stale encrypted test data encrypted under this well-known secret persists in Redis.",
+    "impact": "Any data accidentally stored under the verification namespace can be decrypted by anyone with access to the source code. More importantly, the pattern normalizes hardcoded secrets in a security-critical module, and the well-known secret could be confused with or substituted for production secrets in misconfigured deployments. The secret also appears in integration tests under the same value, suggesting copy-paste reuse.",
+    "attack_path": "1. Attacker reads the hardcoded secret from the public GitHub repository. 2. If a deployment's Redis is network-accessible, attacker connects and scans for keys under the `data-layer:verify` namespace. 3. Any data stored under that namespace can be decrypted using the well-known secret. 4. In a misconfigured deployment where the verification secret bleeds into production paths (e.g., environment variable not set, fallback logic), production credentials could be encrypted under the well-known key.",
+    "evidence": [
+      "packages/data-layer/src/credentials-store.ts:175 — hardcoded secret `aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s`",
+      "packages/data-layer/integration/redis.integration.ts:43 — same secret reused in integration tests"
+    ],
+    "remediation": "Generate a random ephemeral secret for each verification call using `crypto.randToken(32)`. After the connect/disconnect verification, explicitly delete any keys created under the verification namespace. Add a code review rule prohibiting hardcoded secret strings in non-test source files.",
+    "poc_video_notes": "Connect to a Sockethub deployment's Redis instance, run `SCAN 0 MATCH *data-layer:verify*`, and demonstrate that any found keys can be decrypted using the hardcoded secret from the source code."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "packages/schemas/src/schemas/activity-stream.ts",
+    "title": "Unbounded object property in ActivityStream schema enables memory exhaustion via job queue",
+    "description": "The ActivityStream JSON schema defines the `object` property as `{ type: 'object' }` with no `maxProperties`, `maxLength` on string values, or `additionalProperties` constraint. While the HTTP actions path has a `maxPayloadBytes` limit (default 262KB), the Socket.IO transport uses the default `maxHttpBufferSize` of 1MB per message. Since each message is serialized, encrypted, and stored in Redis via BullMQ, an attacker can send messages with arbitrarily complex/deep `object` payloads up to 1MB each. At 100 messages/second (the default rate limit), this amounts to ~100MB/s of Redis writes per socket connection, and with the default `maxConnectionsPerIp: 0` (unlimited), a single IP can open many sockets to multiply this.",
+    "impact": "Redis memory exhaustion causing denial of service. BullMQ jobs with large payloads also increase CPU time for JSON serialization, AES encryption, and Redis I/O. Since job removal is deferred (5-minute TTL via `removeOnComplete/removeOnFail`), large payloads accumulate. A sustained attack from a single client can exhaust Redis memory and crash the entire Sockethub instance, affecting all connected users and platforms.",
+    "attack_path": "1. Attacker opens a Socket.IO connection to the Sockethub instance. 2. Attacker sends valid ActivityStream messages where the `object` property contains deeply nested or wide JSON structures (up to Socket.IO's 1MB buffer limit). 3. Each message passes schema validation (the `object` field only requires `type: 'object'`). 4. Messages are encrypted and queued in Redis via BullMQ with a 5-minute retention. 5. At 100 msg/s × 1MB = 100MB/s stored in Redis, memory fills rapidly. 6. With `maxConnectionsPerIp: 0`, attacker opens N parallel sockets to multiply throughput to N × 100MB/s.",
+    "evidence": [
+      "packages/schemas/src/schemas/activity-stream.ts:62-64 — `object: { type: 'object' }` with no size/depth constraints",
+      "packages/server/src/listener.ts:46-52 — Socket.IO server created without `maxHttpBufferSize` override (defaults to 1MB)",
+      "packages/data-layer/src/job-queue.ts:186-189 — jobs retained for 5 minutes: `removeOnComplete: { age: 300 }`",
+      "packages/schemas/src/schemas/sockethub-config.ts:211 — `maxConnectionsPerIp` defaults to 0 (unlimited)"
+    ],
+    "remediation": "1. Set `maxHttpBufferSize` on the Socket.IO server to a reasonable limit (e.g., 64KB or 128KB). 2. Add `maxProperties` and depth constraints to the `object` property in the ActivityStream schema. 3. Change `maxConnectionsPerIp` default from 0 (unlimited) to a reasonable value (e.g., 5-10). 4. Consider adding a payload-size check before encryption and Redis insertion in `JobQueue.add()`.",
+    "poc_video_notes": "Open a Socket.IO connection and send valid ActivityStream messages with a 900KB `object` payload in a loop. Monitor Redis memory usage (`redis-cli info memory`) and observe it climbing at ~100MB/s until OOM kill."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "packages/util/src/crypto/index.ts",
+    "title": "AES-256-CBC decrypt lacks IV length validation enabling oracle and crash vectors",
+    "description": "The `decrypt()` method splits the ciphertext on `:` and uses `parts.shift()` as the IV without validating that it is exactly 32 hex characters (16 bytes). A malformed ciphertext with a short, empty, or oversized IV segment causes `Buffer.from(parts.shift(), 'hex')` to produce a buffer of unexpected length. When passed to `createDecipheriv()`, a non-16-byte IV throws a runtime exception. More critically, if the IV is exactly the right length but the remaining ciphertext is manipulated, the lack of authenticated encryption (already a known issue — CBC without HMAC) means padding oracle attacks are feasible: the `decipher.final()` call throws distinguishable padding errors vs. `JSON.parse()` throwing syntax errors, leaking information about the plaintext byte-by-byte.",
+    "impact": "An attacker who can submit crafted ciphertexts and observe the error type (padding error vs. JSON parse error vs. success) can mount a padding oracle attack to decrypt any ciphertext encrypted with the same key. This applies to job queue data in Redis: an attacker with Redis write access can replace encrypted job payloads with oracle probes and observe the worker's error behavior (logged at warn level) to recover plaintext credentials and messages.",
+    "attack_path": "1. Attacker gains write access to the Redis instance (unauthenticated by default at redis://127.0.0.1:6379). 2. Attacker identifies an encrypted job payload in a BullMQ queue. 3. Attacker replaces the ciphertext with crafted padding oracle probes, keeping the original IV. 4. The JobWorker decrypts each probe: `decipher.final()` throws for bad padding, `JSON.parse()` throws for valid padding but invalid JSON, and success indicates correct decryption. 5. By observing the worker's error log messages (or timing differences), the attacker distinguishes these cases. 6. Standard CBC padding oracle attack recovers the plaintext block-by-block (typically 128-256 queries per byte).",
+    "evidence": [
+      "packages/util/src/crypto/index.ts:46-53 — `decrypt()` splits on `:`, no IV length validation, distinguishable error paths (decipher.final vs JSON.parse)",
+      "packages/util/src/crypto/index.ts:37-42 — `encrypt()` uses AES-256-CBC without HMAC/authentication",
+      "packages/data-layer/src/job-worker.ts:133-137 — `jobHandler` decrypts and logs errors at warn level",
+      "packages/schemas/src/schemas/sockethub-config.ts:234 — Redis URL defaults to unauthenticated `redis://127.0.0.1:6379`"
+    ],
+    "remediation": "1. Validate IV length before decryption: reject if the hex IV is not exactly 32 characters. 2. Migrate from AES-256-CBC to AES-256-GCM (authenticated encryption) which eliminates padding oracle attacks entirely. 3. As an interim measure, compute HMAC-SHA256 over (IV || ciphertext) with a derived authentication key and verify before decrypting, making error types indistinguishable. 4. Ensure error messages from decryption failures are generic and do not leak whether the failure was in padding or parsing.",
+    "poc_video_notes": "With Redis access, modify an encrypted job payload in a BullMQ queue. Submit two variants: one with corrupted last ciphertext block (triggers padding error), one with valid padding but invalid JSON. Observe different error messages in the worker logs, confirming the oracle distinguisher."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "packages/schemas/src/helpers/objects.ts",
+    "title": "Actor and target schemas allow unbounded additional properties enabling prototype pollution via JSON merge",
+    "description": "Most object type schemas in `ObjectTypesSchema` (person, room, service, feed, website, platform, calendar) set `additionalProperties: true`, allowing any arbitrary key-value pairs. The `ActivityActor` TypeScript type confirms this with `[key: string]: unknown`. When these actor/target objects are spread or merged in server-side code (e.g., `platform-instance.ts` line 411-416 uses spread/delete on payloads, `activity-stream-helper.ts` uses spread for normalization), attacker-controlled property names like `__proto__`, `constructor`, or `toString` pass validation and flow into object operations. While modern V8 prevents classic `__proto__` pollution via JSON.parse, libraries that perform recursive merging (e.g., lodash merge, deep-extend) remain vulnerable, and the permissive schema means no defense-in-depth exists at the validation layer.",
+    "impact": "An attacker can inject arbitrary properties into actor/target objects that flow through the server pipeline. Properties named `__proto__` or `constructor.prototype` could trigger prototype pollution if any code path performs a deep merge. Even without prototype pollution, injected properties (e.g., `isAdmin`, `role`, `permissions`) could be misinterpreted by downstream platform code that checks for property existence without schema-aware validation.",
+    "attack_path": "1. Attacker sends a valid ActivityStream message with actor `{ id: 'user@example.com', type: 'person', __proto__: { isAdmin: true }, constructor: { prototype: { polluted: true } } }`. 2. The schema validates successfully because `additionalProperties: true` on the person type. 3. The actor object flows through message handlers, middleware, and into platform child processes via the encrypted job queue. 4. Any code that performs deep merge, recursive copy, or property enumeration on the actor object processes these attacker-controlled keys. 5. Platform-specific code that checks `actor.someProperty` may find injected values.",
+    "evidence": [
+      "packages/schemas/src/helpers/objects.ts:32-34 — person: `additionalProperties: true`",
+      "packages/schemas/src/helpers/objects.ts:48-50 — room: `additionalProperties: true`",
+      "packages/schemas/src/helpers/objects.ts:64-66 — service: `additionalProperties: true`",
+      "packages/schemas/src/helpers/objects.ts:80-82 — platform: `additionalProperties: true`",
+      "packages/schemas/src/types.ts:35 — `ActivityActor` interface: `[key: string]: unknown`"
+    ],
+    "remediation": "1. Remove `additionalProperties: true` from object type schemas and explicitly enumerate allowed properties per type. If extensibility is needed, use a dedicated `extensions` or `metadata` sub-object rather than allowing arbitrary top-level properties. 2. Add a schema-level deny-list for dangerous property names (`__proto__`, `constructor`, `prototype`). 3. Sanitize actor/target objects after validation by deleting known-dangerous property names before they enter the processing pipeline.",
+    "poc_video_notes": "Send an ActivityStream credentials message with actor `{ id: 'test@host', type: 'person', __proto__: { injected: true } }`. Trace the object through the middleware chain and into the credential store to confirm the injected property persists through all processing stages."
+  }
+]
