@@ -73,7 +73,8 @@ does not start).
   "sockethub": {
     "port": 10550,
     "host": "localhost", 
-    "path": "/sockethub"
+    "path": "/sockethub",
+    "maxPayloadBytes": 262144
   },
   "httpActions": {
     "enabled": false,
@@ -98,6 +99,7 @@ does not start).
     "port": 10550,          // Port Sockethub listens on
     "host": "localhost",    // Bind address
     "path": "/sockethub",   // WebSocket endpoint path
+    "maxPayloadBytes": 262144, // Maximum Socket.IO message size
     "cors": {
       "origin": "https://app.example.com, https://admin.example.com"
     }
@@ -112,6 +114,10 @@ list is configured, the matching request origin is echoed back in
 `Access-Control-Allow-Origin`. See [CORS](#cors) for details. It can also be
 set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
 `--cors.origin` command-line flag.
+
+`sockethub:maxPayloadBytes` (default `262144`, or 256 KiB) limits each
+Socket.IO message before it enters validation or the Redis-backed job queue.
+It can be overridden with `SOCKETHUB_MAX_PAYLOAD_BYTES`.
 
 ### Public Settings
 

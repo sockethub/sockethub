@@ -283,6 +283,13 @@ export const SockethubConfigSchema = {
                     type: "string",
                     default: "/sockethub",
                 },
+                maxPayloadBytes: {
+                    type: "integer",
+                    minimum: 1,
+                    default: 262144,
+                    description:
+                        "Maximum size in bytes of a single Socket.IO message.",
+                },
                 cors: {
                     type: "object",
                     additionalProperties: false,
