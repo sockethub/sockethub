@@ -82,6 +82,23 @@ export type GetClientCallback = (
 
 type JobQueueHandler = (err?: Error | string) => void | Promise<void>;
 
+const IRC_LINE_BREAK = /[\r\n]/;
+
+function rejectIrcLineBreaks(
+    values: Array<unknown>,
+    done: PlatformCallback,
+): boolean {
+    if (
+        values.some(
+            (value) => typeof value === "string" && IRC_LINE_BREAK.test(value),
+        )
+    ) {
+        done("IRC values must not contain CR or LF characters");
+        return true;
+    }
+    return false;
+}
+
 interface IrcSocketOptionsCapabilities {
     requires: string[];
 }
@@ -189,6 +206,8 @@ export class IRC implements PersistentPlatformInterface {
      */
     join(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`join() called for ${job.actor.id}`);
+        if (rejectIrcLineBreaks([job.actor.name, job.target.name], done))
+            return;
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -218,6 +237,7 @@ export class IRC implements PersistentPlatformInterface {
      */
     leave(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`leave() called for ${job.actor.name}`);
+        if (rejectIrcLineBreaks([job.target.name], done)) return;
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -241,6 +261,13 @@ export class IRC implements PersistentPlatformInterface {
         this.log.debug(
             `send() called for ${job.actor.id} target: ${job.target.id}`,
         );
+        if (
+            rejectIrcLineBreaks(
+                [job.actor.name, job.target.name, job.object?.content],
+                done,
+            )
+        )
+            return;
         this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
@@ -326,6 +353,13 @@ export class IRC implements PersistentPlatformInterface {
         done: PlatformCallback,
     ) {
         this.log.debug(`update() called for ${job.actor.id}`);
+        if (
+            rejectIrcLineBreaks(
+                [job.actor.name, job.target.name, job.object?.content],
+                done,
+            )
+        )
+            return;
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);

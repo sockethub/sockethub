@@ -468,6 +468,27 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            it("rejects IRC line injection before writing to the socket", async () => {
+                const rawCalls: Array<unknown> = [];
+                platform.client.raw = (...args) => rawCalls.push(args);
+
+                const err = await new Promise((resolve) => {
+                    platform.send(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "send",
+                            actor,
+                            object: { content: "hello\nJOIN #other" },
+                            target: targetRoom,
+                        } as ActivityStream,
+                        resolve,
+                    );
+                });
+
+                expect(err).toContain("must not contain CR or LF");
+                expect(rawCalls).toHaveLength(0);
+            });
+
             // Regression coverage for the /me handling: /me must report
             // synchronous success without enqueueing a jobQueue handler.
             // See the long comment in src/index.ts for the protocol-level
