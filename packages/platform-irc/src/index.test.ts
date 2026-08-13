@@ -631,6 +631,27 @@ describe("Initialize IRC Platform", () => {
                     );
                 });
 
+                it("rejects CR injection in query targets before writing", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor,
+                            target: {
+                                type: "room",
+                                id: "irc.example.com/#a-room",
+                                name: "#a-room\rPRIVMSG victim :injected",
+                            },
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toContain("must not contain CR or LF");
+                            expect(rawCalls).toEqual([]);
+                            done();
+                        },
+                    );
+                });
+
                 // Regression coverage for sockethub/sockethub#1085: a query
                 // with no resolvable channel must error rather than emit a
                 // bare `NAMES`, which the server answers with the entire
@@ -754,6 +775,24 @@ describe("ircConnect TLS certificate validation", () => {
         });
 
         expect(capturedIrcSocketOptions?.connectOptions).toBeUndefined();
+    });
+
+    it.each([
+        ["nick", { object: { nick: "nick\rOPER root" } }],
+        ["username", { object: { username: "user\rOPER root" } }],
+        ["realname", { actor: { name: "name\rOPER root" } }],
+    ])("rejects CR injection in connect-time %s", async (_field, override) => {
+        const credentials = {
+            ...validCredentials,
+            ...override,
+            actor: { ...validCredentials.actor, ...override.actor },
+            object: { ...validCredentials.object, ...override.object },
+        };
+
+        await expect(connect(credentials)).rejects.toThrow(
+            "must not contain CR or LF",
+        );
+        expect(capturedIrcSocketOptions).toBeUndefined();
     });
 });
 
