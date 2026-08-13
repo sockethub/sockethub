@@ -202,7 +202,7 @@ export const SockethubConfigSchema = {
                 maxConnectionsPerIp: {
                     type: "number",
                     minimum: 0,
-                    default: 0,
+                    default: 20,
                     description:
                         "Maximum concurrent socket connections per client IP. " +
                         "The per-event rate limiter is keyed by socket id, so " +
@@ -218,7 +218,7 @@ export const SockethubConfigSchema = {
                 maxPlatformInstances: {
                     type: "number",
                     minimum: 0,
-                    default: 0,
+                    default: 100,
                     description:
                         "Upper bound on concurrently running platform instances " +
                         "(child processes). Each persistent-platform actor forks " +
