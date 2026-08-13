@@ -47,7 +47,8 @@ const actorName = $derived(
     {/if}
     <span>
         <a rel="noreferrer" href={entry.object?.url} target="_blank" class="text-blue-600 hover:text-blue-800 underline">
-            {entry.object?.title || typeof entry.target === "string" ? entry.target : entry.target?.id}
+            {entry.object?.title ||
+                (typeof entry.target === "string" ? entry.target : entry.target?.id)}
         </a>
     </span>
     {#if entry.object?.published}
