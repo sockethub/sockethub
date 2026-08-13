@@ -7,11 +7,13 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Validate branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
         run: |
-          BRANCH="${{ github.head_ref }}"
-          
           # Allow release branches (created by automation)
           if [[ "$BRANCH" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             echo "✅ Release branch: $BRANCH"
@@ -63,9 +65,9 @@ jobs:
           fi
 
       - name: Validate PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
         run: |
-          TITLE="${{ github.event.pull_request.title }}"
-          
           # Allow release PR titles (created by automation)
           if [[ "$TITLE" =~ ^Release\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             echo "✅ Release PR title: $TITLE"
