@@ -53,7 +53,11 @@ does not start).
   "rateLimiter": {
     "windowMs": 1000,
     "maxRequests": 100,
-    "blockDurationMs": 5000
+    "blockDurationMs": 5000,
+    "maxConnectionsPerIp": 20
+  },
+  "limits": {
+    "maxPlatformInstances": 100
   },
   "credentialCheck": {
     "reconnectIpSource": "socket",
@@ -189,12 +193,20 @@ Protect against event flooding from individual clients:
   "rateLimiter": {
     "windowMs": 1000,          // Time window in milliseconds
     "maxRequests": 100,        // Max events per window per client
-    "blockDurationMs": 5000    // Block duration after exceeding limit
+    "blockDurationMs": 5000,   // Block duration after exceeding limit
+    "maxConnectionsPerIp": 20  // Concurrent sockets per client IP
+  },
+  "limits": {
+    "maxPlatformInstances": 100 // Concurrent platform child processes
   }
 }
 ```
 
-**Default limits:** 100 events per second per client, 5 second block.
+**Default limits:** 100 events per second per client, a 5 second block, 20
+concurrent sockets per client IP, and 100 concurrent platform processes.
+
+Set either resource cap to `0` only when an external control provides the
+equivalent protection.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
