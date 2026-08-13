@@ -41,6 +41,22 @@ type OverlayEntry = {
     default?: unknown;
 };
 
+convict.addFormat({
+    name: "positive-integer",
+    validate(value: unknown): void {
+        if (
+            typeof value !== "number" ||
+            !Number.isInteger(value) ||
+            value < 1
+        ) {
+            throw new Error("must be a positive integer");
+        }
+    },
+    coerce(value: unknown): number {
+        return Number(value);
+    },
+});
+
 const OVERLAY: Record<string, OverlayEntry> = {
     $schema: { default: "" },
     examples: { arg: "examples" },
@@ -77,7 +93,7 @@ const OVERLAY: Record<string, OverlayEntry> = {
     },
     "sockethub.host": { env: "HOST", emptyEnvIsUnset: true, arg: "host" },
     "sockethub.maxPayloadBytes": {
-        format: "nat",
+        format: "positive-integer",
         env: "SOCKETHUB_MAX_PAYLOAD_BYTES",
         emptyEnvIsUnset: true,
     },

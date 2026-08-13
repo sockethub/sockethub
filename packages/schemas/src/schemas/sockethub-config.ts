@@ -284,7 +284,7 @@ export const SockethubConfigSchema = {
                     default: "/sockethub",
                 },
                 maxPayloadBytes: {
-                    type: "number",
+                    type: "integer",
                     minimum: 1,
                     default: 262144,
                     description:
