@@ -225,8 +225,7 @@ platforms.
 
 Setting `maxPlatformInstances` to `0` removes the server-wide platform process
 limit entirely. Setting `maxConnectionsPerIp` to `0` likewise removes the
-per-IP connection limit. Disable either cap only when an external control
-provides equivalent protection.
+per-IP connection limit.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
