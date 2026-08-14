@@ -223,8 +223,10 @@ additional process for each identity. Increase the default for deployments that
 expect more than 100 concurrent persistent actors, allowing for active stateless
 platforms.
 
-Set either resource cap to `0` only when an external control provides the
-equivalent protection.
+Setting `maxPlatformInstances` to `0` removes the server-wide platform process
+limit entirely. Setting `maxConnectionsPerIp` to `0` likewise removes the
+per-IP connection limit. Disable either cap only when an external control
+provides equivalent protection.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
