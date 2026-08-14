@@ -25,4 +25,5 @@ ENV LOG_LEVEL=${LOG_LEVEL}
 WORKDIR /app
 COPY --from=build /app ./
 RUN echo "Running sockethub (prod) on node: LOG_LEVEL=${LOG_LEVEL}"
+USER node
 CMD ["node", "/app/packages/sockethub/bin/sockethub", "--host", "0.0.0.0"]
