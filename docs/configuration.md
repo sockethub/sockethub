@@ -214,10 +214,10 @@ concurrent sockets per client IP, and 100 concurrent platform processes.
 `maxPlatformInstances` is a server-wide limit, not a per-user limit. Persistent
 platforms such as IRC and XMPP use one process for each unique actor, while
 sessions for the same actor reuse that process. Stateless platforms such as
-CalDAV, CardDAV, dummy, feeds, and metadata use one shared process per platform.
+CalDAV, CardDAV, feeds, and metadata use one shared process per platform.
 
-As a sizing example, 20 users each connected to IRC and XMPP, with all five
-stateless platforms active, use approximately `20 * 2 + 5 = 45` platform
+As a sizing example, 20 users each connected to IRC and XMPP, with all four
+stateless platforms active, use approximately `20 * 2 + 4 = 44` platform
 processes. Users with multiple identities on a persistent platform use an
 additional process for each identity. Increase the default for deployments that
 expect more than 100 concurrent persistent actors, allowing for active stateless
