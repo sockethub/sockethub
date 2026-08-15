@@ -19,10 +19,14 @@ let enabledPlatforms: Set<string> | undefined = $state();
 let configLoaded = $state(false);
 
 onMount(async () => {
-    const { platforms } = await loadRuntimeConfig();
-    enabledPlatforms = platforms
-        ? new Set(platforms.map(platformId))
-        : undefined;
+    try {
+        const { platforms } = await loadRuntimeConfig();
+        enabledPlatforms = platforms
+            ? new Set(platforms.map(platformId))
+            : undefined;
+    } catch {
+        enabledPlatforms = new Set();
+    }
     configLoaded = true;
 });
 

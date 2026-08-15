@@ -169,5 +169,7 @@ function sockethubConnect(config: RuntimeConfig = defaultConfig) {
 
 if (typeof globalThis === "object" && "window" in globalThis) {
     console.log("connecting to sockethub");
-    loadRuntimeConfig().then(sockethubConnect);
+    loadRuntimeConfig()
+        .then(sockethubConnect)
+        .catch(() => sockethubConnect());
 }
