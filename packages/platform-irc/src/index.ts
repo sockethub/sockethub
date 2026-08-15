@@ -202,6 +202,7 @@ export class IRC implements PersistentPlatformInterface {
         this.log.debug(`join() called for ${job.actor.id}`);
         const lineBreakError = ircLineBreakError([
             job.actor.name,
+            job.target.id,
             job.target.name,
         ]);
         if (lineBreakError) return done(lineBreakError);
@@ -240,7 +241,10 @@ export class IRC implements PersistentPlatformInterface {
      */
     leave(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`leave() called for ${job.actor.name}`);
-        const lineBreakError = ircLineBreakError([job.target.name]);
+        const lineBreakError = ircLineBreakError([
+            job.target.id,
+            job.target.name,
+        ]);
         if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
@@ -273,6 +277,7 @@ export class IRC implements PersistentPlatformInterface {
         );
         const lineBreakError = ircLineBreakError([
             job.actor.name,
+            job.target.id,
             job.target.name,
             job.object?.content,
         ]);
@@ -371,6 +376,7 @@ export class IRC implements PersistentPlatformInterface {
         this.log.debug(`update() called for ${job.actor.id}`);
         const lineBreakError = ircLineBreakError([
             job.actor.name,
+            job.target.id,
             job.target.name,
             job.object?.content,
         ]);
