@@ -128,6 +128,7 @@ class Listener {
             JSON.stringify({
                 sockethub: config.get("sockethub"),
                 public: config.get("public"),
+                platforms: config.get("platforms"),
             }),
         );
 
