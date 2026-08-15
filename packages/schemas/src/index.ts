@@ -14,6 +14,11 @@ import {
     ObjectTypesList,
     ObjectTypesSchema,
 } from "./helpers/objects.js";
+import {
+    type RuntimeConfig,
+    RuntimeConfigSchema,
+    validateRuntimeConfig,
+} from "./runtime-config.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import {
@@ -55,9 +60,11 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityStreamResponse,
+    validateRuntimeConfig,
     validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
+    RuntimeConfigSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     SockethubConfigSchemaId,
@@ -65,5 +72,7 @@ export {
     ObjectTypesSchema,
     InternalObjectTypesList,
 };
+
+export type { RuntimeConfig };
 
 export * from "./types.js";

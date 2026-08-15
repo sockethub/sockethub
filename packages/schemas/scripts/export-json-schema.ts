@@ -12,6 +12,7 @@ const ajv = new Ajv();
 const schemas = [
     ["activity-stream", "ActivityStreamSchema"],
     ["platform", "PlatformSchema"],
+    ["runtime-config", "RuntimeConfigSchema"],
     ["sockethub-config", "SockethubConfigSchema"],
 ];
 

@@ -1,17 +1,9 @@
-export interface RuntimeConfig {
-    sockethub: {
-        port: number;
-        host: string;
-        path: string;
-    };
-    public: {
-        protocol: string;
-        host: string;
-        port: number;
-        path: string;
-    };
-    platforms?: string[];
-}
+import {
+    type RuntimeConfig,
+    validateRuntimeConfig,
+} from "@sockethub/schemas/runtime-config";
+
+export type { RuntimeConfig };
 
 export const defaultConfig: RuntimeConfig = {
     sockethub: {
@@ -39,7 +31,7 @@ export function loadRuntimeConfig(): Promise<RuntimeConfig> {
                     );
                 }
                 const config: unknown = await response.json();
-                if (!isRuntimeConfig(config)) {
+                if (!validateRuntimeConfig(config)) {
                     throw new Error("invalid runtime config");
                 }
                 return config;
@@ -52,42 +44,6 @@ export function loadRuntimeConfig(): Promise<RuntimeConfig> {
     }
 
     return runtimeConfigPromise;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
-}
-
-function isString(value: unknown): value is string {
-    return typeof value === "string";
-}
-
-function isPort(value: unknown): value is number {
-    return typeof value === "number" && Number.isFinite(value);
-}
-
-export function isRuntimeConfig(value: unknown): value is RuntimeConfig {
-    if (!isRecord(value)) {
-        return false;
-    }
-
-    const sockethub = value.sockethub;
-    const publicConfig = value.public;
-    if (!isRecord(sockethub) || !isRecord(publicConfig)) {
-        return false;
-    }
-
-    return (
-        isPort(sockethub.port) &&
-        isString(sockethub.host) &&
-        isString(sockethub.path) &&
-        isString(publicConfig.protocol) &&
-        isString(publicConfig.host) &&
-        isPort(publicConfig.port) &&
-        isString(publicConfig.path) &&
-        (value.platforms === undefined ||
-            (Array.isArray(value.platforms) && value.platforms.every(isString)))
-    );
 }
 
 export function platformId(packageName: string): string {

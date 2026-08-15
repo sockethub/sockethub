@@ -26,8 +26,16 @@
       "import": "./dist/object-types.js",
       "default": "./dist/object-types.js"
     },
+    "./runtime-config": {
+      "types": "./dist/runtime-config.d.ts",
+      "import": "./dist/runtime-config.js",
+      "default": "./dist/runtime-config.js"
+    },
     "./schemas/json/sockethub-config.json": {
       "default": "./dist/schemas/json/sockethub-config.json"
+    },
+    "./schemas/json/runtime-config.json": {
+      "default": "./dist/schemas/json/runtime-config.json"
     }
   },
   "files": [
@@ -53,7 +61,7 @@
     "@types/bun": "latest"
   },
   "scripts": {
-    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/object-types.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/context.ts src/activity-stream-helper.ts --outdir dist --target browser --format esm --sourcemap=external",
+    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/object-types.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/context.ts src/activity-stream-helper.ts src/runtime-config.ts --outdir dist --target browser --format esm --sourcemap=external",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules"
   },

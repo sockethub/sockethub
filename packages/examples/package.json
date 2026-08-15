@@ -62,5 +62,8 @@
     "vite": "^6.4.1",
     "vitest": "^3.2.4"
   },
+  "dependencies": {
+    "@sockethub/schemas": "^3.0.0-alpha.19"
+  },
   "gitHead": "9dc63d790aabfbfe894b1d1b0754013e40fd25ec"
 }

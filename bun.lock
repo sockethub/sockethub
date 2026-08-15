@@ -86,6 +86,9 @@
     "packages/examples": {
       "name": "@sockethub/examples",
       "version": "1.0.0-alpha.19",
+      "dependencies": {
+        "@sockethub/schemas": "^3.0.0-alpha.19",
+      },
       "devDependencies": {
         "@playwright/test": "^1.57.0",
         "@sockethub/client": "^5.0.0-alpha.19",
