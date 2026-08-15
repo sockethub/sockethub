@@ -39,12 +39,13 @@
     "socket.io": "4.8.3"
   },
   "scripts": {
-    "build": "bun run build:foundations && bun run --filter='!@sockethub/{util,dav,schemas,client}' build && bun run build:server:post && bun run build:types",
+    "build": "bun run build:runtime && bun run build:types",
     "build:foundations": "bun run --filter='@sockethub/util' build && bun run --filter='@sockethub/dav' build && bun run --filter='@sockethub/schemas' build && bun run --filter='@sockethub/client' build",
+    "build:runtime": "bun run build:foundations && bun run --filter='!@sockethub/{util,dav,schemas,client}' build && bun run build:server:post",
     "build:server:post": "rm -rf packages/server/res && mkdir -p packages/server/res && cp node_modules/@sockethub/client/dist/sockethub-client.browser.js packages/server/res/sockethub-client.js && cp node_modules/@sockethub/client/dist/sockethub-client.min.js packages/server/res/sockethub-client.min.js && cp node_modules/socket.io-client/dist/socket.io.js packages/server/res/socket.io.js",
     "clean": "bun run --filter='*' clean",
     "clean:deps": "bun run --filter='*' clean:deps && rm -rf node_modules",
-    "dev": "bun run build && cd packages/sockethub && bun run dev",
+    "dev": "bun run build:runtime && cd packages/sockethub && bun run dev",
     "doc": "bun run --filter='*' doc",
     "docker:start": "bun run docker:start:xmpp && bun run docker:start:irc && bun run docker:start:caldav && docker compose up sockethub -d",
     "docker:start:xmpp": "bash scripts/docker-compose-retry.sh up prosody -d",
