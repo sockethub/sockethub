@@ -2,7 +2,7 @@
 import { base } from "$app/paths";
 import { page } from "$app/stores";
 import { onMount } from "svelte";
-import { loadRuntimeConfig, platformId } from "$lib/runtime-config";
+import { loadExamplesConfig, platformId } from "$lib/examples-config";
 
 const navItems = [
     ["🏠", "Home", "/", "Start here to understand Sockethub", undefined],
@@ -20,7 +20,7 @@ let configLoaded = $state(false);
 
 onMount(async () => {
     try {
-        const { platforms } = await loadRuntimeConfig();
+        const { platforms } = await loadExamplesConfig();
         enabledPlatforms = platforms
             ? new Set(platforms.map(platformId))
             : undefined;

@@ -1,4 +1,4 @@
-export interface RuntimeConfig {
+export interface ExamplesConfig {
     sockethub: {
         port: number;
         host: string;
@@ -19,8 +19,8 @@ const port = {
     maximum: 65535,
 } as const;
 
-export const RuntimeConfigSchema = {
-    $id: "https://sockethub.org/schemas/v/runtime-config.json",
+export const ExamplesConfigSchema = {
+    $id: "https://sockethub.org/schemas/v/examples-config.json",
     description: "Sockethub examples runtime configuration",
     type: "object",
     required: ["sockethub", "public"],

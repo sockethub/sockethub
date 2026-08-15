@@ -10,15 +10,15 @@ import {
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "./context.js";
 import {
+    type ExamplesConfig,
+    ExamplesConfigSchema,
+    validateExamplesConfig,
+} from "./examples-config.js";
+import {
     InternalObjectTypesList,
     ObjectTypesList,
     ObjectTypesSchema,
 } from "./helpers/objects.js";
-import {
-    type RuntimeConfig,
-    RuntimeConfigSchema,
-    validateRuntimeConfig,
-} from "./runtime-config.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import {
@@ -60,11 +60,11 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityStreamResponse,
-    validateRuntimeConfig,
+    validateExamplesConfig,
     validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
-    RuntimeConfigSchema,
+    ExamplesConfigSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     SockethubConfigSchemaId,
@@ -73,6 +73,6 @@ export {
     InternalObjectTypesList,
 };
 
-export type { RuntimeConfig };
+export type { ExamplesConfig };
 
 export * from "./types.js";

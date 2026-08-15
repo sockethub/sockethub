@@ -1,11 +1,11 @@
 import {
-    type RuntimeConfig,
-    validateRuntimeConfig,
-} from "@sockethub/schemas/runtime-config";
+    type ExamplesConfig,
+    validateExamplesConfig,
+} from "@sockethub/schemas/examples-config";
 
-export type { RuntimeConfig };
+export type { ExamplesConfig };
 
-export const defaultConfig: RuntimeConfig = {
+export const defaultConfig: ExamplesConfig = {
     sockethub: {
         port: 10550,
         host: "localhost",
@@ -19,11 +19,11 @@ export const defaultConfig: RuntimeConfig = {
     },
 };
 
-let runtimeConfigPromise: Promise<RuntimeConfig> | undefined;
+let examplesConfigPromise: Promise<ExamplesConfig> | undefined;
 
-export function loadRuntimeConfig(): Promise<RuntimeConfig> {
-    if (!runtimeConfigPromise) {
-        runtimeConfigPromise = fetch("/config.json")
+export function loadExamplesConfig(): Promise<ExamplesConfig> {
+    if (!examplesConfigPromise) {
+        examplesConfigPromise = fetch("/examples-config.json")
             .then(async (response) => {
                 if (!response.ok) {
                     throw new Error(
@@ -31,19 +31,19 @@ export function loadRuntimeConfig(): Promise<RuntimeConfig> {
                     );
                 }
                 const config: unknown = await response.json();
-                if (!validateRuntimeConfig(config)) {
-                    throw new Error("invalid runtime config");
+                if (!validateExamplesConfig(config)) {
+                    throw new Error("invalid examples config");
                 }
                 return config;
             })
             .catch((error: unknown) => {
-                runtimeConfigPromise = undefined;
-                console.error("failed to load runtime config", error);
+                examplesConfigPromise = undefined;
+                console.error("failed to load examples config", error);
                 throw error;
             });
     }
 
-    return runtimeConfigPromise;
+    return examplesConfigPromise;
 }
 
 export function platformId(packageName: string): string {

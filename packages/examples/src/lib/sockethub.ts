@@ -8,9 +8,9 @@ import { io } from "socket.io-client";
 import { writable } from "svelte/store";
 import {
     defaultConfig,
-    loadRuntimeConfig,
-    type RuntimeConfig,
-} from "./runtime-config";
+    loadExamplesConfig,
+    type ExamplesConfig,
+} from "./examples-config";
 
 export let sc: SockethubClient;
 export const connected = writable(false);
@@ -139,7 +139,7 @@ function handleIncomingMessage(msg: AnyActivityStream) {
     displayMessage(msg, false);
 }
 
-function sockethubConnect(config: RuntimeConfig = defaultConfig) {
+function sockethubConnect(config: ExamplesConfig = defaultConfig) {
     sc = new SockethubClient(
         io(
             `${config.public.protocol}://${config.public.host}:${config.public.port}`,
@@ -169,7 +169,7 @@ function sockethubConnect(config: RuntimeConfig = defaultConfig) {
 
 if (typeof globalThis === "object" && "window" in globalThis) {
     console.log("connecting to sockethub");
-    loadRuntimeConfig()
+    loadExamplesConfig()
         .then(sockethubConnect)
         .catch(() => sockethubConnect());
 }
