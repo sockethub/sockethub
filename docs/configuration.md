@@ -211,8 +211,21 @@ Protect against event flooding from individual clients:
 **Default limits:** 100 events per second per client, a 5 second block, 20
 concurrent sockets per client IP, and 100 concurrent platform processes.
 
-Set either resource cap to `0` only when an external control provides the
-equivalent protection.
+`maxPlatformInstances` is a server-wide limit, not a per-user limit. Persistent
+platforms such as IRC and XMPP use one process for each unique actor, while
+sessions for the same actor reuse that process. Stateless platforms such as
+CalDAV, CardDAV, feeds, and metadata use one shared process per platform.
+
+As a sizing example, 20 users each connected to IRC and XMPP, with all four
+stateless platforms active, use approximately `20 * 2 + 4 = 44` platform
+processes. Users with multiple identities on a persistent platform use an
+additional process for each identity. Increase the default for deployments that
+expect more than 100 concurrent persistent actors, allowing for active stateless
+platforms.
+
+Setting `maxPlatformInstances` to `0` removes the server-wide platform process
+limit entirely. Setting `maxConnectionsPerIp` to `0` likewise removes the
+per-IP connection limit.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
