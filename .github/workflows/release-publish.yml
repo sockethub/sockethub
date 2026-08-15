@@ -214,7 +214,7 @@ jobs:
         if: steps.preflight.outputs.npm_complete != 'true'
         run: |
           echo "Publishing packages to npm with dist-tag: ${{ steps.dist_tag.outputs.tag }}"
-          lerna publish from-package \
+          bunx lerna publish from-package \
             --dist-tag ${{ steps.dist_tag.outputs.tag }} \
             --yes \
             --no-git-tag-version \
