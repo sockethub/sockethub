@@ -80,6 +80,16 @@ import Intro from "../components/Intro.svelte";
                     </a>
                 </div>
                 <div class="grid md:grid-cols-2 gap-3">
+                    <a href="{base}/caldav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                        <div class="font-semibold text-purple-800">📅 CalDAV Calendars</div>
+                        <div class="text-purple-600">Discover calendars and create events or tasks</div>
+                    </a>
+                    <a href="{base}/carddav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                        <div class="font-semibold text-purple-800">👤 CardDAV Contacts</div>
+                        <div class="text-purple-600">Discover address books and find contacts</div>
+                    </a>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
                     <a href="{base}/irc" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors border-l-4 border-l-orange-400">
                         <div class="flex items-center justify-between">
                             <div>

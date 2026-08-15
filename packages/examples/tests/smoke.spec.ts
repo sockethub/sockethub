@@ -78,4 +78,34 @@ test.describe("examples smoke against sockethub --examples", () => {
             page.getByRole("button", { name: "Set Credentials" }),
         ).toBeEnabled();
     });
+
+    test("carddav page exposes the address-book query flow", async ({
+        page,
+    }) => {
+        await page.goto("/carddav");
+        await expect(
+            page.getByRole("heading", { name: "CardDAV Platform Example" }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("button", { name: "Fetch Address Books" }),
+        ).toBeDisabled();
+        await expect(
+            page.getByRole("button", { name: "Search Contacts" }),
+        ).toBeDisabled();
+
+        await page
+            .getByLabel("CardDAV URL")
+            .fill("https://contacts.example/dav/");
+        await page.getByLabel("Username").fill("alice");
+        await page.getByLabel("Password").fill("app-password");
+        await page.getByRole("button", { name: "Set Credentials" }).click();
+        await expect(
+            page.getByRole("button", { name: "Credentials Set" }),
+        ).toBeDisabled();
+
+        await page.getByLabel("Username").fill("alice-changed");
+        await expect(
+            page.getByRole("button", { name: "Set Credentials" }),
+        ).toBeEnabled();
+    });
 });
