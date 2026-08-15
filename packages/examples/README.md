@@ -38,7 +38,7 @@ bun install
 bun run dev
 ```
 
-Point the app at a running Sockethub by editing `static/config.json` or using the
+Point the app at a running Sockethub by editing `static/examples-config.json` or using the
 default `localhost:10550`.
 
 ## Code layout

@@ -6,24 +6,14 @@ import { platformIdFromContext } from "@sockethub/schemas/context";
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";
+import {
+    defaultConfig,
+    loadExamplesConfig,
+    type ExamplesConfig,
+} from "./examples-config";
 
 export let sc: SockethubClient;
 export const connected = writable(false);
-
-const defaultConfig = {
-    sockethub: {
-        port: 10550,
-        host: "localhost",
-        path: "/sockethub",
-    },
-    public: {
-        protocol: "http",
-        host: "localhost",
-        port: 10550,
-        path: "/",
-    },
-};
-type SockethubConfig = typeof defaultConfig;
 
 type BaseProps = {
     id?: string;
@@ -149,7 +139,7 @@ function handleIncomingMessage(msg: AnyActivityStream) {
     displayMessage(msg, false);
 }
 
-function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
+function sockethubConnect(config: ExamplesConfig = defaultConfig) {
     sc = new SockethubClient(
         io(
             `${config.public.protocol}://${config.public.host}:${config.public.port}`,
@@ -179,12 +169,7 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
 
 if (typeof globalThis === "object" && "window" in globalThis) {
     console.log("connecting to sockethub");
-    fetch("/config.json")
-        .then(async (res) => {
-            const config = (await res.json()) as SockethubConfig;
-            sockethubConnect(config);
-        })
-        .catch(() => {
-            sockethubConnect();
-        });
+    loadExamplesConfig()
+        .then(sockethubConnect)
+        .catch(() => sockethubConnect());
 }
