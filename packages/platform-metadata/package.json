@@ -43,7 +43,8 @@
   },
   "dependencies": {
     "@sockethub/util": "^1.0.0-alpha.7",
-    "open-graph-scraper": "^6.11.0"
+    "open-graph-scraper": "^6.11.0",
+    "undici": "^7.16.0"
   },
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.19"

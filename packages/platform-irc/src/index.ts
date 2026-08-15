@@ -81,6 +81,18 @@ export type GetClientCallback = (
 
 type JobQueueHandler = (err?: Error | string) => void | Promise<void>;
 
+const IRC_LINE_BREAK = /[\r\n]/;
+
+function ircLineBreakError(values: Array<unknown>): string | undefined {
+    if (
+        values.some(
+            (value) => typeof value === "string" && IRC_LINE_BREAK.test(value),
+        )
+    ) {
+        return "IRC values must not contain CR or LF characters";
+    }
+}
+
 interface IrcSocketOptionsCapabilities {
     requires: string[];
 }
@@ -188,6 +200,11 @@ export class IRC implements PersistentPlatformInterface {
      */
     join(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`join() called for ${job.actor.id}`);
+        const lineBreakError = ircLineBreakError([
+            job.actor.name,
+            job.target.name,
+        ]);
+        if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -223,6 +240,8 @@ export class IRC implements PersistentPlatformInterface {
      */
     leave(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`leave() called for ${job.actor.name}`);
+        const lineBreakError = ircLineBreakError([job.target.name]);
+        if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -252,6 +271,12 @@ export class IRC implements PersistentPlatformInterface {
         this.log.debug(
             `send() called for ${job.actor.id} target: ${job.target.id}`,
         );
+        const lineBreakError = ircLineBreakError([
+            job.actor.name,
+            job.target.name,
+            job.object?.content,
+        ]);
+        if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
@@ -344,6 +369,12 @@ export class IRC implements PersistentPlatformInterface {
         done: PlatformCallback,
     ) {
         this.log.debug(`update() called for ${job.actor.id}`);
+        const lineBreakError = ircLineBreakError([
+            job.actor.name,
+            job.target.name,
+            job.object?.content,
+        ]);
+        if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -394,6 +425,11 @@ export class IRC implements PersistentPlatformInterface {
      */
     query(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`query() called for ${job.actor.id}`);
+        const lineBreakError = ircLineBreakError([
+            job.target?.name,
+            job.target?.id,
+        ]);
+        if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -558,6 +594,13 @@ export class IRC implements PersistentPlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         cb: GetClientCallback,
     ) {
+        const lineBreakError = ircLineBreakError([
+            credentials.object.nick,
+            credentials.object.username,
+            credentials.actor.name,
+        ]);
+        if (lineBreakError) return cb(lineBreakError);
+
         this.clientConnecting = true;
         const is_secure =
             typeof credentials.object.secure === "boolean"

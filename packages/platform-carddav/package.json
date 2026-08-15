@@ -1,0 +1,47 @@
+{
+  "name": "@sockethub/platform-carddav",
+  "description": "A Sockethub platform for CardDAV address books and contacts",
+  "version": "1.0.0-alpha.0",
+  "type": "module",
+  "private": false,
+  "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
+    "test": "bun test src/"
+  },
+  "dependencies": {
+    "@sockethub/dav": "^1.0.0-alpha.0",
+    "@sockethub/schemas": "^3.0.0-alpha.19"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "@sockethub/server": "^5.0.0-alpha.19"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
+  }
+}

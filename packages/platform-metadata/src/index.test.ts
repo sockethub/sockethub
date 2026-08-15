@@ -7,6 +7,7 @@ import { Agent } from "undici";
 let ogsOptions: Record<string, unknown> | undefined;
 let ogsBehavior: () => Promise<{ result: Record<string, unknown> }> = () =>
     Promise.resolve({ result: {} });
+let redditJsonBehavior: ((url: string) => Promise<unknown>) | undefined;
 
 mock.module("open-graph-scraper", () => ({
     default: (options: Record<string, unknown>) => {
@@ -15,7 +16,7 @@ mock.module("open-graph-scraper", () => ({
     },
 }));
 
-const { default: Metadata } = await import("./index");
+const { default: Metadata, withDeadline } = await import("./index");
 
 /** The user-agent header the platform handed to open-graph-scraper. */
 function sentUserAgent(): string | undefined {
@@ -28,6 +29,15 @@ function sentUserAgent(): string | undefined {
 function makePlatform(config?: Record<string, unknown>) {
     // biome-ignore lint/suspicious/noExplicitAny: minimal fake session
     const platform = new Metadata({ log: { debug() {} } } as any);
+    // Production uses Undici explicitly. Route it through the replaceable
+    // global in unit tests so both remote stages remain deterministic.
+    // biome-ignore lint/suspicious/noExplicitAny: test-only private override
+    (platform as any).fetchImpl = (...args: Parameters<typeof fetch>) =>
+        globalThis.fetch(...args);
+    if (redditJsonBehavior) {
+        // biome-ignore lint/suspicious/noExplicitAny: test-only private override
+        (platform as any).fetchRedditJson = redditJsonBehavior;
+    }
     if (config) {
         Object.assign(platform.config, config);
     }
@@ -64,6 +74,7 @@ describe("metadata fetch SSRF hardening", () => {
             | { dispatcher?: unknown }
             | undefined;
         expect(fetchOptions?.dispatcher).toBeInstanceOf(Agent);
+        expect(ogsOptions?.timeout).toEqual(5);
     });
 
     it("still passes a dispatcher when the escape hatch is enabled", async () => {
@@ -132,40 +143,139 @@ describe("favicon fallback", () => {
     });
 });
 
-describe("reddit compatibility user agent", () => {
+describe("reddit structured metadata", () => {
+    const realFetch = globalThis.fetch;
+    let fetchCalls: Array<{ url: string; options?: RequestInit }> = [];
+    let postResponse: Record<string, unknown> = {};
+    let redditJsonUrl: string | undefined;
+
     beforeEach(() => {
         ogsOptions = undefined;
         ogsBehavior = () => Promise.resolve({ result: {} });
+        fetchCalls = [];
+        postResponse = {
+            title: "A Reddit post",
+            selftext: "First paragraph\n\n\n\nSecond paragraph",
+            url_overridden_by_dest: "https://i.redd.it/post.png",
+        };
+        redditJsonUrl = undefined;
+        redditJsonBehavior = (url) => {
+            redditJsonUrl = url;
+            return Promise.resolve([
+                { data: { children: [{ data: postResponse }] } },
+            ]);
+        };
+        // biome-ignore lint/suspicious/noExplicitAny: controlled Reddit fetch stub
+        globalThis.fetch = ((url: URL, options?: RequestInit) => {
+            fetchCalls.push({ url: String(url), options });
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () =>
+                    Promise.resolve([
+                        { data: { children: [{ data: postResponse }] } },
+                    ]),
+            });
+        }) as any;
     });
 
-    it("scrapes reddit posts with an embed-crawler user agent", async () => {
-        await runFetch(
+    afterEach(() => {
+        globalThis.fetch = realFetch;
+        redditJsonBehavior = undefined;
+    });
+
+    it("uses old.reddit JSON without scraping HTML", async () => {
+        const { err, result } = await runFetch(
             makePlatform(),
             "https://www.reddit.com/r/pics/comments/abc123/some_title/",
         );
-        expect(ogsOptions?.url).toEqual(
-            "https://www.reddit.com/r/pics/comments/abc123/some_title/",
+        expect(err).toBeNull();
+        expect(redditJsonUrl).toEqual(
+            "https://old.reddit.com/r/pics/comments/abc123/some_title.json?raw_json=1",
         );
-        expect(sentUserAgent()).toMatch(/Discordbot/);
+        expect(ogsOptions).toBeUndefined();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "A Reddit post",
+            description: "First paragraph\n\nSecond paragraph",
+            image: [{ url: "https://i.redd.it/post.png" }],
+        });
     });
 
-    it("covers redd.it short links", async () => {
-        await runFetch(makePlatform(), "https://redd.it/abc123");
-        expect(sentUserAgent()).toMatch(/Discordbot/);
-    });
-
-    it("honors a packageConfig compatUserAgent override", async () => {
+    it("uses the configured compatibility user agent", async () => {
         await runFetch(
-            makePlatform({ compatUserAgent: "MyCrawler/2.0" }),
-            "https://old.reddit.com/r/x/comments/id/",
+            makePlatform({ compatUserAgent: "MyCrawler/1.0" }),
+            "https://old.reddit.com/r/x/comments/id/post/",
         );
-        expect(sentUserAgent()).toEqual("MyCrawler/2.0");
+        expect(redditJsonUrl).toStartWith("https://old.reddit.com");
     });
 
     it("does not affect non-reddit scrapes", async () => {
         await runFetch(makePlatform(), "https://example.com/article");
         expect(ogsOptions?.url).toEqual("https://example.com/article");
         expect(sentUserAgent()).toMatch(/SockethubBot/);
+    });
+
+    it("returns no image for text posts", async () => {
+        postResponse = { title: "Text only", selftext: "Body" };
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/words/comments/abc123/post/",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toBeUndefined();
+    });
+
+    it("falls back to oEmbed when Reddit JSON fails", async () => {
+        redditJsonBehavior = () => Promise.reject(new Error("JSON down"));
+        globalThis.fetch = ((url: URL) =>
+            Promise.resolve({
+                      ok: true,
+                      status: 200,
+                      json: () =>
+                          Promise.resolve({
+                              title: "Fallback title",
+                              provider_name: "reddit",
+                          }),
+                  })) as any;
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/words/comments/abc123/post/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            type: "page",
+            title: "Fallback title",
+            name: "reddit",
+            image: undefined,
+        });
+    });
+});
+
+describe("description normalization", () => {
+    it("keeps paragraphs but removes pathological whitespace", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogDescription:
+                        "  First\tline  \r\n\r\n\r\n\r\n Second\u00a0 line ",
+                },
+            });
+        const { result } = await runFetch(makePlatform());
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.description).toEqual(
+            "First line\n\nSecond line",
+        );
+    });
+});
+
+describe("scrape deadline", () => {
+    it("rejects even when the underlying request never settles", async () => {
+        const stalled = new Promise<never>(() => {});
+        await expect(withDeadline(stalled, 5)).rejects.toThrow(
+            "metadata scrape timed out after 5ms",
+        );
     });
 });
 

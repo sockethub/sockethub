@@ -62,10 +62,12 @@ jobs:
           BUMP="${{ inputs.bump }}"
           PREID="${{ inputs.preid }}"
           
+          # Use bunx so the workspace-pinned @lerna-lite/cli is used, not
+          # whatever global lerna the runner image happens to ship
           if [ -n "$PREID" ]; then
-            CMD="lerna version $BUMP --preid $PREID --no-push --no-git-tag-version --yes"
+            CMD="bunx lerna version $BUMP --preid $PREID --no-push --no-git-tag-version --yes"
           else
-            CMD="lerna version $BUMP --no-push --no-git-tag-version --yes"
+            CMD="bunx lerna version $BUMP --no-push --no-git-tag-version --yes"
           fi
           
           echo "command=$CMD" >> $GITHUB_OUTPUT

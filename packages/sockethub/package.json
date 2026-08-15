@@ -37,6 +37,7 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
+    "@sockethub/platform-carddav": "^1.0.0-alpha.0",
     "@sockethub/platform-caldav": "^1.0.0-alpha.3",
     "@sockethub/platform-dummy": "^3.0.0-alpha.19",
     "@sockethub/platform-feeds": "^4.0.0-alpha.19",
@@ -47,7 +48,7 @@
   "scripts": {
     "build": "bun build.js",
     "clean:deps": "rm -rf node_modules",
-    "dev": "bun run --hot ./bin/sockethub --examples",
+    "dev": "SOCKETHUB_HTTP_ACTIONS_ENABLED=true bun run --hot ./bin/sockethub --examples",
     "info": "node ./bin/sockethub --info",
     "start": "node ./bin/sockethub",
     "start:logged": "bun ./bin/sockethub-logged"

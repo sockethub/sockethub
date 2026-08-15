@@ -295,6 +295,7 @@ export default class ChatBot implements PersistentPlatformInterface {
 
 - **[Dummy Platform](../packages/platform-dummy/README.md)** - Simple testing platform
 - **[CalDAV Platform](../packages/platform-caldav/README.md)** - Calendar and task synchronization
+- **[CardDAV Platform](../packages/platform-carddav/README.md)** - Address-book and contact synchronization
 - **[Feeds Platform](../packages/platform-feeds/README.md)** - RSS/Atom feed processing
 - **[IRC Platform](../packages/platform-irc/README.md)** - IRC chat protocol
 - **[Metadata Platform](../packages/platform-metadata/README.md)** - Web page metadata extraction  

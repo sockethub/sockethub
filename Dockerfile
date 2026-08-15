@@ -23,6 +23,8 @@ FROM node:22-slim AS prod
 ARG LOG_LEVEL=info
 ENV LOG_LEVEL=${LOG_LEVEL}
 WORKDIR /app
-COPY --from=build /app ./
+COPY --chown=node:node --from=build /app ./
 RUN echo "Running sockethub (prod) on node: LOG_LEVEL=${LOG_LEVEL}"
+RUN chown node:node /app
+USER node
 CMD ["node", "/app/packages/sockethub/bin/sockethub", "--host", "0.0.0.0"]

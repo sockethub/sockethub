@@ -1,6 +1,6 @@
 import { lookup as dnsLookup, type LookupAddress } from "node:dns";
-import type { LookupFunction } from "node:net";
-import { Agent } from "undici";
+import { isIP, type LookupFunction } from "node:net";
+import { Agent, buildConnector } from "undici";
 import { isBlockedAddress } from "./address.js";
 
 /** Default response-body cap (5 MiB) applied by a guarded dispatcher. */
@@ -83,6 +83,35 @@ export function createGuardedLookup(
     };
 }
 
+type Connector = ReturnType<typeof buildConnector>;
+
+/**
+ * Wrap Undici's connector so IP-literal hosts are checked before Node opens a
+ * socket. Node bypasses custom DNS lookup functions for literals, so the
+ * lookup guard alone does not cover these destinations.
+ *
+ * Exported for direct unit testing with an injected connector.
+ */
+export function createGuardedConnector(
+    allowPrivateAddresses: boolean,
+    connector: Connector = buildConnector({
+        lookup: createGuardedLookup(allowPrivateAddresses),
+    }),
+): Connector {
+    return (options, callback): void => {
+        const hostname = options.hostname.replace(/^\[|\]$/g, "");
+        if (
+            !allowPrivateAddresses &&
+            isIP(hostname) !== 0 &&
+            isBlockedAddress(hostname)
+        ) {
+            callback(new Error(`blocked non-public address ${hostname}`), null);
+            return;
+        }
+        connector(options, callback);
+    };
+}
+
 /**
  * Build an undici {@link Agent} that defends a server fetching client-supplied
  * URLs against SSRF and memory exhaustion:
@@ -105,8 +134,6 @@ export function createGuardedDispatcher(
     } = options;
     return new Agent({
         maxResponseSize: maxResponseBytes,
-        connect: {
-            lookup: createGuardedLookup(allowPrivateAddresses),
-        },
+        connect: createGuardedConnector(allowPrivateAddresses),
     });
 }

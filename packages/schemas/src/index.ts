@@ -10,6 +10,11 @@ import {
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "./context.js";
 import {
+    type ExamplesConfig,
+    ExamplesConfigSchema,
+    validateExamplesConfig,
+} from "./examples-config.js";
+import {
     InternalObjectTypesList,
     ObjectTypesList,
     ObjectTypesSchema,
@@ -55,9 +60,11 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityStreamResponse,
+    validateExamplesConfig,
     validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
+    ExamplesConfigSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     SockethubConfigSchemaId,
@@ -65,5 +72,7 @@ export {
     ObjectTypesSchema,
     InternalObjectTypesList,
 };
+
+export type { ExamplesConfig };
 
 export * from "./types.js";

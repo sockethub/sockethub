@@ -101,6 +101,7 @@ example, an XMPP friend request can be modeled as `request-friend`,
 
 ### Included Platforms
 
+* **[CardDAV](packages/platform-carddav)** - Address-book and contact synchronization
 * **[CalDAV](packages/platform-caldav)** - Calendar and task synchronization
 * **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[IRC](packages/platform-irc)** - Internet Relay Chat protocol support
@@ -145,7 +146,7 @@ for the full workflow.
 
 ```bash
 bun install        # install workspace dependencies
-bun run dev        # dev server with examples + hot reload
+bun run dev        # dev server with examples, HTTP actions, and hot reload
 ```
 
 Open `http://localhost:10550` for the interactive examples.
@@ -173,6 +174,7 @@ For debugging and configuration options, see the [Server package documentation](
 ### Platform Implementations
 
 * **[@sockethub/platform-dummy](packages/platform-dummy)** - Example platform for development reference
+* **[@sockethub/platform-carddav](packages/platform-carddav)** - Address-book and contact synchronization
 * **[@sockethub/platform-caldav](packages/platform-caldav)** - Calendar and task synchronization
 * **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support

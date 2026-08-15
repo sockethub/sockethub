@@ -35,9 +35,9 @@
     "test": "bun test src/"
   },
   "dependencies": {
+    "@sockethub/dav": "^1.0.0-alpha.0",
     "@sockethub/schemas": "^3.0.0-alpha.19",
-    "@sockethub/util": "^1.0.0-alpha.7",
-    "fast-xml-parser": "^5.10.1"
+    "@sockethub/util": "^1.0.0-alpha.7"
   },
   "devDependencies": {
     "@types/bun": "latest",

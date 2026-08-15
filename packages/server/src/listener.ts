@@ -45,6 +45,9 @@ class Listener {
         this.http = new HTTP.Server(app);
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
+            maxHttpBufferSize: config.get(
+                "sockethub:maxPayloadBytes",
+            ) as number,
             cors: {
                 origin: Listener.corsOrigin(),
                 methods: ["GET", "POST"],
@@ -121,10 +124,20 @@ class Listener {
 
         // Write runtime config for the examples app
         writeFileSync(
-            path.join(examplesPath, "config.json"),
+            path.join(examplesPath, "examples-config.json"),
             JSON.stringify({
-                sockethub: config.get("sockethub"),
-                public: config.get("public"),
+                sockethub: {
+                    host: config.get("sockethub:host"),
+                    port: config.get("sockethub:port"),
+                    path: config.get("sockethub:path"),
+                },
+                public: {
+                    protocol: config.get("public:protocol"),
+                    host: config.get("public:host"),
+                    port: config.get("public:port"),
+                    path: config.get("public:path"),
+                },
+                platforms: config.get("platforms"),
             }),
         );
 

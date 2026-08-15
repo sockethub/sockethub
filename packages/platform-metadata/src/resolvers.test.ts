@@ -1,6 +1,14 @@
 import { describe, expect, it } from "bun:test";
 import {
     isRedditUrl,
+    normalizeDescription,
+    parseRedditOEmbed,
+    parseRedditPost,
+    redditOEmbedImage,
+    redditPostImage,
+    redditPostImages,
+    resolveRedditEmbed,
+    resolveRedditJson,
     resolveTwitterStatus,
     tweetToPageObject,
 } from "./resolvers";
@@ -50,6 +58,142 @@ describe("resolveTwitterStatus", () => {
             resolveTwitterStatus("https://notx.com/u/status/123"),
         ).toBeNull();
         expect(resolveTwitterStatus("not a url")).toBeNull();
+    });
+});
+
+describe("resolveRedditEmbed", () => {
+    it("maps Reddit posts to the official media-enabled embed", () => {
+        expect(
+            resolveRedditEmbed(
+                "https://www.reddit.com/r/pics/comments/abc123/title/?share=1",
+            ),
+        ).toEqual(
+            "https://embed.reddit.com/r/pics/comments/abc123/title/?embed=true&showmedia=true",
+        );
+    });
+
+    it("ignores non-post, short, lookalike, and invalid URLs", () => {
+        expect(resolveRedditEmbed("https://reddit.com/r/pics")).toBeNull();
+        expect(resolveRedditEmbed("https://redd.it/abc123")).toBeNull();
+        expect(resolveRedditEmbed("https://notreddit.com/r/x/comments/1/x")).toBeNull();
+        expect(resolveRedditEmbed("not a url")).toBeNull();
+    });
+});
+
+describe("Reddit JSON metadata", () => {
+    it("maps canonical posts to old.reddit JSON", () => {
+        expect(
+            resolveRedditJson(
+                "https://www.reddit.com/r/pics/comments/abc123/title/",
+            ),
+        ).toEqual(
+            "https://old.reddit.com/r/pics/comments/abc123/title.json?raw_json=1",
+        );
+        expect(resolveRedditJson("https://reddit.com/r/pics")).toBeNull();
+    });
+
+    it("validates a listing and selects only direct Reddit post media", () => {
+        const post = parseRedditPost([
+            {
+                data: {
+                    children: [
+                        {
+                            data: {
+                                title: "Post",
+                                selftext: "Body",
+                                url: "https://i.redd.it/post.png",
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+        expect(post).not.toBeNull();
+        expect(redditPostImage(post!)).toEqual([
+            { url: "https://i.redd.it/post.png" },
+        ]);
+        expect(parseRedditPost([{ data: { children: [{ data: { title: 1 } }] } }])).toBeNull();
+        expect(
+            redditPostImage({ title: "Link", url: "https://example.com/a.png" }),
+        ).toBeUndefined();
+    });
+});
+
+describe("redditOEmbedImage", () => {
+    it("maps a post thumbnail with its dimensions", () => {
+        expect(
+            redditOEmbedImage({
+                thumbnail_url: "https://preview.redd.it/post.jpg",
+                thumbnail_width: 640,
+                thumbnail_height: 480,
+            }),
+        ).toEqual([
+            {
+                url: "https://preview.redd.it/post.jpg",
+                width: 640,
+                height: 480,
+            },
+        ]);
+    });
+
+    it("returns no image for text posts or unsafe thumbnail URLs", () => {
+        expect(redditOEmbedImage({})).toBeUndefined();
+        expect(
+            redditOEmbedImage({ thumbnail_url: "javascript:alert(1)" }),
+        ).toBeUndefined();
+        expect(
+            redditOEmbedImage({ thumbnail_url: "not a URL" }),
+        ).toBeUndefined();
+    });
+});
+
+describe("parseRedditOEmbed", () => {
+    it("accepts the consumed fields and ignores valid upstream extras", () => {
+        expect(
+            parseRedditOEmbed({
+                title: "Post",
+                provider_name: "reddit",
+                thumbnail_url: "https://preview.redd.it/post.png",
+                thumbnail_width: 640,
+                html: "<blockquote>upstream field</blockquote>",
+            }),
+        ).toMatchObject({ title: "Post", thumbnail_width: 640 });
+    });
+
+    it("rejects malformed external payloads", () => {
+        expect(parseRedditOEmbed(null)).toBeNull();
+        expect(parseRedditOEmbed([])).toBeNull();
+        expect(parseRedditOEmbed({ title: 42 })).toBeNull();
+        expect(parseRedditOEmbed({ thumbnail_width: -1 })).toBeNull();
+        expect(parseRedditOEmbed({ thumbnail_height: Number.NaN })).toBeNull();
+    });
+});
+
+describe("redditPostImages", () => {
+    it("keeps post media and removes generic Reddit images", () => {
+        expect(
+            redditPostImages([
+                { url: "https://redditstatic.com/generic-hero.png" },
+                { url: "https://share.redd.it/preview/post/abc123" },
+                { url: "https://preview.redd.it/post.png?width=640" },
+            ]),
+        ).toEqual([{ url: "https://preview.redd.it/post.png?width=640" }]);
+    });
+});
+
+describe("normalizeDescription", () => {
+    it("caps blank lines and normalizes horizontal whitespace", () => {
+        expect(
+            normalizeDescription(
+                "\r\n  First\t paragraph  \r\n\r\n \r\n\r\n Second\u00a0  paragraph \r\n",
+            ),
+        ).toEqual("First paragraph\n\nSecond paragraph");
+    });
+
+    it("preserves meaningful line and paragraph boundaries", () => {
+        expect(normalizeDescription("one\ntwo\n\nthree")).toEqual(
+            "one\ntwo\n\nthree",
+        );
     });
 });
 

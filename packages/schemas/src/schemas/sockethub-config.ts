@@ -49,6 +49,7 @@ export const SockethubConfigSchema = {
             },
             description: "Platform packages to load",
             default: [
+                "@sockethub/platform-carddav",
                 "@sockethub/platform-caldav",
                 "@sockethub/platform-dummy",
                 "@sockethub/platform-feeds",
@@ -67,6 +68,16 @@ export const SockethubConfigSchema = {
                 "Per-platform config keyed by package name, validated against " +
                 "each platform's config schema and forwarded to its child process",
             properties: {
+                "@sockethub/platform-carddav": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        connectTimeoutMs: { type: "integer", minimum: 1 },
+                        allowPrivateAddresses: { type: "boolean" },
+                        allowInsecureHttp: { type: "boolean" },
+                        concurrency: { type: "integer", minimum: 1 },
+                    },
+                },
                 "@sockethub/platform-caldav": {
                     type: "object",
                     additionalProperties: false,
@@ -191,7 +202,7 @@ export const SockethubConfigSchema = {
                 maxConnectionsPerIp: {
                     type: "number",
                     minimum: 0,
-                    default: 0,
+                    default: 20,
                     description:
                         "Maximum concurrent socket connections per client IP. " +
                         "The per-event rate limiter is keyed by socket id, so " +
@@ -207,7 +218,7 @@ export const SockethubConfigSchema = {
                 maxPlatformInstances: {
                     type: "number",
                     minimum: 0,
-                    default: 0,
+                    default: 100,
                     description:
                         "Upper bound on concurrently running platform instances " +
                         "(child processes). Each persistent-platform actor forks " +
@@ -271,6 +282,13 @@ export const SockethubConfigSchema = {
                 path: {
                     type: "string",
                     default: "/sockethub",
+                },
+                maxPayloadBytes: {
+                    type: "integer",
+                    minimum: 1,
+                    default: 262144,
+                    description:
+                        "Maximum size in bytes of a single Socket.IO message.",
                 },
                 cors: {
                     type: "object",

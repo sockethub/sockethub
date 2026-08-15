@@ -1,6 +1,10 @@
 {
   "$schema": "../packages/schemas/src/schemas/json/sockethub-config.json",
   "packageConfig": {
+    "@sockethub/platform-carddav": {
+      "allowPrivateAddresses": true,
+      "allowInsecureHttp": true
+    },
     "@sockethub/platform-feeds": {
       "allowPrivateAddresses": true
     },

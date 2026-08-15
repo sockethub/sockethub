@@ -36,6 +36,7 @@ does not start).
     "file": "sockethub.log"
   },
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
@@ -52,7 +53,11 @@ does not start).
   "rateLimiter": {
     "windowMs": 1000,
     "maxRequests": 100,
-    "blockDurationMs": 5000
+    "blockDurationMs": 5000,
+    "maxConnectionsPerIp": 20
+  },
+  "limits": {
+    "maxPlatformInstances": 100
   },
   "credentialCheck": {
     "reconnectIpSource": "socket",
@@ -68,7 +73,8 @@ does not start).
   "sockethub": {
     "port": 10550,
     "host": "localhost", 
-    "path": "/sockethub"
+    "path": "/sockethub",
+    "maxPayloadBytes": 262144
   },
   "httpActions": {
     "enabled": false,
@@ -93,6 +99,7 @@ does not start).
     "port": 10550,          // Port Sockethub listens on
     "host": "localhost",    // Bind address
     "path": "/sockethub",   // WebSocket endpoint path
+    "maxPayloadBytes": 262144, // Maximum Socket.IO message size
     "cors": {
       "origin": "https://app.example.com, https://admin.example.com"
     }
@@ -107,6 +114,10 @@ list is configured, the matching request origin is echoed back in
 `Access-Control-Allow-Origin`. See [CORS](#cors) for details. It can also be
 set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
 `--cors.origin` command-line flag.
+
+`sockethub:maxPayloadBytes` (default `262144`, or 256 KiB) limits each
+Socket.IO message before it enters validation or the Redis-backed job queue.
+It can be overridden with `SOCKETHUB_MAX_PAYLOAD_BYTES`.
 
 ### Public Settings
 
@@ -135,6 +146,7 @@ them. They cannot be supplied by browser clients.
 ```json
 {
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
@@ -157,6 +169,10 @@ the platform default):
 ```json
 {
   "packageConfig": {
+    "@sockethub/platform-carddav": {
+      "connectTimeoutMs": 15000,
+      "concurrency": 10
+    },
     "@sockethub/platform-caldav": {
       "connectTimeoutMs": 15000,
       "concurrency": 10
@@ -183,12 +199,33 @@ Protect against event flooding from individual clients:
   "rateLimiter": {
     "windowMs": 1000,          // Time window in milliseconds
     "maxRequests": 100,        // Max events per window per client
-    "blockDurationMs": 5000    // Block duration after exceeding limit
+    "blockDurationMs": 5000,   // Block duration after exceeding limit
+    "maxConnectionsPerIp": 20  // Concurrent sockets per client IP
+  },
+  "limits": {
+    "maxPlatformInstances": 100 // Concurrent platform child processes
   }
 }
 ```
 
-**Default limits:** 100 events per second per client, 5 second block.
+**Default limits:** 100 events per second per client, a 5 second block, 20
+concurrent sockets per client IP, and 100 concurrent platform processes.
+
+`maxPlatformInstances` is a server-wide limit, not a per-user limit. Persistent
+platforms such as IRC and XMPP use one process for each unique actor, while
+sessions for the same actor reuse that process. Stateless platforms such as
+CalDAV, CardDAV, feeds, and metadata use one shared process per platform.
+
+As a sizing example, 20 users each connected to IRC and XMPP, with all four
+stateless platforms active, use approximately `20 * 2 + 4 = 44` platform
+processes. Users with multiple identities on a persistent platform use an
+additional process for each identity. Increase the default for deployments that
+expect more than 100 concurrent persistent actors, allowing for active stateless
+platforms.
+
+Setting `maxPlatformInstances` to `0` removes the server-wide platform process
+limit entirely. Setting `maxConnectionsPerIp` to `0` likewise removes the
+per-IP connection limit.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
@@ -624,6 +661,7 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
     "traceSampleRate": 0.1
   },
   "platforms": [
+    "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",

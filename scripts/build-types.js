@@ -22,6 +22,10 @@ const packages = [
         entries: ["src/index.ts"],
     },
     {
+        dir: "packages/dav",
+        entries: ["src/index.ts"],
+    },
+    {
         dir: "packages/irc2as",
         entries: ["src/index.js"],
         allowJs: true,
@@ -32,6 +36,10 @@ const packages = [
     },
     {
         dir: "packages/platform-caldav",
+        entries: ["src/index.ts"],
+    },
+    {
+        dir: "packages/platform-carddav",
         entries: ["src/index.ts"],
     },
     {
