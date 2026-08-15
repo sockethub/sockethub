@@ -3,7 +3,7 @@ import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import { contextFor, ensureClientReady, sc, send } from "$lib/sockethub";
-import type { AnyActivityStream, SockethubResponse } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
 
 type AddressBook = {
     id: string;
@@ -35,6 +35,8 @@ let error = $state<string | null>(null);
 let success = $state<string | null>(null);
 let credentialError = $state<string | null>(null);
 let credentialSuccess = $state<string | null>(null);
+let credentialRevision = 0;
+let contactRequestRevision = 0;
 
 const selectedAddressBook = $derived(
     addressBooks.find(
@@ -47,7 +49,8 @@ function actor() {
 }
 
 function invalidateCredentials(): void {
-    if (!credentialsSet) return;
+    credentialRevision += 1;
+    contactRequestRevision += 1;
     credentialsSet = false;
     addressBooks = [];
     selectedAddressBookId = "";
@@ -56,7 +59,15 @@ function invalidateCredentials(): void {
     credentialSuccess = null;
 }
 
+function selectAddressBook(): void {
+    contactRequestRevision += 1;
+    contacts = [];
+    error = null;
+    success = null;
+}
+
 async function setCredentials(): Promise<void> {
+    const revision = credentialRevision;
     credentialError = null;
     credentialSuccess = null;
     busy = true;
@@ -77,7 +88,7 @@ async function setCredentials(): Promise<void> {
             sc.socket.emit(
                 "credentials",
                 credentials,
-                (response: SockethubResponse) => {
+                (response?: { error?: string }) => {
                     if (response?.error) {
                         reject(new Error(response.error));
                         return;
@@ -86,16 +97,22 @@ async function setCredentials(): Promise<void> {
                 },
             );
         });
-        credentialsSet = true;
-        credentialSuccess = "Credentials set for this Sockethub session.";
+        if (revision === credentialRevision) {
+            credentialsSet = true;
+            credentialSuccess = "Credentials set for this Sockethub session.";
+        }
     } catch (err) {
-        credentialError = err instanceof Error ? err.message : String(err);
+        if (revision === credentialRevision) {
+            credentialError = err instanceof Error ? err.message : String(err);
+        }
     } finally {
         busy = false;
     }
 }
 
 async function fetchAddressBooks(): Promise<void> {
+    if (!credentialsSet) return;
+    const revision = credentialRevision;
     error = null;
     success = null;
     contacts = [];
@@ -106,6 +123,7 @@ async function fetchAddressBooks(): Promise<void> {
             type: "fetch",
             actor: actor(),
         } as AnyActivityStream);
+        if (revision !== credentialRevision || !credentialsSet) return;
         addressBooks = (response.items ?? []).filter(
             (item): item is AnyActivityStream & AddressBook =>
                 item.type === "addressBook" &&
@@ -115,14 +133,19 @@ async function fetchAddressBooks(): Promise<void> {
         selectedAddressBookId = addressBooks[0]?.id ?? "";
         success = `Found ${addressBooks.length} address book${addressBooks.length === 1 ? "" : "s"}.`;
     } catch (err) {
-        error = err instanceof Error ? err.message : String(err);
+        if (revision === credentialRevision) {
+            error = err instanceof Error ? err.message : String(err);
+        }
     } finally {
         busy = false;
     }
 }
 
 async function queryContacts(): Promise<void> {
-    if (!selectedAddressBook) return;
+    if (!credentialsSet || !selectedAddressBook) return;
+    const revision = credentialRevision;
+    const requestRevision = ++contactRequestRevision;
+    const addressBookId = selectedAddressBook.id;
     error = null;
     success = null;
     contacts = [];
@@ -132,7 +155,7 @@ async function queryContacts(): Promise<void> {
             "@context": await contextFor("carddav"),
             type: "query",
             actor: actor(),
-            target: { id: selectedAddressBook.id, type: "addressBook" },
+            target: { id: addressBookId, type: "addressBook" },
             object: {
                 type: "contactQuery",
                 text: contactName,
@@ -140,6 +163,13 @@ async function queryContacts(): Promise<void> {
                 limit: 50,
             },
         } as unknown as AnyActivityStream);
+        if (
+            revision !== credentialRevision ||
+            requestRevision !== contactRequestRevision ||
+            selectedAddressBookId !== addressBookId ||
+            !credentialsSet
+        )
+            return;
         contacts = (response.items ?? []).filter(
             (item): item is AnyActivityStream & Contact =>
                 item.type === "person" &&
@@ -148,7 +178,12 @@ async function queryContacts(): Promise<void> {
         ) as Contact[];
         success = `Found ${contacts.length} contact${contacts.length === 1 ? "" : "s"}.`;
     } catch (err) {
-        error = err instanceof Error ? err.message : String(err);
+        if (
+            revision === credentialRevision &&
+            requestRevision === contactRequestRevision
+        ) {
+            error = err instanceof Error ? err.message : String(err);
+        }
     } finally {
         busy = false;
     }
@@ -219,6 +254,7 @@ async function queryContacts(): Promise<void> {
             <select
                 id="carddav-address-book"
                 bind:value={selectedAddressBookId}
+                onchange={selectAddressBook}
                 class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3"
             >
                 {#each addressBooks as addressBook (addressBook.id)}
@@ -235,7 +271,10 @@ async function queryContacts(): Promise<void> {
         <h2 class="text-xl font-semibold text-gray-900">3. Find contacts</h2>
         <FormField label="Contact name" id="carddav-contact-name" bind:value={contactName} placeholder="Bob" />
         <div class="flex justify-end">
-            <SockethubButton buttonAction={queryContacts} disabled={busy || !selectedAddressBook || !contactName.trim()}>
+            <SockethubButton
+                buttonAction={queryContacts}
+                disabled={busy || !credentialsSet || !selectedAddressBook || !contactName.trim()}
+            >
                 Search Contacts
             </SockethubButton>
         </div>
