@@ -1,4 +1,12 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import {
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    test,
+} from "bun:test";
 import {
     CredentialsMismatchError,
     CredentialsNotShareableError,
@@ -122,7 +130,7 @@ describe("Middleware: credentialCheck", () => {
     // Regression: the incumbent's credentials hash must reach the data layer,
     // otherwise the exact-match comparison is skipped and any non-empty
     // password attaches to another client's live connection.
-    test("passes the incumbent's credentialsHash to the store", async () => {
+    it("passes the incumbent's credentialsHash to the store", async () => {
         let seenHash: string | undefined | symbol = Symbol("unset");
         store.get = async (
             _actor: string,
@@ -147,7 +155,7 @@ describe("Middleware: credentialCheck", () => {
         expect(seenHash).toEqual("incumbent-hash");
     });
 
-    test("blocks an attach whose credentials do not match the incumbent", async () => {
+    it("blocks an attach whose credentials do not match the incumbent", async () => {
         store.get = async () =>
             Promise.reject(
                 new CredentialsMismatchError(
@@ -168,7 +176,7 @@ describe("Middleware: credentialCheck", () => {
         expect(result instanceof Error).toEqual(true);
     });
 
-    test("a credentials mismatch is not eligible for same-IP reconnect", async () => {
+    it("a credentials mismatch is not eligible for same-IP reconnect", async () => {
         // Same IP and a stale prior session — the escape hatch that rescues an
         // anonymous reconnect must not rescue a wrong-password attach.
         store.get = async () =>
@@ -194,6 +202,104 @@ describe("Middleware: credentialCheck", () => {
         });
 
         expect(result instanceof Error).toEqual(true);
+    });
+
+    // Regression: the incumbent's hash is unset for the whole remote
+    // handshake. Admitting an attach on the non-empty rule alone during that
+    // window failed open — registration is sticky and an attached session
+    // skips this middleware on later messages, so it stayed attached once the
+    // hash finally arrived.
+    describe("before the incumbent's credentials are known", () => {
+        it("refuses a persistent-platform attach when the hash never arrives", async () => {
+            store.get = async () =>
+                makeCredentials({ type: "credentials", password: "abc123" });
+            platformInstances.set(platformKey, {
+                sessions: new Set(["socket-2"]),
+                sessionIps: new Map([["socket-2", clientIp]]),
+                config: { persist: true },
+                credentialsHash: undefined,
+                waitForCredentialsHash: async () => undefined,
+                // biome-ignore lint/suspicious/noExplicitAny: test double
+            } as any);
+
+            const result = await new Promise<ActivityStream | Error>(
+                (resolve) => {
+                    credentialCheck(store, socketId, clientIp)(
+                        baseMessage,
+                        resolve,
+                    );
+                },
+            );
+
+            expect(result instanceof Error).toEqual(true);
+        });
+
+        it("admits a concurrent connect once the hash arrives and matches", async () => {
+            // Two clients connecting with the same credentials: the second
+            // waits for the first to finish rather than being refused.
+            let seenHash: string | undefined;
+            store.get = async (
+                _actor: string,
+                credentialsHash: string | undefined,
+            ) => {
+                seenHash = credentialsHash;
+                return makeCredentials({
+                    type: "credentials",
+                    password: "abc123",
+                });
+            };
+            platformInstances.set(platformKey, {
+                sessions: new Set(["socket-2"]),
+                sessionIps: new Map([["socket-2", clientIp]]),
+                config: { persist: true },
+                credentialsHash: undefined,
+                waitForCredentialsHash: async () => "late-hash",
+                // biome-ignore lint/suspicious/noExplicitAny: test double
+            } as any);
+
+            const result = await new Promise<ActivityStream | Error>(
+                (resolve) => {
+                    credentialCheck(store, socketId, clientIp)(
+                        baseMessage,
+                        resolve,
+                    );
+                },
+            );
+
+            expect(result).toEqual(baseMessage);
+            expect(seenHash).toEqual("late-hash");
+        });
+
+        it("does not wait for non-persistent platforms", async () => {
+            // Nothing publishes a hash for these, and there is no long-lived
+            // connection to join, so the original rule still applies.
+            let waited = false;
+            store.get = async () =>
+                makeCredentials({ type: "credentials", password: "abc123" });
+            platformInstances.set(platformKey, {
+                sessions: new Set(["socket-2"]),
+                sessionIps: new Map([["socket-2", clientIp]]),
+                config: { persist: false },
+                credentialsHash: undefined,
+                waitForCredentialsHash: async () => {
+                    waited = true;
+                    return undefined;
+                },
+                // biome-ignore lint/suspicious/noExplicitAny: test double
+            } as any);
+
+            const result = await new Promise<ActivityStream | Error>(
+                (resolve) => {
+                    credentialCheck(store, socketId, clientIp)(
+                        baseMessage,
+                        resolve,
+                    );
+                },
+            );
+
+            expect(result).toEqual(baseMessage);
+            expect(waited).toEqual(false);
+        });
     });
 
     test("allows anonymous reconnect when prior session is stale and IP matches", async () => {

@@ -24,12 +24,23 @@ import { platformInstances } from "../platform-instance.js";
  *     session. The child reports its `credentialsHash` over IPC precisely so
  *     this comparison can happen here, *before* `registerSession()`.
  *
- * When the hash is not known yet (no credentialed call has completed — e.g.
- * two clients connecting concurrently) only (1) applies. The connection isn't
- * established at that point, so there is no traffic to expose; the first
- * successful connect publishes the hash and later attaches are checked in
- * full.
+ * The hash is not known until the incumbent's first credentialed call
+ * succeeds, which spans the whole remote handshake. Attaching on the
+ * non-empty rule alone during that window would fail open: registration is
+ * sticky (the janitor is the only other removal path) and an already-attached
+ * session skips this middleware entirely on later messages, so a session that
+ * slipped in mid-handshake would still be attached — and receiving the
+ * connection's traffic — once the hash finally arrived.
+ *
+ * So for persistent platforms we wait, briefly, for the incumbent's hash and
+ * then compare; if it never arrives we fail closed. Two clients connecting
+ * concurrently with the same credentials still both succeed — the second one
+ * simply waits for the first to finish. Non-persistent platforms never publish
+ * a hash and have no long-lived connection to join, so they keep the
+ * non-empty rule alone.
  */
+// Bounded so a hung remote handshake can't pin a waiting session forever.
+const INCUMBENT_HASH_WAIT_MS = 10000;
 export default function credentialCheck(
     credentialsStore: CredentialsStoreInterface,
     socketId: string,
@@ -41,7 +52,10 @@ export default function credentialCheck(
         `server:middleware:credential-check:${socketId}`,
     );
 
-    return (msg: ActivityStream, next: MiddlewareNext<ActivityStream>) => {
+    return async (
+        msg: ActivityStream,
+        next: MiddlewareNext<ActivityStream>,
+    ) => {
         // `@context` is canonical by the time validate middleware has run.
         // Fall back to an empty string so the lookup deterministically misses
         // rather than blowing up on unresolved platform IDs.
@@ -59,12 +73,35 @@ export default function credentialCheck(
             return;
         }
 
+        let incumbentHash = existing.credentialsHash;
+        if (!incumbentHash && existing.config?.persist) {
+            // Mid-handshake: hold this attach until the incumbent's credentials
+            // are known, rather than admitting it on the weaker rule.
+            incumbentHash = await existing.waitForCredentialsHash(
+                INCUMBENT_HASH_WAIT_MS,
+            );
+            if (!incumbentHash) {
+                sessionLog.info(
+                    `refusing attach to ${platformId}:${msg.actor.id} (socketId=${socketId}): ` +
+                        "incumbent credentials still unknown",
+                );
+                next(
+                    toError(
+                        new CredentialsNotShareableError(
+                            "username already in use",
+                        ),
+                    ),
+                );
+                return;
+            }
+        }
+
         // Only shared-session attach attempts need credential-share validation.
         // The data layer owns the credential semantics for this check: passing
         // the incumbent's hash makes `get()` require an exact match, on top of
         // the non-empty-secret rule `validateSessionShare` applies.
-        credentialsStore
-            .get(msg.actor.id, existing.credentialsHash, {
+        return credentialsStore
+            .get(msg.actor.id, incumbentHash, {
                 validateSessionShare: true,
             })
             .then(() => {
