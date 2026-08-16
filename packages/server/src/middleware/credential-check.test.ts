@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import {
+    CredentialsMismatchError,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
     type CredentialsValidationOptions,
@@ -116,6 +117,83 @@ describe("Middleware: credentialCheck", () => {
         });
 
         expect(result).toEqual(baseMessage);
+    });
+
+    // Regression: the incumbent's credentials hash must reach the data layer,
+    // otherwise the exact-match comparison is skipped and any non-empty
+    // password attaches to another client's live connection.
+    test("passes the incumbent's credentialsHash to the store", async () => {
+        let seenHash: string | undefined | symbol = Symbol("unset");
+        store.get = async (
+            _actor: string,
+            credentialsHash: string | undefined,
+            options: CredentialsValidationOptions | undefined,
+        ) => {
+            seenHash = credentialsHash;
+            expect(options).toEqual({ validateSessionShare: true });
+            return makeCredentials({ type: "credentials", password: "abc123" });
+        };
+        platformInstances.set(platformKey, {
+            sessions: new Set(["socket-2"]),
+            sessionIps: new Map([["socket-2", clientIp]]),
+            credentialsHash: "incumbent-hash",
+            // biome-ignore lint/suspicious/noExplicitAny: test double
+        } as any);
+
+        await new Promise<ActivityStream | Error>((resolve) => {
+            credentialCheck(store, socketId, clientIp)(baseMessage, resolve);
+        });
+
+        expect(seenHash).toEqual("incumbent-hash");
+    });
+
+    test("blocks an attach whose credentials do not match the incumbent", async () => {
+        store.get = async () =>
+            Promise.reject(
+                new CredentialsMismatchError(
+                    "invalid credentials for nick@irc.example.com",
+                ),
+            );
+        platformInstances.set(platformKey, {
+            sessions: new Set(["socket-2"]),
+            sessionIps: new Map([["socket-2", clientIp]]),
+            credentialsHash: "incumbent-hash",
+            // biome-ignore lint/suspicious/noExplicitAny: test double
+        } as any);
+
+        const result = await new Promise<ActivityStream | Error>((resolve) => {
+            credentialCheck(store, socketId, clientIp)(baseMessage, resolve);
+        });
+
+        expect(result instanceof Error).toEqual(true);
+    });
+
+    test("a credentials mismatch is not eligible for same-IP reconnect", async () => {
+        // Same IP and a stale prior session — the escape hatch that rescues an
+        // anonymous reconnect must not rescue a wrong-password attach.
+        store.get = async () =>
+            Promise.reject(
+                new CredentialsMismatchError(
+                    "invalid credentials for nick@irc.example.com",
+                ),
+            );
+        platformInstances.set(platformKey, {
+            sessions: new Set(["socket-2"]),
+            sessionIps: new Map([["socket-2", clientIp]]),
+            credentialsHash: "incumbent-hash",
+            // biome-ignore lint/suspicious/noExplicitAny: test double
+        } as any);
+
+        const result = await new Promise<ActivityStream | Error>((resolve) => {
+            credentialCheck(
+                store,
+                socketId,
+                clientIp,
+                () => false,
+            )(baseMessage, resolve);
+        });
+
+        expect(result instanceof Error).toEqual(true);
     });
 
     test("allows anonymous reconnect when prior session is stale and IP matches", async () => {

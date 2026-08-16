@@ -482,6 +482,21 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
             });
 
+            test("message events from platform thread are routed based on command: credentialsHash", async () => {
+                // The child reports which credentials its connection is bound
+                // to; credential-check needs this to authorize further
+                // sessions attaching to the instance.
+                expect(pi.credentialsHash).toBeUndefined();
+                await pi.handleProcessMessage([
+                    "credentialsHash",
+                    undefined,
+                    "a-credentials-hash",
+                ]);
+                expect(pi.credentialsHash).toEqual("a-credentials-hash");
+                // control message, not client traffic
+                sandbox.assert.notCalled(pi.sendToClient);
+            });
+
             test("message events from platform thread are delivered to every registered session", async () => {
                 pi.sessions.add("session one");
                 pi.sessions.add("session two");

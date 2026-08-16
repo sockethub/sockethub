@@ -11,8 +11,24 @@ import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
 /**
- * Prevents a second socket from attaching to an existing persistent platform
- * instance when credentials are "empty" (e.g., unregistered IRC nick).
+ * Gates a second socket attaching to an existing persistent platform instance.
+ *
+ * Two conditions must hold for an attach to be allowed:
+ *
+ *  1. The attaching session's credentials are not "empty" (e.g. an
+ *     unregistered IRC nick), which is what the original guard checked.
+ *  2. Those credentials *match the ones that opened the connection*. Without
+ *     this, knowing an `actor.id` plus any non-empty password was enough to
+ *     join another client's live connection — sending as them and receiving
+ *     their inbound traffic, since platform emits fan out to every registered
+ *     session. The child reports its `credentialsHash` over IPC precisely so
+ *     this comparison can happen here, *before* `registerSession()`.
+ *
+ * When the hash is not known yet (no credentialed call has completed — e.g.
+ * two clients connecting concurrently) only (1) applies. The connection isn't
+ * established at that point, so there is no traffic to expose; the first
+ * successful connect publishes the hash and later attaches are checked in
+ * full.
  */
 export default function credentialCheck(
     credentialsStore: CredentialsStoreInterface,
@@ -44,9 +60,13 @@ export default function credentialCheck(
         }
 
         // Only shared-session attach attempts need credential-share validation.
-        // The data layer owns the credential semantics for this check.
+        // The data layer owns the credential semantics for this check: passing
+        // the incumbent's hash makes `get()` require an exact match, on top of
+        // the non-empty-secret rule `validateSessionShare` applies.
         credentialsStore
-            .get(msg.actor.id, undefined, { validateSessionShare: true })
+            .get(msg.actor.id, existing.credentialsHash, {
+                validateSessionShare: true,
+            })
             .then(() => {
                 next(msg);
             })

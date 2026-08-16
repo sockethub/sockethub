@@ -42,6 +42,7 @@ type EnvFormat = {
 
 type MessageFromPlatform =
     | ["updateActor", ActivityStream | undefined, string]
+    | ["credentialsHash", undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
@@ -81,6 +82,14 @@ export default class PlatformInstance {
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
+    /**
+     * Hash of the credentials this instance's remote connection was
+     * established with, reported by the child once a credentialed call has
+     * succeeded. `credential-check` compares an attaching session's
+     * credentials against it. `undefined` until the first successful
+     * connect — see that middleware for how the unknown case is handled.
+     */
+    credentialsHash: string | undefined;
     private processMessageListener?: (message: MessageFromPlatform) => void;
     private processCloseListener?: (e: unknown) => void;
     private heartbeatLastSeen = Date.now();
@@ -583,6 +592,11 @@ export default class PlatformInstance {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
             this.updateIdentifier(third);
+        } else if (first === "credentialsHash") {
+            // Internal control message: the child is reporting which credentials
+            // its remote connection is bound to, so the parent can authorize
+            // (or refuse) additional sessions attaching to this instance.
+            this.credentialsHash = third;
         } else if (first === "error") {
             // Error messages travel over IPC as plain objects; normalize to a string.
             let normalizedError: string;
