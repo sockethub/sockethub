@@ -1,7 +1,9 @@
 import {
+    buildCredentialsKey,
     CredentialsMismatchError,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
+    SESSION_SHARE_DENIED,
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import { type ActivityStream, resolvePlatformId } from "@sockethub/schemas";
@@ -46,7 +48,9 @@ export default function credentialCheck(
         // Only shared-session attach attempts need credential-share validation.
         // The data layer owns the credential semantics for this check.
         credentialsStore
-            .get(msg.actor.id, undefined, { validateSessionShare: true })
+            .get(buildCredentialsKey(platformId, msg.actor.id), undefined, {
+                validateSessionShare: true,
+            })
             .then(() => {
                 next(msg);
             })
@@ -93,7 +97,8 @@ function isExpectedCredentialValidationError(err: unknown): boolean {
     }
     return (
         err instanceof Error &&
-        err.message.startsWith("credentials not found for ")
+        (err.message.startsWith("credentials not found for ") ||
+            err.message === SESSION_SHARE_DENIED)
     );
 }
 

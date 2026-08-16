@@ -482,6 +482,52 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
             });
 
+            test("message events from platform thread are routed based on command: sessionUnauthorized", async () => {
+                pi.registerSession("good session", "203.0.113.1");
+                pi.registerSession("bad session", "203.0.113.2");
+
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    "bad session",
+                ]);
+
+                expect(pi.sessions.has("bad session")).toEqual(false);
+                expect(pi.sessionIps.has("bad session")).toEqual(false);
+                expect(pi.sessions.has("good session")).toEqual(true);
+                // control message, not client traffic
+                sandbox.assert.notCalled(pi.sendToClient);
+            });
+
+            test("a deregistered session no longer receives platform messages", async () => {
+                pi.registerSession("stays");
+                pi.registerSession("goes");
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    "goes",
+                ]);
+
+                await pi.handleProcessMessage(["blah", { foo: "bar" }]);
+
+                sandbox.assert.calledWith(pi.sendToClient, "stays", {
+                    foo: "bar",
+                });
+                sandbox.assert.neverCalledWith(pi.sendToClient, "goes", {
+                    foo: "bar",
+                });
+            });
+
+            test("deregistering an unknown session is a no-op", async () => {
+                pi.registerSession("stays");
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    "never registered",
+                ]);
+                expect(pi.sessions.has("stays")).toEqual(true);
+            });
+
             test("message events from platform thread are delivered to every registered session", async () => {
                 pi.sessions.add("session one");
                 pi.sessions.add("session two");

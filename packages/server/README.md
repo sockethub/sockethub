@@ -31,7 +31,11 @@ Session sharing rules:
 - Share is allowed only when credentials include a non-empty `password` or
   `token` field (e.g. IRC OAuth). Credential objects with neither are treated
   as anonymous and cannot be shared across connections.
-- Username-only/anonymous credentials are rejected with `username already in use`.
+- Every rejected share attempt returns the same message,
+  `unable to attach session for this actor`, whatever the reason (no
+  credentials stored, anonymous credentials, or credentials that do not match
+  the ones that opened the connection). The reason is deliberately not
+  disclosed, so a caller cannot probe guessed actor ids for detail.
 
 Reconnect exception for anonymous credentials:
 

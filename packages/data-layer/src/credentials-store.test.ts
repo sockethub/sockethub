@@ -8,6 +8,7 @@ import {
     CredentialsNotShareableError,
     CredentialsStore,
     purgeCredentialsStoreKeys,
+    SESSION_SHARE_DENIED,
 } from "./credentials-store";
 
 const mockLogger: Logger = {
@@ -209,6 +210,63 @@ describe("CredentialsStore", () => {
             });
         });
 
+        // A caller probing guessed actor ids must not learn *why* it was
+        // turned away — every attach failure reports the same string.
+        describe("session-share rejections are indistinguishable", () => {
+            it("uses the generic message when no credentials are stored", async () => {
+                MockStoreGet.returns(undefined);
+                try {
+                    await credentialsStore.get("an actor", undefined, {
+                        validateSessionShare: true,
+                    });
+                    expect(false).toEqual(true);
+                } catch (err) {
+                    expect(err.message).toEqual(SESSION_SHARE_DENIED);
+                    // must NOT be "not shareable": only that class is eligible
+                    // for the same-IP anonymous reconnect escape hatch
+                    expect(err).not.toBeInstanceOf(CredentialsNotShareableError);
+                }
+            });
+
+            it("uses the generic message when the credential object is empty", async () => {
+                MockStoreGet.returns({ object: {} });
+                try {
+                    await credentialsStore.get("an actor", undefined, {
+                        validateSessionShare: true,
+                    });
+                    expect(false).toEqual(true);
+                } catch (err) {
+                    expect(err.message).toEqual(SESSION_SHARE_DENIED);
+                }
+            });
+
+            it("uses the generic message when no secret is present", async () => {
+                MockStoreGet.returns({ object: { type: "credentials" } });
+                try {
+                    await credentialsStore.get("an actor", undefined, {
+                        validateSessionShare: true,
+                    });
+                    expect(false).toEqual(true);
+                } catch (err) {
+                    expect(err.message).toEqual(SESSION_SHARE_DENIED);
+                }
+            });
+
+            it("keeps detailed messages for the platform's own reads", async () => {
+                // validateSessionShare is not set: the caller already owns
+                // these credentials, so there is nothing to disclose.
+                MockStoreGet.returns(undefined);
+                try {
+                    await credentialsStore.get("an actor");
+                    expect(false).toEqual(true);
+                } catch (err) {
+                    expect(err.message).toEqual(
+                        "credentials not found for an actor",
+                    );
+                }
+            });
+        });
+
         it("rejects credentials without password or token for session-share validation", async () => {
             MockStoreGet.returns({
                 object: { type: "credentials" },
@@ -219,7 +277,7 @@ describe("CredentialsStore", () => {
                 });
                 expect(false).toEqual(true);
             } catch (err) {
-                expect(err.toString()).toEqual("Error: username already in use");
+                expect(err.toString()).toEqual(`Error: ${SESSION_SHARE_DENIED}`);
                 expect(err).toBeInstanceOf(CredentialsNotShareableError);
             }
             sinon.assert.calledOnce(MockStoreGet);

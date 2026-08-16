@@ -3,6 +3,7 @@ import {
     addPlatformContext,
     addPlatformSchema,
     normalizeActivityStream,
+    resolvePlatformId,
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
@@ -528,9 +529,10 @@ export default class SockethubClient {
 
     private eventCredentials(content: ActivityStream) {
         if (content.object && content.object.type === "credentials") {
-            const key: string =
-                content.actor.id || (content.actor as unknown as string);
-            this.events.credentials.set(key, content);
+            this.events.credentials.set(
+                SockethubClient.getKey(content),
+                content,
+            );
         }
     }
 
@@ -550,6 +552,12 @@ export default class SockethubClient {
         }
     }
 
+    /**
+     * Key for the replay maps. Scoped by platform: the same visible actor id
+     * can exist on more than one platform (an `alice@example.org` that is both
+     * an IRC nick and an XMPP JID), and keyed by actor alone one platform's
+     * stored credentials/connect/join would replace the other's on reconnect.
+     */
     private static getKey(content: ActivityStream) {
         const actor = content.actor?.id || content.actor;
         if (!actor) {
@@ -560,7 +568,8 @@ export default class SockethubClient {
         const target = content.target
             ? content.target.id || content.target
             : "";
-        return `${actor}-${target}`;
+        const platform = resolvePlatformId(content) ?? "";
+        return `${platform}:${actor}-${target}`;
     }
 
     private buildPlatformRegistryPayload(): PlatformRegistryPayload {

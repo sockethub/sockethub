@@ -239,8 +239,9 @@ When another socket is already attached to that actor:
 
 - Session-share validation runs in the data layer.
 - Credentials with a non-empty `password` are considered shareable.
-- Credentials without a non-empty `password` are not shareable and return
-  `username already in use`.
+- Credentials without a non-empty `password` are not shareable.
+- Every rejection returns the same message, `unable to attach session for this
+  actor`, so the reason is not disclosed to the caller.
 
 This prevents anonymous/username-only accounts from accidentally sharing the
 same platform thread across different users.

@@ -1,8 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import {
+    buildCredentialsKey,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
     type CredentialsValidationOptions,
+    SESSION_SHARE_DENIED,
 } from "@sockethub/data-layer";
 import {
     type ActivityStream,
@@ -80,7 +82,7 @@ describe("Middleware: credentialCheck", () => {
             credentialsHash: string | undefined,
             options: CredentialsValidationOptions | undefined,
         ) => {
-            expect(actor).toEqual(baseMessage.actor.id);
+            expect(actor).toEqual(buildCredentialsKey("irc", baseMessage.actor.id));
             expect(credentialsHash).toBeUndefined();
             expect(options).toEqual({ validateSessionShare: true });
             return makeCredentials({ type: "credentials", password: "abc123" });
@@ -120,7 +122,7 @@ describe("Middleware: credentialCheck", () => {
 
     test("allows anonymous reconnect when prior session is stale and IP matches", async () => {
         store.get = async () =>
-            Promise.reject(new CredentialsNotShareableError("username already in use"));
+            Promise.reject(new CredentialsNotShareableError(SESSION_SHARE_DENIED));
         platformInstances.set(
             platformKey,
             {
@@ -143,7 +145,7 @@ describe("Middleware: credentialCheck", () => {
 
     test("blocks anonymous reconnect when prior session IP differs", async () => {
         store.get = async () =>
-            Promise.reject(new CredentialsNotShareableError("username already in use"));
+            Promise.reject(new CredentialsNotShareableError(SESSION_SHARE_DENIED));
         platformInstances.set(
             platformKey,
             {
@@ -162,12 +164,12 @@ describe("Middleware: credentialCheck", () => {
         });
 
         expect(result instanceof Error).toEqual(true);
-        expect(result.toString()).toEqual("Error: username already in use");
+        expect(result.toString()).toEqual(`Error: ${SESSION_SHARE_DENIED}`);
     });
 
     test("blocks anonymous reconnect when prior session is still active", async () => {
         store.get = async () =>
-            Promise.reject(new CredentialsNotShareableError("username already in use"));
+            Promise.reject(new CredentialsNotShareableError(SESSION_SHARE_DENIED));
         platformInstances.set(
             platformKey,
             {
@@ -186,6 +188,6 @@ describe("Middleware: credentialCheck", () => {
         });
 
         expect(result instanceof Error).toEqual(true);
-        expect(result.toString()).toEqual("Error: username already in use");
+        expect(result.toString()).toEqual(`Error: ${SESSION_SHARE_DENIED}`);
     });
 });

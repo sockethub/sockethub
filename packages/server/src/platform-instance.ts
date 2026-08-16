@@ -42,6 +42,7 @@ type EnvFormat = {
 
 type MessageFromPlatform =
     | ["updateActor", ActivityStream | undefined, string]
+    | ["sessionUnauthorized", undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
@@ -344,6 +345,19 @@ export default class PlatformInstance {
     }
 
     /**
+     * Stop delivering this instance's messages to a session. Used when the
+     * session loses (or never had) the right to be attached; the janitor
+     * separately drops sessions whose sockets have gone away.
+     */
+    public deregisterSession(sessionId: string) {
+        if (!this.sessions.delete(sessionId)) {
+            return;
+        }
+        this.sessionIps.delete(sessionId);
+        this.log.debug(`deregistered session ${sessionId}`);
+    }
+
+    /**
      * Sends a message to client (user), can be registered with an event emitted from the platform
      * process.
      * @param sessionId ID of the socket connection to send the message to
@@ -583,6 +597,13 @@ export default class PlatformInstance {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
             this.updateIdentifier(third);
+        } else if (first === "sessionUnauthorized") {
+            // The child could not validate this session's credentials against
+            // the running connection. Drop it so the fan-out in this method
+            // (and broadcastToSharedPeers) stops delivering the connection's
+            // traffic to it. A session that later presents valid credentials
+            // re-registers through ProcessManager on its next message.
+            this.deregisterSession(third);
         } else if (first === "error") {
             // Error messages travel over IPC as plain objects; normalize to a string.
             let normalizedError: string;
