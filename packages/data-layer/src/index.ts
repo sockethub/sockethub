@@ -15,6 +15,7 @@ import {
     resetSharedCredentialsRedisConnection,
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
+    SESSION_SHARE_DENIED,
     verifySecureStore,
 } from "./credentials-store.js";
 import {
@@ -72,4 +73,5 @@ export {
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
     resetSharedRedisConnection,
+    SESSION_SHARE_DENIED,
 };
