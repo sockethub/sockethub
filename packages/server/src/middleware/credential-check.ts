@@ -38,6 +38,23 @@ import { platformInstances } from "../platform-instance.js";
  * simply waits for the first to finish. Non-persistent platforms never publish
  * a hash and have no long-lived connection to join, so they keep the
  * non-empty rule alone.
+ *
+ * "Match" means an identical submitted credential object, not equivalent
+ * effective connection settings: `secure` omitted and `secure: true` hash
+ * differently and will not share. That is the contract the platform already
+ * enforced for `connect`/`update` (see `platform.credentialsHash`); this
+ * applies it consistently to the attach gate rather than introducing it.
+ * Sharing a connection therefore requires clients to submit byte-identical
+ * credentials, which is the conservative direction for an authorization
+ * check.
+ *
+ * Known gap, pre-dating this check: `canReconnectFromSameIp` lets a
+ * passwordless session past the share rules when every prior session is stale
+ * and its IP matches. Client IP is weak identity — behind NAT or a shared
+ * egress it is effectively no identity at all — so this remains a takeover
+ * path for anonymous sessions. Left as-is here to avoid changing reconnect
+ * behaviour in a security fix; worth revisiting once token auth (#1054) can
+ * supply a real identity.
  */
 // Bounded so a hung remote handshake can't pin a waiting session forever.
 const INCUMBENT_HASH_WAIT_MS = 10000;

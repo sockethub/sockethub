@@ -70,8 +70,18 @@ export class Crypto {
         return createHash("sha256").update(text).digest("hex");
     }
 
+    /**
+     * Stable hash of a credential object, used as the verifier that decides
+     * whether a session may reuse an existing platform connection.
+     *
+     * `object-hash` defaults to SHA-1; pinned to SHA-256 instead, since this
+     * backs an authorization decision. Not an exploit fix — the value is never
+     * exposed to clients, and forging a match needs a second preimage of an
+     * unknown credential object, which SHA-1 does not give you — but a new
+     * security-sensitive verifier should not be built on a deprecated digest.
+     */
     objectHash(object: object): string {
-        return hash(object);
+        return hash(object, { algorithm: "sha256" });
     }
 
     /**

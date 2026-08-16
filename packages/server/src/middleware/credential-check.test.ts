@@ -270,6 +270,48 @@ describe("Middleware: credentialCheck", () => {
             expect(seenHash).toEqual("late-hash");
         });
 
+        it("refuses an attacker racing the incumbent's connect", async () => {
+            // The hostile variant of the concurrent-connect case: B submits
+            // the same actor.id with a different password while A is still
+            // authenticating. B must wait for A's hash and then be refused,
+            // never registered — before the fail-closed change it was admitted
+            // here and never re-checked afterwards.
+            store.get = async (
+                _actor: string,
+                credentialsHash: string | undefined,
+            ) => {
+                if (credentialsHash === "victims-hash") {
+                    throw new CredentialsMismatchError(
+                        "invalid credentials for nick@irc.example.com",
+                    );
+                }
+                return makeCredentials({
+                    type: "credentials",
+                    password: "attacker-arbitrary",
+                });
+            };
+            platformInstances.set(platformKey, {
+                sessions: new Set(["socket-2"]),
+                sessionIps: new Map([["socket-2", "198.51.100.9"]]),
+                config: { persist: true },
+                credentialsHash: undefined,
+                // A's connect completes while B is waiting.
+                waitForCredentialsHash: async () => "victims-hash",
+                // biome-ignore lint/suspicious/noExplicitAny: test double
+            } as any);
+
+            const result = await new Promise<ActivityStream | Error>(
+                (resolve) => {
+                    credentialCheck(store, socketId, clientIp)(
+                        baseMessage,
+                        resolve,
+                    );
+                },
+            );
+
+            expect(result instanceof Error).toEqual(true);
+        });
+
         it("does not wait for non-persistent platforms", async () => {
             // Nothing publishes a hash for these, and there is no long-lived
             // connection to join, so the original rule still applies.
