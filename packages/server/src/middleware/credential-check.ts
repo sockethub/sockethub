@@ -1,4 +1,5 @@
 import {
+    buildCredentialsKey,
     CredentialsMismatchError,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
@@ -117,7 +118,7 @@ export default function credentialCheck(
         // the incumbent's hash makes `get()` require an exact match, on top of
         // the non-empty-secret rule `validateSessionShare` applies.
         return credentialsStore
-            .get(msg.actor.id, incumbentHash, {
+            .get(buildCredentialsKey(platformId, msg.actor.id), incumbentHash, {
                 validateSessionShare: true,
             })
             .then(() => {

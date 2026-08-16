@@ -24,6 +24,7 @@ import {
 } from "./job-base.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker, type JobWorkerOptions } from "./job-worker.js";
+import { buildCredentialsKey } from "./queue-id.js";
 
 export * from "./types.js";
 
@@ -53,6 +54,7 @@ async function redisCheck(config: RedisConfig): Promise<void> {
 }
 
 export {
+    buildCredentialsKey,
     CredentialsMismatchError,
     CredentialsNotShareableError,
     CredentialsStore,
