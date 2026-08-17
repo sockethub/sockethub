@@ -209,6 +209,67 @@ describe("CredentialsStore", () => {
             });
         });
 
+        // Regression: a session attaching to an existing persistent instance
+        // must prove it holds the *same* credentials that opened it. Before
+        // this, any non-empty password was accepted, so knowing an actor id
+        // was enough to join someone else's live connection.
+        describe("session-share attach against an incumbent hash", () => {
+            const INCUMBENT_HASH = "hash-of-the-connected-credentials";
+
+            it("rejects an attach with no password at all", async () => {
+                MockObjectHash.returns(INCUMBENT_HASH);
+                MockStoreGet.returns({
+                    object: { type: "credentials", nick: "victim" },
+                });
+                try {
+                    await credentialsStore.get("an actor", INCUMBENT_HASH, {
+                        validateSessionShare: true,
+                    });
+                    expect(false).toEqual(true);
+                } catch (err) {
+                    // Reported as "not shareable" rather than "mismatch" so the
+                    // same-IP anonymous reconnect path stays reachable.
+                    expect(err).toBeInstanceOf(CredentialsNotShareableError);
+                    expect(err.toString()).toEqual(
+                        "Error: username already in use",
+                    );
+                }
+            });
+
+            it("rejects an attach with a wrong password", async () => {
+                MockObjectHash.returns("hash-of-the-attackers-credentials");
+                MockStoreGet.returns({
+                    object: { type: "credentials", password: "totally-wrong" },
+                });
+                try {
+                    await credentialsStore.get("an actor", INCUMBENT_HASH, {
+                        validateSessionShare: true,
+                    });
+                    expect(false).toEqual(true);
+                } catch (err) {
+                    expect(err).toBeInstanceOf(CredentialsMismatchError);
+                    expect(err.toString()).toEqual(
+                        "Error: invalid credentials for an actor",
+                    );
+                }
+            });
+
+            it("allows an attach with the correct password", async () => {
+                MockObjectHash.returns(INCUMBENT_HASH);
+                MockStoreGet.returns({
+                    object: { type: "credentials", password: "correct-horse" },
+                });
+                const res = await credentialsStore.get(
+                    "an actor",
+                    INCUMBENT_HASH,
+                    { validateSessionShare: true },
+                );
+                expect(res).toEqual({
+                    object: { type: "credentials", password: "correct-horse" },
+                });
+            });
+        });
+
         it("rejects credentials without password or token for session-share validation", async () => {
             MockStoreGet.returns({
                 object: { type: "credentials" },

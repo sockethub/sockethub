@@ -290,16 +290,10 @@ export class CredentialsStore implements CredentialsStoreInterface {
             );
         }
 
-        if (credentialsHash) {
-            // If a hash is provided, credentials must match exactly. This blocks
-            // "same actor, different credentials" reuse attempts.
-            if (credentialsHash !== this.objectHash(credentials.object)) {
-                throw new CredentialsMismatchError(
-                    `invalid credentials for ${actor}`,
-                );
-            }
-        }
-
+        // Ordered before the hash comparison so a passwordless attach always
+        // reports "not shareable" rather than "mismatch", whatever the
+        // incumbent's credentials were. Callers distinguish the two: only the
+        // not-shareable case is eligible for same-IP anonymous reconnect.
         if (options.validateSessionShare) {
             const password = credentials.object.password;
             const token = credentials.object.token;
@@ -312,6 +306,16 @@ export class CredentialsStore implements CredentialsStoreInterface {
             if (!hasPassword && !hasToken) {
                 throw new CredentialsNotShareableError(
                     "username already in use",
+                );
+            }
+        }
+
+        if (credentialsHash) {
+            // If a hash is provided, credentials must match exactly. This blocks
+            // "same actor, different credentials" reuse attempts.
+            if (credentialsHash !== this.objectHash(credentials.object)) {
+                throw new CredentialsMismatchError(
+                    `invalid credentials for ${actor}`,
                 );
             }
         }
