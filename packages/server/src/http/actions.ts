@@ -154,11 +154,23 @@ function buildCredentialsAck(
         return result;
     }
 
+    // The payload is whatever the caller sent; it has only been classified,
+    // not validated. Validation happens inside the handler chain, so an
+    // invalid one arrives here with the chain's error already attached — but
+    // with nothing to correlate on. Hand that back rather than reaching into
+    // an actor that may not be an object.
+    const actor = isObject(payload) ? payload.actor : undefined;
+    const actorId =
+        isObject(actor) && typeof actor.id === "string" ? actor.id : undefined;
+    if (!actorId) {
+        return result ?? new Error("invalid credentials payload");
+    }
+
     const ack: ActivityStream = {
         "@context": buildCanonicalContext(INTERNAL_PLATFORM_CONTEXT_URL),
         type: "credentials-ack",
         actor: {
-            id: payload.actor.id,
+            id: actorId,
             type: "person",
         },
     };
@@ -908,7 +920,14 @@ export function registerHttpActionsRoutes(
 
                 persistLine(serialized);
 
-                if (!responseClosed) {
+                // `completionStarted` as well as `responseClosed`: with
+                // idempotency enabled, completeRequest() defers closing the
+                // response behind the Redis write chain, so there is a window
+                // where the response is still writable but persistLine() has
+                // already stopped recording. A late callback landing there
+                // would put a line in the stream that the cached replay does
+                // not have.
+                if (!responseClosed && !completionStarted) {
                     res.write(`${serialized}\n`);
                 }
                 pending -= 1;

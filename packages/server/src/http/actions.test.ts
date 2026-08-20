@@ -2,6 +2,7 @@
  * Tests for HTTP actions endpoint idempotency and GET replay behavior.
  */
 import { describe, expect, it } from "bun:test";
+import type { ActivityStream } from "@sockethub/schemas";
 
 import { registerHttpActionsRoutes } from "./actions.js";
 import {
@@ -725,6 +726,42 @@ describe("http actions", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
     });
 
+    it("returns an error for a malformed credentials payload instead of throwing", async () => {
+        // The payload is only classified before dispatch, not validated —
+        // validation happens inside the handler chain. The ack builder must
+        // therefore tolerate an actor that is not an object, rather than
+        // reaching into it and taking the whole request down.
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 300,
+                "httpActions:idleTimeoutMs": 300,
+            },
+            // Stands in for the real chain, which attaches the validation
+            // error to the payload and hands it back.
+            createMessageHandlersOverride: () => ({
+                credentials: (payload: ActivityStream, cb: (data: unknown) => void) =>
+                    cb({ ...payload, error: "invalid actor" }),
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ ok: true }),
+            }),
+        });
+
+        const { req, res, writes } = createReqRes({
+            body: [{ type: "credentials", actor: null }],
+        });
+
+        await handlers["/sockethub-http"](req, res);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.ended).toBeTrue();
+        // The caller gets the validation error rather than a 500 from a
+        // TypeError thrown while building the acknowledgement.
+        expect(writes.join("")).toContain("invalid actor");
+    });
+
     it("saves credentials in payload order even when the first one is slow", async () => {
         // Two credentials for the same actor write the same key. Run
         // concurrently they could land in either order, leaving the stored
@@ -741,8 +778,11 @@ describe("http actions", () => {
                 "httpActions:idleTimeoutMs": 1000,
             },
             createMessageHandlersOverride: () => ({
-                credentials: (payload: any, cb: (data: unknown) => void) => {
-                    const id = payload.object?.id as string;
+                credentials: (
+                    payload: ActivityStream,
+                    cb: (data: unknown) => void,
+                ) => {
+                    const id = payload.object?.id;
                     if (id === "first") {
                         releaseFirst = () => {
                             saveOrder.push(id);
