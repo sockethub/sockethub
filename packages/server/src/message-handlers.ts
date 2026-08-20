@@ -16,6 +16,7 @@ import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-s
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import middleware from "./middleware.js";
+import { observability } from "./observability.js";
 import type PlatformInstance from "./platform-instance.js";
 import type ProcessManager from "./process-manager.js";
 
@@ -188,8 +189,35 @@ export function createMessageHandlers(
         )
         .done();
 
+    function instrument<T extends ActivityStream>(
+        handler: MessageHandler<T>,
+        fallbackAction: string,
+    ): MessageHandler<T> {
+        return (data, callback) => {
+            const platform = resolvePlatformId(data) ?? "unknown";
+            const action =
+                typeof data.type === "string" ? data.type : fallbackAction;
+            const finish = observability.startAction(platform, action);
+            let finished = false;
+            const acknowledge =
+                typeof callback === "function" ? callback : () => {};
+            handler(data, (result) => {
+                if (!finished) {
+                    finished = true;
+                    const failed =
+                        result instanceof Error ||
+                        (typeof result === "object" &&
+                            result !== null &&
+                            "error" in result);
+                    finish(failed);
+                }
+                acknowledge(result);
+            });
+        };
+    }
+
     return {
-        credentials,
-        message,
+        credentials: instrument(credentials, "credentials"),
+        message: instrument(message, "message"),
     };
 }

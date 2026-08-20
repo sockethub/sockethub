@@ -8,6 +8,7 @@ import {
     initLogger,
     resetLoggerContext,
     resetLoggerForTesting,
+    setLogSink,
     setLoggerContext,
 } from "./index.js";
 
@@ -65,6 +66,40 @@ describe("Logger Package", () => {
         it("does not create file transport when file is empty string", () => {
             const log = createLogger("test:namespace", { file: "" });
             expect(log.transports.length).toBe(1); // console only
+        });
+
+        it("forwards structured records to a configured sink", async () => {
+            const records: Array<{
+                level: string;
+                message: string;
+                namespace: string;
+            }> = [];
+            setLogSink((record) => records.push(record));
+            const log = createLogger("test:namespace", { level: "error" });
+
+            log.warn("health warning");
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(records).toEqual([
+                {
+                    level: "warn",
+                    message: "health warning",
+                    namespace: "test:namespace",
+                },
+            ]);
+        });
+
+        it("can disable the structured sink without affecting other transports", async () => {
+            const records: Array<unknown> = [];
+            setLogSink((record) => records.push(record));
+            setLogSink(null);
+            const log = createLogger("test:namespace", { level: "error" });
+
+            log.warn("not forwarded");
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(records).toHaveLength(0);
+            expect(log.transports).toHaveLength(1);
         });
     });
 

@@ -24,6 +24,7 @@ import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
 import { createMessageHandlers } from "./message-handlers.js";
+import { observability } from "./observability.js";
 import ProcessManager from "./process-manager.js";
 import {
     cleanupClient,
@@ -98,6 +99,7 @@ class Sockethub {
     // Concurrent socket connections per client IP; used to enforce
     // rateLimiter.maxConnectionsPerIp.
     private readonly socketsPerIp = new Map<string, number>();
+    private activeConnections = 0;
     private serverVersion?: string;
     private platformRegistryPayloadCache?: {
         payload: ReturnType<Sockethub["buildPlatformRegistryPayload"]> & {
@@ -298,8 +300,15 @@ class Sockethub {
         // bypass it by opening more sockets; cap concurrent connections per
         // IP when configured (0 = disabled).
         if (!this.claimIpSlot(socket, clientIp, sessionLog)) {
+            observability.count("sockethub.connection.rejected");
             return;
         }
+        this.activeConnections += 1;
+        observability.count("sockethub.connection.opened");
+        observability.gauge(
+            "sockethub.connection.active",
+            this.activeConnections,
+        );
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -352,6 +361,12 @@ class Sockethub {
             });
             cleanupClient(socket.id);
             this.releaseIpSlot(clientIp);
+            this.activeConnections = Math.max(0, this.activeConnections - 1);
+            observability.count("sockethub.connection.closed");
+            observability.gauge(
+                "sockethub.connection.active",
+                this.activeConnections,
+            );
         });
 
         const handlers = createMessageHandlers({

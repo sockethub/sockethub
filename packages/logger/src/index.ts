@@ -8,6 +8,14 @@ export interface LoggerOptions {
     file?: string;
 }
 
+export interface LogRecord {
+    level: string;
+    message: string;
+    namespace: string;
+}
+
+export type LogSink = (record: LogRecord) => void;
+
 // Global configuration state (set once at bootstrap via initLogger)
 let globalConfig: LoggerOptions | null = null;
 let hasLoggedInit = false;
@@ -15,6 +23,27 @@ let hasLoggedInit = false;
 // Process-wide logger context (set once at process startup)
 let loggerContext = "";
 let loggerNamespaceStore = new WeakMap<Logger, string>();
+let globalLogSink: LogSink | null = null;
+
+class SinkTransport extends winston.Transport {
+    log(
+        info: { level?: unknown; message?: unknown; namespace?: unknown },
+        callback: () => void,
+    ): void {
+        setImmediate(() => this.emit("logged", info));
+        globalLogSink?.({
+            level: String(info.level ?? "info"),
+            message: String(info.message ?? ""),
+            namespace: String(info.namespace ?? ""),
+        });
+        callback();
+    }
+}
+
+/** Attach or remove a process-wide structured-log sink. */
+export function setLogSink(sink: LogSink | null): void {
+    globalLogSink = sink;
+}
 
 // Keep log formatting resilient when metadata contains errors, bigints, or cycles.
 function safeStringify(value: unknown): string {
@@ -257,6 +286,9 @@ export function createLogger(
         defaultMeta: { namespace: fullNamespace },
         transports,
     });
+    if (globalLogSink) {
+        logger.add(new SinkTransport());
+    }
     loggerNamespaceStore.set(logger, fullNamespace);
     return logger;
 }
@@ -297,4 +329,5 @@ export function resetLoggerForTesting(): void {
     hasLoggedInit = false;
     loggerContext = "";
     loggerNamespaceStore = new WeakMap<Logger, string>();
+    globalLogSink = null;
 }
