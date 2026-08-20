@@ -163,7 +163,17 @@ function buildCredentialsAck(
     const actorId =
         isObject(actor) && typeof actor.id === "string" ? actor.id : undefined;
     if (!actorId) {
-        return result ?? new Error("invalid credentials payload");
+        // Never the raw result: the chain's error handler spreads the whole
+        // submitted activity (`{ ...msg, error }`, stripping only
+        // `sessionSecret`), so `object.password` / `object.token` are still on
+        // it. That would be written to the NDJSON stream and persisted to the
+        // idempotency cache, which an unauthenticated GET replays. Only the
+        // message travels.
+        const message =
+            isObject(result) && typeof result.error === "string"
+                ? result.error
+                : "invalid credentials payload";
+        return new Error(message);
     }
 
     const ack: ActivityStream = {

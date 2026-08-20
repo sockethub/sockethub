@@ -742,24 +742,49 @@ describe("http actions", () => {
             // Stands in for the real chain, which attaches the validation
             // error to the payload and hands it back.
             createMessageHandlersOverride: () => ({
-                credentials: (payload: ActivityStream, cb: (data: unknown) => void) =>
-                    cb({ ...payload, error: "invalid actor" }),
+                credentials: (
+                    payload: ActivityStream,
+                    cb: (data: unknown) => void,
+                ) => cb({ ...payload, error: "invalid actor" }),
                 message: (_payload: unknown, cb: (data: unknown) => void) =>
                     cb({ ok: true }),
             }),
         });
 
+        const requestId = "malformed-actor-redaction";
         const { req, res, writes } = createReqRes({
-            body: [{ type: "credentials", actor: null }],
+            body: [
+                {
+                    type: "credentials",
+                    actor: null,
+                    object: {
+                        type: "credentials",
+                        username: "alice",
+                        password: "malformed-test-password",
+                    },
+                },
+            ],
+            headers: { "x-request-id": requestId },
         });
 
         await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(res.statusCode).toBe(200);
         expect(res.ended).toBeTrue();
         // The caller gets the validation error rather than a 500 from a
         // TypeError thrown while building the acknowledgement.
         expect(writes.join("")).toContain("invalid actor");
+        // ...and without the submitted credentials riding along. There is no
+        // actor id to build a redacted ack around, so only the message may
+        // travel: the chain's error result still carries the whole activity,
+        // and both the response and the idempotency cache are readable later.
+        const exposed = JSON.stringify({
+            writes,
+            cached: fakeRedis.lists,
+        });
+        expect(exposed).not.toContain("malformed-test-password");
+        expect(exposed).not.toContain('"username"');
     });
 
     it("saves credentials in payload order even when the first one is slow", async () => {
