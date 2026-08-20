@@ -41,9 +41,9 @@ type EnvFormat = {
 };
 
 type MessageFromPlatform =
-    | ["updateActor", ActivityStream | undefined, string]
-    | ["credentialsHash", undefined, string]
-    | ["sessionUnauthorized", undefined, string]
+    | ["updateActor", ActivityStream | null | undefined, string]
+    | ["credentialsHash", null | undefined, string]
+    | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
@@ -664,10 +664,14 @@ export default class PlatformInstance {
             if (
                 typeof third !== "string" ||
                 third.length === 0 ||
-                typeof second !== "undefined"
+                (typeof second !== "undefined" && second !== null)
             ) {
+                const sessionContext =
+                    typeof third === "string"
+                        ? ` sessionId=${JSON.stringify(third)}`
+                        : "";
                 this.log.error(
-                    "ignoring malformed sessionUnauthorized control message",
+                    `ignoring malformed platform IPC control message platform=${this.name} action=sessionUnauthorized${sessionContext}`,
                 );
                 return;
             }

@@ -526,11 +526,16 @@ describe("PlatformInstance", () => {
                 pi.registerSession("good session", "203.0.113.1");
                 pi.registerSession("bad session", "203.0.113.2");
 
-                await pi.handleProcessMessage([
-                    "sessionUnauthorized",
-                    undefined,
-                    "bad session",
-                ]);
+                // Exercise the JSON serialization used by child_process IPC:
+                // an empty tuple slot arrives as null, not undefined.
+                const ipcMessage = JSON.parse(
+                    JSON.stringify([
+                        "sessionUnauthorized",
+                        null,
+                        "bad session",
+                    ]),
+                );
+                await pi.handleProcessMessage(ipcMessage);
 
                 expect(pi.sessions.has("bad session")).toEqual(false);
                 expect(pi.sessionIps.has("bad session")).toEqual(false);
@@ -544,7 +549,7 @@ describe("PlatformInstance", () => {
                 pi.registerSession("goes");
                 await pi.handleProcessMessage([
                     "sessionUnauthorized",
-                    undefined,
+                    null,
                     "goes",
                 ]);
 
@@ -584,6 +589,18 @@ describe("PlatformInstance", () => {
                 expect(pi.sessions.has("stays")).toEqual(true);
                 expect(pi.sessionIps.get("stays")).toEqual("203.0.113.1");
                 sandbox.assert.calledTwice(errorSpy);
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match("platform=a platform name"),
+                );
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match("action=sessionUnauthorized"),
+                );
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match('sessionId="stays"'),
+                );
             });
 
             it("deregistering an unknown session is a no-op", async () => {

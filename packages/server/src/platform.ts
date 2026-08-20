@@ -473,7 +473,7 @@ async function startPlatformProcess() {
                                 // janitor noticed its socket had gone.
                                 safeProcessSend([
                                     "sessionUnauthorized",
-                                    undefined,
+                                    null,
                                     job.sessionId,
                                 ]);
                                 doneCallback(toError(err), null);
