@@ -12,6 +12,7 @@
 
 import type { JobHandler } from "@sockethub/data-layer";
 import {
+    buildCredentialsKey,
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
@@ -396,7 +397,10 @@ async function startPlatformProcess() {
                         : undefined;
 
                     credentialStore
-                        .get(job.msg.actor.id, credentialsHash)
+                        .get(
+                            buildCredentialsKey(platformName, job.msg.actor.id),
+                            credentialsHash,
+                        )
                         .then((credentials) => {
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (

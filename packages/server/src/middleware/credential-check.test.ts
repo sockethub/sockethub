@@ -8,6 +8,7 @@ import {
     test,
 } from "bun:test";
 import {
+    buildCredentialsKey,
     CredentialsMismatchError,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
@@ -90,7 +91,7 @@ describe("Middleware: credentialCheck", () => {
             credentialsHash: string | undefined,
             options: CredentialsValidationOptions | undefined,
         ) => {
-            expect(actor).toEqual(baseMessage.actor.id);
+            expect(actor).toEqual(buildCredentialsKey("irc", baseMessage.actor.id));
             expect(credentialsHash).toBeUndefined();
             expect(options).toEqual({ validateSessionShare: true });
             return makeCredentials({ type: "credentials", password: "abc123" });

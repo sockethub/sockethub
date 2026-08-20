@@ -2,7 +2,18 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
 import type { CredentialsObject } from "@sockethub/schemas";
+import { buildCredentialsKey } from "@sockethub/data-layer";
+import { addPlatformContext } from "@sockethub/schemas";
 import storeCredentials from "./store-credentials.js";
+
+// The `validate` middleware runs before this one and rejects unregistered
+// platforms, so by the time credentials are stored the context is always
+// resolvable. Register it here to match that guarantee.
+addPlatformContext(
+    "dummy",
+    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+);
+const expectedKey = buildCredentialsKey("dummy", "dood@irc.freenode.net");
 
 const creds: CredentialsObject = {
     type: "credentials",
@@ -71,7 +82,7 @@ describe("Middleware: storeCredentials", () => {
         const sc = storeCredentials(storeSuccess);
         sc(creds as CredentialsObject, (err: any) => {
             expect(saveSuccessFake.callCount).toEqual(1);
-            expect(saveSuccessFake.firstArg).toEqual(creds.actor.id);
+            expect(saveSuccessFake.firstArg).toEqual(expectedKey);
             expect(err).toEqual(creds);
             done();
         });
@@ -81,7 +92,7 @@ describe("Middleware: storeCredentials", () => {
         const sc = storeCredentials(storeError);
         sc(creds as CredentialsObject, (err: any) => {
             expect(saveErrorFake.callCount).toEqual(1);
-            expect(saveErrorFake.firstArg).toEqual(creds.actor.id);
+            expect(saveErrorFake.firstArg).toEqual(expectedKey);
             expect(err.toString()).toEqual("Error: some error");
             done();
         });
