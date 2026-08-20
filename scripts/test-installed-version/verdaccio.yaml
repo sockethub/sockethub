@@ -1,5 +1,10 @@
 storage: ./storage
 
+# The bundled @sockethub/server tarball is ~7MB, and npm publish sends it
+# base64-encoded in a JSON body (~1.34x), which overruns Verdaccio's 10mb
+# default and fails the publish with HTTP 413.
+max_body_size: 100mb
+
 auth:
   htpasswd:
     file: ./htpasswd
