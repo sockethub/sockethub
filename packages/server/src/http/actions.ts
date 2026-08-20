@@ -948,27 +948,42 @@ export function registerHttpActionsRoutes(
                 kind: classifyPayload(payload),
             }));
 
-            const credentialsDone = Promise.all(
-                classified
-                    .filter((entry) => entry.kind === "credentials")
-                    .map(
-                        (entry) =>
-                            new Promise<void>((resolve) => {
-                                handlers.credentials(
-                                    entry.payload as ActivityStream,
-                                    (result) => {
-                                        writeResult(
-                                            buildCredentialsAck(
-                                                entry.payload as ActivityStream,
-                                                result,
-                                            ),
-                                        );
-                                        resolve();
-                                    },
+            // One at a time, in payload order. Two credentials for the same
+            // platform and actor write the same key, so concurrent saves could
+            // land in either order and leave the stored credentials
+            // disagreeing with the scope resolved for them.
+            const credentialsDone = (async () => {
+                for (const entry of classified) {
+                    if (entry.kind !== "credentials") {
+                        continue;
+                    }
+                    if (completionStarted) {
+                        return;
+                    }
+                    await new Promise<void>((resolve) => {
+                        handlers.credentials(
+                            entry.payload as ActivityStream,
+                            (result) => {
+                                writeResult(
+                                    buildCredentialsAck(
+                                        entry.payload as ActivityStream,
+                                        result,
+                                    ),
                                 );
-                            }),
-                    ),
-            );
+                                resolve();
+                            },
+                        );
+                    });
+                }
+            })();
+            // Observed here so a rejection can never surface as an unhandled
+            // one when requestFinalized wins the race below. The race still
+            // sees it when credentialsDone settles first.
+            credentialsDone.catch((err: unknown) => {
+                log.error(
+                    `credentials phase failed for ${requestId}: ${String(err)}`,
+                );
+            });
 
             // Race the finalization signal so a hung credentials handler cannot
             // pin this handler; the request timeout completes the request and

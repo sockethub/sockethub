@@ -725,6 +725,64 @@ describe("http actions", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
     });
 
+    it("saves credentials in payload order even when the first one is slow", async () => {
+        // Two credentials for the same actor write the same key. Run
+        // concurrently they could land in either order, leaving the stored
+        // credentials disagreeing with the scope resolved for them.
+        const saveOrder: Array<string> = [];
+        let releaseFirst: (() => void) | undefined;
+
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 1000,
+                "httpActions:idleTimeoutMs": 1000,
+            },
+            createMessageHandlersOverride: () => ({
+                credentials: (payload: any, cb: (data: unknown) => void) => {
+                    const id = payload.object?.id as string;
+                    if (id === "first") {
+                        releaseFirst = () => {
+                            saveOrder.push(id);
+                            cb({ ok: true });
+                        };
+                        return;
+                    }
+                    saveOrder.push(id);
+                    cb({ ok: true });
+                },
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ ok: true }),
+            }),
+        });
+
+        const { req, res } = createReqRes({
+            body: [
+                {
+                    ...singlePayload,
+                    type: "credentials",
+                    object: { id: "first" },
+                },
+                {
+                    ...singlePayload,
+                    type: "credentials",
+                    object: { id: "second" },
+                },
+            ],
+        });
+        const pending = handlers["/sockethub-http"](req, res);
+
+        // The second must not have overtaken the stalled first.
+        expect(saveOrder).toEqual([]);
+
+        releaseFirst?.();
+        await pending;
+
+        expect(saveOrder).toEqual(["first", "second"]);
+    });
+
     it("still dispatches messages when the client disconnects mid-credentials", async () => {
         // Credentials are processed as a first phase, so the message phase
         // resumes after an await. A disconnect during that await must not drop

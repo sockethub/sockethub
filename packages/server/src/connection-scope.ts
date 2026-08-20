@@ -72,17 +72,18 @@ function scopeKey(platform: string, actorId: string): string {
 }
 
 /**
- * Joined on NUL rather than ":". `actor.id` is an unconstrained string, so it
- * may contain colons of its own (`xmpp:alice@example.org`, an https URI), and
- * so may an IPv6 address — a colon-joined key cannot be split back apart, and
- * distinct tuples could produce the same key. NUL occurs in none of the three.
+ * JSON-encoded rather than delimiter-joined. `actor.id` is an unconstrained
+ * string, so it may contain colons (`xmpp:alice@example.org`, an https URI) and
+ * equally whatever byte a delimiter picks, NUL included; an IPv6 address
+ * carries colons too. Encoding removes the question entirely, so distinct
+ * tuples can never produce the same key.
  */
 function buildResumptionKey(
     platform: string,
     actorId: string,
     ip: string,
 ): string {
-    return [platform, actorId, ip].join("\u0000");
+    return JSON.stringify([platform, actorId, ip]);
 }
 
 /**
