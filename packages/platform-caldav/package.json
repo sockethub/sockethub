@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-caldav",
   "description": "A Sockethub platform for synchronizing CalDAV calendars, events, and tasks",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "type": "module",
   "private": false,
   "license": "LGPL-3.0+",
@@ -35,16 +35,16 @@
     "test": "bun test src/"
   },
   "dependencies": {
-    "@sockethub/dav": "^1.0.0-alpha.1",
-    "@sockethub/schemas": "^3.0.0-alpha.20",
-    "@sockethub/util": "^1.0.0-alpha.8"
+    "@sockethub/dav": "^1.0.0-alpha.2",
+    "@sockethub/schemas": "^3.0.0-alpha.21",
+    "@sockethub/util": "^1.0.0-alpha.9"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "undici": "^7.19.0"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.20"
+    "@sockethub/server": "^5.0.0-alpha.21"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
@@ -52,5 +52,5 @@
     }
   },
   "types": "./dist/index.d.ts",
-  "gitHead": "194422de2ffe1a95ffff45063bc988da8594756a"
+  "gitHead": "28689adddf46a227dd2b91625be42cbe15bac3bb"
 }
