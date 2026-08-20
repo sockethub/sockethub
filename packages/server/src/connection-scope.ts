@@ -30,6 +30,12 @@ interface AnonymousRecord {
     scope: string;
     instanceId: string;
     sessionId: string;
+    /**
+     * Normalized client address, kept as a field rather than parsed back out
+     * of the map key. An IPv6 address contains colons, so the key is not
+     * safely splittable.
+     */
+    ip: string;
 }
 
 /** sessionId -> `platform:actorId` -> fingerprint, or null when anonymous. */
@@ -56,6 +62,24 @@ export interface CredentialScopeHandle {
 
 function scopeKey(platform: string, actorId: string): string {
     return `${platform}:${actorId}`;
+}
+
+function buildResumptionKey(
+    platform: string,
+    actorId: string,
+    ip: string,
+): string {
+    return `${platform}:${actorId}:${ip}`;
+}
+
+/**
+ * Only used for a key built before the record carried its address. The IP is
+ * everything after the platform and actor, so take the third field onward
+ * rather than the last — an IPv6 address contains colons of its own.
+ */
+function ipFromResumptionKey(key: string): string {
+    const parts = key.split(":");
+    return parts.slice(2).join(":");
 }
 
 /**
@@ -209,7 +233,9 @@ function anonymousScope(
     // HTTP requests never inherit or record a resumable scope. Each gets its
     // own private worker, which is what a single-use session should get.
     const resumptionKey =
-        ip && socketSessionId ? `${platform}:${actorId}:${ip}` : undefined;
+        ip && socketSessionId
+            ? buildResumptionKey(platform, actorId, ip)
+            : undefined;
     if (resumptionKey) {
         const record = anonymousScopes.get(resumptionKey);
         // Reuse this session's own recorded scope, or one whose session has
@@ -249,7 +275,13 @@ export function rememberAnonymousScope(
     if (!scope || !sessionId) {
         return;
     }
-    anonymousScopes.set(resumptionKey, { scope, instanceId, sessionId });
+    const existing = anonymousScopes.get(resumptionKey);
+    anonymousScopes.set(resumptionKey, {
+        scope,
+        instanceId,
+        sessionId,
+        ip: existing?.ip ?? ipFromResumptionKey(resumptionKey),
+    });
 }
 
 /**
@@ -278,8 +310,7 @@ export function reassignAnonymousScopes(
         if (!actorId) {
             continue;
         }
-        const ip = key.slice(key.lastIndexOf(":") + 1);
-        anonymousScopes.set(`${platform}:${actorId}:${ip}`, {
+        anonymousScopes.set(buildResumptionKey(platform, actorId, record.ip), {
             ...record,
             instanceId: toInstanceId,
         });

@@ -355,6 +355,65 @@ describe("connection scope", () => {
             expect(second.scope).toEqual(first.scope);
         });
 
+        it("survives a rename for an IPv6 client", async () => {
+            // An IPv6 address contains colons, so a resumption key cannot be
+            // split on the last one: "2001:db8::1" would come back as "1".
+            const ip = "2001:db8::1";
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: ip,
+            });
+            rememberAnonymousScope(
+                first.resumptionKey as string,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            const renamed = "alice_away@irc.example.org";
+            reassignAnonymousScopes(
+                "instance-1",
+                "instance-2",
+                PLATFORM,
+                renamed,
+            );
+
+            const second = await resolveConnectionScope(PLATFORM, renamed, {
+                socketSessionId: "s2",
+                sessionIp: ip,
+            });
+            expect(second.scope).toEqual(first.scope);
+        });
+
+        it("keeps IPv6 clients on different addresses apart after a rename", async () => {
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: "2001:db8::1",
+            });
+            rememberAnonymousScope(
+                first.resumptionKey as string,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            const renamed = "alice_away@irc.example.org";
+            reassignAnonymousScopes(
+                "instance-1",
+                "instance-2",
+                PLATFORM,
+                renamed,
+            );
+
+            // Shares the final key segment with the address above; must not
+            // be treated as the same client.
+            const other = await resolveConnectionScope(PLATFORM, renamed, {
+                socketSessionId: "s2",
+                sessionIp: "2001:db8::2",
+            });
+            expect(other.scope).toEqual("s2");
+        });
+
         it("clears a re-keyed instance's records on shutdown", async () => {
             const first = await resolveConnectionScope(PLATFORM, ACTOR, {
                 socketSessionId: "s1",

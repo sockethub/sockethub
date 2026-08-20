@@ -806,10 +806,6 @@ export function registerHttpActionsRoutes(
                     return;
                 }
                 responseClosed = true;
-                // Reached without completeRequest() when the client
-                // disconnects with work still pending; release the credentials
-                // phase here too.
-                signalRequestFinalized();
                 if (!res.writableEnded) {
                     res.end();
                 }
@@ -974,15 +970,22 @@ export function registerHttpActionsRoutes(
                     ),
             );
 
-            // Race the finalization signal so a hung credentials handler, or a
-            // request that times out mid-phase, cannot pin this handler.
+            // Race the finalization signal so a hung credentials handler cannot
+            // pin this handler; the request timeout completes the request and
+            // releases it.
             await Promise.race([credentialsDone, requestFinalized]);
 
-            if (completionStarted || responseClosed) {
+            if (completionStarted) {
                 // cleanup() has already unregistered the platform sessions and
                 // dropped this session's credential scopes. Dispatching now
                 // would queue jobs the janitor may reap, and each one would
                 // miss its scope and fork a separate worker.
+                //
+                // Deliberately not gated on `responseClosed`: a client that
+                // disconnects mid-request leaves the platform sessions
+                // registered so queued jobs still finish (see the "close"
+                // handler). Bailing out there would drop every message payload
+                // and leave `pending` above zero until the request timeout.
                 return;
             }
 

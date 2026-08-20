@@ -725,6 +725,51 @@ describe("http actions", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
     });
 
+    it("still dispatches messages when the client disconnects mid-credentials", async () => {
+        // Credentials are processed as a first phase, so the message phase
+        // resumes after an await. A disconnect during that await must not drop
+        // the messages: the "close" handler deliberately keeps the platform
+        // sessions registered so queued jobs finish.
+        let releaseCredentials: ((data: unknown) => void) | undefined;
+        let messageDispatched = false;
+
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 500,
+                "httpActions:idleTimeoutMs": 500,
+            },
+            createMessageHandlersOverride: () => ({
+                credentials: (_payload: unknown, cb: (data: unknown) => void) => {
+                    releaseCredentials = cb;
+                },
+                message: (_payload: unknown, cb: (data: unknown) => void) => {
+                    messageDispatched = true;
+                    cb({ ok: true });
+                },
+            }),
+        });
+
+        const { req, res } = createReqRes({
+            body: [
+                { ...singlePayload, type: "credentials" },
+                singlePayload,
+            ],
+        });
+        const pending = handlers["/sockethub-http"](req, res);
+
+        // Still inside the credentials phase.
+        expect(messageDispatched).toBeFalse();
+
+        req.triggerClose();
+        releaseCredentials?.({ ok: true });
+        await pending;
+
+        expect(messageDispatched).toBeTrue();
+    });
+
     it("propagates an unexpected setup error to Express", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({

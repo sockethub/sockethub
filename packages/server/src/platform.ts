@@ -546,6 +546,7 @@ async function startPlatformProcess() {
      * @param credentials
      */
     async function updateActor(credentials: CredentialsObject): Promise<void> {
+        const previousIdentifier = identifier;
         // Same scope the parent mixed into the identifier this child was
         // forked with, so both sides derive the same value.
         identifier = getPlatformId(
@@ -567,8 +568,53 @@ async function startPlatformProcess() {
 
         // The actor travels with the new identifier: the parent keys anonymous
         // resumption records on it and has no other way to learn it changed.
-        process.send(["updateActor", credentials.actor.id, identifier]);
+        //
+        // Not safeProcessSend(): that logs and continues, which would leave the
+        // parent routing to the old queue while this child listens on the new
+        // one, so jobs would be queued that nobody consumes. On failure, roll
+        // the identifier back and leave the queue listener where it is, so both
+        // sides stay on the identifier the parent still knows.
+        try {
+            await sendUpdateActor(credentials.actor.id, identifier);
+        } catch (err) {
+            identifier = previousIdentifier;
+            setLoggerContext(
+                `sockethub:platform:${platformName}:${identifier}`,
+            );
+            logger = createLogger("main");
+            throw err;
+        }
         await startQueueListener(true);
+    }
+
+    /**
+     * Resolves once the parent has been handed the new identifier, and rejects
+     * if the IPC channel is gone or the write fails.
+     */
+    function sendUpdateActor(
+        actorId: string,
+        newIdentifier: string,
+    ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!process.send) {
+                reject(
+                    new Error(
+                        "unable to report actor change: no IPC channel to parent",
+                    ),
+                );
+                return;
+            }
+            process.send(
+                ["updateActor", actorId, newIdentifier],
+                (err: Error | null) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                },
+            );
+        });
     }
 
     /**
