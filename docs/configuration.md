@@ -68,7 +68,14 @@ does not start).
   },
   "sentry": {
     "dsn": "",
-    "traceSampleRate": 1.0
+    "environment": "production",
+    "release": "",
+    "enableLogs": false,
+    "logLevels": ["warn", "error"],
+    "enableMetrics": true,
+    "tracesSampleRate": 0.1,
+    "profileSessionSampleRate": 0,
+    "sendDefaultPii": false
   },
   "sockethub": {
     "port": 10550,
@@ -565,9 +572,28 @@ LOG_LEVEL=debug LOG_FILE_LEVEL=debug sockethub
   "sentry": {
     "dsn": "https://your-dsn@sentry.io/project-id",
     "environment": "production",
-    "traceSampleRate": 1.0
+    "release": "sockethub@5.0.0",
+    "enableLogs": true,
+    "logLevels": ["warn", "error"],
+    "enableMetrics": true,
+    "tracesSampleRate": 0.1,
+    "profileSessionSampleRate": 0.01,
+    "sendDefaultPii": false
   }
 }
+```
+
+Sentry records aggregate connection and action counters, active connection
+gauges, action-duration distributions, and action traces. Metric dimensions are
+limited to platform and action names; actor IDs, credentials, message bodies,
+URLs, and client IP addresses are not attached. Logs are opt-in and default to
+`warn` and `error`. Profiling is disabled by default; keep its sample rate low
+in production.
+
+Verify delivery without starting the service:
+
+```bash
+sockethub --sentry-test --config /path/to/sockethub.config.json
 ```
 
 ## Environment Variables
@@ -591,6 +617,8 @@ export LOG_FILE_LEVEL=debug  # File log level (error, warn, info, debug)
 
 # Sentry (optional)
 export SENTRY_DSN=https://your-dsn@sentry.io/project-id
+export SENTRY_ENVIRONMENT=production
+export SENTRY_RELEASE=sockethub@5.0.0
 ```
 
 ## Environment Examples
@@ -658,7 +686,8 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
   "sentry": {
     "dsn": "https://your-dsn@sentry.io/project-id",
     "environment": "production",
-    "traceSampleRate": 0.1
+    "enableLogs": true,
+    "tracesSampleRate": 0.1
   },
   "platforms": [
     "@sockethub/platform-carddav",

@@ -51,6 +51,7 @@
   "homepage": "https://sockethub.org",
   "dependencies": {
     "@sentry/node": "^10.36.0",
+    "@sentry/profiling-node": "10.36.0",
     "@sockethub/client": "^5.0.0-alpha.20",
     "@sockethub/data-layer": "^1.0.0-alpha.20",
     "@sockethub/logger": "^1.0.0-alpha.20",

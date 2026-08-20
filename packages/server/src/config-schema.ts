@@ -84,7 +84,16 @@ const OVERLAY: Record<string, OverlayEntry> = {
     "redis.connectTimeout": { format: "nat" },
     "redis.disconnectTimeout": { format: "nat" },
     "redis.maxRetriesPerRequest": { format: "*" },
-    "sentry.dsn": { arg: "sentry.dsn" },
+    "sentry.dsn": {
+        env: "SENTRY_DSN",
+        emptyEnvIsUnset: true,
+        arg: "sentry.dsn",
+    },
+    "sentry.environment": {
+        env: "SENTRY_ENVIRONMENT",
+        emptyEnvIsUnset: true,
+    },
+    "sentry.release": { env: "SENTRY_RELEASE", emptyEnvIsUnset: true },
     "sockethub.port": {
         format: "port",
         env: "PORT",
