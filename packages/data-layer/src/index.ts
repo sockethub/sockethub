@@ -2,7 +2,6 @@ import { createLogger } from "@sockethub/logger";
 
 import {
     CredentialsMismatchError,
-    CredentialsNotShareableError,
     CredentialsStore,
     type CredentialsStoreInterface,
     type CredentialsStoreOptions,
@@ -15,7 +14,6 @@ import {
     resetSharedCredentialsRedisConnection,
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
-    SESSION_SHARE_DENIED,
     verifySecureStore,
 } from "./credentials-store.js";
 import {
@@ -56,7 +54,6 @@ async function redisCheck(config: RedisConfig): Promise<void> {
 export {
     buildCredentialsKey,
     CredentialsMismatchError,
-    CredentialsNotShareableError,
     CredentialsStore,
     type CredentialsStoreInterface,
     type CredentialsStoreOptions,
@@ -75,5 +72,4 @@ export {
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
     resetSharedRedisConnection,
-    SESSION_SHARE_DENIED,
 };

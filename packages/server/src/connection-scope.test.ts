@@ -7,6 +7,7 @@ import {
     forgetAnonymousScopes,
     rememberAnonymousScope,
     reassignAnonymousScopes,
+    type ResumptionRef,
     resetConnectionScopes,
     resolveConnectionScope,
 } from "./connection-scope.js";
@@ -196,7 +197,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -217,7 +218,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -239,7 +240,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                before.resumptionKey as string,
+                before.resumption as ResumptionRef,
                 before.scope,
                 "instance-1",
                 "s1",
@@ -252,7 +253,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                connect.resumptionKey as string,
+                connect.resumption as ResumptionRef,
                 connect.scope,
                 "instance-1",
                 "s2",
@@ -273,7 +274,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -288,13 +289,137 @@ describe("connection scope", () => {
             expect(second.scope).toEqual("s2");
         });
 
+        it("does not let a colliding session strand the one that owns the record", async () => {
+            // Two anonymous clients behind one NAT ask for the same nick.
+            const ip = "10.0.0.1";
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: ip,
+            });
+            rememberAnonymousScope(
+                first.resumption as ResumptionRef,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            // s1 is still connected, so s2 gets a worker of its own.
+            connectedSockets(["s1", "s2"]);
+            const second = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s2",
+                sessionIp: ip,
+            });
+            expect(second.scope).toEqual("s2");
+            rememberAnonymousScope(
+                second.resumption as ResumptionRef,
+                second.scope,
+                "instance-2",
+                "s2",
+            );
+
+            // s2's remote connect fails (the nick is taken) and its worker is
+            // torn down. That must not take s1's record with it.
+            forgetAnonymousScopes("instance-2");
+
+            // s1 refreshes and has to land back on its own live worker.
+            connectedSockets(["s3"]);
+            const refreshed = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s3",
+                sessionIp: ip,
+            });
+            expect(refreshed.scope).toEqual(first.scope);
+        });
+
+        it("hands the record on once the owning session is gone", async () => {
+            const ip = "10.0.0.1";
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: ip,
+            });
+            rememberAnonymousScope(
+                first.resumption as ResumptionRef,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            // s1 has gone, so s2 inherits and becomes the record's owner.
+            connectedSockets(["s2"]);
+            const second = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s2",
+                sessionIp: ip,
+            });
+            rememberAnonymousScope(
+                second.resumption as ResumptionRef,
+                second.scope,
+                "instance-1",
+                "s2",
+            );
+
+            connectedSockets(["s3"]);
+            const third = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s3",
+                sessionIp: ip,
+            });
+            expect(third.scope).toEqual(first.scope);
+        });
+
+        it("keeps actors whose ids contain colons apart", async () => {
+            // `actor.id` is an unconstrained string, so it can carry colons of
+            // its own. These two tuples must not collide.
+            const a = await resolveConnectionScope(PLATFORM, "xmpp:alice", {
+                socketSessionId: "s1",
+                sessionIp: "10.0.0.1",
+            });
+            rememberAnonymousScope(
+                a.resumption as ResumptionRef,
+                a.scope,
+                "instance-1",
+                "s1",
+            );
+
+            const b = await resolveConnectionScope(PLATFORM, "xmpp", {
+                socketSessionId: "s2",
+                sessionIp: "alice:10.0.0.1",
+            });
+            expect(b.scope).toEqual("s2");
+        });
+
+        it("survives a rename for an actor id containing colons", async () => {
+            const actor = "xmpp:alice@example.org";
+            const first = await resolveConnectionScope(PLATFORM, actor, {
+                socketSessionId: "s1",
+                sessionIp: "2001:db8::1",
+            });
+            rememberAnonymousScope(
+                first.resumption as ResumptionRef,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            const renamed = "xmpp:alice_away@example.org";
+            reassignAnonymousScopes(
+                "instance-1",
+                "instance-2",
+                PLATFORM,
+                renamed,
+            );
+
+            const second = await resolveConnectionScope(PLATFORM, renamed, {
+                socketSessionId: "s2",
+                sessionIp: "2001:db8::1",
+            });
+            expect(second.scope).toEqual(first.scope);
+        });
+
         it("does not share a scope across addresses", async () => {
             const first = await resolveConnectionScope(PLATFORM, ACTOR, {
                 socketSessionId: "s1",
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -313,7 +438,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -332,7 +457,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -364,7 +489,7 @@ describe("connection scope", () => {
                 sessionIp: ip,
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -391,7 +516,7 @@ describe("connection scope", () => {
                 sessionIp: "2001:db8::1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -420,7 +545,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -450,7 +575,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -479,7 +604,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",
@@ -500,7 +625,7 @@ describe("connection scope", () => {
                 sessionIp: "10.0.0.1",
             });
             rememberAnonymousScope(
-                first.resumptionKey as string,
+                first.resumption as ResumptionRef,
                 first.scope,
                 "instance-1",
                 "s1",

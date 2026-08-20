@@ -44,6 +44,13 @@ const pendingScopes = new Map<string, Map<string, Promise<string | null>>>();
 /** `platform:actorId:ip` -> the session-derived scope last used for it. */
 const anonymousScopes = new Map<string, AnonymousRecord>();
 
+/** Identifies the record a session-derived scope is recorded under. */
+export interface ResumptionRef {
+    key: string;
+    /** Carried alongside the key so it never has to be parsed back out. */
+    ip: string;
+}
+
 export interface ConnectionScope {
     scope: string;
     /**
@@ -52,7 +59,7 @@ export interface ConnectionScope {
      * of the same client can inherit this scope instead of forking a second
      * worker onto a nick the first one still holds.
      */
-    resumptionKey?: string;
+    resumption?: ResumptionRef;
 }
 
 export interface CredentialScopeHandle {
@@ -64,22 +71,18 @@ function scopeKey(platform: string, actorId: string): string {
     return `${platform}:${actorId}`;
 }
 
+/**
+ * Joined on NUL rather than ":". `actor.id` is an unconstrained string, so it
+ * may contain colons of its own (`xmpp:alice@example.org`, an https URI), and
+ * so may an IPv6 address — a colon-joined key cannot be split back apart, and
+ * distinct tuples could produce the same key. NUL occurs in none of the three.
+ */
 function buildResumptionKey(
     platform: string,
     actorId: string,
     ip: string,
 ): string {
-    return `${platform}:${actorId}:${ip}`;
-}
-
-/**
- * Only used for a key built before the record carried its address. The IP is
- * everything after the platform and actor, so take the third field onward
- * rather than the last — an IPv6 address contains colons of its own.
- */
-function ipFromResumptionKey(key: string): string {
-    const parts = key.split(":");
-    return parts.slice(2).join(":");
+    return [platform, actorId, ip].join("\u0000");
 }
 
 /**
@@ -232,12 +235,12 @@ function anonymousScope(
     // Only sockets refresh, and liveness is only knowable for a socket id, so
     // HTTP requests never inherit or record a resumable scope. Each gets its
     // own private worker, which is what a single-use session should get.
-    const resumptionKey =
+    const resumption: ResumptionRef | undefined =
         ip && socketSessionId
-            ? buildResumptionKey(platform, actorId, ip)
+            ? { key: buildResumptionKey(platform, actorId, ip), ip }
             : undefined;
-    if (resumptionKey) {
-        const record = anonymousScopes.get(resumptionKey);
+    if (resumption) {
+        const record = anonymousScopes.get(resumption.key);
         // Reuse this session's own recorded scope, or one whose session has
         // gone away. Only a *different*, still-connected client blocks it.
         // Without the self check, the caller's second action would see the
@@ -245,7 +248,7 @@ function anonymousScope(
         // scope — landing on a new worker mid-session.
         const ownedByCaller = record?.sessionId === socketSessionId;
         if (record && (ownedByCaller || !socketIsLive(record.sessionId))) {
-            return { scope: record.scope, resumptionKey };
+            return { scope: record.scope, resumption };
         }
     }
     const scope = socketSessionId ?? credentialSessionId;
@@ -257,7 +260,7 @@ function anonymousScope(
             `cannot resolve a connection scope for ${platform} without a session`,
         );
     }
-    return { scope, resumptionKey };
+    return { scope, resumption };
 }
 
 /**
@@ -267,7 +270,7 @@ function anonymousScope(
  * it points at.
  */
 export function rememberAnonymousScope(
-    resumptionKey: string,
+    resumption: ResumptionRef,
     scope: string,
     instanceId: string,
     sessionId: string,
@@ -275,12 +278,26 @@ export function rememberAnonymousScope(
     if (!scope || !sessionId) {
         return;
     }
-    const existing = anonymousScopes.get(resumptionKey);
-    anonymousScopes.set(resumptionKey, {
+    const existing = anonymousScopes.get(resumption.key);
+    if (
+        existing &&
+        existing.sessionId !== sessionId &&
+        socketIsLive(existing.sessionId)
+    ) {
+        // Another session is still connected on this (platform, actor,
+        // address) and owns the record. Two anonymous sessions that collide
+        // here get separate workers, and the second one's remote connect
+        // usually fails — the nick is taken. Overwriting would strand the
+        // first client, and worse: when the second worker is torn down,
+        // forgetAnonymousScopes() would delete a record pointing at the
+        // first's still-live worker, so its refresh would fork yet another.
+        return;
+    }
+    anonymousScopes.set(resumption.key, {
         scope,
         instanceId,
         sessionId,
-        ip: existing?.ip ?? ipFromResumptionKey(resumptionKey),
+        ip: resumption.ip,
     });
 }
 

@@ -239,24 +239,36 @@ thresholds. Blocked clients are automatically unblocked after the `blockDuration
 
 ### Credential Sharing and Anonymous Reconnects
 
-For persistent platforms (for example IRC), Sockethub can reuse an already-running
-platform instance for the same `context + actor.id`.
+For persistent platforms (for example IRC), Sockethub can reuse an
+already-running platform instance across sockets — but never because two
+clients named the same `actor.id`.
 
-When another socket is already attached to that actor:
+A persistent instance is selected by the platform, the actor, and a
+server-derived scope:
 
-- Session-share validation runs in the data layer.
-- Credentials with a non-empty `password` are considered shareable.
-- Credentials without a non-empty `password` are not shareable.
-- Every rejection returns the same message, `unable to attach session for this
-  actor`, so the reason is not disclosed to the caller.
+- Credentials carrying a non-empty `password` or `token` scope the instance by
+  a fingerprint of the submitted credential object. Two sockets reach the same
+  instance only when they submitted identical credentials.
+- Anything else is scoped to the session, so anonymous connections stay private
+  to the socket that opened them.
 
-This prevents anonymous/username-only accounts from accidentally sharing the
-same platform thread across different users.
+The fingerprint is derived from the credentials exactly as submitted, without
+filling in defaults first. A client sending `secure: true` and one leaving it
+off therefore get separate connections even though the resulting connection is
+the same.
 
-Sockethub still allows a narrow reconnect case for anonymous credentials:
+Because the scope is part of the lookup, a client that guesses an `actor.id`
+cannot reach — or detect — someone else's connection. It gets its own
+connection attempt and whatever answer the remote service gives it.
+
+Sockethub still allows a narrow reconnect case for anonymous sessions, so a
+page refresh does not drop the connection:
 
 - The prior session must be stale (disconnected socket, still waiting for janitor cleanup).
 - The reconnecting client IP must match the stale session IP.
+
+Client IP is weak identity, so this applies only to anonymous sessions, and
+only for as long as the original worker is alive.
 
 Configure how reconnect IP is read:
 

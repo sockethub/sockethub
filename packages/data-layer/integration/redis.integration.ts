@@ -5,7 +5,6 @@ import {
     JobQueue,
     JobWorker,
     redisCheck,
-    SESSION_SHARE_DENIED,
 } from "@sockethub/data-layer";
 import {
     type ActivityStream,
@@ -90,18 +89,6 @@ describe("CredentialsStore", () => {
 
         const hash = crypto.objectHash(noPasswordCreds.object);
         await expect(store.get(actor, hash)).resolves.toEqual(noPasswordCreds);
-    });
-
-    it("rejects anonymous credentials when share validation is requested", async () => {
-        const noPasswordCreds: CredentialsObject = {
-            ...creds,
-            object: { type: "credentials" },
-        };
-        await store.save(actor, noPasswordCreds);
-
-        await expect(
-            store.get(actor, undefined, { validateSessionShare: true }),
-        ).rejects.toThrow(SESSION_SHARE_DENIED);
     });
 
     it("isolates credentials by session", async () => {

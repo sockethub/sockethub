@@ -183,9 +183,9 @@ class ProcessManager {
         // Session-derived scopes are recorded against the instance so a page
         // refresh can reclaim this connection. Cleared in
         // PlatformInstance.shutdown(), so it can never outlive the worker.
-        if (connectionScope?.resumptionKey && sessionId) {
+        if (connectionScope?.resumption && sessionId) {
             rememberAnonymousScope(
-                connectionScope.resumptionKey,
+                connectionScope.resumption,
                 connectionScope.scope,
                 identifier,
                 sessionId,
