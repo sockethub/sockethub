@@ -548,14 +548,42 @@ describe("PlatformInstance", () => {
                     "goes",
                 ]);
 
-                await pi.handleProcessMessage(["blah", { foo: "bar" }]);
+                const message = {
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
+                    type: "message",
+                    actor: { id: "platform", type: "service" },
+                    object: { type: "message", content: "hello" },
+                };
+                await pi.handleProcessMessage(["message", message]);
 
-                sandbox.assert.calledWith(pi.sendToClient, "stays", {
-                    foo: "bar",
-                });
-                sandbox.assert.neverCalledWith(pi.sendToClient, "goes", {
-                    foo: "bar",
-                });
+                sandbox.assert.calledWith(pi.sendToClient, "stays", message);
+                sandbox.assert.neverCalledWith(
+                    pi.sendToClient,
+                    "goes",
+                    message,
+                );
+            });
+
+            it("malformed sessionUnauthorized messages leave sessions unchanged", async () => {
+                const errorSpy = sandbox.spy(pi.log, "error");
+                pi.registerSession("stays", "203.0.113.1");
+
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    { unexpected: true },
+                    "stays",
+                ]);
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    42,
+                ]);
+
+                expect(pi.sessions.has("stays")).toEqual(true);
+                expect(pi.sessionIps.get("stays")).toEqual("203.0.113.1");
+                sandbox.assert.calledTwice(errorSpy);
             });
 
             it("deregistering an unknown session is a no-op", async () => {

@@ -661,6 +661,16 @@ export default class PlatformInstance {
             // (or refuse) additional sessions attaching to this instance.
             this.setCredentialsHash(third);
         } else if (first === "sessionUnauthorized") {
+            if (
+                typeof third !== "string" ||
+                third.length === 0 ||
+                typeof second !== "undefined"
+            ) {
+                this.log.error(
+                    "ignoring malformed sessionUnauthorized control message",
+                );
+                return;
+            }
             // The child could not validate this session's credentials against
             // the running connection. Drop it so the fan-out in this method
             // (and broadcastToSharedPeers) stops delivering the connection's
