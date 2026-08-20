@@ -1,6 +1,11 @@
 import { getPlatformId } from "@sockethub/util/crypto";
 import type { IInitObject } from "./bootstrap/init.js";
 import config from "./config.js";
+import {
+    type ConnectionScope,
+    rememberAnonymousScope,
+    resolveConnectionScope,
+} from "./connection-scope.js";
 import PlatformInstance, {
     type MessageFromParent,
     type PlatformInstanceParams,
@@ -27,16 +32,40 @@ class ProcessManager {
         this.init = init;
     }
 
+    /**
+     * @param sessionId socket id to register with the instance; absent for HTTP
+     * @param credentialSessionId session the credentials were submitted under.
+     *   Defaults to `sessionId`; HTTP passes its own single-use session, which
+     *   is not a socket and so is never registered.
+     */
     async get(
         platform: string,
         actorId: string,
         sessionId?: string,
         sessionIp?: string,
+        credentialSessionId?: string,
     ): Promise<PlatformInstance> {
         const platformDetails = this.init.platforms.get(platform);
+        // A persistent instance is selected by actor *and* a server-derived
+        // scope, so a client-supplied actor id on its own can neither reach
+        // another session's connection nor reveal that one exists. Rejects
+        // when this session's credentials failed to store.
+        const connectionScope = platformDetails.config.persist
+            ? await resolveConnectionScope(platform, actorId, {
+                  credentialSessionId: credentialSessionId ?? sessionId,
+                  socketSessionId: sessionId,
+                  sessionIp,
+              })
+            : undefined;
         const pi = platformDetails.config.persist
             ? // ensure process is started - one for each actor
-              await this.ensureProcess(platform, sessionId, actorId, sessionIp)
+              await this.ensureProcess(
+                  platform,
+                  sessionId,
+                  actorId,
+                  sessionIp,
+                  connectionScope,
+              )
             : // ensure process is started - one for all jobs
               await this.ensureProcess(platform);
         pi.config = platformDetails.config;
@@ -48,6 +77,7 @@ class ProcessManager {
         identifier: string,
         platform: string,
         actor?: string,
+        scope?: string,
     ): PlatformInstance {
         const secrets: MessageFromParent = [
             "secrets",
@@ -61,6 +91,7 @@ class ProcessManager {
             platform: platform,
             parentId: this.parentId,
             actor: actor,
+            scope: scope,
         };
         const platformInstance = new PlatformInstance(platformInstanceConfig);
         platformInstance.initQueue(this.parentSecret1 + this.parentSecret2);
@@ -80,8 +111,13 @@ class ProcessManager {
         sessionId?: string,
         actor?: string,
         sessionIp?: string,
+        connectionScope?: ConnectionScope,
     ): Promise<PlatformInstance> {
-        const identifier = getPlatformId(platform, actor);
+        const identifier = getPlatformId(
+            platform,
+            actor,
+            connectionScope?.scope,
+        );
         const prior = this.ensureChains.get(identifier) ?? Promise.resolve();
         const run = prior.then(() =>
             this.ensureProcessNow(
@@ -90,6 +126,7 @@ class ProcessManager {
                 sessionId,
                 actor,
                 sessionIp,
+                connectionScope,
             ),
         );
         // Park a settled (never-rejecting) copy for the next caller, and
@@ -113,6 +150,7 @@ class ProcessManager {
         sessionId?: string,
         actor?: string,
         sessionIp?: string,
+        connectionScope?: ConnectionScope,
     ): Promise<PlatformInstance> {
         const existing = platformInstances.get(identifier);
         const reusable = existing && this.isProcessAlive(existing);
@@ -132,11 +170,27 @@ class ProcessManager {
         }
         const platformInstance = reusable
             ? existing
-            : this.createPlatformInstance(identifier, platform, actor);
+            : this.createPlatformInstance(
+                  identifier,
+                  platform,
+                  actor,
+                  connectionScope?.scope,
+              );
         if (sessionId) {
             platformInstance.registerSession(sessionId, sessionIp);
         }
         platformInstances.set(identifier, platformInstance);
+        // Session-derived scopes are recorded against the instance so a page
+        // refresh can reclaim this connection. Cleared in
+        // PlatformInstance.shutdown(), so it can never outlive the worker.
+        if (connectionScope?.resumptionKey && sessionId) {
+            rememberAnonymousScope(
+                connectionScope.resumptionKey,
+                connectionScope.scope,
+                identifier,
+                sessionId,
+            );
+        }
         return platformInstance;
     }
 

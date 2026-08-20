@@ -6,9 +6,13 @@ import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 import { resolvePlatformId } from "@sockethub/schemas";
 import { toError } from "@sockethub/util/error";
 
+import { beginCredentialScope } from "../connection-scope.js";
 import type { MiddlewareChainInterface } from "../middleware.js";
 
-export default function storeCredentials(store: CredentialsStoreInterface) {
+export default function storeCredentials(
+    store: CredentialsStoreInterface,
+    sessionId: string,
+) {
     return (
         creds: ActivityStream,
         done: MiddlewareChainInterface<ActivityStream>,
@@ -18,14 +22,28 @@ export default function storeCredentials(store: CredentialsStoreInterface) {
             // Scope by platform: the same visible actor id can exist on more
             // than one platform, and keyed by actor alone the second save
             // silently overwrote the first.
-            const key = buildCredentialsKey(
-                resolvePlatformId(creds) ?? "",
+            const platform = resolvePlatformId(creds) ?? "";
+            const key = buildCredentialsKey(platform, credentials.actor.id);
+            // Installed before the write starts, and while this handler is
+            // still running synchronously, so a persistent action arriving
+            // behind these credentials waits for them instead of falling back
+            // to an anonymous scope and forking a second worker.
+            const scope = beginCredentialScope(
+                sessionId,
+                platform,
                 credentials.actor.id,
             );
             store
                 .save(key, credentials)
-                .then(() => done(creds))
-                .catch((err) => done(toError(err)));
+                .then(() => {
+                    scope.resolve(credentials);
+                    done(creds);
+                })
+                .catch((err) => {
+                    const error = toError(err);
+                    scope.reject(error);
+                    done(error);
+                });
         } catch (err) {
             done(toError(err));
         }

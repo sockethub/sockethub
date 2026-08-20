@@ -11,7 +11,6 @@ import type {
 } from "@sockethub/schemas";
 import { resolvePlatformId } from "@sockethub/schemas";
 import { errorMessage } from "@sockethub/util/error";
-import credentialCheck from "./middleware/credential-check.js";
 import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
@@ -36,7 +35,6 @@ export interface MessageHandlersOptions {
     sessionSecret: string;
     credentialsStore: CredentialsStoreInterface;
     clientIp?: string;
-    isSessionActive?: (sessionId: string) => boolean;
     // Socket path uses this to preserve existing ProcessManager session behavior.
     platformSessionId?: string;
     onPlatformInstance?: (platformInstance: PlatformInstance) => void;
@@ -70,7 +68,6 @@ export function createMessageHandlers(
         sessionSecret,
         credentialsStore,
         clientIp,
-        isSessionActive,
         platformSessionId,
         onPlatformInstance,
     } = options;
@@ -79,7 +76,7 @@ export function createMessageHandlers(
     const credentials = middleware<ActivityStream>("credentials")
         .use(normalizeActivityStreamMiddleware)
         .use(validate<ActivityStream>("credentials", sessionId))
-        .use(storeCredentials(credentialsStore))
+        .use(storeCredentials(credentialsStore, sessionId))
         .use(
             (
                 data: ActivityStream,
@@ -129,14 +126,6 @@ export function createMessageHandlers(
             },
         )
         .use(
-            credentialCheck(
-                credentialsStore,
-                sessionId,
-                clientIp ?? "",
-                isSessionActive,
-            ),
-        )
-        .use(
             (
                 err: Error,
                 data: InternalActivityStream,
@@ -172,6 +161,9 @@ export function createMessageHandlers(
                         msg.actor.id,
                         platformSessionId,
                         clientIp,
+                        // Credentials are registered under this session, which
+                        // over HTTP is not the same as platformSessionId.
+                        sessionId,
                     );
                 } catch (err) {
                     // e.g. limits.maxPlatformInstances reached

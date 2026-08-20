@@ -412,9 +412,6 @@ async function startPlatformProcess() {
                                     // Only persistent platforms track credential state across requests.
                                     platform.credentialsHash =
                                         crypto.objectHash(credentials.object);
-                                    publishCredentialsHash(
-                                        platform.credentialsHash,
-                                    );
                                 }
                                 doneCallback(err, result);
                             };
@@ -544,29 +541,18 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Tell the parent which credentials this connection is bound to.
-     *
-     * The hash is only ever computed after a credentialed platform call has
-     * succeeded, so it identifies the credentials that actually opened the
-     * remote connection. The parent needs it to decide whether a *different*
-     * session may attach to this instance — that decision happens in
-     * `credential-check` middleware, before the session is registered, and the
-     * parent has no other way to see the child's credential state.
-     */
-    function publishCredentialsHash(hash: string | undefined): void {
-        if (!hash || !platform.config.persist || !process.send) {
-            return;
-        }
-        process.send(["credentialsHash", undefined, hash]);
-    }
-
-    /**
      * When a user changes its actor name, the channel identifier changes, we need to ensure that
      * both the queue thread (listening on the channel for jobs) and the logging object are updated.
      * @param credentials
      */
     async function updateActor(credentials: CredentialsObject): Promise<void> {
-        identifier = getPlatformId(platformName, credentials.actor.id);
+        // Same scope the parent mixed into the identifier this child was
+        // forked with, so both sides derive the same value.
+        identifier = getPlatformId(
+            platformName,
+            credentials.actor.id,
+            process.env.SOCKETHUB_PLATFORM_SCOPE,
+        );
         logger.info(
             `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
         );
@@ -577,7 +563,6 @@ async function startPlatformProcess() {
         // Update credentialsHash for persistent platforms (tracks actor-specific state)
         if (isPersistentPlatform(platform)) {
             platform.credentialsHash = crypto.objectHash(credentials.object);
-            publishCredentialsHash(platform.credentialsHash);
         }
 
         process.send(["updateActor", undefined, identifier]);

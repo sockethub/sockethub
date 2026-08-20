@@ -157,13 +157,26 @@ describe("getPlatformId", () => {
     });
 
     it("generates platform hash", () => {
-        expect(getPlatformId("foo", undefined, crypto)).toEqual("foo");
+        expect(getPlatformId("foo", undefined, undefined, crypto)).toEqual(
+            "foo",
+        );
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foo");
     });
     it("generates platform + actor hash", () => {
-        expect(getPlatformId("foo", "bar", crypto)).toEqual("foobar");
+        expect(getPlatformId("foo", "bar", undefined, crypto)).toEqual(
+            "foobar",
+        );
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foobar");
+    });
+    it("includes the scope when one is given", () => {
+        expect(getPlatformId("foo", "bar", "baz", crypto)).toEqual("foobarbaz");
+        sinon.assert.calledOnce(cryptoHashStub);
+        sinon.assert.calledWith(cryptoHashStub, "foobarbaz");
+    });
+    it("ignores the scope for global platforms", () => {
+        expect(getPlatformId("foo", undefined, "baz", crypto)).toEqual("foo");
+        sinon.assert.calledWith(cryptoHashStub, "foo");
     });
 });

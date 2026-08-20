@@ -482,46 +482,6 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
             });
 
-            it("waitForCredentialsHash resolves when the child publishes", async () => {
-                const pending = pi.waitForCredentialsHash(5000);
-                await pi.handleProcessMessage([
-                    "credentialsHash",
-                    undefined,
-                    "published-late",
-                ]);
-                expect(await pending).toEqual("published-late");
-            });
-
-            it("waitForCredentialsHash resolves undefined on timeout", async () => {
-                expect(await pi.waitForCredentialsHash(1)).toBeUndefined();
-            });
-
-            it("waitForCredentialsHash returns immediately once known", async () => {
-                await pi.handleProcessMessage([
-                    "credentialsHash",
-                    undefined,
-                    "already-known",
-                ]);
-                expect(await pi.waitForCredentialsHash(0)).toEqual(
-                    "already-known",
-                );
-            });
-
-            it("message events from platform thread are routed based on command: credentialsHash", async () => {
-                // The child reports which credentials its connection is bound
-                // to; credential-check needs this to authorize further
-                // sessions attaching to the instance.
-                expect(pi.credentialsHash).toBeUndefined();
-                await pi.handleProcessMessage([
-                    "credentialsHash",
-                    undefined,
-                    "a-credentials-hash",
-                ]);
-                expect(pi.credentialsHash).toEqual("a-credentials-hash");
-                // control message, not client traffic
-                sandbox.assert.notCalled(pi.sendToClient);
-            });
-
             it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {
                 pi.registerSession("good session", "203.0.113.1");
                 pi.registerSession("bad session", "203.0.113.2");

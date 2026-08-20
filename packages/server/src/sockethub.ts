@@ -20,6 +20,7 @@ import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
+import { clearSessionScopes } from "./connection-scope.js";
 import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
@@ -360,6 +361,7 @@ class Sockethub {
                 );
             });
             cleanupClient(socket.id);
+            clearSessionScopes(socket.id);
             this.releaseIpSlot(clientIp);
             this.activeConnections = Math.max(0, this.activeConnections - 1);
             observability.count("sockethub.connection.closed");
@@ -375,8 +377,6 @@ class Sockethub {
             sessionSecret,
             credentialsStore,
             clientIp,
-            isSessionActive: (sessionId) =>
-                listener.io?.sockets?.sockets?.has(sessionId) ?? false,
             // Keep session registration behavior inside ProcessManager.get().
             platformSessionId: socket.id,
         });

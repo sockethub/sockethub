@@ -17,6 +17,7 @@ import {
 } from "@sockethub/schemas";
 import { errorMessage } from "@sockethub/util/error";
 import config from "./config.js";
+import { forgetAnonymousScopes } from "./connection-scope.js";
 import { getSocket } from "./listener.js";
 import { __dirname } from "./util.js";
 
@@ -28,6 +29,11 @@ export interface PlatformInstanceParams {
     platform: string;
     parentId?: string;
     actor?: string;
+    /**
+     * Server-derived value mixed into `identifier`. Forwarded to the child so
+     * it derives the same identifier when it re-keys on an actor change.
+     */
+    scope?: string;
 }
 
 type EnvFormat = {
@@ -36,13 +42,13 @@ type EnvFormat = {
     SOCKETHUB_CREDENTIALS_TTL_MS?: string;
     SOCKETHUB_PLATFORM_CHILD?: string;
     SOCKETHUB_PLATFORM_CONFIG?: string;
+    SOCKETHUB_PLATFORM_SCOPE?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
 };
 
 type MessageFromPlatform =
     | ["updateActor", ActivityStream | null | undefined, string]
-    | ["credentialsHash", null | undefined, string]
     | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
@@ -83,17 +89,6 @@ export default class PlatformInstance {
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
-    /**
-     * Hash of the credentials this instance's remote connection was
-     * established with, reported by the child once a credentialed call has
-     * succeeded. `credential-check` compares an attaching session's
-     * credentials against it. `undefined` until the first successful
-     * connect — see that middleware for how the unknown case is handled.
-     */
-    credentialsHash: string | undefined;
-    private readonly credentialsHashWaiters = new Set<
-        (hash: string | undefined) => void
-    >();
     private processMessageListener?: (message: MessageFromPlatform) => void;
     private processCloseListener?: (e: unknown) => void;
     private heartbeatLastSeen = Date.now();
@@ -119,6 +114,9 @@ export default class PlatformInstance {
             REDIS_URL: config.get("redis:url") as string,
             SOCKETHUB_PLATFORM_CHILD: "1",
         };
+        if (params.scope) {
+            env.SOCKETHUB_PLATFORM_SCOPE = params.scope;
+        }
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
@@ -220,14 +218,9 @@ export default class PlatformInstance {
     private async teardown() {
         this.log.debug("platform process shutdown");
         this.flaggedForTermination = true;
-        // This connection will never report its credentials now; release any
-        // attach waiting on them so it fails closed immediately rather than
-        // sitting out the full timeout.
-        for (const waiter of this.credentialsHashWaiters) {
-            waiter(undefined);
-        }
-        this.credentialsHashWaiters.clear();
-
+        // Any session-derived scope pointing here dies with the connection, so
+        // a later session can never inherit a scope whose worker is gone.
+        forgetAnonymousScopes(this.id);
         try {
             if (this.heartbeatMonitor) {
                 clearInterval(this.heartbeatMonitor);
@@ -356,45 +349,6 @@ export default class PlatformInstance {
      * Register listener to be called when the process emits a message.
      * @param sessionId ID of socket connection that will receive messages from platform emits
      */
-    /**
-     * Record the credentials this instance's connection is bound to and
-     * release anything waiting on them.
-     */
-    private setCredentialsHash(hash: string) {
-        this.credentialsHash = hash;
-        for (const waiter of this.credentialsHashWaiters) {
-            waiter(hash);
-        }
-        this.credentialsHashWaiters.clear();
-    }
-
-    /**
-     * Resolve once the child has reported which credentials this connection
-     * was established with, or `undefined` if that has not happened within
-     * `timeoutMs`. Callers treat the timeout as "unknown, refuse" — waiting
-     * unbounded would let a hung remote handshake pin a session indefinitely.
-     */
-    public waitForCredentialsHash(
-        timeoutMs: number,
-    ): Promise<string | undefined> {
-        if (this.credentialsHash) {
-            return Promise.resolve(this.credentialsHash);
-        }
-        return new Promise((resolve) => {
-            const waiter = (hash: string | undefined) => {
-                clearTimeout(timer);
-                resolve(hash);
-            };
-            const timer = setTimeout(() => {
-                this.credentialsHashWaiters.delete(waiter);
-                resolve(undefined);
-            }, timeoutMs);
-            // Don't hold the event loop open purely for this timer.
-            timer.unref?.();
-            this.credentialsHashWaiters.add(waiter);
-        });
-    }
-
     public registerSession(sessionId: string, clientIp?: string) {
         if (clientIp) {
             this.sessionIps.set(sessionId, clientIp);
@@ -655,11 +609,6 @@ export default class PlatformInstance {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
             this.updateIdentifier(third);
-        } else if (first === "credentialsHash") {
-            // Internal control message: the child is reporting which credentials
-            // its remote connection is bound to, so the parent can authorize
-            // (or refuse) additional sessions attaching to this instance.
-            this.setCredentialsHash(third);
         } else if (first === "sessionUnauthorized") {
             if (
                 typeof third !== "string" ||

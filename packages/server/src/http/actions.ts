@@ -31,6 +31,7 @@ import express, {
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import config from "../config.js";
+import { clearSessionScopes } from "../connection-scope.js";
 import { parseCorsOrigins, resolveAllowedOrigin } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
 import type ProcessManager from "../process-manager.js";
@@ -734,6 +735,7 @@ export function registerHttpActionsRoutes(
                     unregisterHttpSession(platformId);
                 }
                 platformIds.clear();
+                clearSessionScopes(sessionId);
                 // This session id is single-use; drop its credential namespace
                 // so it does not linger in Redis (SecureStore writes have no
                 // TTL). Runs after all jobs have completed or the request has
@@ -928,24 +930,47 @@ export function registerHttpActionsRoutes(
                 completeRequest();
             });
 
-            payloads.forEach((payload) => {
-                const kind = classifyPayload(payload);
-                switch (kind) {
+            // Credentials run to completion before anything that depends on
+            // them is dispatched. Handlers are async, so a single pass over
+            // the payloads would let a persistent action reach
+            // ProcessManager.get() before the credentials ahead of it had
+            // registered their scope, forking a second worker.
+            const classified = payloads.map((payload) => ({
+                payload,
+                kind: classifyPayload(payload),
+            }));
+
+            const credentialsDone = Promise.all(
+                classified
+                    .filter((entry) => entry.kind === "credentials")
+                    .map(
+                        (entry) =>
+                            new Promise<void>((resolve) => {
+                                handlers.credentials(
+                                    entry.payload as ActivityStream,
+                                    (result) => {
+                                        writeResult(
+                                            buildCredentialsAck(
+                                                entry.payload as ActivityStream,
+                                                result,
+                                            ),
+                                        );
+                                        resolve();
+                                    },
+                                );
+                            }),
+                    ),
+            );
+
+            await credentialsDone;
+
+            for (const entry of classified) {
+                switch (entry.kind) {
                     case "credentials":
-                        handlers.credentials(
-                            payload as ActivityStream,
-                            (result) =>
-                                writeResult(
-                                    buildCredentialsAck(
-                                        payload as ActivityStream,
-                                        result,
-                                    ),
-                                ),
-                        );
                         break;
                     case "message":
                         handlers.message(
-                            payload as InternalActivityStream,
+                            entry.payload as InternalActivityStream,
                             writeResult,
                         );
                         break;
@@ -953,7 +978,7 @@ export function registerHttpActionsRoutes(
                         writeResult(new Error("unsupported payload type"));
                         break;
                 }
-            });
+            }
         },
     );
 
