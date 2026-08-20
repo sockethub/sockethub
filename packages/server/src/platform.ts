@@ -565,7 +565,9 @@ async function startPlatformProcess() {
             platform.credentialsHash = crypto.objectHash(credentials.object);
         }
 
-        process.send(["updateActor", undefined, identifier]);
+        // The actor travels with the new identifier: the parent keys anonymous
+        // resumption records on it and has no other way to learn it changed.
+        process.send(["updateActor", credentials.actor.id, identifier]);
         await startQueueListener(true);
     }
 

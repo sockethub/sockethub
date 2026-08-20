@@ -729,6 +729,10 @@ export function registerHttpActionsRoutes(
             let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
             let completionStarted = false;
             let redisWriteChain = Promise.resolve();
+            let signalRequestFinalized: () => void = () => undefined;
+            const requestFinalized = new Promise<void>((resolve) => {
+                signalRequestFinalized = resolve;
+            });
 
             const cleanup = () => {
                 for (const platformId of platformIds) {
@@ -761,6 +765,10 @@ export function registerHttpActionsRoutes(
                     return;
                 }
                 completionStarted = true;
+                // Releases the credentials phase below: a timeout or an early
+                // finalization must not leave the route handler awaiting a
+                // callback that may never arrive.
+                signalRequestFinalized();
 
                 const finish = () => {
                     cleanup();
@@ -798,6 +806,10 @@ export function registerHttpActionsRoutes(
                     return;
                 }
                 responseClosed = true;
+                // Reached without completeRequest() when the client
+                // disconnects with work still pending; release the credentials
+                // phase here too.
+                signalRequestFinalized();
                 if (!res.writableEnded) {
                     res.end();
                 }
@@ -962,7 +974,17 @@ export function registerHttpActionsRoutes(
                     ),
             );
 
-            await credentialsDone;
+            // Race the finalization signal so a hung credentials handler, or a
+            // request that times out mid-phase, cannot pin this handler.
+            await Promise.race([credentialsDone, requestFinalized]);
+
+            if (completionStarted || responseClosed) {
+                // cleanup() has already unregistered the platform sessions and
+                // dropped this session's credential scopes. Dispatching now
+                // would queue jobs the janitor may reap, and each one would
+                // miss its scope and fork a separate worker.
+                return;
+            }
 
             for (const entry of classified) {
                 switch (entry.kind) {

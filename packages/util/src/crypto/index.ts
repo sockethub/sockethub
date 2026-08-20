@@ -18,6 +18,12 @@ const IV_LENGTH = 16; // For AES, this is always 16
  * platforms it is a credential fingerprint, or a session-derived value when
  * there are no credentials. Global (non-persistent) platforms pass neither.
  */
+// Separates the hashed components so distinct triples cannot produce the same
+// input string — `("irc", "alice", "X")` must not collide with
+// `("irc", "aliceX", "")`. NUL cannot occur in a platform name, actor id, or
+// hex digest.
+const ID_SEPARATOR = "\u0000";
+
 export function getPlatformId(
     platform: string,
     actor?: string,
@@ -25,7 +31,9 @@ export function getPlatformId(
     _crypto = crypto,
 ): string {
     if (actor) {
-        return _crypto.hashFull(platform + actor + (scope ?? ""));
+        return _crypto.hashFull(
+            [platform, actor, scope ?? ""].join(ID_SEPARATOR),
+        );
     }
     return _crypto.hashFull(platform);
 }

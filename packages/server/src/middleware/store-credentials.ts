@@ -18,6 +18,7 @@ export default function storeCredentials(
         done: MiddlewareChainInterface<ActivityStream>,
     ) => {
         const credentials = creds as CredentialsObject;
+        let scope: ReturnType<typeof beginCredentialScope> | undefined;
         try {
             // Scope by platform: the same visible actor id can exist on more
             // than one platform, and keyed by actor alone the second save
@@ -28,7 +29,7 @@ export default function storeCredentials(
             // still running synchronously, so a persistent action arriving
             // behind these credentials waits for them instead of falling back
             // to an anonymous scope and forking a second worker.
-            const scope = beginCredentialScope(
+            scope = beginCredentialScope(
                 sessionId,
                 platform,
                 credentials.actor.id,
@@ -41,11 +42,16 @@ export default function storeCredentials(
                 })
                 .catch((err) => {
                     const error = toError(err);
-                    scope.reject(error);
+                    scope?.reject(error);
                     done(error);
                 });
         } catch (err) {
-            done(toError(err));
+            const error = toError(err);
+            // A synchronous throw after the scope was installed would otherwise
+            // leave it pending forever, and any action awaiting it would never
+            // complete or error.
+            scope?.reject(error);
+            done(error);
         }
     };
 }

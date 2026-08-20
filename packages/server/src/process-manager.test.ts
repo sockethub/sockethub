@@ -109,15 +109,15 @@ describe("ProcessManager", () => {
     test("disabled cap (0) allows unbounded instance creation", async () => {
         maxPlatformInstances = 0;
         for (let i = 0; i < 5; i++) {
-            await manager.get("fakeplatform", `actor-${i}`);
+            await manager.get("fakeplatform", `actor-${i}`, "session-a");
         }
         expect(platformInstances.size).toEqual(5);
     });
 
     test("blocks a new actor once the cap is reached", async () => {
         maxPlatformInstances = 1;
-        await manager.get("fakeplatform", "actor-a");
-        await expect(manager.get("fakeplatform", "actor-b")).rejects.toThrow(
+        await manager.get("fakeplatform", "actor-a", "session-a");
+        await expect(manager.get("fakeplatform", "actor-b", "session-a")).rejects.toThrow(
             /platform instance limit reached/,
         );
         expect(platformInstances.size).toEqual(1);
@@ -125,27 +125,27 @@ describe("ProcessManager", () => {
 
     test("always allows reusing a live instance regardless of the cap", async () => {
         maxPlatformInstances = 1;
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, true);
-        const second = await manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a", "session-a");
         expect(second).toBe(first);
         expect(platformInstances.size).toEqual(1);
     });
 
     test("allows the same actor to replace its own dead instance at the cap", async () => {
         maxPlatformInstances = 1;
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
-        await manager.get("fakeplatform", "actor-a");
+        await manager.get("fakeplatform", "actor-a", "session-a");
         expect(platformInstances.size).toEqual(1);
     });
 
     test("marks a dead instance as replaced before shutting it down", async () => {
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         const markReplaced = sandbox.spy(first, "markReplaced");
         const shutdown = sandbox.stub(first, "shutdown").resolves();
-        const second = await manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a", "session-a");
         expect(second).not.toBe(first);
         sinon.assert.calledOnce(markReplaced);
         sinon.assert.calledOnce(shutdown);
@@ -153,26 +153,26 @@ describe("ProcessManager", () => {
     });
 
     test("the dead instance's teardown does not evict the replacement from the map", async () => {
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
-        const second = await manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a", "session-a");
         expect(second).not.toBe(first);
         expect(platformInstances.get(second.id)).toBe(second);
     });
 
     test("does not shut down a live instance when reusing it", async () => {
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, true);
         const markReplaced = sandbox.spy(first, "markReplaced");
         const shutdown = sandbox.stub(first, "shutdown").resolves();
-        const second = await manager.get("fakeplatform", "actor-a");
+        const second = await manager.get("fakeplatform", "actor-a", "session-a");
         expect(second).toBe(first);
         sinon.assert.notCalled(markReplaced);
         sinon.assert.notCalled(shutdown);
     });
 
     test("waits for the dead instance's in-flight teardown before creating the replacement", async () => {
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         let releaseTeardown: () => void;
         const teardown = new Promise<void>((resolve) => {
@@ -180,7 +180,7 @@ describe("ProcessManager", () => {
         });
         sandbox.stub(first, "shutdown").returns(teardown);
         let second: PlatformInstance | undefined;
-        const pending = manager.get("fakeplatform", "actor-a").then((pi) => {
+        const pending = manager.get("fakeplatform", "actor-a", "session-a").then((pi) => {
             second = pi;
             return pi;
         });
@@ -197,17 +197,22 @@ describe("ProcessManager", () => {
     });
 
     test("concurrent requests for the same dead instance produce a single replacement", async () => {
-        const first = await manager.get("fakeplatform", "actor-a");
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         const [a, b] = await Promise.all([
-            manager.get("fakeplatform", "actor-a"),
-            manager.get("fakeplatform", "actor-a"),
+            manager.get("fakeplatform", "actor-a", "session-a"),
+            manager.get("fakeplatform", "actor-a", "session-a"),
         ]);
         expect(a).toBe(b);
         expect(platformInstances.size).toEqual(1);
     });
 
     describe("connection scope", () => {
+        const originalIo = (listener as unknown as { io: unknown }).io;
+        afterEach(() => {
+            (listener as unknown as { io: unknown }).io = originalIo;
+        });
+
         test("a different session with different credentials gets its own instance", async () => {
             submitCredentials("session-a", "actor-a", { password: "correct" });
             submitCredentials("session-b", "actor-a", { password: "guessed" });

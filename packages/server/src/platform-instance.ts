@@ -17,7 +17,10 @@ import {
 } from "@sockethub/schemas";
 import { errorMessage } from "@sockethub/util/error";
 import config from "./config.js";
-import { forgetAnonymousScopes } from "./connection-scope.js";
+import {
+    forgetAnonymousScopes,
+    reassignAnonymousScopes,
+} from "./connection-scope.js";
 import { getSocket } from "./listener.js";
 import { __dirname } from "./util.js";
 
@@ -48,7 +51,7 @@ type EnvFormat = {
 };
 
 type MessageFromPlatform =
-    | ["updateActor", ActivityStream | null | undefined, string]
+    | ["updateActor", string | null | undefined, string]
     | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
@@ -547,10 +550,15 @@ export default class PlatformInstance {
      * Updates the instance with a new identifier, updating the platformInstances mapping as well.
      * @param identifier
      */
-    private updateIdentifier(identifier: string) {
+    private updateIdentifier(identifier: string, actorId?: string) {
+        const previousId = this.id;
         platformInstances.delete(this.id);
         this.id = identifier;
         platformInstances.set(this.id, this);
+        // Any session-derived scope was recorded against the old identifier
+        // and the old actor; move it so a refresh still finds this connection,
+        // and so teardown can still clear it.
+        reassignAnonymousScopes(previousId, this.id, this.name, actorId);
     }
 
     /**
@@ -608,7 +616,10 @@ export default class PlatformInstance {
         if (first === "updateActor") {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
-            this.updateIdentifier(third);
+            this.updateIdentifier(
+                third,
+                typeof second === "string" ? second : undefined,
+            );
         } else if (first === "sessionUnauthorized") {
             if (
                 typeof third !== "string" ||

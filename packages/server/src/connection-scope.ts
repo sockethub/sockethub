@@ -58,6 +58,10 @@ function scopeKey(platform: string, actorId: string): string {
     return `${platform}:${actorId}`;
 }
 
+/**
+ * Shared with the socket layer: the resumption key depends on this and on the
+ * `clientIp` the listener records producing the same value.
+ */
 export function normalizeIp(ip: string | undefined): string {
     if (!ip) {
         return "";
@@ -218,10 +222,16 @@ function anonymousScope(
             return { scope: record.scope, resumptionKey };
         }
     }
-    return {
-        scope: socketSessionId ?? credentialSessionId ?? "",
-        resumptionKey,
-    };
+    const scope = socketSessionId ?? credentialSessionId;
+    if (!scope) {
+        // Without a session there is nothing to isolate on, and an empty scope
+        // would collapse the key back to (platform, actor) — the very thing
+        // this replaces. Every real caller supplies one.
+        throw new Error(
+            `cannot resolve a connection scope for ${platform} without a session`,
+        );
+    }
+    return { scope, resumptionKey };
 }
 
 /**
@@ -240,6 +250,40 @@ export function rememberAnonymousScope(
         return;
     }
     anonymousScopes.set(resumptionKey, { scope, instanceId, sessionId });
+}
+
+/**
+ * Follows an instance that has been re-keyed, e.g. after an IRC nick change.
+ *
+ * The record is keyed on the actor as well as the instance, so both move. Left
+ * alone, the record would keep the old actor and the dead identifier: it would
+ * never be matched again (the client now sends the new actor), never be
+ * cleared by `forgetAnonymousScopes()`, and a refresh would fork a second
+ * worker onto a nick the first one still holds.
+ *
+ * With no new actor to move to, the records are dropped rather than left
+ * pointing at an identifier that no longer exists.
+ */
+export function reassignAnonymousScopes(
+    fromInstanceId: string,
+    toInstanceId: string,
+    platform: string,
+    actorId?: string,
+): void {
+    for (const [key, record] of [...anonymousScopes]) {
+        if (record.instanceId !== fromInstanceId) {
+            continue;
+        }
+        anonymousScopes.delete(key);
+        if (!actorId) {
+            continue;
+        }
+        const ip = key.slice(key.lastIndexOf(":") + 1);
+        anonymousScopes.set(`${platform}:${actorId}:${ip}`, {
+            ...record,
+            instanceId: toInstanceId,
+        });
+    }
 }
 
 /** Drops every scope pointing at an instance that is going away. */

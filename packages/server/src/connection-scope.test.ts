@@ -6,6 +6,7 @@ import {
     clearSessionScopes,
     forgetAnonymousScopes,
     rememberAnonymousScope,
+    reassignAnonymousScopes,
     resetConnectionScopes,
     resolveConnectionScope,
 } from "./connection-scope.js";
@@ -91,7 +92,7 @@ describe("connection scope", () => {
             expect(first.scope).not.toEqual(second.scope);
         });
 
-        it("separates the same credentials on different platforms", async () => {
+        it("gives the same credentials the same scope on every platform", async () => {
             const object = { nick: "alice", password: "hunter2" };
             beginCredentialScope("s1", "irc", ACTOR).resolve(
                 credentials(object),
@@ -140,7 +141,7 @@ describe("connection scope", () => {
             });
             handle.reject(new Error("redis down"));
 
-            expect(pending).rejects.toThrow("redis down");
+            await expect(pending).rejects.toThrow("redis down");
         });
 
         it("treats credentials with no secret as anonymous", async () => {
@@ -323,6 +324,94 @@ describe("connection scope", () => {
                 sessionIp: "::ffff:10.0.0.1",
             });
             expect(second.scope).toEqual(first.scope);
+        });
+
+        it("follows the instance when a rename re-keys it", async () => {
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: "10.0.0.1",
+            });
+            rememberAnonymousScope(
+                first.resumptionKey as string,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            // The nick changes, so the worker is re-keyed under a new actor.
+            const renamed = "alice_away@irc.example.org";
+            reassignAnonymousScopes(
+                "instance-1",
+                "instance-2",
+                PLATFORM,
+                renamed,
+            );
+
+            // A refresh now sends the new actor, and must still find it.
+            const second = await resolveConnectionScope(PLATFORM, renamed, {
+                socketSessionId: "s2",
+                sessionIp: "10.0.0.1",
+            });
+            expect(second.scope).toEqual(first.scope);
+        });
+
+        it("clears a re-keyed instance's records on shutdown", async () => {
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: "10.0.0.1",
+            });
+            rememberAnonymousScope(
+                first.resumptionKey as string,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            const renamed = "alice_away@irc.example.org";
+            reassignAnonymousScopes(
+                "instance-1",
+                "instance-2",
+                PLATFORM,
+                renamed,
+            );
+            // Teardown uses the current identifier; the record must go with it
+            // rather than linger under the one it was created with.
+            forgetAnonymousScopes("instance-2");
+
+            const second = await resolveConnectionScope(PLATFORM, renamed, {
+                socketSessionId: "s2",
+                sessionIp: "10.0.0.1",
+            });
+            expect(second.scope).toEqual("s2");
+        });
+
+        it("drops the record when a re-key has no new actor", async () => {
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s1",
+                sessionIp: "10.0.0.1",
+            });
+            rememberAnonymousScope(
+                first.resumptionKey as string,
+                first.scope,
+                "instance-1",
+                "s1",
+            );
+
+            reassignAnonymousScopes("instance-1", "instance-2", PLATFORM);
+
+            const second = await resolveConnectionScope(PLATFORM, ACTOR, {
+                socketSessionId: "s2",
+                sessionIp: "10.0.0.1",
+            });
+            expect(second.scope).toEqual("s2");
+        });
+
+        it("refuses to resolve a scope with no session at all", async () => {
+            await expect(
+                resolveConnectionScope(PLATFORM, ACTOR, {
+                    sessionIp: "10.0.0.1",
+                }),
+            ).rejects.toThrow("without a session");
         });
 
         it("cannot inherit a scope once its worker is gone", async () => {

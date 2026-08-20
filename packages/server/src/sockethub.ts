@@ -20,7 +20,7 @@ import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
-import { clearSessionScopes } from "./connection-scope.js";
+import { clearSessionScopes, normalizeIp } from "./connection-scope.js";
 import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
@@ -34,17 +34,6 @@ import {
 } from "./rate-limiter.js";
 
 const log = createLogger("server:core");
-
-function normalizeIp(ip: string | undefined): string {
-    if (!ip) {
-        return "";
-    }
-    const trimmed = ip.split(",")[0].trim();
-    if (trimmed.startsWith("::ffff:")) {
-        return trimmed.slice(7);
-    }
-    return trimmed;
-}
 
 function getCredentialsTtlMs(): number | undefined {
     const ttlMs = Number(config.get("credentials:ttlMs") ?? 0);
