@@ -286,9 +286,11 @@ export function createLogger(
         defaultMeta: { namespace: fullNamespace },
         transports,
     });
-    if (globalLogSink) {
-        logger.add(new SinkTransport());
-    }
+    // Always attach the lightweight transport so a sink installed later also
+    // receives records from loggers created during bootstrap. The transport
+    // reads globalLogSink at write time, so replacement and clearing do not
+    // retain stale callbacks or require keeping strong references to loggers.
+    logger.add(new SinkTransport());
     loggerNamespaceStore.set(logger, fullNamespace);
     return logger;
 }

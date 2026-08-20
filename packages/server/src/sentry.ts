@@ -46,6 +46,11 @@ Sentry.init({
     profileSessionSampleRate: sentryConfig.profileSessionSampleRate,
     profileLifecycle: "trace",
     sendDefaultPii: sentryConfig.sendDefaultPii,
+    // Sockethub fetches caller-controlled feed and metadata URLs. Never attach
+    // project/deployment baggage or trace identifiers to outbound requests.
+    tracePropagationTargets: [],
+    // Do not continue arbitrary trace headers received by the public server.
+    strictTraceContinuation: true,
     integrations,
 });
 

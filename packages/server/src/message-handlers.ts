@@ -82,6 +82,18 @@ export function createMessageHandlers(
         .use(storeCredentials(credentialsStore))
         .use(
             (
+                data: ActivityStream,
+                next: (data?: ActivityStream | Error) => void,
+            ) => {
+                // This runs only after normalization, schema validation, and
+                // successful credential storage, so labels are trusted.
+                const platform = resolvePlatformId(data) ?? "unknown";
+                observability.startAction(platform, "credentials")();
+                next(data);
+            },
+        )
+        .use(
+            (
                 err: Error,
                 data: ActivityStream,
                 next: (data?: ActivityStream | Error) => void,
@@ -148,6 +160,9 @@ export function createMessageHandlers(
                     );
                     return;
                 }
+                // This middleware runs after AJV validation. Using platform
+                // and action as telemetry labels is safe only from here on.
+                const finish = observability.startAction(platformId, msg.type);
                 let platformInstance: Awaited<
                     ReturnType<ProcessManager["get"]>
                 >;
@@ -160,6 +175,7 @@ export function createMessageHandlers(
                     );
                 } catch (err) {
                     // e.g. limits.maxPlatformInstances reached
+                    finish(true);
                     next(attachError(err, msg));
                     return;
                 }
@@ -175,49 +191,32 @@ export function createMessageHandlers(
                     if (job) {
                         platformInstance.registerCompletedJobHandler(
                             job.title,
-                            next,
+                            (result) => {
+                                const failed =
+                                    result instanceof Error ||
+                                    (typeof result === "object" &&
+                                        result !== null &&
+                                        "error" in result);
+                                finish(failed);
+                                next(result);
+                            },
                         );
                     } else {
                         // failed to add job to queue, reject handler immediately
+                        finish(true);
                         next(attachError("failed to add job to queue", msg));
                     }
                 } catch (err) {
                     // Queue is closed (platform terminating) - send error to client
+                    finish(true);
                     next(attachError(err, msg));
                 }
             },
         )
         .done();
 
-    function instrument<T extends ActivityStream>(
-        handler: MessageHandler<T>,
-        fallbackAction: string,
-    ): MessageHandler<T> {
-        return (data, callback) => {
-            const platform = resolvePlatformId(data) ?? "unknown";
-            const action =
-                typeof data.type === "string" ? data.type : fallbackAction;
-            const finish = observability.startAction(platform, action);
-            let finished = false;
-            const acknowledge =
-                typeof callback === "function" ? callback : () => {};
-            handler(data, (result) => {
-                if (!finished) {
-                    finished = true;
-                    const failed =
-                        result instanceof Error ||
-                        (typeof result === "object" &&
-                            result !== null &&
-                            "error" in result);
-                    finish(failed);
-                }
-                acknowledge(result);
-            });
-        };
-    }
-
     return {
-        credentials: instrument(credentials, "credentials"),
-        message: instrument(message, "message"),
+        credentials,
+        message,
     };
 }
