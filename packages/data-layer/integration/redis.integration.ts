@@ -138,12 +138,16 @@ describe("connect and disconnect", () => {
     ]) {
         describe(o.name, () => {
             let i: JobInstance;
-            beforeEach(() => {
-                i = new o.class("testid", "sessionid", testSecret, {
+            beforeEach(async () => {
+                i = new o.class("lifecycle-testid", "sessionid", testSecret, {
                     url: REDIS_URL,
                 }) as unknown as JobInstance;
                 if (o.name === "worker") {
                     i.init();
+                    // BullMQ opens worker connections asynchronously. Let them
+                    // settle before the test tears the worker down; otherwise
+                    // Bun can report late socket-close errors in the next test.
+                    await new Promise((resolve) => setTimeout(resolve, 100));
                 }
             });
 

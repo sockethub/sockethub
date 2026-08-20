@@ -522,6 +522,97 @@ describe("PlatformInstance", () => {
                 sandbox.assert.notCalled(pi.sendToClient);
             });
 
+            it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {
+                pi.registerSession("good session", "203.0.113.1");
+                pi.registerSession("bad session", "203.0.113.2");
+
+                // Exercise the JSON serialization used by child_process IPC:
+                // an empty tuple slot arrives as null, not undefined.
+                const ipcMessage = JSON.parse(
+                    JSON.stringify([
+                        "sessionUnauthorized",
+                        null,
+                        "bad session",
+                    ]),
+                );
+                await pi.handleProcessMessage(ipcMessage);
+
+                expect(pi.sessions.has("bad session")).toEqual(false);
+                expect(pi.sessionIps.has("bad session")).toEqual(false);
+                expect(pi.sessions.has("good session")).toEqual(true);
+                // control message, not client traffic
+                sandbox.assert.notCalled(pi.sendToClient);
+            });
+
+            it("a deregistered session no longer receives platform messages", async () => {
+                pi.registerSession("stays");
+                pi.registerSession("goes");
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    null,
+                    "goes",
+                ]);
+
+                const message = {
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
+                    type: "message",
+                    actor: { id: "platform", type: "service" },
+                    object: { type: "message", content: "hello" },
+                };
+                await pi.handleProcessMessage(["message", message]);
+
+                sandbox.assert.calledWith(pi.sendToClient, "stays", message);
+                sandbox.assert.neverCalledWith(
+                    pi.sendToClient,
+                    "goes",
+                    message,
+                );
+            });
+
+            it("malformed sessionUnauthorized messages leave sessions unchanged", async () => {
+                const errorSpy = sandbox.spy(pi.log, "error");
+                pi.registerSession("stays", "203.0.113.1");
+
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    { unexpected: true },
+                    "stays",
+                ]);
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    42,
+                ]);
+
+                expect(pi.sessions.has("stays")).toEqual(true);
+                expect(pi.sessionIps.get("stays")).toEqual("203.0.113.1");
+                sandbox.assert.calledTwice(errorSpy);
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match("platform=a platform name"),
+                );
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match("action=sessionUnauthorized"),
+                );
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match('sessionId="stays"'),
+                );
+            });
+
+            it("deregistering an unknown session is a no-op", async () => {
+                pi.registerSession("stays");
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    "never registered",
+                ]);
+                expect(pi.sessions.has("stays")).toEqual(true);
+            });
+
             test("message events from platform thread are delivered to every registered session", async () => {
                 pi.sessions.add("session one");
                 pi.sessions.add("session two");

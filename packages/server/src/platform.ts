@@ -183,7 +183,7 @@ async function startPlatformProcess() {
     /**
      * Safely send message to parent process, handling IPC channel closure
      */
-    function safeProcessSend(message: [string, unknown]) {
+    function safeProcessSend(message: [string, unknown, unknown?]) {
         if (process.send && process.connected) {
             try {
                 process.send(message);
@@ -464,7 +464,18 @@ async function startPlatformProcess() {
                              * - Error is reported to Sentry for monitoring authentication issues.
                              */
                             if (platform.isInitialized()) {
-                                // Platform already running - reject job only, preserve platform instance
+                                // Platform already running - reject job only, preserve platform instance.
+                                // This session has failed to prove it holds
+                                // credentials for this connection, so it must
+                                // also stop receiving the connection's traffic:
+                                // rejecting the job alone left it registered
+                                // (and subscribed to the fan-out) until the
+                                // janitor noticed its socket had gone.
+                                safeProcessSend([
+                                    "sessionUnauthorized",
+                                    null,
+                                    job.sessionId,
+                                ]);
                                 doneCallback(toError(err), null);
                             } else {
                                 // Platform not initialized - terminate platform process

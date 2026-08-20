@@ -41,8 +41,9 @@ type EnvFormat = {
 };
 
 type MessageFromPlatform =
-    | ["updateActor", ActivityStream | undefined, string]
-    | ["credentialsHash", undefined, string]
+    | ["updateActor", ActivityStream | null | undefined, string]
+    | ["credentialsHash", null | undefined, string]
+    | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
@@ -402,6 +403,19 @@ export default class PlatformInstance {
     }
 
     /**
+     * Stop delivering this instance's messages to a session. Used when the
+     * session loses (or never had) the right to be attached; the janitor
+     * separately drops sessions whose sockets have gone away.
+     */
+    public deregisterSession(sessionId: string) {
+        if (!this.sessions.delete(sessionId)) {
+            return;
+        }
+        this.sessionIps.delete(sessionId);
+        this.log.debug(`deregistered session ${sessionId}`);
+    }
+
+    /**
      * Sends a message to client (user), can be registered with an event emitted from the platform
      * process.
      * @param sessionId ID of the socket connection to send the message to
@@ -646,6 +660,27 @@ export default class PlatformInstance {
             // its remote connection is bound to, so the parent can authorize
             // (or refuse) additional sessions attaching to this instance.
             this.setCredentialsHash(third);
+        } else if (first === "sessionUnauthorized") {
+            if (
+                typeof third !== "string" ||
+                third.length === 0 ||
+                (typeof second !== "undefined" && second !== null)
+            ) {
+                const sessionContext =
+                    typeof third === "string"
+                        ? ` sessionId=${JSON.stringify(third)}`
+                        : "";
+                this.log.error(
+                    `ignoring malformed platform IPC control message platform=${this.name} action=sessionUnauthorized${sessionContext}`,
+                );
+                return;
+            }
+            // The child could not validate this session's credentials against
+            // the running connection. Drop it so the fan-out in this method
+            // (and broadcastToSharedPeers) stops delivering the connection's
+            // traffic to it. A session that later presents valid credentials
+            // re-registers through ProcessManager on its next message.
+            this.deregisterSession(third);
         } else if (first === "error") {
             // Error messages travel over IPC as plain objects; normalize to a string.
             let normalizedError: string;
