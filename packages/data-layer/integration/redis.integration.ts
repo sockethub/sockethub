@@ -5,6 +5,7 @@ import {
     JobQueue,
     JobWorker,
     redisCheck,
+    SESSION_SHARE_DENIED,
 } from "@sockethub/data-layer";
 import {
     type ActivityStream,
@@ -100,7 +101,7 @@ describe("CredentialsStore", () => {
 
         await expect(
             store.get(actor, undefined, { validateSessionShare: true }),
-        ).rejects.toThrow("username already in use");
+        ).rejects.toThrow(SESSION_SHARE_DENIED);
     });
 
     it("isolates credentials by session", async () => {

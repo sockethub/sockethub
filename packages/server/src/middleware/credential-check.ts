@@ -2,6 +2,7 @@ import {
     CredentialsMismatchError,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
+    SESSION_SHARE_DENIED,
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import { type ActivityStream, resolvePlatformId } from "@sockethub/schemas";
@@ -104,9 +105,7 @@ export default function credentialCheck(
                 );
                 next(
                     toError(
-                        new CredentialsNotShareableError(
-                            "username already in use",
-                        ),
+                        new CredentialsNotShareableError(SESSION_SHARE_DENIED),
                     ),
                 );
                 return;
@@ -167,7 +166,8 @@ function isExpectedCredentialValidationError(err: unknown): boolean {
     }
     return (
         err instanceof Error &&
-        err.message.startsWith("credentials not found for ")
+        (err.message.startsWith("credentials not found for ") ||
+            err.message === SESSION_SHARE_DENIED)
     );
 }
 

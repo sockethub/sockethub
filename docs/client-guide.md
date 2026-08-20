@@ -254,7 +254,7 @@ The rejected request returns an ActivityStream response with an `error`:
   "type": "connect",
   "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "id": "1",
-  "error": "username already in use"
+  "error": "unable to attach session for this actor"
 }
 ```
 
