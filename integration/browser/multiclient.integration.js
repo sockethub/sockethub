@@ -386,11 +386,16 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             expect(records).to.have.length(CLIENT_COUNT);
         });
 
-        it("rejects connection with mismatched credentials (same actor, different credentials)", async () => {
-            // Take first client's JID but use different resource credentials
+        it("gives a session with different credentials its own connection", async () => {
+            // Same JID, different resource. A persistent instance is keyed on
+            // a server-derived credential fingerprint, so this session cannot
+            // reach the first client's connection by naming its actor id — it
+            // gets its own, and XMPP decides whether to accept it. Previously
+            // Sockethub refused this with "unable to attach session for this
+            // actor", which also told the caller a connection existed.
             const originalClient = records[0];
             const originalJid = originalClient.jid;
-            const wrongResource = "DifferentResource"; // Different from SockethubTest1
+            const otherResource = "DifferentResource"; // Different from SockethubTest1
 
             // Create a new socket connection
             const newSocket = io(config.sockethub.url, {
@@ -398,12 +403,12 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             });
             const newSockethubClient = new SockethubClient(newSocket);
 
-            let _connectError = null;
+            let _connectError = "";
 
             // Set up error listener
             newSockethubClient.socket.on("message", (msg) => {
                 if (msg.type === "error") {
-                    _connectError = msg.error;
+                    _connectError = String(msg.error);
                 }
             });
 
@@ -414,24 +419,18 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             );
             await newSockethubClient.ready();
 
-            // Set WRONG credentials (same actor JID, different resource)
             await setXMPPCredentials(
                 newSockethubClient,
                 originalJid,
-                wrongResource,
+                otherResource,
             );
 
-            // Try to connect - this should fail with credential error
             try {
+                // Its own connection, established on its own credentials.
                 await connectXMPP(newSockethubClient, originalJid);
-                // If we reach here, the test should fail
-                expect.fail(
-                    "Connection should have been rejected with mismatched credentials",
-                );
-            } catch (error) {
-                // Connection should fail
-                expect(error.message).to.include("Connect failed");
-                expect(error.message).to.include(
+                expect(newSockethubClient.socket.connected).to.be.true;
+                // No Sockethub-level refusal leaked the first client to it.
+                expect(_connectError).to.not.include(
                     "unable to attach session for this actor",
                 );
             } finally {

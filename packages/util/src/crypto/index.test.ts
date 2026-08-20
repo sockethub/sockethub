@@ -157,13 +157,46 @@ describe("getPlatformId", () => {
     });
 
     it("generates platform hash", () => {
-        expect(getPlatformId("foo", undefined, crypto)).toEqual("foo");
+        expect(getPlatformId("foo", undefined, undefined, crypto)).toEqual(
+            "foo",
+        );
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foo");
     });
     it("generates platform + actor hash", () => {
-        expect(getPlatformId("foo", "bar", crypto)).toEqual("foobar");
+        expect(getPlatformId("foo", "bar", undefined, crypto)).toEqual(
+            JSON.stringify(["foo", "bar", ""]),
+        );
         sinon.assert.calledOnce(cryptoHashStub);
-        sinon.assert.calledWith(cryptoHashStub, "foobar");
+        sinon.assert.calledWith(cryptoHashStub, JSON.stringify(["foo", "bar", ""]));
+    });
+    it("includes the scope when one is given", () => {
+        expect(getPlatformId("foo", "bar", "baz", crypto)).toEqual(
+            JSON.stringify(["foo", "bar", "baz"]),
+        );
+        sinon.assert.calledOnce(cryptoHashStub);
+        sinon.assert.calledWith(cryptoHashStub, JSON.stringify(["foo", "bar", "baz"]));
+    });
+
+    it("cannot be made to collide by shifting the separator", () => {
+        // ("foo", "bar", "baz") and ("foo", "barbaz", "") are distinct.
+        expect(getPlatformId("foo", "bar", "baz", crypto)).not.toEqual(
+            getPlatformId("foo", "barbaz", undefined, crypto),
+        );
+    });
+
+    it("cannot be made to collide by embedding a separator in the actor", () => {
+        // `actor.id` is an unconstrained string, so it can contain any byte a
+        // delimiter might use — NUL included.
+        expect(getPlatformId("foo", "bar", "baz", crypto)).not.toEqual(
+            getPlatformId("foo", "bar\u0000baz", undefined, crypto),
+        );
+        expect(getPlatformId("foo", 'a"b', "c", crypto)).not.toEqual(
+            getPlatformId("foo", "a", 'b"c', crypto),
+        );
+    });
+    it("ignores the scope for global platforms", () => {
+        expect(getPlatformId("foo", undefined, "baz", crypto)).toEqual("foo");
+        sinon.assert.calledWith(cryptoHashStub, "foo");
     });
 });

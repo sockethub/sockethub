@@ -120,7 +120,6 @@ export interface CredentialsStoreInterface {
     get(
         actor: string,
         credentialsHash?: string,
-        options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
     /**
@@ -143,30 +142,7 @@ export interface CredentialsStoreOptions {
     ttlMs?: number;
 }
 
-export interface CredentialsValidationOptions {
-    /**
-     * Enables stricter checks used only when trying to attach a second socket
-     * session to an already-running actor-scoped platform instance.
-     */
-    validateSessionShare?: boolean;
-}
-
 export class CredentialsMismatchError extends Error {
-    constructor(message: string) {
-        super(message);
-        // Keep the legacy "Error: ..." string shape in existing callers/tests.
-        this.name = "Error";
-    }
-}
-
-/**
- * The single message returned for every failed attach to an existing
- * persistent platform instance, whatever the underlying reason. Callers still
- * distinguish the cases by error *class* internally; clients see one string.
- */
-export const SESSION_SHARE_DENIED = "unable to attach session for this actor";
-
-export class CredentialsNotShareableError extends Error {
     constructor(message: string) {
         super(message);
         // Keep the legacy "Error: ..." string shape in existing callers/tests.
@@ -276,27 +252,14 @@ export class CredentialsStore implements CredentialsStoreInterface {
     async get(
         actor: string,
         credentialsHash?: string,
-        options: CredentialsValidationOptions = {},
     ): Promise<CredentialsObject> {
         this.log.debug(`get credentials for ${actor}`);
         if (!this.store.isConnected) {
             await this.store.connect();
         }
-        // Attach attempts get one uniform message for every rejection reason.
-        // Distinct texts ("not found" / "invalid" / "already in use") let a
-        // caller probing guessed actor ids learn *why* it was turned away.
-        // Detailed messages are kept for the platform's own credential reads,
-        // where the caller already owns the credentials being described.
-        const share = options.validateSessionShare === true;
-        const denied = (detail: string) =>
-            share ? SESSION_SHARE_DENIED : detail;
-
         const credentials: CredentialsObject = await this.store.get(actor);
         if (!credentials) {
-            // Deliberately NOT a CredentialsNotShareableError: only that class
-            // is eligible for the same-IP anonymous reconnect escape hatch,
-            // and a session with no stored credentials at all must not be.
-            throw new Error(denied(`credentials not found for ${actor}`));
+            throw new Error(`credentials not found for ${actor}`);
         }
         if (
             !credentials.object ||
@@ -305,26 +268,8 @@ export class CredentialsStore implements CredentialsStoreInterface {
             Object.keys(credentials.object).length === 0
         ) {
             throw new CredentialsMismatchError(
-                denied(`invalid credentials for ${actor}`),
+                `invalid credentials for ${actor}`,
             );
-        }
-
-        // Ordered before the hash comparison so a passwordless attach always
-        // reports "not shareable" rather than "mismatch", whatever the
-        // incumbent's credentials were. Callers distinguish the two: only the
-        // not-shareable case is eligible for same-IP anonymous reconnect.
-        if (options.validateSessionShare) {
-            const password = credentials.object.password;
-            const token = credentials.object.token;
-            const hasPassword =
-                typeof password === "string" && password.length > 0;
-            const hasToken = typeof token === "string" && token.length > 0;
-
-            // Credentials must include a non-empty secret before an additional
-            // session can attach to the same persistent actor instance.
-            if (!hasPassword && !hasToken) {
-                throw new CredentialsNotShareableError(SESSION_SHARE_DENIED);
-            }
         }
 
         if (credentialsHash) {
@@ -332,7 +277,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
             // "same actor, different credentials" reuse attempts.
             if (credentialsHash !== this.objectHash(credentials.object)) {
                 throw new CredentialsMismatchError(
-                    denied(`invalid credentials for ${actor}`),
+                    `invalid credentials for ${actor}`,
                 );
             }
         }

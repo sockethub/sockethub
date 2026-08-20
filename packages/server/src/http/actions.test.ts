@@ -2,6 +2,7 @@
  * Tests for HTTP actions endpoint idempotency and GET replay behavior.
  */
 import { describe, expect, it } from "bun:test";
+import type { ActivityStream } from "@sockethub/schemas";
 
 import { registerHttpActionsRoutes } from "./actions.js";
 import {
@@ -723,6 +724,173 @@ describe("http actions", () => {
         // Only the request timeout finally releases it.
         await new Promise((resolve) => setTimeout(resolve, 50));
         expect(hasHttpSessions(platformId)).toBeFalse();
+    });
+
+    it("returns an error for a malformed credentials payload instead of throwing", async () => {
+        // The payload is only classified before dispatch, not validated —
+        // validation happens inside the handler chain. The ack builder must
+        // therefore tolerate an actor that is not an object, rather than
+        // reaching into it and taking the whole request down.
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 300,
+                "httpActions:idleTimeoutMs": 300,
+            },
+            // Stands in for the real chain, which attaches the validation
+            // error to the payload and hands it back.
+            createMessageHandlersOverride: () => ({
+                credentials: (
+                    payload: ActivityStream,
+                    cb: (data: unknown) => void,
+                ) => cb({ ...payload, error: "invalid actor" }),
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ ok: true }),
+            }),
+        });
+
+        const requestId = "malformed-actor-redaction";
+        const { req, res, writes } = createReqRes({
+            body: [
+                {
+                    type: "credentials",
+                    actor: null,
+                    object: {
+                        type: "credentials",
+                        username: "alice",
+                        password: "malformed-test-password",
+                    },
+                },
+            ],
+            headers: { "x-request-id": requestId },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(res.statusCode).toBe(200);
+        expect(res.ended).toBeTrue();
+        // The caller gets the validation error rather than a 500 from a
+        // TypeError thrown while building the acknowledgement.
+        expect(writes.join("")).toContain("invalid actor");
+        // ...and without the submitted credentials riding along. There is no
+        // actor id to build a redacted ack around, so only the message may
+        // travel: the chain's error result still carries the whole activity,
+        // and both the response and the idempotency cache are readable later.
+        const exposed = JSON.stringify({
+            writes,
+            cached: fakeRedis.lists,
+        });
+        expect(exposed).not.toContain("malformed-test-password");
+        expect(exposed).not.toContain('"username"');
+    });
+
+    it("saves credentials in payload order even when the first one is slow", async () => {
+        // Two credentials for the same actor write the same key. Run
+        // concurrently they could land in either order, leaving the stored
+        // credentials disagreeing with the scope resolved for them.
+        const saveOrder: Array<string> = [];
+        let releaseFirst: (() => void) | undefined;
+
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 1000,
+                "httpActions:idleTimeoutMs": 1000,
+            },
+            createMessageHandlersOverride: () => ({
+                credentials: (
+                    payload: ActivityStream,
+                    cb: (data: unknown) => void,
+                ) => {
+                    const id = payload.object?.id;
+                    if (id === "first") {
+                        releaseFirst = () => {
+                            saveOrder.push(id);
+                            cb({ ok: true });
+                        };
+                        return;
+                    }
+                    saveOrder.push(id);
+                    cb({ ok: true });
+                },
+                message: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ ok: true }),
+            }),
+        });
+
+        const { req, res } = createReqRes({
+            body: [
+                {
+                    ...singlePayload,
+                    type: "credentials",
+                    object: { id: "first" },
+                },
+                {
+                    ...singlePayload,
+                    type: "credentials",
+                    object: { id: "second" },
+                },
+            ],
+        });
+        const pending = handlers["/sockethub-http"](req, res);
+
+        // The second must not have overtaken the stalled first.
+        expect(saveOrder).toEqual([]);
+
+        releaseFirst?.();
+        await pending;
+
+        expect(saveOrder).toEqual(["first", "second"]);
+    });
+
+    it("still dispatches messages when the client disconnects mid-credentials", async () => {
+        // Credentials are processed as a first phase, so the message phase
+        // resumes after an await. A disconnect during that await must not drop
+        // the messages: the "close" handler deliberately keeps the platform
+        // sessions registered so queued jobs finish.
+        let releaseCredentials: ((data: unknown) => void) | undefined;
+        let messageDispatched = false;
+
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 500,
+                "httpActions:idleTimeoutMs": 500,
+            },
+            createMessageHandlersOverride: () => ({
+                credentials: (_payload: unknown, cb: (data: unknown) => void) => {
+                    releaseCredentials = cb;
+                },
+                message: (_payload: unknown, cb: (data: unknown) => void) => {
+                    messageDispatched = true;
+                    cb({ ok: true });
+                },
+            }),
+        });
+
+        const { req, res } = createReqRes({
+            body: [
+                { ...singlePayload, type: "credentials" },
+                singlePayload,
+            ],
+        });
+        const pending = handlers["/sockethub-http"](req, res);
+
+        // Still inside the credentials phase.
+        expect(messageDispatched).toBeFalse();
+
+        req.triggerClose();
+        releaseCredentials?.({ ok: true });
+        await pending;
+
+        expect(messageDispatched).toBeTrue();
     });
 
     it("propagates an unexpected setup error to Express", async () => {

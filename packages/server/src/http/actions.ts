@@ -31,6 +31,7 @@ import express, {
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import config from "../config.js";
+import { clearSessionScopes } from "../connection-scope.js";
 import { parseCorsOrigins, resolveAllowedOrigin } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
 import type ProcessManager from "../process-manager.js";
@@ -153,11 +154,33 @@ function buildCredentialsAck(
         return result;
     }
 
+    // The payload is whatever the caller sent; it has only been classified,
+    // not validated. Validation happens inside the handler chain, so an
+    // invalid one arrives here with the chain's error already attached — but
+    // with nothing to correlate on. Hand that back rather than reaching into
+    // an actor that may not be an object.
+    const actor = isObject(payload) ? payload.actor : undefined;
+    const actorId =
+        isObject(actor) && typeof actor.id === "string" ? actor.id : undefined;
+    if (!actorId) {
+        // Never the raw result: the chain's error handler spreads the whole
+        // submitted activity (`{ ...msg, error }`, stripping only
+        // `sessionSecret`), so `object.password` / `object.token` are still on
+        // it. That would be written to the NDJSON stream and persisted to the
+        // idempotency cache, which an unauthenticated GET replays. Only the
+        // message travels.
+        const message =
+            isObject(result) && typeof result.error === "string"
+                ? result.error
+                : "invalid credentials payload";
+        return new Error(message);
+    }
+
     const ack: ActivityStream = {
         "@context": buildCanonicalContext(INTERNAL_PLATFORM_CONTEXT_URL),
         type: "credentials-ack",
         actor: {
-            id: payload.actor.id,
+            id: actorId,
             type: "person",
         },
     };
@@ -728,12 +751,17 @@ export function registerHttpActionsRoutes(
             let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
             let completionStarted = false;
             let redisWriteChain = Promise.resolve();
+            let signalRequestFinalized: () => void = () => undefined;
+            const requestFinalized = new Promise<void>((resolve) => {
+                signalRequestFinalized = resolve;
+            });
 
             const cleanup = () => {
                 for (const platformId of platformIds) {
                     unregisterHttpSession(platformId);
                 }
                 platformIds.clear();
+                clearSessionScopes(sessionId);
                 // This session id is single-use; drop its credential namespace
                 // so it does not linger in Redis (SecureStore writes have no
                 // TTL). Runs after all jobs have completed or the request has
@@ -759,6 +787,10 @@ export function registerHttpActionsRoutes(
                     return;
                 }
                 completionStarted = true;
+                // Releases the credentials phase below: a timeout or an early
+                // finalization must not leave the route handler awaiting a
+                // callback that may never arrive.
+                signalRequestFinalized();
 
                 const finish = () => {
                     cleanup();
@@ -898,7 +930,14 @@ export function registerHttpActionsRoutes(
 
                 persistLine(serialized);
 
-                if (!responseClosed) {
+                // `completionStarted` as well as `responseClosed`: with
+                // idempotency enabled, completeRequest() defers closing the
+                // response behind the Redis write chain, so there is a window
+                // where the response is still writable but persistLine() has
+                // already stopped recording. A late callback landing there
+                // would put a line in the stream that the cached replay does
+                // not have.
+                if (!responseClosed && !completionStarted) {
                     res.write(`${serialized}\n`);
                 }
                 pending -= 1;
@@ -928,24 +967,79 @@ export function registerHttpActionsRoutes(
                 completeRequest();
             });
 
-            payloads.forEach((payload) => {
-                const kind = classifyPayload(payload);
-                switch (kind) {
-                    case "credentials":
+            // Credentials run to completion before anything that depends on
+            // them is dispatched. Handlers are async, so a single pass over
+            // the payloads would let a persistent action reach
+            // ProcessManager.get() before the credentials ahead of it had
+            // registered their scope, forking a second worker.
+            const classified = payloads.map((payload) => ({
+                payload,
+                kind: classifyPayload(payload),
+            }));
+
+            // One at a time, in payload order. Two credentials for the same
+            // platform and actor write the same key, so concurrent saves could
+            // land in either order and leave the stored credentials
+            // disagreeing with the scope resolved for them.
+            const credentialsDone = (async () => {
+                for (const entry of classified) {
+                    if (entry.kind !== "credentials") {
+                        continue;
+                    }
+                    if (completionStarted) {
+                        return;
+                    }
+                    await new Promise<void>((resolve) => {
                         handlers.credentials(
-                            payload as ActivityStream,
-                            (result) =>
+                            entry.payload as ActivityStream,
+                            (result) => {
                                 writeResult(
                                     buildCredentialsAck(
-                                        payload as ActivityStream,
+                                        entry.payload as ActivityStream,
                                         result,
                                     ),
-                                ),
+                                );
+                                resolve();
+                            },
                         );
+                    });
+                }
+            })();
+            // Observed here so a rejection can never surface as an unhandled
+            // one when requestFinalized wins the race below. The race still
+            // sees it when credentialsDone settles first.
+            credentialsDone.catch((err: unknown) => {
+                log.error(
+                    `credentials phase failed for ${requestId}: ${String(err)}`,
+                );
+            });
+
+            // Race the finalization signal so a hung credentials handler cannot
+            // pin this handler; the request timeout completes the request and
+            // releases it.
+            await Promise.race([credentialsDone, requestFinalized]);
+
+            if (completionStarted) {
+                // cleanup() has already unregistered the platform sessions and
+                // dropped this session's credential scopes. Dispatching now
+                // would queue jobs the janitor may reap, and each one would
+                // miss its scope and fork a separate worker.
+                //
+                // Deliberately not gated on `responseClosed`: a client that
+                // disconnects mid-request leaves the platform sessions
+                // registered so queued jobs still finish (see the "close"
+                // handler). Bailing out there would drop every message payload
+                // and leave `pending` above zero until the request timeout.
+                return;
+            }
+
+            for (const entry of classified) {
+                switch (entry.kind) {
+                    case "credentials":
                         break;
                     case "message":
                         handlers.message(
-                            payload as InternalActivityStream,
+                            entry.payload as InternalActivityStream,
                             writeResult,
                         );
                         break;
@@ -953,7 +1047,7 @@ export function registerHttpActionsRoutes(
                         writeResult(new Error("unsupported payload type"));
                         break;
                 }
-            });
+            }
         },
     );
 
