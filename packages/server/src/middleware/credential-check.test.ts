@@ -233,6 +233,9 @@ describe("Middleware: credentialCheck", () => {
             );
 
             expect(result instanceof Error).toEqual(true);
+            expect(result.toString()).toEqual(
+                `Error: ${SESSION_SHARE_DENIED}`,
+            );
         });
 
         it("admits a concurrent connect once the hash arrives and matches", async () => {

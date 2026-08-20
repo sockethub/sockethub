@@ -105,9 +105,7 @@ export default function credentialCheck(
                 );
                 next(
                     toError(
-                        new CredentialsNotShareableError(
-                            "username already in use",
-                        ),
+                        new CredentialsNotShareableError(SESSION_SHARE_DENIED),
                     ),
                 );
                 return;
