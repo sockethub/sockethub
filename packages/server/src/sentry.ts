@@ -8,6 +8,7 @@ import {
     sanitizeObservabilityNamespace,
     setObservabilityAdapter,
 } from "./observability.js";
+import { defaultSentryRelease } from "./version.js";
 
 type SentryConfig = {
     dsn: string;
@@ -39,7 +40,9 @@ if (sentryConfig.profileSessionSampleRate > 0) {
 Sentry.init({
     dsn: sentryConfig.dsn,
     environment: sentryConfig.environment,
-    release: sentryConfig.release || undefined,
+    // Fall back to the running package version so releases are tagged
+    // correctly without every deployment having to restate its own version.
+    release: sentryConfig.release || defaultSentryRelease(),
     enableLogs: sentryConfig.enableLogs,
     enableMetrics: sentryConfig.enableMetrics,
     tracesSampleRate: sentryConfig.tracesSampleRate,

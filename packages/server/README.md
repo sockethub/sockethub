@@ -126,7 +126,7 @@ Sentry error reporting can be configured via environment variable or config file
 
 - `SENTRY_DSN` - enable Sentry
 - `SENTRY_ENVIRONMENT` - deployment name such as `production`
-- `SENTRY_RELEASE` - deployed release identifier
+- `SENTRY_RELEASE` - deployed release identifier (defaults to `sockethub@<running version>`)
 
 **Config File:**
 For more advanced Sentry configuration, add a `sentry` section to your

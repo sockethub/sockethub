@@ -14,13 +14,13 @@ import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import { parseCorsOrigins } from "./cors.js";
 import routes from "./routes.js";
+import { SOCKETHUB_VERSION } from "./version.js";
 
 const require = createRequire(import.meta.url);
-const packageJson = require("../package.json");
 
 const log = createLogger("server:listener");
 // initial details
-log.info(`sockethub v${packageJson.version}`);
+log.info(`sockethub v${SOCKETHUB_VERSION}`);
 
 /**
  * Handles the initialization and access of Sockethub resources.

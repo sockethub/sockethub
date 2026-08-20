@@ -596,6 +596,13 @@ LOG_LEVEL=debug LOG_FILE_LEVEL=debug sockethub
 }
 ```
 
+`release` is optional. Left unset (or empty), Sockethub reports
+`sockethub@<version>` using the version of the server package that is actually
+running, so a container image tags its own release without the deployment
+having to restate it. Set it explicitly only when you need a different
+identifier — for example a build that must match source maps uploaded under a
+git SHA.
+
 Sentry records aggregate connection and action counters, active connection
 gauges, action-duration distributions, and action traces. Metric dimensions are
 limited to platform and action names; actor IDs, credentials, message bodies,
@@ -631,7 +638,7 @@ export LOG_FILE_LEVEL=debug  # File log level (error, warn, info, debug)
 # Sentry (optional)
 export SENTRY_DSN=https://your-dsn@sentry.io/project-id
 export SENTRY_ENVIRONMENT=production
-export SENTRY_RELEASE=sockethub@5.0.0
+export SENTRY_RELEASE=sockethub@5.0.0   # optional; defaults to the running version
 ```
 
 ## Environment Examples
