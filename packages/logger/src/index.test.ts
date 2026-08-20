@@ -8,6 +8,7 @@ import {
     initLogger,
     resetLoggerContext,
     resetLoggerForTesting,
+    setLogSink,
     setLoggerContext,
 } from "./index.js";
 
@@ -59,12 +60,46 @@ describe("Logger Package", () => {
             const log = createLogger("test:namespace", {
                 file: "/tmp/test.log",
             });
-            expect(log.transports.length).toBe(2); // console + file
+            expect(log.transports.length).toBe(3); // console + file + sink
         });
 
         it("does not create file transport when file is empty string", () => {
             const log = createLogger("test:namespace", { file: "" });
-            expect(log.transports.length).toBe(1); // console only
+            expect(log.transports.length).toBe(2); // console + sink
+        });
+
+        it("forwards records from a logger created before sink setup", async () => {
+            const records: Array<{
+                level: string;
+                message: string;
+                namespace: string;
+            }> = [];
+            const log = createLogger("test:namespace", { level: "error" });
+            setLogSink((record) => records.push(record));
+
+            log.warn("health warning");
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(records).toEqual([
+                {
+                    level: "warn",
+                    message: "health warning",
+                    namespace: "test:namespace",
+                },
+            ]);
+        });
+
+        it("can disable the structured sink without affecting other transports", async () => {
+            const records: Array<unknown> = [];
+            setLogSink((record) => records.push(record));
+            setLogSink(null);
+            const log = createLogger("test:namespace", { level: "error" });
+
+            log.warn("not forwarded");
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(records).toHaveLength(0);
+            expect(log.transports).toHaveLength(2);
         });
     });
 
@@ -98,7 +133,7 @@ describe("Logger Package", () => {
             });
 
             const log = createLogger("test:namespace");
-            expect(log.transports.length).toBe(2); // console + file
+            expect(log.transports.length).toBe(3); // console + file + sink
             const consoleTransport = log.transports[0];
             expect(consoleTransport.level).toBe("debug");
         });
@@ -170,11 +205,11 @@ describe("Logger Package", () => {
 
             // Explicit empty string disables file
             const log1 = createLogger("test:1", { file: "" });
-            expect(log1.transports.length).toBe(1);
+            expect(log1.transports.length).toBe(2);
 
             // No explicit option uses global
             const log2 = createLogger("test:2");
-            expect(log2.transports.length).toBe(2);
+            expect(log2.transports.length).toBe(3);
         });
 
         it("serializes circular metadata with [Circular] marker in log output", () => {

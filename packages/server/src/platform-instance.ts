@@ -41,7 +41,9 @@ type EnvFormat = {
 };
 
 type MessageFromPlatform =
-    | ["updateActor", ActivityStream | undefined, string]
+    | ["updateActor", ActivityStream | null | undefined, string]
+    | ["credentialsHash", null | undefined, string]
+    | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
@@ -81,6 +83,17 @@ export default class PlatformInstance {
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
+    /**
+     * Hash of the credentials this instance's remote connection was
+     * established with, reported by the child once a credentialed call has
+     * succeeded. `credential-check` compares an attaching session's
+     * credentials against it. `undefined` until the first successful
+     * connect — see that middleware for how the unknown case is handled.
+     */
+    credentialsHash: string | undefined;
+    private readonly credentialsHashWaiters = new Set<
+        (hash: string | undefined) => void
+    >();
     private processMessageListener?: (message: MessageFromPlatform) => void;
     private processCloseListener?: (e: unknown) => void;
     private heartbeatLastSeen = Date.now();
@@ -207,6 +220,13 @@ export default class PlatformInstance {
     private async teardown() {
         this.log.debug("platform process shutdown");
         this.flaggedForTermination = true;
+        // This connection will never report its credentials now; release any
+        // attach waiting on them so it fails closed immediately rather than
+        // sitting out the full timeout.
+        for (const waiter of this.credentialsHashWaiters) {
+            waiter(undefined);
+        }
+        this.credentialsHashWaiters.clear();
 
         try {
             if (this.heartbeatMonitor) {
@@ -336,11 +356,63 @@ export default class PlatformInstance {
      * Register listener to be called when the process emits a message.
      * @param sessionId ID of socket connection that will receive messages from platform emits
      */
+    /**
+     * Record the credentials this instance's connection is bound to and
+     * release anything waiting on them.
+     */
+    private setCredentialsHash(hash: string) {
+        this.credentialsHash = hash;
+        for (const waiter of this.credentialsHashWaiters) {
+            waiter(hash);
+        }
+        this.credentialsHashWaiters.clear();
+    }
+
+    /**
+     * Resolve once the child has reported which credentials this connection
+     * was established with, or `undefined` if that has not happened within
+     * `timeoutMs`. Callers treat the timeout as "unknown, refuse" — waiting
+     * unbounded would let a hung remote handshake pin a session indefinitely.
+     */
+    public waitForCredentialsHash(
+        timeoutMs: number,
+    ): Promise<string | undefined> {
+        if (this.credentialsHash) {
+            return Promise.resolve(this.credentialsHash);
+        }
+        return new Promise((resolve) => {
+            const waiter = (hash: string | undefined) => {
+                clearTimeout(timer);
+                resolve(hash);
+            };
+            const timer = setTimeout(() => {
+                this.credentialsHashWaiters.delete(waiter);
+                resolve(undefined);
+            }, timeoutMs);
+            // Don't hold the event loop open purely for this timer.
+            timer.unref?.();
+            this.credentialsHashWaiters.add(waiter);
+        });
+    }
+
     public registerSession(sessionId: string, clientIp?: string) {
         if (clientIp) {
             this.sessionIps.set(sessionId, clientIp);
         }
         this.sessions.add(sessionId);
+    }
+
+    /**
+     * Stop delivering this instance's messages to a session. Used when the
+     * session loses (or never had) the right to be attached; the janitor
+     * separately drops sessions whose sockets have gone away.
+     */
+    public deregisterSession(sessionId: string) {
+        if (!this.sessions.delete(sessionId)) {
+            return;
+        }
+        this.sessionIps.delete(sessionId);
+        this.log.debug(`deregistered session ${sessionId}`);
     }
 
     /**
@@ -583,6 +655,32 @@ export default class PlatformInstance {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
             this.updateIdentifier(third);
+        } else if (first === "credentialsHash") {
+            // Internal control message: the child is reporting which credentials
+            // its remote connection is bound to, so the parent can authorize
+            // (or refuse) additional sessions attaching to this instance.
+            this.setCredentialsHash(third);
+        } else if (first === "sessionUnauthorized") {
+            if (
+                typeof third !== "string" ||
+                third.length === 0 ||
+                (typeof second !== "undefined" && second !== null)
+            ) {
+                const sessionContext =
+                    typeof third === "string"
+                        ? ` sessionId=${JSON.stringify(third)}`
+                        : "";
+                this.log.error(
+                    `ignoring malformed platform IPC control message platform=${this.name} action=sessionUnauthorized${sessionContext}`,
+                );
+                return;
+            }
+            // The child could not validate this session's credentials against
+            // the running connection. Drop it so the fan-out in this method
+            // (and broadcastToSharedPeers) stops delivering the connection's
+            // traffic to it. A session that later presents valid credentials
+            // re-registers through ProcessManager on its next message.
+            this.deregisterSession(third);
         } else if (first === "error") {
             // Error messages travel over IPC as plain objects; normalize to a string.
             let normalizedError: string;

@@ -15,6 +15,7 @@ import {
     resetSharedCredentialsRedisConnection,
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
+    SESSION_SHARE_DENIED,
     verifySecureStore,
 } from "./credentials-store.js";
 import {
@@ -23,6 +24,7 @@ import {
 } from "./job-base.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker, type JobWorkerOptions } from "./job-worker.js";
+import { buildCredentialsKey } from "./queue-id.js";
 
 export * from "./types.js";
 
@@ -52,6 +54,7 @@ async function redisCheck(config: RedisConfig): Promise<void> {
 }
 
 export {
+    buildCredentialsKey,
     CredentialsMismatchError,
     CredentialsNotShareableError,
     CredentialsStore,
@@ -72,4 +75,5 @@ export {
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
     resetSharedRedisConnection,
+    SESSION_SHARE_DENIED,
 };

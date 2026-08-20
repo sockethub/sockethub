@@ -431,7 +431,9 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             } catch (error) {
                 // Connection should fail
                 expect(error.message).to.include("Connect failed");
-                expect(error.message).to.include("invalid credentials");
+                expect(error.message).to.include(
+                    "unable to attach session for this actor",
+                );
             } finally {
                 // Clean up
                 newSockethubClient.socket.disconnect();

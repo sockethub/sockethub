@@ -261,9 +261,45 @@ export const SockethubConfigSchema = {
                     type: "string",
                     default: "",
                 },
-                traceSampleRate: {
+                environment: {
+                    type: "string",
+                    default: "production",
+                },
+                release: {
+                    type: "string",
+                    default: "",
+                },
+                enableLogs: {
+                    type: "boolean",
+                    default: false,
+                },
+                logLevels: {
+                    type: "array",
+                    items: {
+                        type: "string",
+                        enum: ["debug", "info", "warn", "error"],
+                    },
+                    default: ["warn", "error"],
+                },
+                enableMetrics: {
+                    type: "boolean",
+                    default: true,
+                },
+                tracesSampleRate: {
                     type: "number",
-                    default: 1.0,
+                    minimum: 0,
+                    maximum: 1,
+                    default: 0.1,
+                },
+                profileSessionSampleRate: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 1,
+                    default: 0,
+                },
+                sendDefaultPii: {
+                    type: "boolean",
+                    default: false,
                 },
             },
         },

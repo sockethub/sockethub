@@ -60,6 +60,10 @@ describe("config-schema", () => {
             expect(conf.get("redis.maxRetriesPerRequest")).toBeNull();
             expect(conf.get("credentials.ttlMs")).toBe(604800000);
             expect(conf.get("logging.level")).toBe("info");
+            expect(conf.get("sentry.enableLogs")).toBe(false);
+            expect(conf.get("sentry.enableMetrics")).toBe(true);
+            expect(conf.get("sentry.tracesSampleRate")).toBe(0.1);
+            expect(conf.get("sentry.profileSessionSampleRate")).toBe(0);
             expect(conf.get("packageConfig")).toEqual({});
             expect(conf.get("platforms")).toContain(
                 "@sockethub/platform-feeds",
@@ -82,6 +86,18 @@ describe("config-schema", () => {
             process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS = "9000";
             const conf = buildSchema();
             expect(conf.get("platformHeartbeat.intervalMs")).toBe(9000);
+        });
+
+        it("loads Sentry identity settings from the environment", () => {
+            process.env.SENTRY_DSN = "https://public@example.invalid/1";
+            process.env.SENTRY_ENVIRONMENT = "staging";
+            process.env.SENTRY_RELEASE = "sockethub@1.2.3";
+            const conf = buildSchema();
+            expect(conf.get("sentry.dsn")).toBe(
+                "https://public@example.invalid/1",
+            );
+            expect(conf.get("sentry.environment")).toBe("staging");
+            expect(conf.get("sentry.release")).toBe("sockethub@1.2.3");
         });
 
         it("does not share mutable defaults between instances", () => {

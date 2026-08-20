@@ -5,6 +5,7 @@ import {
     JobQueue,
     JobWorker,
     redisCheck,
+    SESSION_SHARE_DENIED,
 } from "@sockethub/data-layer";
 import {
     type ActivityStream,
@@ -39,7 +40,9 @@ const creds: CredentialsObject = {
         password: "secret",
     },
 };
-const credsHash = "267a747d006c9a2c2e94b2f7d646400ba16e5709";
+// SHA-256 of `creds.object` (see Crypto.objectHash).
+const credsHash =
+    "8ab6f374809a069edf089497d3d091c467699fac4f6330dd056f662887995891";
 const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 
 describe("CredentialsStore", () => {
@@ -98,7 +101,7 @@ describe("CredentialsStore", () => {
 
         await expect(
             store.get(actor, undefined, { validateSessionShare: true }),
-        ).rejects.toThrow("username already in use");
+        ).rejects.toThrow(SESSION_SHARE_DENIED);
     });
 
     it("isolates credentials by session", async () => {
@@ -136,12 +139,16 @@ describe("connect and disconnect", () => {
     ]) {
         describe(o.name, () => {
             let i: JobInstance;
-            beforeEach(() => {
-                i = new o.class("testid", "sessionid", testSecret, {
+            beforeEach(async () => {
+                i = new o.class("lifecycle-testid", "sessionid", testSecret, {
                     url: REDIS_URL,
                 }) as unknown as JobInstance;
                 if (o.name === "worker") {
                     i.init();
+                    // BullMQ opens worker connections asynchronously. Let them
+                    // settle before the test tears the worker down; otherwise
+                    // Bun can report late socket-close errors in the next test.
+                    await new Promise((resolve) => setTimeout(resolve, 100));
                 }
             });
 

@@ -12,6 +12,7 @@
 
 import type { JobHandler } from "@sockethub/data-layer";
 import {
+    buildCredentialsKey,
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
@@ -183,7 +184,7 @@ async function startPlatformProcess() {
     /**
      * Safely send message to parent process, handling IPC channel closure
      */
-    function safeProcessSend(message: [string, unknown]) {
+    function safeProcessSend(message: [string, unknown, unknown?]) {
         if (process.send && process.connected) {
             try {
                 process.send(message);
@@ -396,7 +397,10 @@ async function startPlatformProcess() {
                         : undefined;
 
                     credentialStore
-                        .get(job.msg.actor.id, credentialsHash)
+                        .get(
+                            buildCredentialsKey(platformName, job.msg.actor.id),
+                            credentialsHash,
+                        )
                         .then((credentials) => {
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (
@@ -408,6 +412,9 @@ async function startPlatformProcess() {
                                     // Only persistent platforms track credential state across requests.
                                     platform.credentialsHash =
                                         crypto.objectHash(credentials.object);
+                                    publishCredentialsHash(
+                                        platform.credentialsHash,
+                                    );
                                 }
                                 doneCallback(err, result);
                             };
@@ -461,7 +468,18 @@ async function startPlatformProcess() {
                              * - Error is reported to Sentry for monitoring authentication issues.
                              */
                             if (platform.isInitialized()) {
-                                // Platform already running - reject job only, preserve platform instance
+                                // Platform already running - reject job only, preserve platform instance.
+                                // This session has failed to prove it holds
+                                // credentials for this connection, so it must
+                                // also stop receiving the connection's traffic:
+                                // rejecting the job alone left it registered
+                                // (and subscribed to the fan-out) until the
+                                // janitor noticed its socket had gone.
+                                safeProcessSend([
+                                    "sessionUnauthorized",
+                                    null,
+                                    job.sessionId,
+                                ]);
                                 doneCallback(toError(err), null);
                             } else {
                                 // Platform not initialized - terminate platform process
@@ -526,6 +544,23 @@ async function startPlatformProcess() {
     }
 
     /**
+     * Tell the parent which credentials this connection is bound to.
+     *
+     * The hash is only ever computed after a credentialed platform call has
+     * succeeded, so it identifies the credentials that actually opened the
+     * remote connection. The parent needs it to decide whether a *different*
+     * session may attach to this instance — that decision happens in
+     * `credential-check` middleware, before the session is registered, and the
+     * parent has no other way to see the child's credential state.
+     */
+    function publishCredentialsHash(hash: string | undefined): void {
+        if (!hash || !platform.config.persist || !process.send) {
+            return;
+        }
+        process.send(["credentialsHash", undefined, hash]);
+    }
+
+    /**
      * When a user changes its actor name, the channel identifier changes, we need to ensure that
      * both the queue thread (listening on the channel for jobs) and the logging object are updated.
      * @param credentials
@@ -542,6 +577,7 @@ async function startPlatformProcess() {
         // Update credentialsHash for persistent platforms (tracks actor-specific state)
         if (isPersistentPlatform(platform)) {
             platform.credentialsHash = crypto.objectHash(credentials.object);
+            publishCredentialsHash(platform.credentialsHash);
         }
 
         process.send(["updateActor", undefined, identifier]);

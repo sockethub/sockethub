@@ -4,7 +4,10 @@ import { toError } from "@sockethub/util/error";
 import type SockethubType from "./sockethub";
 import { parseWriteConfigTarget, writeDefaultConfig } from "./write-config";
 
-let sentry: { readonly reportError: (err: Error) => void } = {
+let sentry: {
+    readonly reportError: (err: Error) => void;
+    readonly sendTestEvent?: () => Promise<boolean>;
+} = {
     reportError: (_err: Error) => {},
 };
 
@@ -29,7 +32,6 @@ export async function server() {
     // Loaded lazily (not statically) so the import-time Config singleton
     // doesn't run for the --write-config path above.
     const { default: config } = await import("./config.js");
-    const { default: Sockethub } = await import("./sockethub.js");
 
     // Initialize global logger configuration
     const loggingConfig = config.get("logging");
@@ -53,6 +55,22 @@ export async function server() {
         log.info("initializing sentry");
         sentry = await import("./sentry");
     }
+
+    if (process.argv.includes("--sentry-test")) {
+        if (!sentry.sendTestEvent) {
+            console.error("Sentry is not configured; no test event was sent");
+            process.exit(1);
+        }
+        const sent = await sentry.sendTestEvent();
+        console.log(
+            sent ? "Sentry test event sent" : "Sentry test event failed",
+        );
+        process.exit(sent ? 0 : 1);
+    }
+
+    // Load the application graph only after Sentry so automatic tracing can
+    // instrument Express, Socket.IO, Redis, and child-process dependencies.
+    const { default: Sockethub } = await import("./sockethub.js");
 
     try {
         sockethub = new Sockethub();

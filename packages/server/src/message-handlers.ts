@@ -16,6 +16,7 @@ import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-s
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import middleware from "./middleware.js";
+import { observability } from "./observability.js";
 import type PlatformInstance from "./platform-instance.js";
 import type ProcessManager from "./process-manager.js";
 
@@ -79,6 +80,18 @@ export function createMessageHandlers(
         .use(normalizeActivityStreamMiddleware)
         .use(validate<ActivityStream>("credentials", sessionId))
         .use(storeCredentials(credentialsStore))
+        .use(
+            (
+                data: ActivityStream,
+                next: (data?: ActivityStream | Error) => void,
+            ) => {
+                // This runs only after normalization, schema validation, and
+                // successful credential storage, so labels are trusted.
+                const platform = resolvePlatformId(data) ?? "unknown";
+                observability.startAction(platform, "credentials")();
+                next(data);
+            },
+        )
         .use(
             (
                 err: Error,
@@ -147,6 +160,9 @@ export function createMessageHandlers(
                     );
                     return;
                 }
+                // This middleware runs after AJV validation. Using platform
+                // and action as telemetry labels is safe only from here on.
+                const finish = observability.startAction(platformId, msg.type);
                 let platformInstance: Awaited<
                     ReturnType<ProcessManager["get"]>
                 >;
@@ -159,6 +175,7 @@ export function createMessageHandlers(
                     );
                 } catch (err) {
                     // e.g. limits.maxPlatformInstances reached
+                    finish(true);
                     next(attachError(err, msg));
                     return;
                 }
@@ -174,14 +191,24 @@ export function createMessageHandlers(
                     if (job) {
                         platformInstance.registerCompletedJobHandler(
                             job.title,
-                            next,
+                            (result) => {
+                                const failed =
+                                    result instanceof Error ||
+                                    (typeof result === "object" &&
+                                        result !== null &&
+                                        "error" in result);
+                                finish(failed);
+                                next(result);
+                            },
                         );
                     } else {
                         // failed to add job to queue, reject handler immediately
+                        finish(true);
                         next(attachError("failed to add job to queue", msg));
                     }
                 } catch (err) {
                     // Queue is closed (platform terminating) - send error to client
+                    finish(true);
                     next(attachError(err, msg));
                 }
             },

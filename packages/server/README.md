@@ -31,7 +31,11 @@ Session sharing rules:
 - Share is allowed only when credentials include a non-empty `password` or
   `token` field (e.g. IRC OAuth). Credential objects with neither are treated
   as anonymous and cannot be shared across connections.
-- Username-only/anonymous credentials are rejected with `username already in use`.
+- Every rejected share attempt returns the same message,
+  `unable to attach session for this actor`, whatever the reason (no
+  credentials stored, anonymous credentials, or credentials that do not match
+  the ones that opened the connection). The reason is deliberately not
+  disclosed, so a caller cannot probe guessed actor ids for detail.
 
 Reconnect exception for anonymous credentials:
 
@@ -113,13 +117,15 @@ separate platform routing model.
 
 See [`docs/configuration.md`](../../docs/configuration.md) for details and examples.
 
-#### Sentry Configuration
+#### Sentry Observability
 
 Sentry error reporting can be configured via environment variable or config file:
 
-**Environment Variable:**
+**Environment Variables:**
 
-- SENTRY_DSN - Set this to enable basic Sentry error reporting
+- `SENTRY_DSN` - enable Sentry
+- `SENTRY_ENVIRONMENT` - deployment name such as `production`
+- `SENTRY_RELEASE` - deployed release identifier
 
 **Config File:**
 For more advanced Sentry configuration, add a `sentry` section to your
@@ -130,13 +136,20 @@ For more advanced Sentry configuration, add a `sentry` section to your
   "sentry": {
     "dsn": "https://your-dsn@sentry.io/project-id",
     "environment": "production",
-    "traceSampleRate": 1.0
+    "enableLogs": true,
+    "logLevels": ["warn", "error"],
+    "enableMetrics": true,
+    "tracesSampleRate": 0.1,
+    "profileSessionSampleRate": 0.01,
+    "sendDefaultPii": false
   }
 }
 ```
 
-When configured, the server automatically reports errors to Sentry for monitoring and
-debugging in production environments.
+When configured, the server reports errors plus aggregate connection/action
+metrics and traces. Logs are opt-in. Profiling is disabled when its sample rate
+is zero. Run `sockethub --sentry-test --config /path/to/config.json` to send a
+verification event and exit.
 
 ### Command-line params
 

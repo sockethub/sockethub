@@ -708,6 +708,33 @@ describe("SockethubClient", () => {
         });
     });
 
+    describe("replay keys are scoped by platform", () => {
+        beforeEach(() => {
+            sc.socket.connected = true;
+            sc._socket.connected = true;
+            socket.emit("schemas", TEST_REGISTRY);
+            sandbox.stub(sc, "validateActivity").returns("");
+        });
+
+        it("keeps credentials for one actor id on two platforms separate", () => {
+            // Regression: keyed by actor alone, the second platform's
+            // credentials replaced the first, so a reconnect replayed only one.
+            const actor = { id: "alice@example.org", type: "person" };
+            sc.socket.emit("credentials", {
+                "@context": sc.contextFor("test-xmpp"),
+                actor,
+                object: { type: "credentials", password: "xmpp-pass" },
+            });
+            sc.socket.emit("credentials", {
+                "@context": sc.contextFor("dummy"),
+                actor,
+                object: { type: "credentials", password: "dummy-pass" },
+            });
+
+            expect(sc.events.credentials.size).to.equal(2);
+        });
+    });
+
     describe("clearCredentials", () => {
         beforeEach(() => {
             sc.socket.connected = true;

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, test } from "bun:test";
 import * as sinon from "sinon";
 import {
     addPlatformContext,
@@ -480,6 +480,137 @@ describe("PlatformInstance", () => {
                     { foo: "bar" },
                 ]);
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
+            });
+
+            it("waitForCredentialsHash resolves when the child publishes", async () => {
+                const pending = pi.waitForCredentialsHash(5000);
+                await pi.handleProcessMessage([
+                    "credentialsHash",
+                    undefined,
+                    "published-late",
+                ]);
+                expect(await pending).toEqual("published-late");
+            });
+
+            it("waitForCredentialsHash resolves undefined on timeout", async () => {
+                expect(await pi.waitForCredentialsHash(1)).toBeUndefined();
+            });
+
+            it("waitForCredentialsHash returns immediately once known", async () => {
+                await pi.handleProcessMessage([
+                    "credentialsHash",
+                    undefined,
+                    "already-known",
+                ]);
+                expect(await pi.waitForCredentialsHash(0)).toEqual(
+                    "already-known",
+                );
+            });
+
+            it("message events from platform thread are routed based on command: credentialsHash", async () => {
+                // The child reports which credentials its connection is bound
+                // to; credential-check needs this to authorize further
+                // sessions attaching to the instance.
+                expect(pi.credentialsHash).toBeUndefined();
+                await pi.handleProcessMessage([
+                    "credentialsHash",
+                    undefined,
+                    "a-credentials-hash",
+                ]);
+                expect(pi.credentialsHash).toEqual("a-credentials-hash");
+                // control message, not client traffic
+                sandbox.assert.notCalled(pi.sendToClient);
+            });
+
+            it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {
+                pi.registerSession("good session", "203.0.113.1");
+                pi.registerSession("bad session", "203.0.113.2");
+
+                // Exercise the JSON serialization used by child_process IPC:
+                // an empty tuple slot arrives as null, not undefined.
+                const ipcMessage = JSON.parse(
+                    JSON.stringify([
+                        "sessionUnauthorized",
+                        null,
+                        "bad session",
+                    ]),
+                );
+                await pi.handleProcessMessage(ipcMessage);
+
+                expect(pi.sessions.has("bad session")).toEqual(false);
+                expect(pi.sessionIps.has("bad session")).toEqual(false);
+                expect(pi.sessions.has("good session")).toEqual(true);
+                // control message, not client traffic
+                sandbox.assert.notCalled(pi.sendToClient);
+            });
+
+            it("a deregistered session no longer receives platform messages", async () => {
+                pi.registerSession("stays");
+                pi.registerSession("goes");
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    null,
+                    "goes",
+                ]);
+
+                const message = {
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
+                    type: "message",
+                    actor: { id: "platform", type: "service" },
+                    object: { type: "message", content: "hello" },
+                };
+                await pi.handleProcessMessage(["message", message]);
+
+                sandbox.assert.calledWith(pi.sendToClient, "stays", message);
+                sandbox.assert.neverCalledWith(
+                    pi.sendToClient,
+                    "goes",
+                    message,
+                );
+            });
+
+            it("malformed sessionUnauthorized messages leave sessions unchanged", async () => {
+                const errorSpy = sandbox.spy(pi.log, "error");
+                pi.registerSession("stays", "203.0.113.1");
+
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    { unexpected: true },
+                    "stays",
+                ]);
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    42,
+                ]);
+
+                expect(pi.sessions.has("stays")).toEqual(true);
+                expect(pi.sessionIps.get("stays")).toEqual("203.0.113.1");
+                sandbox.assert.calledTwice(errorSpy);
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match("platform=a platform name"),
+                );
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match("action=sessionUnauthorized"),
+                );
+                sandbox.assert.calledWith(
+                    errorSpy,
+                    sinon.match('sessionId="stays"'),
+                );
+            });
+
+            it("deregistering an unknown session is a no-op", async () => {
+                pi.registerSession("stays");
+                await pi.handleProcessMessage([
+                    "sessionUnauthorized",
+                    undefined,
+                    "never registered",
+                ]);
+                expect(pi.sessions.has("stays")).toEqual(true);
             });
 
             test("message events from platform thread are delivered to every registered session", async () => {
