@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "5.0.0-alpha.21",
+  "version": "5.0.0-alpha.22",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -37,13 +37,13 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sockethub/platform-caldav": "^1.0.0-alpha.5",
-    "@sockethub/platform-carddav": "^1.0.0-alpha.2",
-    "@sockethub/platform-dummy": "^3.0.0-alpha.21",
-    "@sockethub/platform-feeds": "^4.0.0-alpha.21",
-    "@sockethub/platform-irc": "^4.0.0-alpha.21",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.21",
-    "@sockethub/server": "^5.0.0-alpha.21"
+    "@sockethub/platform-caldav": "^1.0.0-alpha.6",
+    "@sockethub/platform-carddav": "^1.0.0-alpha.3",
+    "@sockethub/platform-dummy": "^3.0.0-alpha.22",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.22",
+    "@sockethub/platform-irc": "^4.0.0-alpha.22",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.22",
+    "@sockethub/server": "^5.0.0-alpha.22"
   },
   "scripts": {
     "build": "bun build.js",
@@ -53,5 +53,5 @@
     "start": "node ./bin/sockethub",
     "start:logged": "bun ./bin/sockethub-logged"
   },
-  "gitHead": "683f7b2c0cda2eda05c845eb98827cf13d055eb4"
+  "gitHead": "1630010f605e85cc548e3323cb9694fbe3a7a18a"
 }
