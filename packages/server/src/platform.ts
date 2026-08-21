@@ -34,6 +34,7 @@ import {
 import { crypto, getPlatformId } from "@sockethub/util/crypto";
 import { errorMessage, toError } from "@sockethub/util/error";
 import config from "./config";
+import { resolveSentryConfig } from "./sentry-config.js";
 
 // Simple wrapper function to help with testing
 /**
@@ -97,7 +98,9 @@ async function startPlatformProcess() {
         },
     };
     (async () => {
-        if (config.get("sentry:dsn")) {
+        // Resolved from the parent's forwarded settings, not this process's
+        // own config: a worker is forked without the server's config file.
+        if (resolveSentryConfig().dsn) {
             logger.info("initializing sentry");
             sentry = await import("./sentry");
         }

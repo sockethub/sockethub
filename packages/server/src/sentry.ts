@@ -2,29 +2,18 @@
 
 import * as Sentry from "@sentry/node";
 import { createLogger, setLogSink } from "@sockethub/logger";
-import config from "./config";
 import {
     redactObservabilityLog,
     sanitizeObservabilityNamespace,
     setObservabilityAdapter,
 } from "./observability.js";
-
-type SentryConfig = {
-    dsn: string;
-    environment: string;
-    release: string;
-    enableLogs: boolean;
-    logLevels: Array<"debug" | "info" | "warn" | "error">;
-    enableMetrics: boolean;
-    tracesSampleRate: number;
-    profileSessionSampleRate: number;
-    sendDefaultPii: boolean;
-};
+import { resolveSentryConfig } from "./sentry-config.js";
+import { defaultSentryRelease } from "./version.js";
 
 type MetricAttributes = Record<string, string | number | boolean>;
 
 const logger = createLogger("sentry");
-const sentryConfig = config.get("sentry") as SentryConfig;
+const sentryConfig = resolveSentryConfig();
 
 if (!sentryConfig.dsn) {
     throw new Error("Sentry attempted initialization with no DSN provided");
@@ -39,7 +28,9 @@ if (sentryConfig.profileSessionSampleRate > 0) {
 Sentry.init({
     dsn: sentryConfig.dsn,
     environment: sentryConfig.environment,
-    release: sentryConfig.release || undefined,
+    // Fall back to the running package version so releases are tagged
+    // correctly without every deployment having to restate its own version.
+    release: sentryConfig.release || defaultSentryRelease(),
     enableLogs: sentryConfig.enableLogs,
     enableMetrics: sentryConfig.enableMetrics,
     tracesSampleRate: sentryConfig.tracesSampleRate,
