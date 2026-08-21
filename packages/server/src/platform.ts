@@ -85,7 +85,10 @@ async function startPlatformProcess() {
     const loggerCache = new Map<string, Logger>();
 
     // conditionally initialize sentry
-    let sentry: { readonly reportError: (err: Error) => void } = {
+    let sentry: {
+        readonly reportError: (err: Error) => void;
+        readonly flush?: (timeoutMs?: number) => Promise<boolean>;
+    } = {
         reportError: (err: Error) => {
             logger.debug(
                 "Sentry not configured; error not reported to Sentry",
@@ -97,14 +100,31 @@ async function startPlatformProcess() {
             );
         },
     };
-    (async () => {
-        // Resolved from the parent's forwarded settings, not this process's
-        // own config: a worker is forked without the server's config file.
-        if (resolveSentryConfig().dsn) {
-            logger.info("initializing sentry");
-            sentry = await import("./sentry");
-        }
-    })();
+    // Registered before any awaited startup work: an import that rejects
+    // during startup would otherwise never reach the handlers, and the worker
+    // would die without notifying the parent or reporting to Sentry.
+    // `reportFatal` and `safeProcessSend` are function declarations, so they
+    // are hoisted and callable from here.
+    // Neither a thrown value nor a rejection reason is guaranteed to be an
+    // Error — `throw null` and `Promise.reject(null)` both reach here — and a
+    // non-Error would throw on `.stack` inside the handler, losing the very
+    // report it exists to make. Normalize both first.
+    process.once("uncaughtException", (err: unknown) => {
+        void reportFatal(toError(err));
+    });
+
+    process.once("unhandledRejection", (err: unknown) => {
+        void reportFatal(toError(err));
+    });
+
+    // Awaited (not fire-and-forget) so a crash during the rest of startup is
+    // reported to Sentry rather than to the no-op stub above. Resolved from
+    // the parent's forwarded settings, not this process's own config: a
+    // worker is forked without the server's config file.
+    if (resolveSentryConfig().dsn) {
+        logger.info("initializing sentry");
+        sentry = await import("./sentry");
+    }
 
     let jobWorker: JobWorker;
     let jobWorkerStarted = false;
@@ -259,23 +279,32 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Handle any uncaught errors from the platform by alerting the worker and shutting down.
+     * Handle any uncaught errors from the platform by alerting the worker and
+     * shutting down. Sentry sends events asynchronously, so the queued event
+     * must be flushed before `process.exit` discards it.
      */
-    process.once("uncaughtException", (err: Error) => {
+    async function reportFatal(err: Error): Promise<never> {
         console.log("EXCEPTION IN PLATFORM");
         sentry.reportError(err);
         console.log("error:\n", err.stack);
         safeProcessSend(["error", err.toString()]);
+        try {
+            // A false result means the timeout elapsed with the event still
+            // queued. Report it rather than exiting as though it had been
+            // delivered, but exit either way: a failing flush must never mask
+            // the error being reported.
+            if ((await sentry.flush?.()) === false) {
+                console.error(
+                    `fatal-error-flush timed out for ${platformName} ${identifier}; event may be lost`,
+                );
+            }
+        } catch (flushErr) {
+            console.error(
+                `fatal-error-flush failed for ${platformName} ${identifier}: ${errorMessage(flushErr)}`,
+            );
+        }
         process.exit(1);
-    });
-
-    process.once("unhandledRejection", (err: Error) => {
-        console.log("EXCEPTION IN PLATFORM");
-        sentry.reportError(err);
-        console.log("error:\n", err.stack);
-        safeProcessSend(["error", err.toString()]);
-        process.exit(1);
-    });
+    }
 
     /**
      * In the case of a parent disconnect, terminate child process.
