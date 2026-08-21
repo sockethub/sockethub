@@ -10,13 +10,33 @@ import { SecretValidator } from "secure-store-redis";
 const ALGORITHM = "aes-256-cbc";
 const IV_LENGTH = 16; // For AES, this is always 16
 
+/**
+ * Identifier for a platform instance.
+ *
+ * `scope` is a server-derived value that keeps a client-supplied `actor` from
+ * being enough on its own to select a live connection. For persistent
+ * platforms it is a credential fingerprint, or a session-derived value when
+ * there are no credentials. Global (non-persistent) platforms pass neither.
+ */
+// Encodes the components unambiguously so distinct triples cannot produce the
+// same input string — `("irc", "alice", "X")` must not collide with
+// `("irc", "aliceX", "")`. A separator character is not enough: `actor.id` is
+// an unconstrained string, so it can contain whatever byte is chosen as the
+// separator, NUL included. JSON escapes the encoding away entirely.
+function encodeIdComponents(parts: Array<string>): string {
+    return JSON.stringify(parts);
+}
+
 export function getPlatformId(
     platform: string,
     actor?: string,
+    scope?: string,
     _crypto = crypto,
 ): string {
     if (actor) {
-        return _crypto.hashFull(platform + actor);
+        return _crypto.hashFull(
+            encodeIdComponents([platform, actor, scope ?? ""]),
+        );
     }
     return _crypto.hashFull(platform);
 }

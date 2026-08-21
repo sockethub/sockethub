@@ -20,6 +20,7 @@ import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
+import { clearSessionScopes, normalizeIp } from "./connection-scope.js";
 import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
@@ -33,17 +34,6 @@ import {
 } from "./rate-limiter.js";
 
 const log = createLogger("server:core");
-
-function normalizeIp(ip: string | undefined): string {
-    if (!ip) {
-        return "";
-    }
-    const trimmed = ip.split(",")[0].trim();
-    if (trimmed.startsWith("::ffff:")) {
-        return trimmed.slice(7);
-    }
-    return trimmed;
-}
 
 function getCredentialsTtlMs(): number | undefined {
     const ttlMs = Number(config.get("credentials:ttlMs") ?? 0);
@@ -360,6 +350,7 @@ class Sockethub {
                 );
             });
             cleanupClient(socket.id);
+            clearSessionScopes(socket.id);
             this.releaseIpSlot(clientIp);
             this.activeConnections = Math.max(0, this.activeConnections - 1);
             observability.count("sockethub.connection.closed");
@@ -375,8 +366,6 @@ class Sockethub {
             sessionSecret,
             credentialsStore,
             clientIp,
-            isSessionActive: (sessionId) =>
-                listener.io?.sockets?.sockets?.has(sessionId) ?? false,
             // Keep session registration behavior inside ProcessManager.get().
             platformSessionId: socket.id,
         });

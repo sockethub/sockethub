@@ -19,6 +19,7 @@ addPlatformContext("respplat", RESPONSES_CTX);
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
+import config from "./config.js";
 import PlatformInstance, { platformInstances } from "./platform-instance.js";
 
 describe("PlatformInstance", () => {
@@ -77,6 +78,56 @@ describe("PlatformInstance", () => {
                 "name",
                 "id",
             ]);
+            await pi.shutdown();
+        });
+    });
+
+    describe("sentry settings forwarded to the worker", () => {
+        const SENTRY = {
+            dsn: "https://key@o1.ingest.sentry.io/1",
+            environment: "staging",
+            release: "sockethub@9.9.9",
+            enableLogs: true,
+            logLevels: ["debug", "info", "warn", "error"],
+            enableMetrics: true,
+            tracesSampleRate: 1,
+            profileSessionSampleRate: 0,
+            sendDefaultPii: false,
+        };
+
+        function forkedEnv() {
+            return forkFake.lastCall.args[2];
+        }
+
+        function newInstance(resolveSentryEnv?) {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            if (resolveSentryEnv) {
+                TestPlatformInstance.prototype.resolveSentryEnv =
+                    resolveSentryEnv;
+            }
+            return new TestPlatformInstance({
+                identifier: "id",
+                platform: "name",
+                parentId: "parentId",
+            });
+        }
+
+        // The worker is forked with an allowlisted environment and no
+        // --config, so settings it is not handed are unavailable to it.
+        test("forwards the resolved block when a dsn is configured", async () => {
+            const pi = newInstance(() => JSON.stringify(SENTRY));
+            expect(JSON.parse(forkedEnv().SOCKETHUB_SENTRY_CONFIG)).toEqual(
+                SENTRY,
+            );
+            await pi.shutdown();
+        });
+
+        // Default resolution against the loaded config, which has no DSN under
+        // test: the worker environment stays as small as it was.
+        test("omits it when no dsn is configured", async () => {
+            const pi = newInstance();
+            expect(config.get("sentry").dsn).toBe("");
+            expect(forkedEnv().SOCKETHUB_SENTRY_CONFIG).toBeUndefined();
             await pi.shutdown();
         });
     });
@@ -480,46 +531,6 @@ describe("PlatformInstance", () => {
                     { foo: "bar" },
                 ]);
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
-            });
-
-            it("waitForCredentialsHash resolves when the child publishes", async () => {
-                const pending = pi.waitForCredentialsHash(5000);
-                await pi.handleProcessMessage([
-                    "credentialsHash",
-                    undefined,
-                    "published-late",
-                ]);
-                expect(await pending).toEqual("published-late");
-            });
-
-            it("waitForCredentialsHash resolves undefined on timeout", async () => {
-                expect(await pi.waitForCredentialsHash(1)).toBeUndefined();
-            });
-
-            it("waitForCredentialsHash returns immediately once known", async () => {
-                await pi.handleProcessMessage([
-                    "credentialsHash",
-                    undefined,
-                    "already-known",
-                ]);
-                expect(await pi.waitForCredentialsHash(0)).toEqual(
-                    "already-known",
-                );
-            });
-
-            it("message events from platform thread are routed based on command: credentialsHash", async () => {
-                // The child reports which credentials its connection is bound
-                // to; credential-check needs this to authorize further
-                // sessions attaching to the instance.
-                expect(pi.credentialsHash).toBeUndefined();
-                await pi.handleProcessMessage([
-                    "credentialsHash",
-                    undefined,
-                    "a-credentials-hash",
-                ]);
-                expect(pi.credentialsHash).toEqual("a-credentials-hash");
-                // control message, not client traffic
-                sandbox.assert.notCalled(pi.sendToClient);
             });
 
             it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {

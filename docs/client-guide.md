@@ -245,9 +245,9 @@ sc.socket.emit('credentials', {
 ### Anonymous IRC Username Collisions
 
 If two sockets use the same IRC actor (same `context` + `actor.id`) without a
-password, Sockethub does not allow them to share one running IRC session.
-
-The rejected request returns an ActivityStream response with an `error`:
+password, they do not share one running IRC session. Each gets its own
+connection, and IRC decides what happens next — the second one normally fails
+because the nick is already taken:
 
 ```json
 {
@@ -255,15 +255,21 @@ The rejected request returns an ActivityStream response with an `error`:
   "type": "connect",
   "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "id": "1",
-  "error": "unable to attach session for this actor"
+  "error": "unable to connect to server: nicknames unavailable"
 }
 ```
+
+The error comes from IRC rather than from Sockethub. Earlier versions rejected
+this with `unable to attach session for this actor`; that message no longer
+exists, because it also revealed whether someone else was connected as that
+actor.
 
 Client apps should treat any callback payload containing `error` as a failed
 action and reset UI state accordingly (for example, re-enable a connect button).
 
 Small exception: after a browser refresh, a reconnect from the same client IP
-may still be allowed while the old stale socket is waiting for janitor cleanup.
+lands back on the original connection while the old stale socket is waiting for
+janitor cleanup.
 
 ## Platform Examples
 

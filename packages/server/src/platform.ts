@@ -34,6 +34,7 @@ import {
 import { crypto, getPlatformId } from "@sockethub/util/crypto";
 import { errorMessage, toError } from "@sockethub/util/error";
 import config from "./config";
+import { resolveSentryConfig } from "./sentry-config.js";
 
 // Simple wrapper function to help with testing
 /**
@@ -97,7 +98,9 @@ async function startPlatformProcess() {
         },
     };
     (async () => {
-        if (config.get("sentry:dsn")) {
+        // Resolved from the parent's forwarded settings, not this process's
+        // own config: a worker is forked without the server's config file.
+        if (resolveSentryConfig().dsn) {
             logger.info("initializing sentry");
             sentry = await import("./sentry");
         }
@@ -412,9 +415,6 @@ async function startPlatformProcess() {
                                     // Only persistent platforms track credential state across requests.
                                     platform.credentialsHash =
                                         crypto.objectHash(credentials.object);
-                                    publishCredentialsHash(
-                                        platform.credentialsHash,
-                                    );
                                 }
                                 doneCallback(err, result);
                             };
@@ -544,29 +544,19 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Tell the parent which credentials this connection is bound to.
-     *
-     * The hash is only ever computed after a credentialed platform call has
-     * succeeded, so it identifies the credentials that actually opened the
-     * remote connection. The parent needs it to decide whether a *different*
-     * session may attach to this instance — that decision happens in
-     * `credential-check` middleware, before the session is registered, and the
-     * parent has no other way to see the child's credential state.
-     */
-    function publishCredentialsHash(hash: string | undefined): void {
-        if (!hash || !platform.config.persist || !process.send) {
-            return;
-        }
-        process.send(["credentialsHash", undefined, hash]);
-    }
-
-    /**
      * When a user changes its actor name, the channel identifier changes, we need to ensure that
      * both the queue thread (listening on the channel for jobs) and the logging object are updated.
      * @param credentials
      */
     async function updateActor(credentials: CredentialsObject): Promise<void> {
-        identifier = getPlatformId(platformName, credentials.actor.id);
+        const previousIdentifier = identifier;
+        // Same scope the parent mixed into the identifier this child was
+        // forked with, so both sides derive the same value.
+        identifier = getPlatformId(
+            platformName,
+            credentials.actor.id,
+            process.env.SOCKETHUB_PLATFORM_SCOPE,
+        );
         logger.info(
             `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
         );
@@ -577,11 +567,57 @@ async function startPlatformProcess() {
         // Update credentialsHash for persistent platforms (tracks actor-specific state)
         if (isPersistentPlatform(platform)) {
             platform.credentialsHash = crypto.objectHash(credentials.object);
-            publishCredentialsHash(platform.credentialsHash);
         }
 
-        process.send(["updateActor", undefined, identifier]);
+        // The actor travels with the new identifier: the parent keys anonymous
+        // resumption records on it and has no other way to learn it changed.
+        //
+        // Not safeProcessSend(): that logs and continues, which would leave the
+        // parent routing to the old queue while this child listens on the new
+        // one, so jobs would be queued that nobody consumes. On failure, roll
+        // the identifier back and leave the queue listener where it is, so both
+        // sides stay on the identifier the parent still knows.
+        try {
+            await sendUpdateActor(credentials.actor.id, identifier);
+        } catch (err) {
+            identifier = previousIdentifier;
+            setLoggerContext(
+                `sockethub:platform:${platformName}:${identifier}`,
+            );
+            logger = createLogger("main");
+            throw err;
+        }
         await startQueueListener(true);
+    }
+
+    /**
+     * Resolves once the parent has been handed the new identifier, and rejects
+     * if the IPC channel is gone or the write fails.
+     */
+    function sendUpdateActor(
+        actorId: string,
+        newIdentifier: string,
+    ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!process.send) {
+                reject(
+                    new Error(
+                        "unable to report actor change: no IPC channel to parent",
+                    ),
+                );
+                return;
+            }
+            process.send(
+                ["updateActor", actorId, newIdentifier],
+                (err: Error | null) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                },
+            );
+        });
     }
 
     /**

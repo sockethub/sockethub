@@ -23,19 +23,20 @@ The server implements:
 ## Credential Session Sharing
 
 For persistent platforms, Sockethub may attach multiple sockets to one running
-platform instance when they target the same actor.
+platform instance — but never because they named the same actor.
 
-Session sharing rules:
+Instance selection:
 
-- Credentials are validated in the data layer during share attempts.
-- Share is allowed only when credentials include a non-empty `password` or
-  `token` field (e.g. IRC OAuth). Credential objects with neither are treated
-  as anonymous and cannot be shared across connections.
-- Every rejected share attempt returns the same message,
-  `unable to attach session for this actor`, whatever the reason (no
-  credentials stored, anonymous credentials, or credentials that do not match
-  the ones that opened the connection). The reason is deliberately not
-  disclosed, so a caller cannot probe guessed actor ids for detail.
+- A persistent instance is keyed on the platform, the actor, and a
+  server-derived scope.
+- Credentials with a non-empty `password` or `token` (e.g. IRC OAuth) scope the
+  instance by a fingerprint of the submitted credential object, so two sockets
+  share an instance only when their credentials are identical.
+- Credentials with neither are treated as anonymous and scoped to the session,
+  so they are never shared across sockets.
+- A client that knows or guesses an `actor.id` cannot select another session's
+  instance, and cannot tell whether one exists: it takes the same path as a
+  fresh connect and receives the remote protocol's own error.
 
 Reconnect exception for anonymous credentials:
 
@@ -125,7 +126,7 @@ Sentry error reporting can be configured via environment variable or config file
 
 - `SENTRY_DSN` - enable Sentry
 - `SENTRY_ENVIRONMENT` - deployment name such as `production`
-- `SENTRY_RELEASE` - deployed release identifier
+- `SENTRY_RELEASE` - deployed release identifier (defaults to `sockethub@<running version>`)
 
 **Config File:**
 For more advanced Sentry configuration, add a `sentry` section to your
