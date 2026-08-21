@@ -168,6 +168,7 @@ verification event and exit.
   --port              : port to bind to
 
   --sentry-test       : send a verification event to Sentry and exit
+  --sentry-test-crash : report a synthetic fatal error to Sentry and exit
 ```
 
 `--help`, `--version` and `--write-config` answer without loading the config

@@ -41,6 +41,7 @@ describe("renderHelp", () => {
             "--config",
             "--write-config",
             "--sentry-test",
+            "--sentry-test-crash",
             "--version",
             "--help",
         ]) {

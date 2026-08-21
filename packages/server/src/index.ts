@@ -8,10 +8,26 @@ import { parseWriteConfigTarget, writeDefaultConfig } from "./write-config";
 
 let sentry: {
     readonly reportError: (err: Error) => void;
+    readonly flush?: (timeoutMs?: number) => Promise<boolean>;
     readonly sendTestEvent?: () => Promise<boolean>;
 } = {
     reportError: (_err: Error) => {},
 };
+
+/**
+ * Report a fatal error and exit. Sentry sends events asynchronously, so the
+ * queued event has to be flushed before `process.exit` tears the process down
+ * — otherwise the crash that matters most is the one Sentry never sees.
+ */
+async function reportFatal(err: Error, code = 1): Promise<never> {
+    sentry.reportError(err);
+    try {
+        await sentry.flush?.();
+    } catch {
+        // Never let a failing flush mask the error being reported.
+    }
+    process.exit(code);
+}
 
 export async function server() {
     const argv = process.argv.slice(2);
@@ -84,6 +100,18 @@ export async function server() {
         process.exit(sent ? 0 : 1);
     }
 
+    // Exercises the fatal-error path itself — capture, flush, exit — which is
+    // what a real crash takes and what --sentry-test does not cover. Runs
+    // before the server is constructed, so it never contends for the port.
+    if (argv.includes("--sentry-test-crash")) {
+        if (!sentry.flush) {
+            console.error("Sentry is not configured; no crash was reported");
+            process.exit(1);
+        }
+        console.error("Reporting a synthetic fatal error to Sentry");
+        await reportFatal(new Error("Sockethub Sentry verification crash"));
+    }
+
     // Load the application graph only after Sentry so automatic tracing can
     // instrument Express, Socket.IO, Redis, and child-process dependencies.
     const { default: Sockethub } = await import("./sockethub.js");
@@ -92,9 +120,8 @@ export async function server() {
         sockethub = new Sockethub();
     } catch (err) {
         const error = toError(err);
-        sentry.reportError(error);
         console.error(error);
-        process.exit(1);
+        await reportFatal(error);
     }
 
     process.once("uncaughtException", (err: Error) => {
@@ -102,8 +129,7 @@ export async function server() {
             `${(new Date()).toUTCString()} UNCAUGHT EXCEPTION\n`,
             err.stack,
         );
-        sentry.reportError(err);
-        process.exit(1);
+        void reportFatal(err);
     });
 
     process.once("unhandledRejection", (err: unknown) => {
@@ -111,8 +137,7 @@ export async function server() {
             `${(new Date()).toUTCString()} UNHANDLED REJECTION\n`,
             err,
         );
-        sentry.reportError(toError(err));
-        process.exit(1);
+        void reportFatal(toError(err));
     });
 
     const gracefulShutdown = async (signal: string) => {
@@ -122,9 +147,8 @@ export async function server() {
             process.exit(0);
         } catch (err) {
             const error = toError(err);
-            sentry.reportError(error);
             console.error(error);
-            process.exit(1);
+            await reportFatal(error);
         }
     };
 
@@ -140,8 +164,7 @@ export async function server() {
         await sockethub.boot();
     } catch (err) {
         const error = toError(err);
-        sentry.reportError(error);
         console.error(error);
-        process.exit(1);
+        await reportFatal(error);
     }
 }

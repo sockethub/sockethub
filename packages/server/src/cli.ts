@@ -26,6 +26,8 @@ Options:
       --sentry.dsn <dsn>    Sentry DSN to report to (config: sentry.dsn)
       --sentry-test         Send a test event to Sentry and exit, reporting
                             whether it was accepted
+      --sentry-test-crash   Report a synthetic fatal error to Sentry and exit
+                            non-zero, exercising the crash-reporting path
       --examples            Serve the bundled example pages
       --info                Print runtime information
   -v, --version             Print the version and exit

@@ -85,7 +85,10 @@ async function startPlatformProcess() {
     const loggerCache = new Map<string, Logger>();
 
     // conditionally initialize sentry
-    let sentry: { readonly reportError: (err: Error) => void } = {
+    let sentry: {
+        readonly reportError: (err: Error) => void;
+        readonly flush?: (timeoutMs?: number) => Promise<boolean>;
+    } = {
         reportError: (err: Error) => {
             logger.debug(
                 "Sentry not configured; error not reported to Sentry",
@@ -97,14 +100,14 @@ async function startPlatformProcess() {
             );
         },
     };
-    (async () => {
-        // Resolved from the parent's forwarded settings, not this process's
-        // own config: a worker is forked without the server's config file.
-        if (resolveSentryConfig().dsn) {
-            logger.info("initializing sentry");
-            sentry = await import("./sentry");
-        }
-    })();
+    // Awaited (not fire-and-forget) so a crash during the rest of startup is
+    // reported to Sentry rather than to the no-op stub above. Resolved from
+    // the parent's forwarded settings, not this process's own config: a
+    // worker is forked without the server's config file.
+    if (resolveSentryConfig().dsn) {
+        logger.info("initializing sentry");
+        sentry = await import("./sentry");
+    }
 
     let jobWorker: JobWorker;
     let jobWorkerStarted = false;
@@ -261,20 +264,30 @@ async function startPlatformProcess() {
     /**
      * Handle any uncaught errors from the platform by alerting the worker and shutting down.
      */
-    process.once("uncaughtException", (err: Error) => {
+    /**
+     * Report a fatal worker error and exit. Sentry sends events
+     * asynchronously, so the queued event must be flushed before
+     * `process.exit` discards it.
+     */
+    async function reportFatal(err: Error): Promise<never> {
         console.log("EXCEPTION IN PLATFORM");
         sentry.reportError(err);
         console.log("error:\n", err.stack);
         safeProcessSend(["error", err.toString()]);
+        try {
+            await sentry.flush?.();
+        } catch {
+            // Never let a failing flush mask the error being reported.
+        }
         process.exit(1);
+    }
+
+    process.once("uncaughtException", (err: Error) => {
+        void reportFatal(err);
     });
 
     process.once("unhandledRejection", (err: Error) => {
-        console.log("EXCEPTION IN PLATFORM");
-        sentry.reportError(err);
-        console.log("error:\n", err.stack);
-        safeProcessSend(["error", err.toString()]);
-        process.exit(1);
+        void reportFatal(err);
     });
 
     /**

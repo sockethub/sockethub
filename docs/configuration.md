@@ -318,7 +318,6 @@ clients can spoof the header and evade rate limiting.
 
 [trust-proxy]: https://expressjs.com/en/guide/behind-proxies.html
 
-
 ### HTTP Actions
 
 HTTP actions provide a one-shot HTTP interface for sending ActivityStreams
@@ -652,6 +651,16 @@ Verify delivery without starting the service:
 ```bash
 sockethub --sentry-test --config /path/to/sockethub.config.json
 ```
+
+`--sentry-test` sends an informational message. To verify the crash path in
+particular — capture, flush, then exit — use:
+
+```bash
+sockethub --sentry-test-crash --config /path/to/sockethub.config.json
+```
+
+It reports a synthetic fatal error and exits non-zero. Neither flag binds a
+port, so both are safe to run against a host already serving Sockethub.
 
 ## Environment Variables
 
