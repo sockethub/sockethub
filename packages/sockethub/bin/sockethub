@@ -1,4 +1,10 @@
 #!/usr/bin/env node
-import("@sockethub/server").then((sockethub) => {
-    sockethub.server();
-});
+// Startup failures before the server registers its own fatal handlers (a
+// missing build, an unreadable config) would otherwise surface as an
+// unhandled rejection with no clean message and no exit code.
+import("@sockethub/server")
+    .then((sockethub) => sockethub.server())
+    .catch((err) => {
+        console.error(err);
+        process.exitCode = 1;
+    });

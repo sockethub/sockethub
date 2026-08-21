@@ -40,14 +40,21 @@ export async function server() {
 
     // --help/--version short-circuit before anything else: they must answer
     // without loading config, binding a port, or initializing Sentry.
+    //
+    // These paths return rather than calling process.exit: writes to a pipe
+    // are asynchronous, and a forced exit can truncate them mid-stream. There
+    // is nothing holding the event loop open here, so returning exits just as
+    // promptly, only after stdout has drained.
     const infoFlag = parseInfoFlag(argv);
     if (infoFlag === "help") {
         process.stdout.write(renderHelp());
-        process.exit(0);
+        process.exitCode = 0;
+        return;
     }
     if (infoFlag === "version") {
         console.log(SOCKETHUB_VERSION);
-        process.exit(0);
+        process.exitCode = 0;
+        return;
     }
 
     // --write-config short-circuits startup: emit a default config file and
@@ -60,11 +67,12 @@ export async function server() {
             if (message) {
                 console.log(message);
             }
-            process.exit(0);
+            process.exitCode = 0;
         } catch (err) {
             console.error(toError(err).message);
-            process.exit(1);
+            process.exitCode = 1;
         }
+        return;
     }
 
     // Loaded lazily (not statically) so the import-time Config singleton
@@ -93,6 +101,28 @@ export async function server() {
         log.info("initializing sentry");
         sentry = await import("./sentry");
     }
+
+    // Registered as soon as Sentry is available and before the remaining
+    // startup imports: a rejected import would otherwise leave `server()` to
+    // reject with no handler attached, exiting without a report. Failures
+    // before this point cannot reach Sentry in any case — the config that
+    // carries the DSN has not been read yet.
+    process.once("uncaughtException", (err: unknown) => {
+        const error = toError(err);
+        console.error(
+            `${(new Date()).toUTCString()} UNCAUGHT EXCEPTION\n`,
+            error.stack,
+        );
+        void reportFatal(error);
+    });
+
+    process.once("unhandledRejection", (err: unknown) => {
+        console.error(
+            `${(new Date()).toUTCString()} UNHANDLED REJECTION\n`,
+            err,
+        );
+        void reportFatal(toError(err));
+    });
 
     if (argv.includes("--sentry-test")) {
         if (!sentry.sendTestEvent) {
@@ -129,22 +159,6 @@ export async function server() {
         console.error(error);
         await reportFatal(error);
     }
-
-    process.once("uncaughtException", (err: Error) => {
-        console.error(
-            `${(new Date()).toUTCString()} UNCAUGHT EXCEPTION\n`,
-            err.stack,
-        );
-        void reportFatal(err);
-    });
-
-    process.once("unhandledRejection", (err: unknown) => {
-        console.error(
-            `${(new Date()).toUTCString()} UNHANDLED REJECTION\n`,
-            err,
-        );
-        void reportFatal(toError(err));
-    });
 
     const gracefulShutdown = async (signal: string) => {
         console.log(`Received ${signal} signal. Shutting down sockethub...`);

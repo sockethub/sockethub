@@ -105,12 +105,14 @@ async function startPlatformProcess() {
     // would die without notifying the parent or reporting to Sentry.
     // `reportFatal` and `safeProcessSend` are function declarations, so they
     // are hoisted and callable from here.
-    process.once("uncaughtException", (err: Error) => {
-        void reportFatal(err);
+    // Neither a thrown value nor a rejection reason is guaranteed to be an
+    // Error — `throw null` and `Promise.reject(null)` both reach here — and a
+    // non-Error would throw on `.stack` inside the handler, losing the very
+    // report it exists to make. Normalize both first.
+    process.once("uncaughtException", (err: unknown) => {
+        void reportFatal(toError(err));
     });
 
-    // A rejection reason can be any value, including null or undefined, which
-    // would throw on `.stack` inside the handler. Normalize it first.
     process.once("unhandledRejection", (err: unknown) => {
         void reportFatal(toError(err));
     });
