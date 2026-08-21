@@ -19,6 +19,7 @@ addPlatformContext("respplat", RESPONSES_CTX);
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
+import config from "./config.js";
 import PlatformInstance, { platformInstances } from "./platform-instance.js";
 
 describe("PlatformInstance", () => {
@@ -77,6 +78,56 @@ describe("PlatformInstance", () => {
                 "name",
                 "id",
             ]);
+            await pi.shutdown();
+        });
+    });
+
+    describe("sentry settings forwarded to the worker", () => {
+        const SENTRY = {
+            dsn: "https://key@o1.ingest.sentry.io/1",
+            environment: "staging",
+            release: "sockethub@9.9.9",
+            enableLogs: true,
+            logLevels: ["debug", "info", "warn", "error"],
+            enableMetrics: true,
+            tracesSampleRate: 1,
+            profileSessionSampleRate: 0,
+            sendDefaultPii: false,
+        };
+
+        function forkedEnv() {
+            return forkFake.lastCall.args[2];
+        }
+
+        function newInstance(resolveSentryEnv?) {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            if (resolveSentryEnv) {
+                TestPlatformInstance.prototype.resolveSentryEnv =
+                    resolveSentryEnv;
+            }
+            return new TestPlatformInstance({
+                identifier: "id",
+                platform: "name",
+                parentId: "parentId",
+            });
+        }
+
+        // The worker is forked with an allowlisted environment and no
+        // --config, so settings it is not handed are unavailable to it.
+        test("forwards the resolved block when a dsn is configured", async () => {
+            const pi = newInstance(() => JSON.stringify(SENTRY));
+            expect(JSON.parse(forkedEnv().SOCKETHUB_SENTRY_CONFIG)).toEqual(
+                SENTRY,
+            );
+            await pi.shutdown();
+        });
+
+        // Default resolution against the loaded config, which has no DSN under
+        // test: the worker environment stays as small as it was.
+        test("omits it when no dsn is configured", async () => {
+            const pi = newInstance();
+            expect(config.get("sentry").dsn).toBe("");
+            expect(forkedEnv().SOCKETHUB_SENTRY_CONFIG).toBeUndefined();
             await pi.shutdown();
         });
     });

@@ -610,6 +610,12 @@ URLs, and client IP addresses are not attached. Logs are opt-in and default to
 `warn` and `error`. Profiling is disabled by default; keep its sample rate low
 in production.
 
+These settings apply to the server process and to every platform worker it
+forks. Workers are started with a minimal environment and no config file of
+their own, so the server hands them its resolved Sentry block; errors raised
+inside a platform are reported to the same project, under the same sampling
+and redaction settings, however the server was configured.
+
 Verify delivery without starting the service:
 
 ```bash

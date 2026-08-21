@@ -22,6 +22,7 @@ import {
     reassignAnonymousScopes,
 } from "./connection-scope.js";
 import { getSocket } from "./listener.js";
+import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
 import { __dirname } from "./util.js";
 
 // collection of platform instances, stored by `id`
@@ -48,6 +49,7 @@ type EnvFormat = {
     SOCKETHUB_PLATFORM_SCOPE?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
+    SOCKETHUB_SENTRY_CONFIG?: string;
 };
 
 type MessageFromPlatform =
@@ -139,6 +141,13 @@ export default class PlatformInstance {
             env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS =
                 String(heartbeatTimeout);
         }
+        // Forward the parent's resolved Sentry settings. Without this a worker
+        // sees no DSN (it is not in the forked environment, and the worker gets
+        // no --config either), so its errors are logged and dropped.
+        const sentryConfig = this.resolveSentryEnv();
+        if (sentryConfig) {
+            env.SOCKETHUB_SENTRY_CONFIG = sentryConfig;
+        }
         // Forward this platform's `packageConfig` entry (keyed by package name)
         // to the forked child, which merges it onto the platform's defaults.
         const packageConfig = config.get("packageConfig") as
@@ -164,6 +173,11 @@ export default class PlatformInstance {
 
     createQueue() {
         this.JobQueue = JobQueue;
+    }
+
+    // Separate method to help with testing
+    resolveSentryEnv(): string | undefined {
+        return serializeSentryConfig(config.get("sentry") as SentryConfig);
     }
 
     initProcess(parentId: string, name: string, id: string, env: EnvFormat) {
