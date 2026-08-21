@@ -155,14 +155,23 @@ verification event and exit.
 ### Command-line params
 
 ```
-  --help       : this help screen
-  --info       : displays some basic runtime info
+  --help, -h          : this help screen
+  --version, -v       : print the version and exit
+  --info              : displays some basic runtime info
 
-  --examples   : enabled examples page and serves helper files like jquery
+  --examples          : enabled examples page and serves helper files like jquery
 
-  --host       : hostname to bind to
-  --port       : port to bind to
+  --config, -c        : path to a config file
+  --write-config      : write a default config file and exit
+
+  --host              : hostname to bind to
+  --port              : port to bind to
+
+  --sentry-test       : send a verification event to Sentry and exit
 ```
+
+`--help`, `--version` and `--write-config` answer without loading the config
+file or binding a port, so they work on a host already running Sockethub.
 
 ### Start
 

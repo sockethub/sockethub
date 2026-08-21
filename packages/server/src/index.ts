@@ -1,7 +1,9 @@
 import path from "node:path";
 import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
 import { toError } from "@sockethub/util/error";
+import { parseInfoFlag, renderHelp } from "./cli.js";
 import type SockethubType from "./sockethub";
+import { SOCKETHUB_VERSION } from "./version.js";
 import { parseWriteConfigTarget, writeDefaultConfig } from "./write-config";
 
 let sentry: {
@@ -12,10 +14,24 @@ let sentry: {
 };
 
 export async function server() {
+    const argv = process.argv.slice(2);
+
+    // --help/--version short-circuit before anything else: they must answer
+    // without loading config, binding a port, or initializing Sentry.
+    const infoFlag = parseInfoFlag(argv);
+    if (infoFlag === "help") {
+        process.stdout.write(renderHelp());
+        process.exit(0);
+    }
+    if (infoFlag === "version") {
+        console.log(SOCKETHUB_VERSION);
+        process.exit(0);
+    }
+
     // --write-config short-circuits startup: emit a default config file and
     // exit. Handled before the config modules load so it works even when an
     // existing config file in the working directory is invalid.
-    const writeConfigTarget = parseWriteConfigTarget(process.argv.slice(2));
+    const writeConfigTarget = parseWriteConfigTarget(argv);
     if (writeConfigTarget !== undefined) {
         try {
             const message = writeDefaultConfig(writeConfigTarget);
@@ -56,7 +72,7 @@ export async function server() {
         sentry = await import("./sentry");
     }
 
-    if (process.argv.includes("--sentry-test")) {
+    if (argv.includes("--sentry-test")) {
         if (!sentry.sendTestEvent) {
             console.error("Sentry is not configured; no test event was sent");
             process.exit(1);
