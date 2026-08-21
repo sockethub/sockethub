@@ -313,6 +313,12 @@ follows it and trusts one hop. Without this, every proxied request appears to
 come from the proxy's own address and shares a single HTTP rate-limit bucket,
 and `express-rate-limit` logs `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`.
 
+That inference applies only when `credentialCheck.proxyHeader` is
+`x-forwarded-for`, the sole header Express consults. A deployment naming a
+custom `proxyHeader` has vouched for that header alone — its proxy may leave
+`x-forwarded-for` client-settable — so `trustProxy` stays `false` and must be
+set explicitly.
+
 Enable it only behind a proxy that overwrites `x-forwarded-for`; otherwise
 clients can spoof the header and evade rate limiting.
 

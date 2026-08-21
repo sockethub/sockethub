@@ -337,8 +337,10 @@ export const SockethubConfigSchema = {
                         "takes an address, subnet or preset ('loopback'). " +
                         "Only enable behind a reverse proxy that overwrites " +
                         "the header. When left false while " +
-                        "credentialCheck.reconnectIpSource is 'proxy', one " +
-                        "hop is trusted so both paths agree.",
+                        "credentialCheck.reconnectIpSource is 'proxy' and " +
+                        "credentialCheck.proxyHeader is 'x-forwarded-for', " +
+                        "one hop is trusted so both paths agree; a custom " +
+                        "proxyHeader requires setting this explicitly.",
                 },
                 cors: {
                     type: "object",

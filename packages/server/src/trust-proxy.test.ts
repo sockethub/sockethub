@@ -48,4 +48,29 @@ describe("resolveTrustProxy", () => {
         expect(resolveTrustProxy("loopback", "proxy")).toBe("loopback");
         expect(resolveTrustProxy(true, "proxy")).toBe(true);
     });
+
+    it("follows an explicit x-forwarded-for proxyHeader", () => {
+        expect(resolveTrustProxy(false, "proxy", "x-forwarded-for")).toBe(1);
+        expect(resolveTrustProxy(false, "proxy", "X-Forwarded-For")).toBe(1);
+        expect(resolveTrustProxy(false, "proxy", "  x-forwarded-for ")).toBe(1);
+        expect(resolveTrustProxy(false, "proxy", "")).toBe(1);
+        expect(resolveTrustProxy(false, "proxy", undefined)).toBe(1);
+    });
+
+    it("does not auto-trust when a custom proxyHeader is configured", () => {
+        // The operator vouched for that header alone. Their proxy may leave
+        // x-forwarded-for — the only header Express reads — client-settable,
+        // which would hand clients control of their rate-limit identity.
+        expect(resolveTrustProxy(false, "proxy", "cf-connecting-ip")).toBe(
+            false,
+        );
+        expect(resolveTrustProxy(undefined, "proxy", "x-real-ip")).toBe(false);
+    });
+
+    it("still honors an explicit setting with a custom proxyHeader", () => {
+        expect(resolveTrustProxy(1, "proxy", "cf-connecting-ip")).toBe(1);
+        expect(resolveTrustProxy("loopback", "proxy", "x-real-ip")).toBe(
+            "loopback",
+        );
+    });
 });

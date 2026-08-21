@@ -203,6 +203,7 @@ class Listener {
         const trustProxy = resolveTrustProxy(
             config.get("sockethub:trustProxy"),
             config.get("credentialCheck:reconnectIpSource"),
+            config.get("credentialCheck:proxyHeader"),
         );
         app.set("trust proxy", trustProxy);
         if (trustProxy !== false) {

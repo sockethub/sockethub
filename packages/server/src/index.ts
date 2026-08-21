@@ -22,9 +22,15 @@ let sentry: {
 async function reportFatal(err: Error, code = 1): Promise<never> {
     sentry.reportError(err);
     try {
-        await sentry.flush?.();
-    } catch {
-        // Never let a failing flush mask the error being reported.
+        // A false result means the timeout elapsed with the event still
+        // queued. Report it rather than exiting as though it had been
+        // delivered, but exit either way: a failing flush must never mask the
+        // error being reported.
+        if ((await sentry.flush?.()) === false) {
+            console.error("fatal-error-flush timed out; event may be lost");
+        }
+    } catch (flushErr) {
+        console.error(`fatal-error-flush failed: ${toError(flushErr).message}`);
     }
     process.exit(code);
 }

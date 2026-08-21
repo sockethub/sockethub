@@ -100,6 +100,21 @@ async function startPlatformProcess() {
             );
         },
     };
+    // Registered before any awaited startup work: an import that rejects
+    // during startup would otherwise never reach the handlers, and the worker
+    // would die without notifying the parent or reporting to Sentry.
+    // `reportFatal` and `safeProcessSend` are function declarations, so they
+    // are hoisted and callable from here.
+    process.once("uncaughtException", (err: Error) => {
+        void reportFatal(err);
+    });
+
+    // A rejection reason can be any value, including null or undefined, which
+    // would throw on `.stack` inside the handler. Normalize it first.
+    process.once("unhandledRejection", (err: unknown) => {
+        void reportFatal(toError(err));
+    });
+
     // Awaited (not fire-and-forget) so a crash during the rest of startup is
     // reported to Sentry rather than to the no-op stub above. Resolved from
     // the parent's forwarded settings, not this process's own config: a
@@ -262,12 +277,9 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Handle any uncaught errors from the platform by alerting the worker and shutting down.
-     */
-    /**
-     * Report a fatal worker error and exit. Sentry sends events
-     * asynchronously, so the queued event must be flushed before
-     * `process.exit` discards it.
+     * Handle any uncaught errors from the platform by alerting the worker and
+     * shutting down. Sentry sends events asynchronously, so the queued event
+     * must be flushed before `process.exit` discards it.
      */
     async function reportFatal(err: Error): Promise<never> {
         console.log("EXCEPTION IN PLATFORM");
@@ -275,20 +287,22 @@ async function startPlatformProcess() {
         console.log("error:\n", err.stack);
         safeProcessSend(["error", err.toString()]);
         try {
-            await sentry.flush?.();
-        } catch {
-            // Never let a failing flush mask the error being reported.
+            // A false result means the timeout elapsed with the event still
+            // queued. Report it rather than exiting as though it had been
+            // delivered, but exit either way: a failing flush must never mask
+            // the error being reported.
+            if ((await sentry.flush?.()) === false) {
+                console.error(
+                    `fatal-error-flush timed out for ${platformName} ${identifier}; event may be lost`,
+                );
+            }
+        } catch (flushErr) {
+            console.error(
+                `fatal-error-flush failed for ${platformName} ${identifier}: ${errorMessage(flushErr)}`,
+            );
         }
         process.exit(1);
     }
-
-    process.once("uncaughtException", (err: Error) => {
-        void reportFatal(err);
-    });
-
-    process.once("unhandledRejection", (err: Error) => {
-        void reportFatal(err);
-    });
 
     /**
      * In the case of a parent disconnect, terminate child process.
