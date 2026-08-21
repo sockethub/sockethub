@@ -14,8 +14,9 @@ describe("version", () => {
     });
 
     it("resolves to a non-empty version string", () => {
-        // A broken relative path to the manifest would surface here as
-        // undefined rather than as a mis-tagged release in production.
+        // A manifest that resolves but carries no version would surface here
+        // as undefined rather than as a mis-tagged release in production. (A
+        // manifest that does not resolve at all throws on import instead.)
         expect(typeof SOCKETHUB_VERSION).toBe("string");
         expect(SOCKETHUB_VERSION.length).toBeGreaterThan(0);
     });
