@@ -326,6 +326,20 @@ export const SockethubConfigSchema = {
                     description:
                         "Maximum size in bytes of a single Socket.IO message.",
                 },
+                trustProxy: {
+                    type: ["boolean", "number", "string"],
+                    default: false,
+                    description:
+                        "Express 'trust proxy' setting, deciding whether " +
+                        "'x-forwarded-for' is believed when determining a " +
+                        "client's IP for HTTP rate limiting. false trusts no " +
+                        "proxy; a number trusts that many hops; a string " +
+                        "takes an address, subnet or preset ('loopback'). " +
+                        "Only enable behind a reverse proxy that overwrites " +
+                        "the header. When left false while " +
+                        "credentialCheck.reconnectIpSource is 'proxy', one " +
+                        "hop is trusted so both paths agree.",
+                },
                 cors: {
                     type: "object",
                     additionalProperties: false,

@@ -14,6 +14,7 @@ import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import { parseCorsOrigins } from "./cors.js";
 import routes from "./routes.js";
+import { resolveTrustProxy } from "./trust-proxy.js";
 import { SOCKETHUB_VERSION } from "./version.js";
 
 const require = createRequire(import.meta.url);
@@ -195,6 +196,18 @@ class Listener {
 
     private static initExpress(): Express {
         const app = express();
+        // Decides whether 'x-forwarded-for' is believed when express-rate-limit
+        // keys a client; left at Express's `false` default, every request
+        // behind a reverse proxy shares the proxy's IP and one rate-limit
+        // bucket.
+        const trustProxy = resolveTrustProxy(
+            config.get("sockethub:trustProxy"),
+            config.get("credentialCheck:reconnectIpSource"),
+        );
+        app.set("trust proxy", trustProxy);
+        if (trustProxy !== false) {
+            log.info(`trusting proxy headers (trust proxy: ${trustProxy})`);
+        }
         // templating engines
         app.set("view engine", "ejs");
         // Express bundles body-parser as express.urlencoded(); use it directly.

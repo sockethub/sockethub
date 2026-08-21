@@ -288,6 +288,37 @@ Configure how reconnect IP is read:
 Use `proxy` only when Sockethub is behind a trusted reverse proxy that sets and
 sanitizes forwarding headers.
 
+### Trusting a reverse proxy for HTTP requests
+
+`sockethub.trustProxy` is Express's [`trust proxy`][trust-proxy] setting, which
+decides whether `x-forwarded-for` is believed when determining a client's IP
+for HTTP rate limiting:
+
+```json
+{
+  "sockethub": {
+    "trustProxy": 1
+  }
+}
+```
+
+- `false` (default) trusts no proxy: `req.ip` is the connecting peer.
+- a number trusts that many hops closest to Sockethub.
+- a string takes an address, subnet, or preset such as `loopback`.
+- `SOCKETHUB_TRUST_PROXY` sets it from the environment.
+
+Setting `credentialCheck.reconnectIpSource` to `proxy` already declares that a
+trusted proxy sets the forwarded header, so a `trustProxy` left at `false`
+follows it and trusts one hop. Without this, every proxied request appears to
+come from the proxy's own address and shares a single HTTP rate-limit bucket,
+and `express-rate-limit` logs `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`.
+
+Enable it only behind a proxy that overwrites `x-forwarded-for`; otherwise
+clients can spoof the header and evade rate limiting.
+
+[trust-proxy]: https://expressjs.com/en/guide/behind-proxies.html
+
+
 ### HTTP Actions
 
 HTTP actions provide a one-shot HTTP interface for sending ActivityStreams
