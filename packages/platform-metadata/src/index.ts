@@ -18,13 +18,17 @@ import {
     normalizeDescription,
     parseRedditOEmbed,
     parseRedditPost,
+    parseYouTubeOEmbed,
     type RedditOEmbed,
     redditOEmbedImage,
     redditPostImage,
     redditPostImages,
     resolveRedditJson,
     resolveTwitterStatus,
+    resolveYouTubeOEmbed,
     tweetToPageObject,
+    type YouTubeOEmbed,
+    youtubeOEmbedImage,
 } from "./resolvers";
 import { PlatformMetadataSchema } from "./schema";
 
@@ -55,6 +59,7 @@ const COMPAT_USER_AGENT =
 const TWEET_API_TIMEOUT_MS = 10_000;
 const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
 const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
+const YOUTUBE_OEMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
@@ -152,7 +157,44 @@ export default class Metadata implements PlatformInterface {
             this.fetchReddit(job, cb);
             return;
         }
+        const youtubeOEmbedUrl = resolveYouTubeOEmbed(job.actor.id);
+        if (youtubeOEmbedUrl) {
+            const embed = withDeadline(
+                this.fetchYouTubeEmbed(youtubeOEmbedUrl),
+                YOUTUBE_OEMBED_TIMEOUT_MS,
+            ).catch(() => undefined);
+            this.scrape(job, cb, undefined, job.actor.id, embed);
+            return;
+        }
         this.scrape(job, cb);
+    }
+
+    /** Fetch and validate YouTube's official preview metadata. */
+    private async fetchYouTubeEmbed(
+        embedUrl: string,
+    ): Promise<YouTubeOEmbed | undefined> {
+        try {
+            const res = await this.fetchImpl(embedUrl, {
+                dispatcher: this.getDispatcher(),
+                headers: { "user-agent": this.userAgent() },
+                signal: AbortSignal.timeout(YOUTUBE_OEMBED_TIMEOUT_MS),
+            } as RequestInit & {
+                dispatcher: ReturnType<typeof createGuardedDispatcher>;
+            });
+            if (!res.ok) {
+                throw new Error(`YouTube oEmbed returned HTTP ${res.status}`);
+            }
+            const embed = parseYouTubeOEmbed(await res.json());
+            if (!embed) {
+                throw new Error("YouTube oEmbed returned an invalid payload");
+            }
+            return embed;
+        } catch (err) {
+            this.log.debug(
+                `youtube oEmbed fetch failed for ${embedUrl}: ${String(err)}; using scraped metadata`,
+            );
+            return undefined;
+        }
     }
 
     private async fetchTweet(
@@ -341,11 +383,15 @@ export default class Metadata implements PlatformInterface {
         cb: PlatformCallback,
         redditEmbed?: Promise<RedditOEmbed | undefined>,
         scrapeUrl = job.actor.id,
+        youtubeEmbed?: Promise<YouTubeOEmbed | undefined>,
     ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
         // gets a page without OG tags, or a 403.
-        const userAgent = isRedditUrl(job.actor.id)
+        const useCompatUserAgent =
+            isRedditUrl(job.actor.id) ||
+            Boolean(resolveYouTubeOEmbed(job.actor.id));
+        const userAgent = useCompatUserAgent
             ? this.compatUserAgent()
             : this.userAgent();
         // The server fetches whatever URL a client puts in actor.id, so guard
@@ -414,6 +460,7 @@ export default class Metadata implements PlatformInterface {
                 this.log.debug(`scrape completed for ${job.actor.id}`);
                 const reddit = isRedditUrl(job.actor.id);
                 const embed = reddit ? await redditEmbed : undefined;
+                const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;
                 job.actor.name = reddit
                     ? (embed?.provider_name ?? "reddit")
@@ -421,8 +468,11 @@ export default class Metadata implements PlatformInterface {
                 job.object = {
                     type: "page",
                     language: result.ogLocale,
-                    title: embed?.title ?? result.ogTitle,
-                    name: embed?.provider_name ?? result.ogSiteName,
+                    title: embed?.title ?? youtube?.title ?? result.ogTitle,
+                    name:
+                        embed?.provider_name ??
+                        youtube?.provider_name ??
+                        result.ogSiteName,
                     description: normalizeDescription(
                         result.ogDescription || "",
                     ),
@@ -432,7 +482,9 @@ export default class Metadata implements PlatformInterface {
                     image: reddit
                         ? (redditPostImages(result.ogImage) ??
                           redditOEmbedImage(embed ?? {}))
-                        : result.ogImage,
+                        : result.ogImage?.length
+                          ? result.ogImage
+                          : youtubeOEmbedImage(youtube),
                     url: reddit ? job.actor.id : result.ogUrl,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
@@ -471,6 +523,24 @@ export default class Metadata implements PlatformInterface {
                         cb(null, job);
                         return;
                     }
+                }
+                const youtube = await youtubeEmbed;
+                if (youtube) {
+                    job.actor.name = youtube.provider_name || "YouTube";
+                    job.object = {
+                        type: "page",
+                        title: youtube.title,
+                        name: youtube.provider_name || "YouTube",
+                        description: "",
+                        image: youtubeOEmbedImage(youtube),
+                        url: job.actor.id,
+                        favicon: "/favicon.ico",
+                    };
+                    this.log.debug(
+                        `using youtube oEmbed fallback for ${job.actor.id}`,
+                    );
+                    cb(null, job);
+                    return;
                 }
                 cb(err);
             });
