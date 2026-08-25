@@ -304,6 +304,67 @@ describe("tweetToPageObject", () => {
         expect(page?.video).toBeUndefined();
     });
 
+    it("maps an X Article body, title, and cover image", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                url: "https://x.com/someperson/status/4",
+                text: "",
+                author,
+                article: {
+                    title: "How to fix your entire life in 1 day",
+                    preview_text: "A short preview that should not win.",
+                    cover_media: {
+                        media_info: {
+                            original_img_url:
+                                "https://pbs.twimg.com/media/cover.jpg",
+                            original_img_width: 1456,
+                            original_img_height: 582,
+                        },
+                    },
+                    content: {
+                        blocks: [
+                            { type: "unstyled", text: "First paragraph." },
+                            { type: "atomic", text: " " },
+                            { type: "header-two", text: "A heading" },
+                            { type: "unstyled", text: "Second paragraph." },
+                        ],
+                    },
+                },
+            },
+        });
+
+        expect(page).toEqual({
+            type: "page",
+            title: "How to fix your entire life in 1 day",
+            name: "X (formerly Twitter)",
+            description:
+                "First paragraph.\n\nA heading\n\nSecond paragraph.",
+            url: "https://x.com/someperson/status/4",
+            favicon: "https://x.com/favicon.ico",
+            image: [
+                {
+                    url: "https://pbs.twimg.com/media/cover.jpg",
+                    width: 1456,
+                    height: 582,
+                },
+            ],
+        });
+    });
+
+    it("uses an X Article preview when content blocks are unavailable", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                text: "",
+                author,
+                article: { preview_text: "Article preview" },
+            },
+        });
+
+        expect(page?.description).toEqual("Article preview");
+    });
+
     it("returns null for API errors so the caller can fall back", () => {
         expect(tweetToPageObject({ code: 404, message: "NOT_FOUND" })).toBeNull();
         expect(tweetToPageObject({ code: 200 })).toBeNull();

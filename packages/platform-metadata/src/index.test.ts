@@ -343,6 +343,48 @@ describe("twitter status resolution", () => {
         ]);
     });
 
+    it("returns the body of an X Article whose tweet text is empty", async () => {
+        tweetResponse = () =>
+            Promise.resolve({
+                code: 200,
+                tweet: {
+                    url: "https://x.com/thedankoe/status/2010751592346030461",
+                    text: "",
+                    author: { name: "DAN KOE", screen_name: "thedankoe" },
+                    article: {
+                        title: "How to fix your entire life in 1 day",
+                        content: {
+                            blocks: [
+                                {
+                                    type: "unstyled",
+                                    text: "If you're anything like me, you think new years resolutions are stupid.",
+                                },
+                                {
+                                    type: "unstyled",
+                                    text: "Because most people go about changing their lives in the completely wrong way.",
+                                },
+                            ],
+                        },
+                    },
+                },
+            });
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://x.com/thedankoe/status/2010751592346030461",
+        );
+
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        const job = result as any;
+        expect(job.object.title).toEqual(
+            "How to fix your entire life in 1 day",
+        );
+        expect(job.object.description).toEqual(
+            "If you're anything like me, you think new years resolutions are stupid.\n\nBecause most people go about changing their lives in the completely wrong way.",
+        );
+    });
+
     it("falls back to the OG scrape when the FxTwitter API errors", async () => {
         tweetResponse = () => Promise.reject(new Error("api down"));
         const { err, result } = await runFetch(

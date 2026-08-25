@@ -289,6 +289,23 @@ export interface FxTwitterStatus {
                 duration?: number;
             }>;
         };
+        article?: {
+            title?: string;
+            preview_text?: string;
+            cover_media?: {
+                media_info?: {
+                    original_img_url?: string;
+                    original_img_width?: number;
+                    original_img_height?: number;
+                };
+            };
+            content?: {
+                blocks?: Array<{
+                    text?: string;
+                    type?: string;
+                }>;
+            };
+        };
     };
 }
 
@@ -329,18 +346,37 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         return null;
     }
     const author = tweet.author ?? {};
+    const article = tweet.article;
+    const articleBody = article?.content?.blocks
+        ?.map((block) =>
+            block?.type !== "atomic" && typeof block?.text === "string"
+                ? block.text.trim()
+                : "",
+        )
+        .filter(Boolean)
+        .join("\n\n");
     const title =
-        author.name && author.screen_name
+        (typeof article?.title === "string" && article.title) ||
+        (author.name && author.screen_name
             ? `${author.name} (@${author.screen_name}) on X`
-            : (author.name ?? "Post on X");
+            : (author.name ?? "Post on X"));
     const photo = tweet.media?.photos?.[0];
     const video = tweet.media?.videos?.[0];
-    const imageUrl = photo?.url ?? video?.thumbnail_url;
+    const articleImage = article?.cover_media?.media_info;
+    const imageUrl =
+        articleImage?.original_img_url ?? photo?.url ?? video?.thumbnail_url;
     const page: PageObject = {
         type: "page",
         title,
         name: "X (formerly Twitter)",
-        description: normalizeDescription(tweet.text ?? ""),
+        description: normalizeDescription(
+            articleBody ||
+                (typeof article?.preview_text === "string"
+                    ? article.preview_text
+                    : "") ||
+                tweet.text ||
+                "",
+        ),
         url: tweet.url,
         // The API bypasses the page scrape, so no favicon comes back with
         // it — supply the canonical one so clients can decorate the card.
@@ -350,8 +386,14 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         page.image = [
             {
                 url: imageUrl,
-                width: photo?.width ?? video?.width,
-                height: photo?.height ?? video?.height,
+                width:
+                    articleImage?.original_img_width ??
+                    photo?.width ??
+                    video?.width,
+                height:
+                    articleImage?.original_img_height ??
+                    photo?.height ??
+                    video?.height,
             },
         ];
     }
