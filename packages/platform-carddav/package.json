@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-carddav",
   "description": "A Sockethub platform for CardDAV address books and contacts",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "type": "module",
   "private": false,
   "license": "LGPL-3.0+",
@@ -30,19 +30,19 @@
     "test": "bun test src/"
   },
   "dependencies": {
-    "@sockethub/dav": "^1.0.0-alpha.3",
-    "@sockethub/schemas": "^3.0.0-alpha.22"
+    "@sockethub/dav": "^1.0.0-alpha.4",
+    "@sockethub/schemas": "^3.0.0-alpha.23"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.22"
+    "@sockethub/server": "^5.0.0-alpha.23"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
   },
-  "gitHead": "1630010f605e85cc548e3323cb9694fbe3a7a18a"
+  "gitHead": "a6d303097640e82c7d1a7cef6dea2e6dae5f2cac"
 }
