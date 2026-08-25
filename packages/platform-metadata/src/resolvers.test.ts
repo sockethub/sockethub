@@ -382,6 +382,19 @@ describe("tweetToPageObject", () => {
         expect(page?.description).toEqual("Safe fallback");
     });
 
+    it("uses tweet text when the X Article preview is blank", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                text: "Tweet fallback",
+                author,
+                article: { preview_text: " \t\n " },
+            },
+        });
+
+        expect(page?.description).toEqual("Tweet fallback");
+    });
+
     it("returns null for API errors so the caller can fall back", () => {
         expect(tweetToPageObject({ code: 404, message: "NOT_FOUND" })).toBeNull();
         expect(tweetToPageObject({ code: 200 })).toBeNull();

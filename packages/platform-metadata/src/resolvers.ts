@@ -374,7 +374,8 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         name: "X (formerly Twitter)",
         description: normalizeDescription(
             articleBody ||
-                (typeof article?.preview_text === "string"
+                (typeof article?.preview_text === "string" &&
+                article.preview_text.trim()
                     ? article.preview_text
                     : "") ||
                 tweet.text ||
