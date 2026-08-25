@@ -145,6 +145,7 @@ export function parseYouTubeOEmbed(value: unknown): YouTubeOEmbed | null {
     return embed as unknown as YouTubeOEmbed;
 }
 
+/** Map a validated YouTube oEmbed thumbnail to the platform image shape. */
 export function youtubeOEmbedImage(
     embed?: YouTubeOEmbed,
 ): PageObject["image"] | undefined {

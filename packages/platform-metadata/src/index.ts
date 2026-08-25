@@ -169,6 +169,7 @@ export default class Metadata implements PlatformInterface {
         this.scrape(job, cb);
     }
 
+    /** Fetch and validate YouTube's official preview metadata. */
     private async fetchYouTubeEmbed(
         embedUrl: string,
     ): Promise<YouTubeOEmbed | undefined> {
@@ -522,6 +523,24 @@ export default class Metadata implements PlatformInterface {
                         cb(null, job);
                         return;
                     }
+                }
+                const youtube = await youtubeEmbed;
+                if (youtube) {
+                    job.actor.name = youtube.provider_name || "YouTube";
+                    job.object = {
+                        type: "page",
+                        title: youtube.title,
+                        name: youtube.provider_name || "YouTube",
+                        description: "",
+                        image: youtubeOEmbedImage(youtube),
+                        url: job.actor.id,
+                        favicon: "/favicon.ico",
+                    };
+                    this.log.debug(
+                        `using youtube oEmbed fallback for ${job.actor.id}`,
+                    );
+                    cb(null, job);
+                    return;
                 }
                 cb(err);
             });

@@ -368,6 +368,33 @@ describe("youtube video resolution", () => {
             },
         ]);
     });
+
+    it("falls back to oEmbed when the page scrape fails", async () => {
+        ogsBehavior = () => Promise.reject(new Error("scrape unavailable"));
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+        );
+
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toEqual({
+            type: "page",
+            title: "oEmbed title",
+            name: "YouTube",
+            description: "",
+            image: [
+                {
+                    url: "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
+                    width: 480,
+                    height: 360,
+                },
+            ],
+            url: "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+            favicon: "/favicon.ico",
+        });
+    });
 });
 
 describe("twitter status resolution", () => {
