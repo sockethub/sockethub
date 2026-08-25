@@ -26,6 +26,13 @@ const TWITTER_HOSTS = new Set([
     "mobile.x.com",
 ]);
 
+const YOUTUBE_HOSTS = new Set([
+    "youtube.com",
+    "www.youtube.com",
+    "m.youtube.com",
+    "music.youtube.com",
+]);
+
 /** Hosts that serve Reddit posts. */
 const REDDIT_HOSTS = new Set([
     "reddit.com",
@@ -59,6 +66,97 @@ export function resolveTwitterStatus(url: string): string | null {
         return null;
     }
     return `https://api.fxtwitter.com/status/${match[1]}`;
+}
+
+/** Resolve supported YouTube video URLs to the official oEmbed endpoint. */
+export function resolveYouTubeOEmbed(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    const host = parsed.hostname.toLowerCase();
+    let videoId: string | null | undefined;
+    if (YOUTUBE_HOSTS.has(host)) {
+        if (parsed.pathname === "/watch") {
+            videoId = parsed.searchParams.get("v");
+        } else {
+            videoId = parsed.pathname.match(
+                /^\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{11})(?:\/|$)/,
+            )?.[1];
+        }
+    } else if (host === "youtu.be") {
+        videoId = parsed.pathname.match(/^\/([A-Za-z0-9_-]{11})(?:\/|$)/)?.[1];
+    }
+    if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
+
+    const canonical = new URL("https://www.youtube.com/watch");
+    canonical.searchParams.set("v", videoId);
+    const endpoint = new URL("https://www.youtube.com/oembed");
+    endpoint.searchParams.set("url", canonical.href);
+    endpoint.searchParams.set("format", "json");
+    return endpoint.href;
+}
+
+export interface YouTubeOEmbed {
+    title: string;
+    provider_name?: string;
+    thumbnail_url: string;
+    thumbnail_width?: number;
+    thumbnail_height?: number;
+}
+
+/** Validate the subset of YouTube's external oEmbed payload we consume. */
+export function parseYouTubeOEmbed(value: unknown): YouTubeOEmbed | null {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+        return null;
+    const embed = value as Record<string, unknown>;
+    if (
+        typeof embed.title !== "string" ||
+        !embed.title ||
+        typeof embed.thumbnail_url !== "string" ||
+        !embed.thumbnail_url
+    ) {
+        return null;
+    }
+    if (
+        embed.provider_name !== undefined &&
+        typeof embed.provider_name !== "string"
+    ) {
+        return null;
+    }
+    for (const key of ["thumbnail_width", "thumbnail_height"]) {
+        if (
+            embed[key] !== undefined &&
+            (typeof embed[key] !== "number" ||
+                !Number.isFinite(embed[key]) ||
+                embed[key] < 0)
+        ) {
+            return null;
+        }
+    }
+    try {
+        const thumbnail = new URL(embed.thumbnail_url);
+        if (!["http:", "https:"].includes(thumbnail.protocol)) return null;
+    } catch {
+        return null;
+    }
+    return embed as unknown as YouTubeOEmbed;
+}
+
+export function youtubeOEmbedImage(
+    embed?: YouTubeOEmbed,
+): PageObject["image"] | undefined {
+    return embed
+        ? [
+              {
+                  url: embed.thumbnail_url,
+                  width: embed.thumbnail_width,
+                  height: embed.thumbnail_height,
+              },
+          ]
+        : undefined;
 }
 
 /**

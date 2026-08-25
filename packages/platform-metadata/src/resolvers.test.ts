@@ -4,14 +4,79 @@ import {
     normalizeDescription,
     parseRedditOEmbed,
     parseRedditPost,
+    parseYouTubeOEmbed,
     redditOEmbedImage,
     redditPostImage,
     redditPostImages,
     resolveRedditEmbed,
     resolveRedditJson,
     resolveTwitterStatus,
+    resolveYouTubeOEmbed,
     tweetToPageObject,
+    youtubeOEmbedImage,
 } from "./resolvers";
+
+describe("resolveYouTubeOEmbed", () => {
+    it("resolves supported YouTube video URL forms", () => {
+        for (const url of [
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE&t=10",
+            "https://youtu.be/eJnBBLKCLjE?si=abc",
+            "https://m.youtube.com/shorts/eJnBBLKCLjE",
+            "https://youtube.com/live/eJnBBLKCLjE",
+            "https://www.youtube.com/embed/eJnBBLKCLjE",
+        ]) {
+            expect(resolveYouTubeOEmbed(url)).toEqual(
+                "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DeJnBBLKCLjE&format=json",
+            );
+        }
+    });
+
+    it("ignores non-video, malformed, and lookalike URLs", () => {
+        expect(resolveYouTubeOEmbed("https://youtube.com/@channel")).toBeNull();
+        expect(resolveYouTubeOEmbed("https://youtube.com/watch?v=short")).toBeNull();
+        expect(resolveYouTubeOEmbed("https://notyoutube.com/watch?v=eJnBBLKCLjE")).toBeNull();
+        expect(resolveYouTubeOEmbed("not a URL")).toBeNull();
+    });
+});
+
+describe("YouTube oEmbed metadata", () => {
+    it("validates and maps a thumbnail", () => {
+        const embed = parseYouTubeOEmbed({
+            title: "Video title",
+            provider_name: "YouTube",
+            thumbnail_url: "https://i.ytimg.com/vi/id/hqdefault.jpg",
+            thumbnail_width: 480,
+            thumbnail_height: 360,
+            html: "ignored external field",
+        });
+        expect(embed).not.toBeNull();
+        expect(youtubeOEmbedImage(embed!)).toEqual([
+            {
+                url: "https://i.ytimg.com/vi/id/hqdefault.jpg",
+                width: 480,
+                height: 360,
+            },
+        ]);
+    });
+
+    it("rejects malformed payloads and unsafe thumbnails", () => {
+        expect(parseYouTubeOEmbed(null)).toBeNull();
+        expect(parseYouTubeOEmbed({ title: "Video" })).toBeNull();
+        expect(
+            parseYouTubeOEmbed({
+                title: "Video",
+                thumbnail_url: "javascript:alert(1)",
+            }),
+        ).toBeNull();
+        expect(
+            parseYouTubeOEmbed({
+                title: "Video",
+                thumbnail_url: "https://i.ytimg.com/x.jpg",
+                thumbnail_width: -1,
+            }),
+        ).toBeNull();
+    });
+});
 
 describe("resolveTwitterStatus", () => {
     it("resolves status URLs on every X/Twitter host", () => {

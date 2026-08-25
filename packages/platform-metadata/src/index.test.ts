@@ -279,6 +279,97 @@ describe("scrape deadline", () => {
     });
 });
 
+describe("youtube video resolution", () => {
+    const realFetch = globalThis.fetch;
+    let fetchedUrl: string | undefined;
+
+    beforeEach(() => {
+        ogsOptions = undefined;
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle: "Scraped title",
+                    ogDescription: "The video description",
+                    ogSiteName: "YouTube",
+                    ogUrl: "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+                },
+            });
+        fetchedUrl = undefined;
+        // biome-ignore lint/suspicious/noExplicitAny: controlled YouTube fetch stub
+        globalThis.fetch = ((url: string) => {
+            fetchedUrl = String(url);
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () =>
+                    Promise.resolve({
+                        title: "oEmbed title",
+                        provider_name: "YouTube",
+                        thumbnail_url:
+                            "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
+                        thumbnail_width: 480,
+                        thumbnail_height: 360,
+                    }),
+            });
+        }) as any;
+    });
+
+    afterEach(() => {
+        globalThis.fetch = realFetch;
+    });
+
+    it("combines the scraped description with the official thumbnail", async () => {
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+        );
+
+        expect(err).toBeNull();
+        expect(fetchedUrl).toEqual(
+            "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DeJnBBLKCLjE&format=json",
+        );
+        expect(sentUserAgent()).toMatch(/Discordbot/);
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "oEmbed title",
+            name: "YouTube",
+            description: "The video description",
+            image: [
+                {
+                    url: "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
+                    width: 480,
+                    height: 360,
+                },
+            ],
+        });
+    });
+
+    it("keeps a higher-quality scraped thumbnail when available", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogDescription: "Description",
+                    ogImage: [
+                        {
+                            url: "https://i.ytimg.com/vi/eJnBBLKCLjE/maxresdefault.jpg",
+                        },
+                    ],
+                },
+            });
+
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://youtu.be/eJnBBLKCLjE",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "https://i.ytimg.com/vi/eJnBBLKCLjE/maxresdefault.jpg",
+            },
+        ]);
+    });
+});
+
 describe("twitter status resolution", () => {
     const realFetch = globalThis.fetch;
     let fetchedUrl: string | undefined;
