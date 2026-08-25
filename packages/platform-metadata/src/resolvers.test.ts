@@ -365,6 +365,23 @@ describe("tweetToPageObject", () => {
         expect(page?.description).toEqual("Article preview");
     });
 
+    it("uses the preview when X Article content blocks are malformed", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                text: "",
+                author,
+                article: {
+                    preview_text: "Safe fallback",
+                    // biome-ignore lint/suspicious/noExplicitAny: malformed external payload
+                    content: { blocks: "not an array" as any },
+                },
+            },
+        });
+
+        expect(page?.description).toEqual("Safe fallback");
+    });
+
     it("returns null for API errors so the caller can fall back", () => {
         expect(tweetToPageObject({ code: 404, message: "NOT_FOUND" })).toBeNull();
         expect(tweetToPageObject({ code: 200 })).toBeNull();

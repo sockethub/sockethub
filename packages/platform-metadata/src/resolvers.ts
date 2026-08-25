@@ -347,14 +347,17 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
     }
     const author = tweet.author ?? {};
     const article = tweet.article;
-    const articleBody = article?.content?.blocks
-        ?.map((block) =>
-            block?.type !== "atomic" && typeof block?.text === "string"
-                ? block.text.trim()
-                : "",
-        )
-        .filter(Boolean)
-        .join("\n\n");
+    const articleBlocks = article?.content?.blocks;
+    const articleBody = Array.isArray(articleBlocks)
+        ? articleBlocks
+              .map((block) =>
+                  block?.type !== "atomic" && typeof block?.text === "string"
+                      ? block.text.trim()
+                      : "",
+              )
+              .filter(Boolean)
+              .join("\n\n")
+        : undefined;
     const title =
         (typeof article?.title === "string" && article.title) ||
         (author.name && author.screen_name
