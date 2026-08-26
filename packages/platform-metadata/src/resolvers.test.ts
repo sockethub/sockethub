@@ -255,6 +255,26 @@ describe("Reddit JSON metadata", () => {
         expect(redditPostImage(post)).toBeUndefined();
         expect(redditPostVideo(post)).toBeUndefined();
     });
+
+    it("never promotes an HTTP image to a video thumbnail", () => {
+        const post = {
+            title: "Hosted video with insecure poster",
+            url: "http://i.redd.it/post.png",
+            secure_media: {
+                reddit_video: {
+                    fallback_url: "https://v.redd.it/abc123/video.mp4",
+                },
+            },
+        };
+        expect(redditPostImage(post)).toBeUndefined();
+        expect(redditPostVideo(post)).toEqual({
+            url: "https://v.redd.it/abc123/video.mp4",
+            thumbnail: undefined,
+            width: undefined,
+            height: undefined,
+            duration: undefined,
+        });
+    });
 });
 
 describe("redditOEmbedImage", () => {

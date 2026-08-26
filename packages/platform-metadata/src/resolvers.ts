@@ -258,6 +258,7 @@ export function parseRedditPost(value: unknown): RedditPost | null {
     return data as unknown as RedditPost;
 }
 
+/** Return a canonical HTTPS URL when it belongs to an allowed Reddit host. */
 function redditMediaUrl(
     value: unknown,
     allowedHosts: Set<string>,
@@ -274,6 +275,7 @@ function redditMediaUrl(
     }
 }
 
+/** Keep valid media measurements while discarding malformed external values. */
 function finiteNonNegative(value: unknown): number | undefined {
     return typeof value === "number" && Number.isFinite(value) && value >= 0
         ? value
@@ -283,19 +285,11 @@ function finiteNonNegative(value: unknown): number | undefined {
 /** Select only a direct Reddit-hosted image belonging to the post. */
 export function redditPostImage(post: RedditPost): PageObject["image"] {
     for (const candidate of [post.url_overridden_by_dest, post.url]) {
-        if (!candidate) continue;
-        try {
-            const url = new URL(candidate);
-            if (
-                ["i.redd.it", "preview.redd.it"].includes(
-                    url.hostname.toLowerCase(),
-                )
-            ) {
-                return [{ url: url.href }];
-            }
-        } catch {
-            // Try the next candidate.
-        }
+        const url = redditMediaUrl(
+            candidate,
+            new Set(["i.redd.it", "preview.redd.it"]),
+        );
+        if (url) return [{ url }];
     }
     const source = post.preview?.images?.[0]?.source;
     const previewUrl = redditMediaUrl(
