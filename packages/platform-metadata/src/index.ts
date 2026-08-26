@@ -23,6 +23,7 @@ import {
     redditOEmbedImage,
     redditPostImage,
     redditPostImages,
+    redditPostVideo,
     resolveRedditJson,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
@@ -259,6 +260,7 @@ export default class Metadata implements PlatformInterface {
                     name: "reddit",
                     description: normalizeDescription(post.selftext ?? ""),
                     image: redditPostImage(post),
+                    video: redditPostVideo(post),
                     url: job.actor.id,
                     favicon: "/favicon.ico",
                 };

@@ -8,6 +8,7 @@ import {
     redditOEmbedImage,
     redditPostImage,
     redditPostImages,
+    redditPostVideo,
     resolveRedditEmbed,
     resolveRedditJson,
     resolveTwitterStatus,
@@ -181,6 +182,78 @@ describe("Reddit JSON metadata", () => {
         expect(
             redditPostImage({ title: "Link", url: "https://example.com/a.png" }),
         ).toBeUndefined();
+    });
+
+    it("maps a hosted video and its preview image", () => {
+        const post = parseRedditPost([
+            {
+                data: {
+                    children: [
+                        {
+                            data: {
+                                title: "Video post",
+                                selftext: "",
+                                url: "https://v.redd.it/abc123",
+                                secure_media: {
+                                    reddit_video: {
+                                        fallback_url:
+                                            "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+                                        width: 480,
+                                        height: 494,
+                                        duration: 41,
+                                    },
+                                },
+                                preview: {
+                                    images: [
+                                        {
+                                            source: {
+                                                url: "https://external-preview.redd.it/post.png?format=pjpg",
+                                                width: 650,
+                                                height: 670,
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+        expect(post).not.toBeNull();
+        expect(redditPostImage(post!)).toEqual([
+            {
+                url: "https://external-preview.redd.it/post.png?format=pjpg",
+                width: 650,
+                height: 670,
+            },
+        ]);
+        expect(redditPostVideo(post!)).toEqual({
+            url: "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+            thumbnail:
+                "https://external-preview.redd.it/post.png?format=pjpg",
+            width: 480,
+            height: 494,
+            duration: 41,
+        });
+    });
+
+    it("rejects untrusted Reddit video and preview URLs", () => {
+        const post = {
+            title: "Unsafe",
+            secure_media: {
+                reddit_video: {
+                    fallback_url: "https://example.com/video.mp4",
+                },
+            },
+            preview: {
+                images: [
+                    { source: { url: "javascript:alert(1)" } },
+                ],
+            },
+        };
+        expect(redditPostImage(post)).toBeUndefined();
+        expect(redditPostVideo(post)).toBeUndefined();
     });
 });
 

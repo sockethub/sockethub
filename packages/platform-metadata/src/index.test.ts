@@ -226,6 +226,57 @@ describe("reddit structured metadata", () => {
         expect((result as any).object.image).toBeUndefined();
     });
 
+    it("returns Reddit hosted video metadata and its poster", async () => {
+        postResponse = {
+            title: "Hosted video",
+            selftext: "",
+            url: "https://v.redd.it/abc123",
+            secure_media: {
+                reddit_video: {
+                    fallback_url:
+                        "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+                    width: 480,
+                    height: 494,
+                    duration: 41,
+                },
+            },
+            preview: {
+                images: [
+                    {
+                        source: {
+                            url: "https://external-preview.redd.it/post.png",
+                            width: 650,
+                            height: 670,
+                        },
+                    },
+                ],
+            },
+        };
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/videos/comments/abc123/post/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            description: "",
+            image: [
+                {
+                    url: "https://external-preview.redd.it/post.png",
+                    width: 650,
+                    height: 670,
+                },
+            ],
+            video: {
+                url: "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+                thumbnail: "https://external-preview.redd.it/post.png",
+                width: 480,
+                height: 494,
+                duration: 41,
+            },
+        });
+    });
+
     it("falls back to oEmbed when Reddit JSON fails", async () => {
         redditJsonBehavior = () => Promise.reject(new Error("JSON down"));
         globalThis.fetch = ((url: URL) =>
