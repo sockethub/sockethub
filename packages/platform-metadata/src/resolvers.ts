@@ -223,6 +223,23 @@ export interface RedditPost {
     selftext?: string;
     url?: string;
     url_overridden_by_dest?: string;
+    secure_media?: {
+        reddit_video?: {
+            fallback_url?: string;
+            width?: number;
+            height?: number;
+            duration?: number;
+        };
+    };
+    preview?: {
+        images?: Array<{
+            source?: {
+                url?: string;
+                width?: number;
+                height?: number;
+            };
+        }>;
+    };
 }
 
 /** Validate and extract the post object from Reddit's listing response. */
@@ -241,24 +258,68 @@ export function parseRedditPost(value: unknown): RedditPost | null {
     return data as unknown as RedditPost;
 }
 
+/** Return a canonical HTTPS URL when it belongs to an allowed Reddit host. */
+function redditMediaUrl(
+    value: unknown,
+    allowedHosts: Set<string>,
+): string | null {
+    if (typeof value !== "string") return null;
+    try {
+        const url = new URL(value);
+        return url.protocol === "https:" &&
+            allowedHosts.has(url.hostname.toLowerCase())
+            ? url.href
+            : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Keep valid media measurements while discarding malformed external values. */
+function finiteNonNegative(value: unknown): number | undefined {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0
+        ? value
+        : undefined;
+}
+
 /** Select only a direct Reddit-hosted image belonging to the post. */
 export function redditPostImage(post: RedditPost): PageObject["image"] {
     for (const candidate of [post.url_overridden_by_dest, post.url]) {
-        if (!candidate) continue;
-        try {
-            const url = new URL(candidate);
-            if (
-                ["i.redd.it", "preview.redd.it"].includes(
-                    url.hostname.toLowerCase(),
-                )
-            ) {
-                return [{ url: url.href }];
-            }
-        } catch {
-            // Try the next candidate.
-        }
+        const url = redditMediaUrl(
+            candidate,
+            new Set(["i.redd.it", "preview.redd.it"]),
+        );
+        if (url) return [{ url }];
+    }
+    const source = post.preview?.images?.[0]?.source;
+    const previewUrl = redditMediaUrl(
+        source?.url,
+        new Set(["preview.redd.it", "external-preview.redd.it"]),
+    );
+    if (previewUrl) {
+        return [
+            {
+                url: previewUrl,
+                width: finiteNonNegative(source?.width),
+                height: finiteNonNegative(source?.height),
+            },
+        ];
     }
     return undefined;
+}
+
+/** Map Reddit's hosted-video payload to the common page video shape. */
+export function redditPostVideo(post: RedditPost): PageObject["video"] {
+    const video = post.secure_media?.reddit_video;
+    const url = redditMediaUrl(video?.fallback_url, new Set(["v.redd.it"]));
+    if (!url) return undefined;
+    return {
+        url,
+        thumbnail: redditPostImage(post)?.[0]?.url,
+        width: finiteNonNegative(video?.width),
+        height: finiteNonNegative(video?.height),
+        duration: finiteNonNegative(video?.duration),
+    };
 }
 
 /** Subset of Reddit's oEmbed response used for link previews. */
