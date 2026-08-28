@@ -226,6 +226,57 @@ describe("reddit structured metadata", () => {
         expect((result as any).object.image).toBeUndefined();
     });
 
+    it("returns Reddit hosted video metadata and its poster", async () => {
+        postResponse = {
+            title: "Hosted video",
+            selftext: "",
+            url: "https://v.redd.it/abc123",
+            secure_media: {
+                reddit_video: {
+                    fallback_url:
+                        "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+                    width: 480,
+                    height: 494,
+                    duration: 41,
+                },
+            },
+            preview: {
+                images: [
+                    {
+                        source: {
+                            url: "https://external-preview.redd.it/post.png",
+                            width: 650,
+                            height: 670,
+                        },
+                    },
+                ],
+            },
+        };
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://reddit.com/r/videos/comments/abc123/post/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            description: "",
+            image: [
+                {
+                    url: "https://external-preview.redd.it/post.png",
+                    width: 650,
+                    height: 670,
+                },
+            ],
+            video: {
+                url: "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+                thumbnail: "https://external-preview.redd.it/post.png",
+                width: 480,
+                height: 494,
+                duration: 41,
+            },
+        });
+    });
+
     it("falls back to oEmbed when Reddit JSON fails", async () => {
         redditJsonBehavior = () => Promise.reject(new Error("JSON down"));
         globalThis.fetch = ((url: URL) =>
@@ -276,6 +327,124 @@ describe("scrape deadline", () => {
         await expect(withDeadline(stalled, 5)).rejects.toThrow(
             "metadata scrape timed out after 5ms",
         );
+    });
+});
+
+describe("youtube video resolution", () => {
+    const realFetch = globalThis.fetch;
+    let fetchedUrl: string | undefined;
+
+    beforeEach(() => {
+        ogsOptions = undefined;
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle: "Scraped title",
+                    ogDescription: "The video description",
+                    ogSiteName: "YouTube",
+                    ogUrl: "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+                },
+            });
+        fetchedUrl = undefined;
+        // biome-ignore lint/suspicious/noExplicitAny: controlled YouTube fetch stub
+        globalThis.fetch = ((url: string) => {
+            fetchedUrl = String(url);
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () =>
+                    Promise.resolve({
+                        title: "oEmbed title",
+                        provider_name: "YouTube",
+                        thumbnail_url:
+                            "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
+                        thumbnail_width: 480,
+                        thumbnail_height: 360,
+                    }),
+            });
+        }) as any;
+    });
+
+    afterEach(() => {
+        globalThis.fetch = realFetch;
+    });
+
+    it("combines the scraped description with the official thumbnail", async () => {
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+        );
+
+        expect(err).toBeNull();
+        expect(fetchedUrl).toEqual(
+            "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DeJnBBLKCLjE&format=json",
+        );
+        expect(sentUserAgent()).toMatch(/Discordbot/);
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "oEmbed title",
+            name: "YouTube",
+            description: "The video description",
+            image: [
+                {
+                    url: "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
+                    width: 480,
+                    height: 360,
+                },
+            ],
+        });
+    });
+
+    it("keeps a higher-quality scraped thumbnail when available", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogDescription: "Description",
+                    ogImage: [
+                        {
+                            url: "https://i.ytimg.com/vi/eJnBBLKCLjE/maxresdefault.jpg",
+                        },
+                    ],
+                },
+            });
+
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://youtu.be/eJnBBLKCLjE",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "https://i.ytimg.com/vi/eJnBBLKCLjE/maxresdefault.jpg",
+            },
+        ]);
+    });
+
+    it("falls back to oEmbed when the page scrape fails", async () => {
+        ogsBehavior = () => Promise.reject(new Error("scrape unavailable"));
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+        );
+
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toEqual({
+            type: "page",
+            title: "oEmbed title",
+            name: "YouTube",
+            description: "",
+            image: [
+                {
+                    url: "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
+                    width: 480,
+                    height: 360,
+                },
+            ],
+            url: "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+            favicon: "/favicon.ico",
+        });
     });
 });
 
@@ -341,6 +510,48 @@ describe("twitter status resolution", () => {
         expect(job.object.image).toEqual([
             { url: "https://pbs.twimg.com/media/a.jpg" },
         ]);
+    });
+
+    it("returns the body of an X Article whose tweet text is empty", async () => {
+        tweetResponse = () =>
+            Promise.resolve({
+                code: 200,
+                tweet: {
+                    url: "https://x.com/thedankoe/status/2010751592346030461",
+                    text: "",
+                    author: { name: "DAN KOE", screen_name: "thedankoe" },
+                    article: {
+                        title: "How to fix your entire life in 1 day",
+                        content: {
+                            blocks: [
+                                {
+                                    type: "unstyled",
+                                    text: "If you're anything like me, you think new years resolutions are stupid.",
+                                },
+                                {
+                                    type: "unstyled",
+                                    text: "Because most people go about changing their lives in the completely wrong way.",
+                                },
+                            ],
+                        },
+                    },
+                },
+            });
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://x.com/thedankoe/status/2010751592346030461",
+        );
+
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        const job = result as any;
+        expect(job.object.title).toEqual(
+            "How to fix your entire life in 1 day",
+        );
+        expect(job.object.description).toEqual(
+            "If you're anything like me, you think new years resolutions are stupid.\n\nBecause most people go about changing their lives in the completely wrong way.",
+        );
     });
 
     it("falls back to the OG scrape when the FxTwitter API errors", async () => {

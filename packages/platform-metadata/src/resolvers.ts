@@ -26,6 +26,13 @@ const TWITTER_HOSTS = new Set([
     "mobile.x.com",
 ]);
 
+const YOUTUBE_HOSTS = new Set([
+    "youtube.com",
+    "www.youtube.com",
+    "m.youtube.com",
+    "music.youtube.com",
+]);
+
 /** Hosts that serve Reddit posts. */
 const REDDIT_HOSTS = new Set([
     "reddit.com",
@@ -59,6 +66,98 @@ export function resolveTwitterStatus(url: string): string | null {
         return null;
     }
     return `https://api.fxtwitter.com/status/${match[1]}`;
+}
+
+/** Resolve supported YouTube video URLs to the official oEmbed endpoint. */
+export function resolveYouTubeOEmbed(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    const host = parsed.hostname.toLowerCase();
+    let videoId: string | null | undefined;
+    if (YOUTUBE_HOSTS.has(host)) {
+        if (parsed.pathname === "/watch") {
+            videoId = parsed.searchParams.get("v");
+        } else {
+            videoId = parsed.pathname.match(
+                /^\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{11})(?:\/|$)/,
+            )?.[1];
+        }
+    } else if (host === "youtu.be") {
+        videoId = parsed.pathname.match(/^\/([A-Za-z0-9_-]{11})(?:\/|$)/)?.[1];
+    }
+    if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
+
+    const canonical = new URL("https://www.youtube.com/watch");
+    canonical.searchParams.set("v", videoId);
+    const endpoint = new URL("https://www.youtube.com/oembed");
+    endpoint.searchParams.set("url", canonical.href);
+    endpoint.searchParams.set("format", "json");
+    return endpoint.href;
+}
+
+export interface YouTubeOEmbed {
+    title: string;
+    provider_name?: string;
+    thumbnail_url: string;
+    thumbnail_width?: number;
+    thumbnail_height?: number;
+}
+
+/** Validate the subset of YouTube's external oEmbed payload we consume. */
+export function parseYouTubeOEmbed(value: unknown): YouTubeOEmbed | null {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+        return null;
+    const embed = value as Record<string, unknown>;
+    if (
+        typeof embed.title !== "string" ||
+        !embed.title ||
+        typeof embed.thumbnail_url !== "string" ||
+        !embed.thumbnail_url
+    ) {
+        return null;
+    }
+    if (
+        embed.provider_name !== undefined &&
+        typeof embed.provider_name !== "string"
+    ) {
+        return null;
+    }
+    for (const key of ["thumbnail_width", "thumbnail_height"]) {
+        if (
+            embed[key] !== undefined &&
+            (typeof embed[key] !== "number" ||
+                !Number.isFinite(embed[key]) ||
+                embed[key] < 0)
+        ) {
+            return null;
+        }
+    }
+    try {
+        const thumbnail = new URL(embed.thumbnail_url);
+        if (!["http:", "https:"].includes(thumbnail.protocol)) return null;
+    } catch {
+        return null;
+    }
+    return embed as unknown as YouTubeOEmbed;
+}
+
+/** Map a validated YouTube oEmbed thumbnail to the platform image shape. */
+export function youtubeOEmbedImage(
+    embed?: YouTubeOEmbed,
+): PageObject["image"] | undefined {
+    return embed
+        ? [
+              {
+                  url: embed.thumbnail_url,
+                  width: embed.thumbnail_width,
+                  height: embed.thumbnail_height,
+              },
+          ]
+        : undefined;
 }
 
 /**
@@ -124,6 +223,23 @@ export interface RedditPost {
     selftext?: string;
     url?: string;
     url_overridden_by_dest?: string;
+    secure_media?: {
+        reddit_video?: {
+            fallback_url?: string;
+            width?: number;
+            height?: number;
+            duration?: number;
+        };
+    };
+    preview?: {
+        images?: Array<{
+            source?: {
+                url?: string;
+                width?: number;
+                height?: number;
+            };
+        }>;
+    };
 }
 
 /** Validate and extract the post object from Reddit's listing response. */
@@ -142,24 +258,68 @@ export function parseRedditPost(value: unknown): RedditPost | null {
     return data as unknown as RedditPost;
 }
 
+/** Return a canonical HTTPS URL when it belongs to an allowed Reddit host. */
+function redditMediaUrl(
+    value: unknown,
+    allowedHosts: Set<string>,
+): string | null {
+    if (typeof value !== "string") return null;
+    try {
+        const url = new URL(value);
+        return url.protocol === "https:" &&
+            allowedHosts.has(url.hostname.toLowerCase())
+            ? url.href
+            : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Keep valid media measurements while discarding malformed external values. */
+function finiteNonNegative(value: unknown): number | undefined {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0
+        ? value
+        : undefined;
+}
+
 /** Select only a direct Reddit-hosted image belonging to the post. */
 export function redditPostImage(post: RedditPost): PageObject["image"] {
     for (const candidate of [post.url_overridden_by_dest, post.url]) {
-        if (!candidate) continue;
-        try {
-            const url = new URL(candidate);
-            if (
-                ["i.redd.it", "preview.redd.it"].includes(
-                    url.hostname.toLowerCase(),
-                )
-            ) {
-                return [{ url: url.href }];
-            }
-        } catch {
-            // Try the next candidate.
-        }
+        const url = redditMediaUrl(
+            candidate,
+            new Set(["i.redd.it", "preview.redd.it"]),
+        );
+        if (url) return [{ url }];
+    }
+    const source = post.preview?.images?.[0]?.source;
+    const previewUrl = redditMediaUrl(
+        source?.url,
+        new Set(["preview.redd.it", "external-preview.redd.it"]),
+    );
+    if (previewUrl) {
+        return [
+            {
+                url: previewUrl,
+                width: finiteNonNegative(source?.width),
+                height: finiteNonNegative(source?.height),
+            },
+        ];
     }
     return undefined;
+}
+
+/** Map Reddit's hosted-video payload to the common page video shape. */
+export function redditPostVideo(post: RedditPost): PageObject["video"] {
+    const video = post.secure_media?.reddit_video;
+    const url = redditMediaUrl(video?.fallback_url, new Set(["v.redd.it"]));
+    if (!url) return undefined;
+    return {
+        url,
+        thumbnail: redditPostImage(post)?.[0]?.url,
+        width: finiteNonNegative(video?.width),
+        height: finiteNonNegative(video?.height),
+        duration: finiteNonNegative(video?.duration),
+    };
 }
 
 /** Subset of Reddit's oEmbed response used for link previews. */
@@ -289,6 +449,23 @@ export interface FxTwitterStatus {
                 duration?: number;
             }>;
         };
+        article?: {
+            title?: string;
+            preview_text?: string;
+            cover_media?: {
+                media_info?: {
+                    original_img_url?: string;
+                    original_img_width?: number;
+                    original_img_height?: number;
+                };
+            };
+            content?: {
+                blocks?: Array<{
+                    text?: string;
+                    type?: string;
+                }>;
+            };
+        };
     };
 }
 
@@ -329,18 +506,41 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         return null;
     }
     const author = tweet.author ?? {};
+    const article = tweet.article;
+    const articleBlocks = article?.content?.blocks;
+    const articleBody = Array.isArray(articleBlocks)
+        ? articleBlocks
+              .map((block) =>
+                  block?.type !== "atomic" && typeof block?.text === "string"
+                      ? block.text.trim()
+                      : "",
+              )
+              .filter(Boolean)
+              .join("\n\n")
+        : undefined;
     const title =
-        author.name && author.screen_name
+        (typeof article?.title === "string" && article.title) ||
+        (author.name && author.screen_name
             ? `${author.name} (@${author.screen_name}) on X`
-            : (author.name ?? "Post on X");
+            : (author.name ?? "Post on X"));
     const photo = tweet.media?.photos?.[0];
     const video = tweet.media?.videos?.[0];
-    const imageUrl = photo?.url ?? video?.thumbnail_url;
+    const articleImage = article?.cover_media?.media_info;
+    const imageUrl =
+        articleImage?.original_img_url ?? photo?.url ?? video?.thumbnail_url;
     const page: PageObject = {
         type: "page",
         title,
         name: "X (formerly Twitter)",
-        description: normalizeDescription(tweet.text ?? ""),
+        description: normalizeDescription(
+            articleBody ||
+                (typeof article?.preview_text === "string" &&
+                article.preview_text.trim()
+                    ? article.preview_text
+                    : "") ||
+                tweet.text ||
+                "",
+        ),
         url: tweet.url,
         // The API bypasses the page scrape, so no favicon comes back with
         // it — supply the canonical one so clients can decorate the card.
@@ -350,8 +550,14 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         page.image = [
             {
                 url: imageUrl,
-                width: photo?.width ?? video?.width,
-                height: photo?.height ?? video?.height,
+                width:
+                    articleImage?.original_img_width ??
+                    photo?.width ??
+                    video?.width,
+                height:
+                    articleImage?.original_img_height ??
+                    photo?.height ??
+                    video?.height,
             },
         ];
     }

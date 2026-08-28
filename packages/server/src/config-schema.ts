@@ -106,6 +106,11 @@ const OVERLAY: Record<string, OverlayEntry> = {
         env: "SOCKETHUB_MAX_PAYLOAD_BYTES",
         emptyEnvIsUnset: true,
     },
+    "sockethub.trustProxy": {
+        format: "*",
+        env: "SOCKETHUB_TRUST_PROXY",
+        emptyEnvIsUnset: true,
+    },
     "sockethub.cors.origin": {
         env: "SOCKETHUB_CORS_ORIGIN",
         arg: "cors.origin",

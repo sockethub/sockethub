@@ -12,6 +12,9 @@ import { defaultSentryRelease } from "./version.js";
 
 type MetricAttributes = Record<string, string | number | boolean>;
 
+/** How long fatal-error paths wait for queued events to reach Sentry. */
+export const SENTRY_FLUSH_TIMEOUT_MS = 2000;
+
 const logger = createLogger("sentry");
 const sentryConfig = resolveSentryConfig();
 
@@ -68,6 +71,16 @@ logger.info("initialized sentry observability");
 export function reportError(err: Error): void {
     logger.warn("reporting error");
     Sentry.captureException(err);
+}
+
+/**
+ * Drain queued events to Sentry. `captureException` only enqueues; a process
+ * that exits without flushing discards everything still in the buffer, which
+ * is exactly the case for fatal-error paths that call `process.exit`.
+ * Resolves `false` if the timeout elapsed with events still unsent.
+ */
+export function flush(timeoutMs = SENTRY_FLUSH_TIMEOUT_MS): Promise<boolean> {
+    return Sentry.flush(timeoutMs);
 }
 
 export function count(

@@ -4,14 +4,80 @@ import {
     normalizeDescription,
     parseRedditOEmbed,
     parseRedditPost,
+    parseYouTubeOEmbed,
     redditOEmbedImage,
     redditPostImage,
     redditPostImages,
+    redditPostVideo,
     resolveRedditEmbed,
     resolveRedditJson,
     resolveTwitterStatus,
+    resolveYouTubeOEmbed,
     tweetToPageObject,
+    youtubeOEmbedImage,
 } from "./resolvers";
+
+describe("resolveYouTubeOEmbed", () => {
+    it("resolves supported YouTube video URL forms", () => {
+        for (const url of [
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE&t=10",
+            "https://youtu.be/eJnBBLKCLjE?si=abc",
+            "https://m.youtube.com/shorts/eJnBBLKCLjE",
+            "https://youtube.com/live/eJnBBLKCLjE",
+            "https://www.youtube.com/embed/eJnBBLKCLjE",
+        ]) {
+            expect(resolveYouTubeOEmbed(url)).toEqual(
+                "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DeJnBBLKCLjE&format=json",
+            );
+        }
+    });
+
+    it("ignores non-video, malformed, and lookalike URLs", () => {
+        expect(resolveYouTubeOEmbed("https://youtube.com/@channel")).toBeNull();
+        expect(resolveYouTubeOEmbed("https://youtube.com/watch?v=short")).toBeNull();
+        expect(resolveYouTubeOEmbed("https://notyoutube.com/watch?v=eJnBBLKCLjE")).toBeNull();
+        expect(resolveYouTubeOEmbed("not a URL")).toBeNull();
+    });
+});
+
+describe("YouTube oEmbed metadata", () => {
+    it("validates and maps a thumbnail", () => {
+        const embed = parseYouTubeOEmbed({
+            title: "Video title",
+            provider_name: "YouTube",
+            thumbnail_url: "https://i.ytimg.com/vi/id/hqdefault.jpg",
+            thumbnail_width: 480,
+            thumbnail_height: 360,
+            html: "ignored external field",
+        });
+        expect(embed).not.toBeNull();
+        expect(youtubeOEmbedImage(embed!)).toEqual([
+            {
+                url: "https://i.ytimg.com/vi/id/hqdefault.jpg",
+                width: 480,
+                height: 360,
+            },
+        ]);
+    });
+
+    it("rejects malformed payloads and unsafe thumbnails", () => {
+        expect(parseYouTubeOEmbed(null)).toBeNull();
+        expect(parseYouTubeOEmbed({ title: "Video" })).toBeNull();
+        expect(
+            parseYouTubeOEmbed({
+                title: "Video",
+                thumbnail_url: "javascript:alert(1)",
+            }),
+        ).toBeNull();
+        expect(
+            parseYouTubeOEmbed({
+                title: "Video",
+                thumbnail_url: "https://i.ytimg.com/x.jpg",
+                thumbnail_width: -1,
+            }),
+        ).toBeNull();
+    });
+});
 
 describe("resolveTwitterStatus", () => {
     it("resolves status URLs on every X/Twitter host", () => {
@@ -116,6 +182,98 @@ describe("Reddit JSON metadata", () => {
         expect(
             redditPostImage({ title: "Link", url: "https://example.com/a.png" }),
         ).toBeUndefined();
+    });
+
+    it("maps a hosted video and its preview image", () => {
+        const post = parseRedditPost([
+            {
+                data: {
+                    children: [
+                        {
+                            data: {
+                                title: "Video post",
+                                selftext: "",
+                                url: "https://v.redd.it/abc123",
+                                secure_media: {
+                                    reddit_video: {
+                                        fallback_url:
+                                            "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+                                        width: 480,
+                                        height: 494,
+                                        duration: 41,
+                                    },
+                                },
+                                preview: {
+                                    images: [
+                                        {
+                                            source: {
+                                                url: "https://external-preview.redd.it/post.png?format=pjpg",
+                                                width: 650,
+                                                height: 670,
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+        expect(post).not.toBeNull();
+        expect(redditPostImage(post!)).toEqual([
+            {
+                url: "https://external-preview.redd.it/post.png?format=pjpg",
+                width: 650,
+                height: 670,
+            },
+        ]);
+        expect(redditPostVideo(post!)).toEqual({
+            url: "https://v.redd.it/abc123/CMAF_480.mp4?source=fallback",
+            thumbnail:
+                "https://external-preview.redd.it/post.png?format=pjpg",
+            width: 480,
+            height: 494,
+            duration: 41,
+        });
+    });
+
+    it("rejects untrusted Reddit video and preview URLs", () => {
+        const post = {
+            title: "Unsafe",
+            secure_media: {
+                reddit_video: {
+                    fallback_url: "https://example.com/video.mp4",
+                },
+            },
+            preview: {
+                images: [
+                    { source: { url: "javascript:alert(1)" } },
+                ],
+            },
+        };
+        expect(redditPostImage(post)).toBeUndefined();
+        expect(redditPostVideo(post)).toBeUndefined();
+    });
+
+    it("never promotes an HTTP image to a video thumbnail", () => {
+        const post = {
+            title: "Hosted video with insecure poster",
+            url: "http://i.redd.it/post.png",
+            secure_media: {
+                reddit_video: {
+                    fallback_url: "https://v.redd.it/abc123/video.mp4",
+                },
+            },
+        };
+        expect(redditPostImage(post)).toBeUndefined();
+        expect(redditPostVideo(post)).toEqual({
+            url: "https://v.redd.it/abc123/video.mp4",
+            thumbnail: undefined,
+            width: undefined,
+            height: undefined,
+            duration: undefined,
+        });
     });
 });
 
@@ -302,6 +460,97 @@ describe("tweetToPageObject", () => {
         expect(page?.description).toEqual("just words");
         expect(page?.image).toBeUndefined();
         expect(page?.video).toBeUndefined();
+    });
+
+    it("maps an X Article body, title, and cover image", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                url: "https://x.com/someperson/status/4",
+                text: "",
+                author,
+                article: {
+                    title: "How to fix your entire life in 1 day",
+                    preview_text: "A short preview that should not win.",
+                    cover_media: {
+                        media_info: {
+                            original_img_url:
+                                "https://pbs.twimg.com/media/cover.jpg",
+                            original_img_width: 1456,
+                            original_img_height: 582,
+                        },
+                    },
+                    content: {
+                        blocks: [
+                            { type: "unstyled", text: "First paragraph." },
+                            { type: "atomic", text: " " },
+                            { type: "header-two", text: "A heading" },
+                            { type: "unstyled", text: "Second paragraph." },
+                        ],
+                    },
+                },
+            },
+        });
+
+        expect(page).toEqual({
+            type: "page",
+            title: "How to fix your entire life in 1 day",
+            name: "X (formerly Twitter)",
+            description:
+                "First paragraph.\n\nA heading\n\nSecond paragraph.",
+            url: "https://x.com/someperson/status/4",
+            favicon: "https://x.com/favicon.ico",
+            image: [
+                {
+                    url: "https://pbs.twimg.com/media/cover.jpg",
+                    width: 1456,
+                    height: 582,
+                },
+            ],
+        });
+    });
+
+    it("uses an X Article preview when content blocks are unavailable", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                text: "",
+                author,
+                article: { preview_text: "Article preview" },
+            },
+        });
+
+        expect(page?.description).toEqual("Article preview");
+    });
+
+    it("uses the preview when X Article content blocks are malformed", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                text: "",
+                author,
+                article: {
+                    preview_text: "Safe fallback",
+                    // biome-ignore lint/suspicious/noExplicitAny: malformed external payload
+                    content: { blocks: "not an array" as any },
+                },
+            },
+        });
+
+        expect(page?.description).toEqual("Safe fallback");
+    });
+
+    it("uses tweet text when the X Article preview is blank", () => {
+        const page = tweetToPageObject({
+            code: 200,
+            tweet: {
+                text: "Tweet fallback",
+                author,
+                article: { preview_text: " \t\n " },
+            },
+        });
+
+        expect(page?.description).toEqual("Tweet fallback");
     });
 
     it("returns null for API errors so the caller can fall back", () => {
