@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+    isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
     parseRedditOEmbed,
@@ -14,6 +15,7 @@ import {
     resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
+    stripFacebookEngagement,
     tweetToPageObject,
     youtubeOEmbedImage,
 } from "./resolvers";
@@ -430,6 +432,57 @@ describe("isRedditUrl", () => {
         expect(isRedditUrl("https://ireddit.com/r/pics")).toBeFalse();
         expect(isRedditUrl("https://notredd.it/abc")).toBeFalse();
         expect(isRedditUrl("not a url")).toBeFalse();
+    });
+});
+
+describe("isFacebookUrl", () => {
+    it("matches facebook hosts and short links", () => {
+        for (const url of [
+            "https://www.facebook.com/share/v/1JudTFVg5h/?mibextid=wwXIfr",
+            "https://facebook.com/SomePage/videos/1720321322579856/",
+            "https://m.facebook.com/share/p/abc/",
+            "https://web.facebook.com/reel/123",
+            "https://fb.watch/abc123/",
+            "https://fb.com/something",
+        ]) {
+            expect(isFacebookUrl(url)).toBeTrue();
+        }
+    });
+
+    it("ignores other hosts and invalid URLs", () => {
+        expect(isFacebookUrl("https://example.com/share/v/abc")).toBeFalse();
+        // Lookalike suffix must not match (attacker-controlled host).
+        expect(isFacebookUrl("https://notfacebook.com/share")).toBeFalse();
+        expect(isFacebookUrl("https://facebook.com.evil.com/x")).toBeFalse();
+        expect(isFacebookUrl("not a url")).toBeFalse();
+    });
+});
+
+describe("stripFacebookEngagement", () => {
+    it("strips the localized stats segment from video titles", () => {
+        expect(
+            stripFacebookEngagement(
+                "2.2M views · 21K reactions | If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+            ),
+        ).toEqual(
+            "If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+        );
+        // Stats arrive in the scraping server's geo-IP language.
+        expect(
+            stripFacebookEngagement(
+                "2,2 mil. zhlédnutí · 21 tis. reakcí | Video | Author",
+            ),
+        ).toEqual("Video | Author");
+    });
+
+    it("leaves titles without a stats segment untouched", () => {
+        expect(stripFacebookEngagement("Steven Bartlett")).toEqual(
+            "Steven Bartlett",
+        );
+        expect(stripFacebookEngagement("My video | Author")).toEqual(
+            "My video | Author",
+        );
+        expect(stripFacebookEngagement(undefined)).toBeUndefined();
     });
 });
 
