@@ -14,6 +14,7 @@ import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
 import {
     type FxTwitterStatus,
+    isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
     parseRedditOEmbed,
@@ -28,6 +29,7 @@ import {
     resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
+    stripFacebookEngagement,
     tweetToPageObject,
     type YouTubeOEmbed,
     youtubeOEmbedImage,
@@ -425,9 +427,11 @@ export default class Metadata implements PlatformInterface {
     ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
-        // gets a page without OG tags, or a 403.
+        // gets a page without OG tags, or a 403. Facebook likewise serves
+        // unrecognized scrapers a login interstitial instead of the post.
         const useCompatUserAgent =
             isRedditUrl(job.actor.id) ||
+            isFacebookUrl(job.actor.id) ||
             Boolean(resolveYouTubeOEmbed(job.actor.id));
         const userAgent = useCompatUserAgent
             ? this.compatUserAgent()
@@ -497,20 +501,37 @@ export default class Metadata implements PlatformInterface {
                 const { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
                 const reddit = isRedditUrl(job.actor.id);
+                const facebook = isFacebookUrl(job.actor.id);
                 const embed = reddit ? await redditEmbed : undefined;
                 const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;
+                // Facebook declares no og:site_name, so supply it; its video
+                // titles come prefixed with localized view/reaction counts.
+                const siteName =
+                    result.ogSiteName ?? (facebook ? "Facebook" : undefined);
+                // The og:image alt inherits the same stats prefix as the title.
+                const scrapedImages = facebook
+                    ? result.ogImage?.map((image) => ({
+                          ...image,
+                          alt: stripFacebookEngagement(image.alt),
+                      }))
+                    : result.ogImage;
                 job.actor.name = reddit
                     ? (embed?.provider_name ?? "reddit")
-                    : (result.ogSiteName ?? job.actor.name ?? "");
+                    : (siteName ?? job.actor.name ?? "");
                 job.object = {
                     type: "page",
                     language: result.ogLocale,
-                    title: embed?.title ?? youtube?.title ?? result.ogTitle,
+                    title:
+                        embed?.title ??
+                        youtube?.title ??
+                        (facebook
+                            ? stripFacebookEngagement(result.ogTitle)
+                            : result.ogTitle),
                     name:
                         embed?.provider_name ??
                         youtube?.provider_name ??
-                        result.ogSiteName,
+                        siteName,
                     description: normalizeDescription(
                         result.ogDescription || "",
                     ),
@@ -520,8 +541,8 @@ export default class Metadata implements PlatformInterface {
                     image: reddit
                         ? (redditPostImages(result.ogImage) ??
                           redditOEmbedImage(embed ?? {}))
-                        : result.ogImage?.length
-                          ? result.ogImage
+                        : scrapedImages?.length
+                          ? scrapedImages
                           : youtubeOEmbedImage(youtube),
                     url: reddit ? job.actor.id : result.ogUrl,
                     // Fall back to the conventional location when the page

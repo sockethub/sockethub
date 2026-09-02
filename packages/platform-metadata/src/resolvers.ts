@@ -4,13 +4,14 @@
  *
  * Some large platforms return a generic banner image (X/Twitter), serve
  * their Open Graph data only to recognized embed crawlers (Reddit), or
- * hide post media behind a login (Facebook). Two of those have working
- * strategies:
+ * hide post media behind a login (Facebook):
  *
  * - X/Twitter → FxTwitter's JSON API (api.fxtwitter.com), built for embed
  *   previews, returns the tweet text plus direct photo/video URLs.
  * - Reddit → the regular scrape works, but only when presented with an
  *   embed-crawler user agent (see COMPAT_USER_AGENT in index.ts).
+ * - Facebook → same crawler-UA gating as Reddit, plus its video titles
+ *   arrive polluted with localized engagement stats that need stripping.
  *
  * These are pure URL matchers/mappers — the platform decides what to do
  * with the resolution (call a JSON API vs. pick a scrape user agent).
@@ -31,6 +32,17 @@ const YOUTUBE_HOSTS = new Set([
     "www.youtube.com",
     "m.youtube.com",
     "music.youtube.com",
+]);
+
+/** Hosts that serve Facebook posts, videos, and reels. */
+const FACEBOOK_HOSTS = new Set([
+    "facebook.com",
+    "www.facebook.com",
+    "m.facebook.com",
+    "web.facebook.com",
+    "mbasic.facebook.com",
+    "fb.com",
+    "www.fb.com",
 ]);
 
 /** Hosts that serve Reddit posts. */
@@ -158,6 +170,37 @@ export function youtubeOEmbedImage(
               },
           ]
         : undefined;
+}
+
+/**
+ * True for Facebook URLs (including fb.watch short links). Facebook serves
+ * an unrecognized scraper a login interstitial instead of the post, but
+ * serves recognized link-preview crawlers the post's Open Graph data —
+ * title, caption, and the video/photo thumbnail — so these URLs scrape
+ * with COMPAT_USER_AGENT (see index.ts), like Reddit.
+ */
+export function isFacebookUrl(url: string): boolean {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    return FACEBOOK_HOSTS.has(host) || host === "fb.watch";
+}
+
+/**
+ * Remove the engagement-stats segment Facebook prepends to video titles:
+ * "2.2M views · 21K reactions | <video title> | <author>". The stats are
+ * localized to the *scraping server's* geo-IP language, so match their
+ * shape — a leading pipe-delimited segment containing a digit and the "·"
+ * separator — rather than any particular wording.
+ */
+export function stripFacebookEngagement(
+    title: string | undefined,
+): string | undefined {
+    return title?.replace(/^[^|]*\p{Nd}[^|]*·[^|]*\|\s*/u, "");
 }
 
 /**

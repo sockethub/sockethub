@@ -137,6 +137,78 @@ describe("scrape user agent", () => {
     });
 });
 
+describe("facebook scrape", () => {
+    beforeEach(() => {
+        ogsOptions = undefined;
+        ogsBehavior = () => Promise.resolve({ result: {} });
+    });
+
+    it("presents the compatibility crawler user agent", async () => {
+        await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/v/1JudTFVg5h/?mibextid=wwXIfr",
+        );
+        expect(ogsOptions?.url).toEqual(
+            "https://www.facebook.com/share/v/1JudTFVg5h/?mibextid=wwXIfr",
+        );
+        expect(sentUserAgent()).toMatch(/Discordbot/);
+    });
+
+    it("strips engagement stats from the title and supplies the site name", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle:
+                        "2.2M views · 21K reactions | If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+                    ogDescription: "If YOU Take Vitamin D, You NEED To Stop!",
+                    ogUrl: "https://www.facebook.com/SteveBartlettShow/posts/1607733517402185/",
+                    ogImage: [
+                        {
+                            url: "https://scontent.example/thumb.jpg",
+                            alt: "2.2M views · 21K reactions | If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+                        },
+                    ],
+                },
+            });
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/v/1JudTFVg5h/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).actor.name).toEqual("Facebook");
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+            name: "Facebook",
+            description: "If YOU Take Vitamin D, You NEED To Stop!",
+            image: [
+                {
+                    url: "https://scontent.example/thumb.jpg",
+                    alt: "If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+                },
+            ],
+        });
+    });
+
+    it("does not rewrite titles on non-facebook pages", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: { ogTitle: "5 things · 3 ideas | A listicle" },
+            });
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://example.com/article",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual(
+            "5 things · 3 ideas | A listicle",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.name).toBeUndefined();
+    });
+});
+
 describe("favicon fallback", () => {
     beforeEach(() => {
         ogsOptions = undefined;
