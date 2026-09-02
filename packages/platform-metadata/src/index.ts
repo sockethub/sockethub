@@ -67,6 +67,39 @@ const YOUTUBE_OEMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
+const DIRECT_IMAGE_PROBE_TIMEOUT_MS = 5_000;
+
+const IMAGE_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
+    avif: "image/avif",
+    gif: "image/gif",
+    jpeg: "image/jpeg",
+    jpg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+};
+
+/** Build best-effort metadata from a URL with a known image extension. */
+function directImageCandidate(
+    rawUrl: string,
+): { title: string; type: string; url: string } | undefined {
+    try {
+        const url = new URL(rawUrl);
+        if (url.protocol !== "http:" && url.protocol !== "https:") return;
+        const filename = decodeURIComponent(
+            url.pathname.split("/").at(-1) || "",
+        );
+        const extension = filename.match(/\.([a-z0-9]+)$/i)?.[1].toLowerCase();
+        const type = extension && IMAGE_TYPES_BY_EXTENSION[extension];
+        if (!type) return;
+        return {
+            title: filename.slice(0, -(extension.length + 1)),
+            type,
+            url: url.href,
+        };
+    } catch {
+        return;
+    }
+}
 
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
 export function withDeadline<T>(
@@ -170,7 +203,74 @@ export default class Metadata implements PlatformInterface {
             this.scrape(job, cb, undefined, job.actor.id, embed);
             return;
         }
+        const image = directImageCandidate(job.actor.id);
+        if (image) {
+            this.fetchDirectImage(job, image, cb);
+            return;
+        }
         this.scrape(job, cb);
+    }
+
+    /**
+     * Verify likely direct-image links when possible. Origins commonly block
+     * server-side preview agents, so a strong file extension remains a useful
+     * fallback: the client can still request the original resource itself.
+     */
+    private async fetchDirectImage(
+        job: ActivityStream,
+        candidate: { title: string; type: string; url: string },
+        cb: PlatformCallback,
+        timeoutMs = DIRECT_IMAGE_PROBE_TIMEOUT_MS,
+    ) {
+        try {
+            const res = await withDeadline(
+                this.fetchImpl(candidate.url, {
+                    dispatcher: this.getDispatcher(),
+                    headers: {
+                        accept: "image/avif,image/webp,image/*,*/*;q=0.8",
+                        "user-agent": this.userAgent(),
+                    },
+                    signal: AbortSignal.timeout(timeoutMs),
+                } as RequestInit & {
+                    dispatcher: ReturnType<typeof createGuardedDispatcher>;
+                }),
+                timeoutMs,
+            );
+            const contentType = res.headers
+                .get("content-type")
+                ?.split(";", 1)[0]
+                .trim()
+                .toLowerCase();
+            if (res.ok && contentType?.startsWith("text/html")) {
+                if (res.body) await res.body.cancel();
+                this.scrape(job, cb);
+                return;
+            }
+            if (res.ok && contentType && !contentType.startsWith("image/")) {
+                if (res.body) await res.body.cancel();
+                this.scrape(job, cb);
+                return;
+            }
+            if (res.body) await res.body.cancel();
+            if (res.ok && contentType?.startsWith("image/")) {
+                candidate.type = contentType;
+                candidate.url = res.url || candidate.url;
+                job.actor.id = candidate.url;
+            }
+        } catch (err) {
+            this.log.debug(
+                `direct image probe failed for ${candidate.url}: ${String(err)}; using URL metadata`,
+            );
+        }
+        job.object = {
+            type: "page",
+            title: candidate.title.replace(/[_-]+/g, " ").trim(),
+            description: "",
+            image: [{ url: candidate.url, type: candidate.type }],
+            url: candidate.url,
+            favicon: "/favicon.ico",
+        };
+        cb(null, job);
     }
 
     /** Fetch and validate YouTube's official preview metadata. */
