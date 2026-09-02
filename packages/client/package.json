@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/client",
-  "version": "5.0.0-alpha.23",
+  "version": "5.0.0-alpha.24",
   "description": "A JavaScript client for the Sockethub protocol gateway",
   "main": "./dist/sockethub-client.js",
   "exports": {
@@ -46,7 +46,7 @@
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
   },
   "dependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.23",
+    "@sockethub/schemas": "^3.0.0-alpha.24",
     "eventemitter3": "^5.0.4"
   },
   "devDependencies": {
@@ -57,6 +57,6 @@
     "sinon": "^17.0.2",
     "socket.io-client": "^4.8.3"
   },
-  "gitHead": "a6d303097640e82c7d1a7cef6dea2e6dae5f2cac",
+  "gitHead": "e778256d7067e2743cd6807a15d39a0cc65a358d",
   "types": "./dist/sockethub-client.d.ts"
 }
