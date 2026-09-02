@@ -218,6 +218,27 @@ export function resolveRedditJson(url: string): string | null {
     return json.href;
 }
 
+/**
+ * Unwrap Reddit's media-viewer URL (`reddit.com/media?url=<image>`) to the
+ * image it displays. Reddit serves neither post JSON nor oEmbed for these
+ * links (its oEmbed endpoint returns HTTP 400), but the target image is
+ * embedded in the link itself, so no network request is needed at all.
+ */
+export function resolveRedditMedia(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    if (!REDDIT_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    if (parsed.pathname.replace(/\/+$/, "") !== "/media") return null;
+    return redditMediaUrl(
+        parsed.searchParams.get("url"),
+        new Set(["i.redd.it", "preview.redd.it", "external-preview.redd.it"]),
+    );
+}
+
 export interface RedditPost {
     title: string;
     selftext?: string;

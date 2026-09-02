@@ -7,7 +7,7 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
-import { toError } from "@sockethub/util/error";
+import { markExpectedError, toError } from "@sockethub/util/error";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
 import { fetch as undiciFetch } from "undici";
@@ -25,6 +25,7 @@ import {
     redditPostImages,
     redditPostVideo,
     resolveRedditJson,
+    resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
     tweetToPageObject,
@@ -234,6 +235,35 @@ export default class Metadata implements PlatformInterface {
     }
 
     private async fetchReddit(job: ActivityStream, cb: PlatformCallback) {
+        // reddit.com/media?url=… wraps a single hosted image; Reddit serves
+        // neither post JSON nor oEmbed for it, so the network pipeline below
+        // can only fail. The image URL is embedded in the link itself —
+        // answer from it directly.
+        const mediaImage = resolveRedditMedia(job.actor.id);
+        if (mediaImage) {
+            const imagePath = new URL(mediaImage).pathname;
+            let title: string;
+            try {
+                title = decodeURIComponent(imagePath).slice(1);
+            } catch {
+                // Malformed percent-sequences survive URL parsing; the title
+                // is cosmetic, so fall back to the undecoded filename.
+                title = imagePath.slice(1);
+            }
+            job.actor.name = "reddit";
+            job.object = {
+                type: "page",
+                title,
+                name: "reddit",
+                description: "",
+                image: [{ url: mediaImage }],
+                url: job.actor.id,
+                favicon: "/favicon.ico",
+            };
+            this.log.debug(`reddit media link unwrapped for ${job.actor.id}`);
+            cb(null, job);
+            return;
+        }
         const jsonUrl = resolveRedditJson(job.actor.id);
         // Start the title fallback immediately. If the richer post JSON fails,
         // this has usually completed already and does not extend the response
@@ -289,7 +319,13 @@ export default class Metadata implements PlatformInterface {
             cb(null, job);
             return;
         }
-        cb(new Error(`No Reddit metadata available for ${job.actor.id}`));
+        // Expected outcome for deleted/blocked posts and unrecognized Reddit
+        // link shapes, not a server defect — keep it out of Sentry.
+        cb(
+            markExpectedError(
+                new Error(`No Reddit metadata available for ${job.actor.id}`),
+            ),
+        );
     }
 
     /**
@@ -544,7 +580,19 @@ export default class Metadata implements PlatformInterface {
                     cb(null, job);
                     return;
                 }
-                cb(err);
+                // Scrape failures are expected operational outcomes of
+                // fetching arbitrary user-supplied URLs — slow sites time
+                // out, bot-blockers return 403s, links go dead. Mark them so
+                // the job handler doesn't report each one to Sentry as a
+                // production error, and name the URL so any report or client
+                // message is self-describing.
+                cb(
+                    markExpectedError(
+                        new Error(
+                            `metadata scrape failed for ${job.actor.id}: ${err.message}`,
+                        ),
+                    ),
+                );
             });
     }
 
