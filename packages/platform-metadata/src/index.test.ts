@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { isExpectedError } from "@sockethub/util/error";
 import { Agent } from "undici";
 
 // Capture the options passed to open-graph-scraper and control its outcome,
@@ -91,7 +92,9 @@ describe("metadata fetch SSRF hardening", () => {
             Promise.reject({ result: { error: new Error("ogs failed") } });
         const { err, result } = await runFetch(makePlatform());
         expect(err).toBeInstanceOf(Error);
-        expect((err as Error).message).toEqual("ogs failed");
+        expect((err as Error).message).toEqual(
+            "metadata scrape failed for https://example.com: ogs failed",
+        );
         expect(result).toBeUndefined();
     });
 
@@ -100,6 +103,18 @@ describe("metadata fetch SSRF hardening", () => {
         const { err } = await runFetch(makePlatform());
         expect(err).toBeInstanceOf(Error);
         expect((err as Error).message).toMatch(/blocked non-public/);
+    });
+
+    it("marks scrape failures as expected operational errors", async () => {
+        // Remote sites timing out or bot-blocking (403) must not be captured
+        // as Sentry production errors by the job handler.
+        ogsBehavior = () =>
+            Promise.reject({ result: { error: new Error("403 Forbidden") } });
+        const { err } = await runFetch(makePlatform());
+        expect(isExpectedError(err)).toBe(true);
+        expect((err as Error).message).toEqual(
+            "metadata scrape failed for https://example.com: 403 Forbidden",
+        );
     });
 });
 
@@ -275,6 +290,48 @@ describe("reddit structured metadata", () => {
                 duration: 41,
             },
         });
+    });
+
+    it("unwraps reddit.com/media links without any network request", async () => {
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fgz85tl8860yg1.png",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            type: "page",
+            title: "gz85tl8860yg1.png",
+            name: "reddit",
+            image: [{ url: "https://i.redd.it/gz85tl8860yg1.png" }],
+            url: "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fgz85tl8860yg1.png",
+        });
+        // The image URL came from the link itself: no JSON, oEmbed, or
+        // scrape round-trips.
+        expect(redditJsonUrl).toBeUndefined();
+        expect(fetchCalls).toHaveLength(0);
+        expect(ogsOptions).toBeUndefined();
+    });
+
+    it("marks the no-metadata Reddit failure as expected", async () => {
+        // A Reddit URL shape with no JSON endpoint and a failing oEmbed —
+        // the job fails, but as an expected operational outcome.
+        redditJsonBehavior = () => Promise.reject(new Error("no JSON"));
+        globalThis.fetch = (() =>
+            Promise.resolve({
+                ok: false,
+                status: 400,
+                json: () => Promise.reject(new Error("no body")),
+            })) as any;
+        const { err } = await runFetch(
+            makePlatform(),
+            "https://www.reddit.com/gallery/abc123",
+        );
+        expect(err).toBeInstanceOf(Error);
+        expect((err as Error).message).toEqual(
+            "No Reddit metadata available for https://www.reddit.com/gallery/abc123",
+        );
+        expect(isExpectedError(err)).toBe(true);
     });
 
     it("falls back to oEmbed when Reddit JSON fails", async () => {

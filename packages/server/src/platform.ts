@@ -32,7 +32,7 @@ import {
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
 import { crypto, getPlatformId } from "@sockethub/util/crypto";
-import { errorMessage, toError } from "@sockethub/util/error";
+import { errorMessage, isExpectedError, toError } from "@sockethub/util/error";
 import config from "./config";
 import { resolveSentryConfig } from "./sentry-config.js";
 
@@ -88,6 +88,11 @@ async function startPlatformProcess() {
     let sentry: {
         readonly reportError: (err: Error) => void;
         readonly flush?: (timeoutMs?: number) => Promise<boolean>;
+        readonly count?: (
+            name: string,
+            value?: number,
+            attributes?: Record<string, string | number | boolean>,
+        ) => void;
     } = {
         reportError: (err: Error) => {
             logger.debug(
@@ -391,7 +396,21 @@ async function startPlatformProcess() {
                             // toString() failed; fall back to the original error.
                             message = errorMessage(err);
                         }
-                        sentry.reportError(new Error(message));
+                        // Platforms mark errors that are expected
+                        // operational outcomes rather than server defects —
+                        // e.g. metadata scrapes of user-supplied URLs that
+                        // time out or get bot-blocked (#1243, #1245). Those
+                        // still fail the job (the client sees the error) but
+                        // are counted as a metric instead of flooding Sentry
+                        // with per-URL error events.
+                        if (isExpectedError(err)) {
+                            sentry.count?.("platform.job.expected_failure", 1, {
+                                platform: platformName,
+                                type: job.msg.type,
+                            });
+                        } else {
+                            sentry.reportError(new Error(message));
+                        }
                         reject(new Error(message));
                     } else {
                         jobLog.debug(`completed ${job.title} ${job.msg.type}`);

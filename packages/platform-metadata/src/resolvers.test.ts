@@ -11,6 +11,7 @@ import {
     redditPostVideo,
     resolveRedditEmbed,
     resolveRedditJson,
+    resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
     tweetToPageObject,
@@ -274,6 +275,60 @@ describe("Reddit JSON metadata", () => {
             height: undefined,
             duration: undefined,
         });
+    });
+});
+
+describe("resolveRedditMedia", () => {
+    it("unwraps a media-viewer link to its i.redd.it image", () => {
+        expect(
+            resolveRedditMedia(
+                "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fgz85tl8860yg1.png",
+            ),
+        ).toEqual("https://i.redd.it/gz85tl8860yg1.png");
+    });
+
+    it("accepts preview.redd.it targets and a trailing slash", () => {
+        expect(
+            resolveRedditMedia(
+                "https://reddit.com/media/?url=https%3A%2F%2Fpreview.redd.it%2Fabc.jpg%3Fwidth%3D640",
+            ),
+        ).toEqual("https://preview.redd.it/abc.jpg?width=640");
+    });
+
+    it("rejects non-Reddit-CDN targets", () => {
+        // The url param is attacker-controlled; only Reddit's own image
+        // hosts may be echoed back as the preview image.
+        expect(
+            resolveRedditMedia(
+                "https://www.reddit.com/media?url=https%3A%2F%2Fevil.example%2Fx.png",
+            ),
+        ).toBeNull();
+        expect(
+            resolveRedditMedia(
+                "https://www.reddit.com/media?url=http%3A%2F%2Fi.redd.it%2Fx.png",
+            ),
+        ).toBeNull();
+    });
+
+    it("ignores missing or malformed url params", () => {
+        expect(resolveRedditMedia("https://www.reddit.com/media")).toBeNull();
+        expect(
+            resolveRedditMedia("https://www.reddit.com/media?url=not-a-url"),
+        ).toBeNull();
+    });
+
+    it("does not match other paths or hosts", () => {
+        expect(
+            resolveRedditMedia(
+                "https://www.reddit.com/r/pics/comments/abc/post/",
+            ),
+        ).toBeNull();
+        expect(
+            resolveRedditMedia(
+                "https://example.com/media?url=https%3A%2F%2Fi.redd.it%2Fx.png",
+            ),
+        ).toBeNull();
+        expect(resolveRedditMedia("not a url")).toBeNull();
     });
 });
 
