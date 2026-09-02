@@ -473,6 +473,12 @@ describe("stripFacebookEngagement", () => {
                 "2,2 mil. zhlédnutí · 21 tis. reakcí | Video | Author",
             ),
         ).toEqual("Video | Author");
+        // Including locales whose stats use non-ASCII decimal digits.
+        expect(
+            stripFacebookEngagement(
+                "٢٫٢ مليون مشاهدة · ٢١ ألف تفاعل | فيديو | Author",
+            ),
+        ).toEqual("فيديو | Author");
     });
 
     it("leaves titles without a stats segment untouched", () => {

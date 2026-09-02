@@ -200,7 +200,7 @@ export function isFacebookUrl(url: string): boolean {
 export function stripFacebookEngagement(
     title: string | undefined,
 ): string | undefined {
-    return title?.replace(/^[^|]*\d[^|]*·[^|]*\|\s*/u, "");
+    return title?.replace(/^[^|]*\p{Nd}[^|]*·[^|]*\|\s*/u, "");
 }
 
 /**
