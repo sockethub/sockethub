@@ -67,6 +67,7 @@ const YOUTUBE_OEMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
+const DIRECT_IMAGE_PROBE_TIMEOUT_MS = 5_000;
 
 const IMAGE_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
     avif: "image/avif",
@@ -77,6 +78,7 @@ const IMAGE_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
     webp: "image/webp",
 };
 
+/** Build best-effort metadata from a URL with a known image extension. */
 function directImageCandidate(
     rawUrl: string,
 ): { title: string; type: string; url: string } | undefined {
@@ -218,18 +220,22 @@ export default class Metadata implements PlatformInterface {
         job: ActivityStream,
         candidate: { title: string; type: string; url: string },
         cb: PlatformCallback,
+        timeoutMs = DIRECT_IMAGE_PROBE_TIMEOUT_MS,
     ) {
         try {
-            const res = await this.fetchImpl(candidate.url, {
-                dispatcher: this.getDispatcher(),
-                headers: {
-                    accept: "image/avif,image/webp,image/*,*/*;q=0.8",
-                    "user-agent": this.userAgent(),
-                },
-                signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
-            } as RequestInit & {
-                dispatcher: ReturnType<typeof createGuardedDispatcher>;
-            });
+            const res = await withDeadline(
+                this.fetchImpl(candidate.url, {
+                    dispatcher: this.getDispatcher(),
+                    headers: {
+                        accept: "image/avif,image/webp,image/*,*/*;q=0.8",
+                        "user-agent": this.userAgent(),
+                    },
+                    signal: AbortSignal.timeout(timeoutMs),
+                } as RequestInit & {
+                    dispatcher: ReturnType<typeof createGuardedDispatcher>;
+                }),
+                timeoutMs,
+            );
             const contentType = res.headers
                 .get("content-type")
                 ?.split(";", 1)[0]
@@ -249,6 +255,7 @@ export default class Metadata implements PlatformInterface {
             if (res.ok && contentType?.startsWith("image/")) {
                 candidate.type = contentType;
                 candidate.url = res.url || candidate.url;
+                job.actor.id = candidate.url;
             }
         } catch (err) {
             this.log.debug(

@@ -170,6 +170,29 @@ describe("direct image links", () => {
         });
     });
 
+    it("uses the final image URL consistently after a redirect", async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: minimal redirected response
+        globalThis.fetch = (() =>
+            Promise.resolve({
+                ok: true,
+                url: "https://cdn.example/final.jpg",
+                headers: new Headers({ "content-type": "image/jpeg" }),
+                body: null,
+            })) as any;
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://images.example/original.jpg",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).actor.id).toEqual(
+            "https://cdn.example/final.jpg",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.url).toEqual(
+            "https://cdn.example/final.jpg",
+        );
+    });
+
     it("uses extension metadata when a bot-blocked origin returns 403", async () => {
         // biome-ignore lint/suspicious/noExplicitAny: controlled blocked response
         globalThis.fetch = (() =>
@@ -204,6 +227,40 @@ describe("direct image links", () => {
         );
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object.title).toEqual("Actually a page");
+    });
+
+    it("returns fallback metadata when the image probe never settles", async () => {
+        globalThis.fetch = (() => new Promise(() => {})) as typeof fetch;
+        const platform = makePlatform({ allowPrivateAddresses: true });
+        const job = {
+            "@context": ["x"],
+            type: "fetch",
+            actor: {
+                id: "http://127.0.0.1/stalled.jpg",
+                type: "website",
+            },
+        };
+        const result = await new Promise((resolve) => {
+            // Exercise a short hard deadline without slowing the test suite.
+            // biome-ignore lint/suspicious/noExplicitAny: private method regression test
+            (platform as any).fetchDirectImage(
+                job,
+                {
+                    title: "stalled",
+                    type: "image/jpeg",
+                    url: job.actor.id,
+                },
+                (_err: unknown, produced: unknown) => resolve(produced),
+                5,
+            );
+        });
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "http://127.0.0.1/stalled.jpg",
+                type: "image/jpeg",
+            },
+        ]);
     });
 });
 
