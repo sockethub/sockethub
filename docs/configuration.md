@@ -640,11 +640,19 @@ identifier — for example a build that must match source maps uploaded under a
 git SHA.
 
 Sentry records aggregate connection and action counters, active connection
-gauges, action-duration distributions, and action traces. Metric dimensions are
-limited to platform and action names; actor IDs, credentials, message bodies,
-URLs, and client IP addresses are not attached. Logs are opt-in and default to
-`warn` and `error`. Profiling is disabled by default; keep its sample rate low
-in production.
+gauges, connection and action-duration distributions, unique platform use per
+socket connection, and action traces. Connections are classified on disconnect
+as inactive, single-platform, or multi-platform. Action metrics include bounded
+`platform`, `action`, and `transport` (`socket` or `http`) dimensions. Platform
+session counters contain only the platform name and count a platform at most
+once per socket connection.
+
+These are service-usage aggregates, not durable user analytics: reconnecting
+creates a new connection and Sockethub does not attempt to identify one person
+across connections. Actor IDs, socket/session IDs, credentials, message bodies,
+servers, rooms, URLs, user agents, and client IP addresses are not attached.
+Logs are opt-in and default to `warn` and `error`. Profiling is disabled by
+default; keep its sample rate low in production.
 
 These settings apply to the server process and to every platform worker it
 forks. Workers are started with a minimal environment and no config file of

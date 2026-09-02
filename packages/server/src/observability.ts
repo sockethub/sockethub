@@ -3,12 +3,23 @@ type Attributes = Record<string, string | number | boolean>;
 export interface ObservabilityAdapter {
     count(name: string, value?: number, attributes?: Attributes): void;
     gauge(name: string, value: number, attributes?: Attributes): void;
-    startAction(platform: string, action: string): (error?: boolean) => void;
+    distribution(
+        name: string,
+        value: number,
+        unit: string,
+        attributes?: Attributes,
+    ): void;
+    startAction(
+        platform: string,
+        action: string,
+        attributes?: Attributes,
+    ): (error?: boolean) => void;
 }
 
 const noopAdapter: ObservabilityAdapter = {
     count: () => {},
     gauge: () => {},
+    distribution: () => {},
     startAction: () => () => {},
 };
 
@@ -21,8 +32,65 @@ export function setObservabilityAdapter(next: ObservabilityAdapter): void {
 export const observability: ObservabilityAdapter = {
     count: (...args) => adapter.count(...args),
     gauge: (...args) => adapter.gauge(...args),
+    distribution: (...args) => adapter.distribution(...args),
     startAction: (...args) => adapter.startAction(...args),
 };
+
+export interface ConnectionTelemetry {
+    recordPlatform(platform: string): void;
+    end(): void;
+}
+
+/**
+ * Aggregate one socket connection without exporting its socket/session id.
+ * Platform names have already come from the validated registry by the time
+ * recordPlatform is called.
+ */
+export function startConnectionTelemetry(): ConnectionTelemetry {
+    const startedAt = performance.now();
+    const platforms = new Set<string>();
+    let ended = false;
+
+    observability.count("sockethub.connection.opened");
+
+    return {
+        recordPlatform(platform: string): void {
+            if (ended || platforms.has(platform)) {
+                return;
+            }
+            platforms.add(platform);
+            observability.count("sockethub.platform_session.started", 1, {
+                platform,
+            });
+        },
+        end(): void {
+            if (ended) {
+                return;
+            }
+            ended = true;
+            observability.count("sockethub.connection.closed");
+            observability.distribution(
+                "sockethub.connection.duration",
+                performance.now() - startedAt,
+                "millisecond",
+            );
+            const classification =
+                platforms.size === 0
+                    ? "inactive"
+                    : platforms.size === 1
+                      ? "single_platform"
+                      : "multi_platform";
+            observability.count("sockethub.connection.classified", 1, {
+                classification,
+            });
+            observability.distribution(
+                "sockethub.connection.platform_count",
+                platforms.size,
+                "none",
+            );
+        },
+    };
+}
 
 export function resetObservabilityForTesting(): void {
     adapter = noopAdapter;
