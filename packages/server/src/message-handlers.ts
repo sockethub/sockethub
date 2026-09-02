@@ -38,6 +38,10 @@ export interface MessageHandlersOptions {
     // Socket path uses this to preserve existing ProcessManager session behavior.
     platformSessionId?: string;
     onPlatformInstance?: (platformInstance: PlatformInstance) => void;
+    /** Bounded telemetry dimension identifying the public request path. */
+    transport?: "socket" | "http";
+    /** Called only after platform and action labels pass schema validation. */
+    onPlatformAction?: (platform: string, action: string) => void;
 }
 
 /**
@@ -70,6 +74,8 @@ export function createMessageHandlers(
         clientIp,
         platformSessionId,
         onPlatformInstance,
+        transport = "socket",
+        onPlatformAction,
     } = options;
 
     // Shared handler chain for credentials across socket + HTTP paths.
@@ -85,7 +91,10 @@ export function createMessageHandlers(
                 // This runs only after normalization, schema validation, and
                 // successful credential storage, so labels are trusted.
                 const platform = resolvePlatformId(data) ?? "unknown";
-                observability.startAction(platform, "credentials")();
+                onPlatformAction?.(platform, "credentials");
+                observability.startAction(platform, "credentials", {
+                    transport,
+                })();
                 next(data);
             },
         )
@@ -151,7 +160,10 @@ export function createMessageHandlers(
                 }
                 // This middleware runs after AJV validation. Using platform
                 // and action as telemetry labels is safe only from here on.
-                const finish = observability.startAction(platformId, msg.type);
+                onPlatformAction?.(platformId, msg.type);
+                const finish = observability.startAction(platformId, msg.type, {
+                    transport,
+                });
                 let platformInstance: Awaited<
                     ReturnType<ProcessManager["get"]>
                 >;
