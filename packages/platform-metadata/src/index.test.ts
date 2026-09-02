@@ -137,6 +137,76 @@ describe("scrape user agent", () => {
     });
 });
 
+describe("direct image links", () => {
+    const realFetch = globalThis.fetch;
+
+    afterEach(() => {
+        globalThis.fetch = realFetch;
+    });
+
+    it("returns image metadata when the origin confirms an image", async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: controlled image response
+        globalThis.fetch = (() =>
+            Promise.resolve(
+                new Response(null, {
+                    status: 200,
+                    headers: { "content-type": "image/jpeg" },
+                }),
+            )) as any;
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://images.example/A-photo_01.JPG?size=large",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "A photo 01",
+            image: [
+                {
+                    url: "https://images.example/A-photo_01.JPG?size=large",
+                    type: "image/jpeg",
+                },
+            ],
+        });
+    });
+
+    it("uses extension metadata when a bot-blocked origin returns 403", async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: controlled blocked response
+        globalThis.fetch = (() =>
+            Promise.resolve(new Response("blocked", { status: 403 }))) as any;
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://images.example/a%20real%20photo.webp",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "https://images.example/a%20real%20photo.webp",
+                type: "image/webp",
+            },
+        ]);
+    });
+
+    it("scrapes HTML served from a URL with an image suffix", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({ result: { ogTitle: "Actually a page" } });
+        // biome-ignore lint/suspicious/noExplicitAny: controlled HTML response
+        globalThis.fetch = (() =>
+            Promise.resolve(
+                new Response("<html></html>", {
+                    headers: { "content-type": "text/html" },
+                }),
+            )) as any;
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://example.com/not-really.jpg",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual("Actually a page");
+    });
+});
+
 describe("facebook scrape", () => {
     beforeEach(() => {
         ogsOptions = undefined;
