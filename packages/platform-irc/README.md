@@ -18,8 +18,8 @@ messages.
 
 ## Usage
 
-IRC room targets use `channel@server` in `target.id` (for example
-`general@irc.libera.chat`). When you include `target.name`, use the channel
+IRC room targets use `#channel@server` in `target.id` (for example
+`#general@irc.libera.chat`). When you include `target.name`, use the channel
 name as it appears on IRC (for example `#general`).
 
 ### Send Message Example
@@ -37,7 +37,7 @@ name as it appears on IRC (for example `#general`).
     "type": "person"
   },
   "target": {
-    "id": "general@irc.libera.chat",
+    "id": "#general@irc.libera.chat",
     "type": "room",
     "name": "#general"
   },
@@ -63,7 +63,7 @@ name as it appears on IRC (for example `#general`).
     "type": "person"
   },
   "target": {
-    "id": "general@irc.libera.chat",
+    "id": "#general@irc.libera.chat",
     "type": "room",
     "name": "#general"
   }
@@ -110,7 +110,7 @@ name as it appears on IRC (for example `#general`).
     "type": "person"
   },
   "target": {
-    "id": "general@irc.libera.chat",
+    "id": "#general@irc.libera.chat",
     "type": "room",
     "name": "#general"
   },
@@ -160,7 +160,7 @@ name as it appears on IRC (for example `#general`).
     "type": "person"
   },
   "target": {
-    "id": "general@irc.libera.chat",
+    "id": "#general@irc.libera.chat",
     "type": "room",
     "name": "#general"
   },
@@ -181,7 +181,7 @@ name as it appears on IRC (for example `#general`).
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "id": "general@irc.libera.chat",
+    "id": "#general@irc.libera.chat",
     "type": "room",
     "name": "#general"
   },

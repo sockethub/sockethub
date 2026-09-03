@@ -260,7 +260,7 @@ export class IrcToActivityStreams {
                     actor: undefined,
                     target: {
                         type: "room",
-                        id: `${this.server}/${channel}`,
+                        id: `${channel}@${this.server}`,
                         name: channel,
                     },
                     object: {

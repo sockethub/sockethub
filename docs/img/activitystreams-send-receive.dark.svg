@@ -29,7 +29,7 @@
   <text x="72" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
   <text x="56" y="265" class="code"><tspan class="p">},</tspan></text>
   <text x="56" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
-  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
   <text x="72" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
   <text x="56" y="337" class="code"><tspan class="p">},</tspan></text>
   <text x="56" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
@@ -51,7 +51,7 @@
   <text x="672" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
   <text x="656" y="265" class="code"><tspan class="p">},</tspan></text>
   <text x="656" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
-  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
   <text x="672" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
   <text x="656" y="337" class="code"><tspan class="p">},</tspan></text>
   <text x="656" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
