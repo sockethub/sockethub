@@ -59,7 +59,7 @@ const newActor = {
 
 const targetRoom = {
     type: "room",
-    id: "irc.example.com/a-room",
+    id: "#a-room@irc.example.com",
     name: "#a-room",
 };
 
@@ -423,6 +423,34 @@ describe("Initialize IRC Platform", () => {
             );
         });
 
+        it("rejects a join with a bare (unqualified) channel target", (done) => {
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: {
+                        type: "room",
+                        id: "#bare-room",
+                        name: "#bare-room",
+                    },
+                },
+                (err) => {
+                    expect(err).toContain("server-qualified");
+                    done();
+                },
+            );
+        });
+
+        it("preserves multiple channel sigils when resolving a room target", () => {
+            expect(
+                platform.resolveIrcTarget({
+                    type: "room",
+                    id: "##a-room@irc.example.com",
+                }),
+            ).toEqual("##a-room");
+        });
+
         describe("after join", () => {
             beforeEach((done) => {
                 platform.join(
@@ -480,6 +508,31 @@ describe("Initialize IRC Platform", () => {
                             actor,
                             object: { content: "hello\nJOIN #other" },
                             target: targetRoom,
+                        } as ActivityStream,
+                        resolve,
+                    );
+                });
+
+                expect(err).toContain("must not contain CR or LF");
+                expect(rawCalls).toHaveLength(0);
+            });
+
+            it("rejects IRC line injection in a person target id", async () => {
+                const rawCalls: Array<unknown> = [];
+                platform.client.raw = (...args) => rawCalls.push(args);
+
+                const err = await new Promise((resolve) => {
+                    platform.send(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "send",
+                            actor,
+                            object: { content: "hello" },
+                            target: {
+                                type: "person",
+                                id: "victim\r\nNAMES\r\nPRIVMSG #unjoined",
+                                name: "safe",
+                            },
                         } as ActivityStream,
                         resolve,
                     );
@@ -619,7 +672,7 @@ describe("Initialize IRC Platform", () => {
                             actor: actor,
                             target: {
                                 type: "room",
-                                id: "irc.example.com/#a-room",
+                                id: "#a-room@irc.example.com",
                             },
                             object: { type: "attendance" },
                         },
@@ -662,12 +715,12 @@ describe("Initialize IRC Platform", () => {
                             "@context": IRC_CONTEXT,
                             type: "query",
                             actor: actor,
-                            target: { type: "room", id: "irc.example.com/" },
+                            target: { type: "room", id: "irc.example.com" },
                             object: { type: "attendance" },
                         },
                         (err) => {
                             expect(err).toEqual(
-                                "cannot query attendance without a valid channel name",
+                                "IRC room targets must be server-qualified as '#channel@server'",
                             );
                             expect(rawCalls).toEqual([]);
                             done();

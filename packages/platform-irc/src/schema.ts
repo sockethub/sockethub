@@ -34,6 +34,26 @@ export const PlatformIrcSchema = {
                     { $ref: "#/definitions/objectTypes/attendance" },
                 ],
             },
+            // Room targets must be server-qualified as `#channel@server`,
+            // consistent with what the platform emits inbound (see irc2as) and
+            // with how person actors are addressed (`nick@server`). A bare
+            // `#channel` or an id without the channel sigil is rejected.
+            // Non-room targets (e.g. person PMs / nick-change) are left
+            // unconstrained here.
+            target: {
+                type: "object",
+                if: {
+                    required: ["type"],
+                    properties: { type: { const: "room" } },
+                },
+                // biome-ignore lint/suspicious/noThenProperty: JSON Schema `then` conditional keyword, not a thenable
+                then: {
+                    required: ["id"],
+                    properties: {
+                        id: { type: "string", pattern: "^#[^\\s]+@[^\\s@]+$" },
+                    },
+                },
+            },
         },
         definitions: {
             objectTypes: {
@@ -136,7 +156,8 @@ export const PlatformIrcSchema = {
                     required: ["id", "type"],
                     additionalProperties: false,
                     properties: {
-                        id: { type: "string" },
+                        // Server-qualified room id: `#channel@server`.
+                        id: { type: "string", pattern: "^#[^\\s]+@[^\\s@]+$" },
                         type: { enum: ["room"] },
                         name: { type: "string" },
                     },

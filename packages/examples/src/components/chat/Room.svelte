@@ -12,9 +12,18 @@ interface Props {
     actor: ActorData;
     context: string;
     sockethubState: SockethubStateStore;
+    // For IRC, the connection server used to qualify the room id as
+    // `#channel@server` (XMPP rooms are already full JIDs).
+    server?: string;
 }
 
-let { room = $bindable(), actor, context, sockethubState }: Props = $props();
+let {
+    room = $bindable(),
+    actor,
+    context,
+    sockethubState,
+    server,
+}: Props = $props();
 
 let joining = $state(false);
 let lastJoinedRoom = $state("");
@@ -27,24 +36,40 @@ $effect(() => {
 });
 
 async function joinRoom(): Promise<void> {
+    // IRC room targets must be server-qualified (`#channel@server`); never fall
+    // back to a bare channel, which the platform rejects.
+    if (context === "irc" && !server) {
+        console.error("IRC room joins require a server (#channel@server)");
+        return;
+    }
     joining = true;
+    const targetId = context === "irc" ? `${room}@${server}` : room;
     return await send({
         "@context": await contextFor(context),
         type: "join",
         actor: actorAsObject(actor),
         target: {
-            id: room,
+            id: targetId,
             name: room,
             type: "room",
         },
     } as AnyActivityStream)
-        .catch(() => {
-            $sockethubState.joined = false;
-            joining = false;
-        })
         .then(() => {
             lastJoinedRoom = room;
             $sockethubState.joined = true;
+        })
+        .catch((err) => {
+            $sockethubState.joined = false;
+            console.error("joinRoom failed", {
+                action: "join",
+                platform: context,
+                room,
+                server,
+                err,
+            });
+            throw err;
+        })
+        .finally(() => {
             joining = false;
         });
 }
@@ -63,10 +88,10 @@ async function joinRoom(): Promise<void> {
                 id="room" 
                 bind:value={room} 
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
-                placeholder="sockethub@irc.libera.chat, kosmos-random@kosmos.chat"
+                placeholder="#sockethub or kosmos-random@kosmos.chat"
             />
             <p class="text-gray-500 text-xs">
-                💡 IRC: channel@server (e.g. sockethub@irc.libera.chat); include # in name when sending (e.g. #sockethub) | XMPP: room@server.com
+                💡 IRC: enter a channel with its # (e.g. #sockethub); XMPP: room@server.com
             </p>
         </div>
         

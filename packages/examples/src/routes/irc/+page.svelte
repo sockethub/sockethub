@@ -18,7 +18,7 @@ const actorIdStore = writable(
     `sh-${(Math.random() + 1).toString(36).substring(7)}`,
 );
 
-let server = $state("chat.freenode.net");
+let server = $state("irc.libera.chat");
 let port = $state(6697);
 let room = $state("#sh-random");
 let connecting = $state(false);
@@ -31,7 +31,7 @@ const sockethubState = writable({
 });
 
 let actor = $derived({
-    id: $actorIdStore,
+    id: `${$actorIdStore}@${server}`,
     type: "person",
     name: $actorIdStore,
 });
@@ -151,9 +151,9 @@ async function connectIrc(): Promise<void> {
                     Join Channel and Chat
                 </h4>
                 <div class="space-y-6">
-                    <Room {actor} {sockethubState} bind:room context="irc" />
+                    <Room {actor} {sockethubState} bind:room context="irc" {server} />
                     <IncomingMessage />
-                    <SendMessage context="irc" {actor} {sockethubState} {room} />
+                    <SendMessage context="irc" {actor} {sockethubState} {room} {server} />
                 </div>
             </div>
         {:else}

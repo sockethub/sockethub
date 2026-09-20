@@ -188,7 +188,7 @@ sc.socket.emit("message", {
     "@context": sc.contextFor("irc"),
     actor: { id: "mynick@irc.libera.chat", type: "person", name: "mynick" },
     target: {
-        id: "sockethub@irc.libera.chat",
+        id: "#sockethub@irc.libera.chat",
         type: "room",
         name: "#sockethub",
     },
