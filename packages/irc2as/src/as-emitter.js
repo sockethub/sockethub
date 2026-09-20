@@ -203,14 +203,14 @@ export class ASEmitter {
         // CTCP ACTION (/me) is framed as \u0001ACTION <text>\u0001. Servers
         // with the legacy `identify-msg` capability (freenode-era) prefix
         // the payload with "+" or "-"; modern servers send the bare framing.
+        // The closing delimiter is optional on input: servers truncate
+        // over-long lines, which can drop it, and the CTCP spec says parsers
+        // should accept its absence.
         // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
-        if (/^[+-]?\u0001ACTION /.test(content)) {
+        const action = /^[+-]?\u0001ACTION ([\s\S]*?)\u0001?$/.exec(content);
+        if (action) {
             type = "me";
-            message = content
-                // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
-                .split(/^[+-]?\u0001ACTION\s+/)[1]
-                // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
-                .split(/\u0001$/)[0];
+            message = action[1];
         } else {
             type = "message";
             message = content;

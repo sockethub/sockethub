@@ -135,6 +135,20 @@ describe("IrcToActivityStreams", () => {
         });
     }
 
+    // Servers truncate over-long lines, which can drop the closing delimiter.
+    it("parses a CTCP ACTION missing its closing delimiter", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "me",
+                content: "waves hello",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test PRIVMSG #room :\u0001ACTION waves hello",
+        );
+    });
+
     it("leaves a plain message starting with + untouched", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object).toEqual({
