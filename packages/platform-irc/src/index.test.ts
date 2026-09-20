@@ -548,6 +548,8 @@ describe("Initialize IRC Platform", () => {
             // reasoning (no echo-message capability => no incoming event
             // for the sender's PRIVMSG/CTCP ACTION).
             it("send() /me completes synchronously without queueing", async () => {
+                const rawCalls: Array<unknown> = [];
+                platform.client.raw = (...args) => rawCalls.push(args);
                 expect(platform.jobQueue.length).toEqual(0);
                 const meErr = await new Promise((resolve) => {
                     platform.send(
@@ -563,6 +565,12 @@ describe("Initialize IRC Platform", () => {
                 });
                 expect(meErr).toBeUndefined();
                 expect(platform.jobQueue.length).toEqual(0);
+                // CTCP ACTION framing: payload delimited by 0x01 bytes
+                expect(rawCalls).toEqual([
+                    [
+                        `PRIVMSG ${targetRoom.name} :${String.fromCharCode(1)}ACTION waves${String.fromCharCode(1)}`,
+                    ],
+                ]);
             });
 
             it("send() /me does not consume an in-flight job's handler", async () => {

@@ -317,16 +317,10 @@ export class IRC implements PersistentPlatformInterface {
 
             if (job.object.type === "me") {
                 // message intended as command
-                // jsdoc does not like this octal escape sequence, but it's needed for proper behavior in IRC
-                // so the following line needs to be commented out when the API doc is built.
-                // investigate:
-                // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
-                const { default: buildCommand } = await import(
-                    "./octal-hack.js"
+                // CTCP ACTION: the payload is wrapped in \x01 delimiters
+                client.raw(
+                    `PRIVMSG ${recipient} :\x01ACTION ${job.object.content}\x01`,
                 );
-                const message = buildCommand(job.object.content);
-                // biome-ignore lint/style/useTemplate: IRC raw command formatting
-                client.raw("PRIVMSG " + recipient + " :" + message);
                 // /me intentionally reports synchronous success rather than
                 // going through the jobQueue + PING/PONG round-trip used by
                 // normal sends. This is safe because:

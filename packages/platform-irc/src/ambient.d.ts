@@ -28,8 +28,3 @@ declare module "@sockethub/irc2as" {
         };
     }
 }
-
-declare module "./octal-hack.js" {
-    const buildCommand: (input: string) => string;
-    export default buildCommand;
-}

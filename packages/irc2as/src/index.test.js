@@ -113,4 +113,36 @@ describe("IrcToActivityStreams", () => {
         });
         irc2as.input(":alice!user@example.test PRIVMSG ##private :hello");
     });
+
+    // Modern servers send bare CTCP framing; the "+"/"-" prefix only appears
+    // with the legacy identify-msg capability.
+    for (const [label, prefix] of [
+        ["bare", ""],
+        ["identify-msg +", "+"],
+        ["identify-msg -", "-"],
+    ]) {
+        it(`parses ${label} CTCP ACTION as a "me" object`, (done) => {
+            irc2as.events.on("incoming", (stream) => {
+                expect(stream.object).toEqual({
+                    type: "me",
+                    content: "waves hello",
+                });
+                done();
+            });
+            irc2as.input(
+                `:alice!user@example.test PRIVMSG #room :${prefix}\u0001ACTION waves hello\u0001`,
+            );
+        });
+    }
+
+    it("leaves a plain message starting with + untouched", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "+1 to that",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test PRIVMSG #room :+1 to that");
+    });
 });

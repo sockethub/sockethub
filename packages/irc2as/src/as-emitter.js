@@ -200,11 +200,15 @@ export class ASEmitter {
     privMsg(nick, target, content) {
         let type;
         let message;
-        if (content.startsWith("+\u0001ACTION ")) {
+        // CTCP ACTION (/me) is framed as \u0001ACTION <text>\u0001. Servers
+        // with the legacy `identify-msg` capability (freenode-era) prefix
+        // the payload with "+" or "-"; modern servers send the bare framing.
+        // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
+        if (/^[+-]?\u0001ACTION /.test(content)) {
             type = "me";
             message = content
                 // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
-                .split(/^\+\u0001ACTION\s+/)[1]
+                .split(/^[+-]?\u0001ACTION\s+/)[1]
                 // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
                 .split(/\u0001$/)[0];
         } else {
