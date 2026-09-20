@@ -530,8 +530,8 @@ curl http://localhost:10550/sockethub-http
 
 - `apiVersion` is the SemVer **major** of the server package; each platform's
   `apiVersion` is the major of that platform's package (server `5.2.1` reports
-  `5`, metadata `2.0.3` reports `2`). The Socket.IO `schemas` bootstrap reports
-  the same numbers.
+  `5`, a platform at `1.0.1-alpha.19` reports `1`). The Socket.IO `schemas`
+  bootstrap reports the same numbers.
 - Exact package versions are deliberately not published on either transport,
   to avoid making deployments easy to fingerprint. They remain available in
   the server logs and via `sockethub --version`.

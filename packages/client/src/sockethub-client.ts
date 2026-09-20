@@ -63,6 +63,17 @@ interface CustomEmitter extends EventEmitter {
     id: string;
 }
 
+// major[.minor[.patch]] with optional prerelease and build metadata.
+const LEGACY_VERSION_PATTERN =
+    /^v?(\d+)(?:\.\d+){0,2}(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
+/** An API version is a SemVer major: a non-negative safe integer. */
+function isApiVersion(value: unknown): value is number {
+    return (
+        typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    );
+}
+
 /**
  * Read an API version off a registry payload or platform entry. Servers that
  * predate API versions published an exact package `version` instead; its
@@ -76,13 +87,14 @@ function resolveApiVersion(source: unknown): number | undefined {
         apiVersion?: unknown;
         version?: unknown;
     };
-    if (typeof apiVersion === "number" && Number.isInteger(apiVersion)) {
+    if (isApiVersion(apiVersion)) {
         return apiVersion;
     }
     if (typeof version === "string") {
-        const match = /^v?(\d+)(?:[.+-]|$)/.exec(version.trim());
-        if (match) {
-            return Number(match[1]);
+        const match = LEGACY_VERSION_PATTERN.exec(version.trim());
+        const major = match ? Number(match[1]) : undefined;
+        if (isApiVersion(major)) {
+            return major;
         }
     }
     return undefined;

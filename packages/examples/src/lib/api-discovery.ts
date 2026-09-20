@@ -25,6 +25,13 @@ export function httpActionsEndpoint(
     return `${protocol}://${host}:${port}${config.httpActions.path}`;
 }
 
+/** An API version is a SemVer major: a non-negative safe integer. */
+function isApiVersion(value: unknown): value is number {
+    return (
+        typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    );
+}
+
 function isServiceDescriptor(value: unknown): value is ServiceDescriptor {
     if (!value || typeof value !== "object") {
         return false;
@@ -32,13 +39,13 @@ function isServiceDescriptor(value: unknown): value is ServiceDescriptor {
     const descriptor = value as Partial<ServiceDescriptor>;
     return (
         typeof descriptor.name === "string" &&
-        typeof descriptor.apiVersion === "number" &&
+        isApiVersion(descriptor.apiVersion) &&
         Array.isArray(descriptor.platforms) &&
         descriptor.platforms.every(
             (platform) =>
                 platform &&
                 typeof platform.id === "string" &&
-                typeof platform.apiVersion === "number",
+                isApiVersion(platform.apiVersion),
         )
     );
 }
@@ -86,6 +93,7 @@ export async function discoverApi(
         }
         return { state: "available", endpoint, descriptor };
     } catch (error) {
+        console.error("API discovery failed", { endpoint, error });
         return {
             state: "unavailable",
             endpoint,

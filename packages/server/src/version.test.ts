@@ -58,6 +58,23 @@ describe("version", () => {
             }
         });
 
+        it("throws on a malformed version instead of reading its leading digits", () => {
+            for (const bad of [
+                "1.invalid",
+                "1.",
+                "1+",
+                "1-",
+                "1.2.3.4",
+                "1.0.0-",
+                "1.0.0 beta",
+                "99999999999999999999.0.0",
+            ]) {
+                expect(() => apiVersionFromSemver(bad)).toThrow(
+                    "cannot derive API version",
+                );
+            }
+        });
+
         it("derives the global API version from the server package", () => {
             expect(SOCKETHUB_API_VERSION).toBe(
                 Number(packageJson.version.split(".")[0]),

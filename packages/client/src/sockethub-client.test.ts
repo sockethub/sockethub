@@ -2,7 +2,10 @@ import { expect } from "chai";
 import EventEmitter from "eventemitter3";
 import { createSandbox, restore } from "sinon";
 
-import SockethubClient from "./sockethub-client";
+import SockethubClient, {
+    type ClientReadyInfo,
+    type PlatformRegistryPayload,
+} from "./sockethub-client";
 
 const TEST_REGISTRY = {
     apiVersion: 5,
@@ -265,18 +268,20 @@ describe("SockethubClient", () => {
         });
 
         it("never exposes exact package versions, deriving API versions from a legacy registry", (done) => {
-            let registry: any;
-            sc.socket.on("schemas", (payload: any) => {
+            let registry: PlatformRegistryPayload | undefined;
+            sc.socket.on("schemas", (payload: PlatformRegistryPayload) => {
                 registry = payload;
             });
-            sc.socket.on("ready", (info: any) => {
+            sc.socket.on("ready", (info: ClientReadyInfo) => {
                 expect(info.apiVersion).to.equal(5);
                 expect(info).to.not.have.any.keys("version", "sockethubVersion");
                 expect(info.platforms[0].apiVersion).to.equal(2);
                 expect(info.platforms[0]).to.not.have.property("version");
-                expect(registry.apiVersion).to.equal(5);
+                expect(registry?.apiVersion).to.equal(5);
                 expect(registry).to.not.have.property("version");
-                expect(registry.platforms[0]).to.not.have.property("version");
+                expect(registry?.platforms?.[0]).to.not.have.property(
+                    "version",
+                );
                 done();
             });
             socket.emit("schemas", {
@@ -291,11 +296,44 @@ describe("SockethubClient", () => {
             });
         });
 
+        for (const invalid of [-1, 1.5, Number.NaN, "5", 2 ** 53]) {
+            it(`omits an invalid apiVersion (${String(invalid)}) instead of publishing it`, (done) => {
+                sc.socket.on("ready", (info: ClientReadyInfo) => {
+                    expect(info.state).to.equal("ready");
+                    expect(info.apiVersion).to.equal(undefined);
+                    for (const platform of info.platforms) {
+                        expect(platform.apiVersion).to.equal(undefined);
+                    }
+                    done();
+                });
+                socket.emit("schemas", {
+                    ...TEST_REGISTRY,
+                    apiVersion: invalid,
+                    platforms: TEST_REGISTRY.platforms.map((platform) => ({
+                        ...platform,
+                        apiVersion: invalid,
+                    })),
+                });
+            });
+        }
+
+        it("ignores a malformed legacy version string", (done) => {
+            sc.socket.on("ready", (info: ClientReadyInfo) => {
+                expect(info.apiVersion).to.equal(undefined);
+                done();
+            });
+            socket.emit("schemas", {
+                ...TEST_REGISTRY,
+                apiVersion: undefined,
+                version: "5.invalid",
+            });
+        });
+
         it("becomes ready without any version information", (done) => {
-            sc.socket.on("ready", (info: any) => {
+            sc.socket.on("ready", (info: ClientReadyInfo) => {
                 expect(info.state).to.equal("ready");
                 expect(info.apiVersion).to.equal(undefined);
-                expect(info.platforms.map((p: any) => p.id)).to.eql([
+                expect(info.platforms.map((p) => p.id)).to.eql([
                     "test-xmpp",
                     "dummy",
                 ]);
