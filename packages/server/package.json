@@ -67,7 +67,7 @@
     "socket.io": "^4.8.3"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external",
+    "build": "bun run clean && bun build src/index.ts --outdir dist --target node --format esm --external '@sentry/node' --external '@sentry/profiling-node' && bun build src/platform.ts --outdir dist --target node --format esm --external '@sentry/node' --external '@sentry/profiling-node'",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules",
     "dev": "bun run --hot ./bin/sockethub --examples",

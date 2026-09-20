@@ -152,6 +152,17 @@ metrics and traces. Logs are opt-in. Profiling is disabled when its sample rate
 is zero. Run `sockethub --sentry-test --config /path/to/config.json` to send a
 verification event and exit.
 
+The published server package intentionally omits source maps. They accounted
+for most of the package size while providing limited value for the server
+bundles. Source maps are not uploaded to Sentry either: Sockethub does not
+currently run a release artifact upload, and its public source remains the
+debugging reference. If artifact uploads are added later, maps should remain
+excluded from npm packages.
+
+The build also leaves the Sentry runtime packages external. The package
+manager can then install the profiler binary appropriate for the deployment
+instead of the server bundle carrying binaries for every platform and Node ABI.
+
 ### Command-line params
 
 ```

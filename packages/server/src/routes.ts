@@ -16,11 +16,12 @@ export const basePaths: IRoutePaths = {
         "res",
         "sockethub-client.js",
     ),
+    // Keep the legacy minified URL without publishing a duplicate bundle.
     "/sockethub-client.min.js": path.resolve(
         __dirname,
         "..",
         "res",
-        "sockethub-client.min.js",
+        "sockethub-client.js",
     ),
     "/socket.io.js": path.resolve(__dirname, "..", "res", "socket.io.js"),
 };

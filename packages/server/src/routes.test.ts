@@ -28,6 +28,12 @@ describe("routes/base", () => {
         sinon.assert.callCount(app.get, Object.keys(basePaths).length);
     });
 
+    it("serves one client bundle through both client URLs", () => {
+        expect(basePaths["/sockethub-client.min.js"]).toBe(
+            basePaths["/sockethub-client.js"],
+        );
+    });
+
     it("handles calls to base routes as expected", () => {
         const routeHandlers: any = {};
         const app = {

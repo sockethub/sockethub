@@ -110,6 +110,20 @@ jobs:
       - name: Build packages
         run: bun run build
 
+      - name: Check server package size
+        run: |
+          PACKAGE_BYTES=$(npm pack ./packages/server --dry-run --json | node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk);
+            process.stdin.on("end", () => console.log(JSON.parse(input)[0].size));
+          ')
+          MAX_BYTES=3000000
+          echo "@sockethub/server tarball: $PACKAGE_BYTES bytes (limit: $MAX_BYTES)"
+          if [ "$PACKAGE_BYTES" -ge "$MAX_BYTES" ]; then
+            echo "@sockethub/server tarball must remain under 3 MB" >&2
+            exit 1
+          fi
+
       - name: Start local npm registry
         run: |
           REGISTRY_DIR="$RUNNER_TEMP/verdaccio"
