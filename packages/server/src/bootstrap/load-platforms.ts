@@ -18,6 +18,7 @@ import {
 } from "@sockethub/schemas";
 import { errorMessage } from "@sockethub/util/error";
 import type { Schema } from "ajv";
+import { apiVersionFromSemver } from "../version.js";
 
 const log = createLogger("server:bootstrap:platforms");
 
@@ -27,7 +28,10 @@ export type PlatformStruct = {
     modulePath?: string;
     config: PlatformConfig;
     schemas: PlatformSchemaRegistry;
+    // Exact package version: for logs and diagnostics only, never published.
     version: string;
+    // Public compatibility number, the package's SemVer major.
+    apiVersion: number;
     contextUrl: string;
     contextVersion: string;
     schemaVersion: string;
@@ -158,6 +162,13 @@ export default async function loadPlatforms(
             ? undefined
             : resolveModulePath(platformName);
 
+        let apiVersion: number;
+        try {
+            apiVersion = apiVersionFromSemver(p.schema.version);
+        } catch (err) {
+            throw new Error(`${platformName} ${errorMessage(err)}`);
+        }
+
         platforms.set(p.schema.name, {
             id: p.schema.name,
             moduleName: p.schema.name,
@@ -175,6 +186,7 @@ export default async function loadPlatforms(
                 responses: p.schema.responses,
             },
             version: p.schema.version,
+            apiVersion,
             contextUrl: p.schema.contextUrl,
             contextVersion: p.schema.contextVersion,
             schemaVersion: p.schema.schemaVersion,

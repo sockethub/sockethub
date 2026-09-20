@@ -222,6 +222,17 @@ Version bumps are **automatic** based on commit types:
 | `BREAKING CHANGE` | Major (x.0.0) | 5.0.0 → 6.0.0 |
 | Other types | None | No version change |
 
+### Breaking API changes always bump the major
+
+The public API version clients see is derived from package SemVer: the server
+package's major is the global `apiVersion`, and each platform package's major
+is that platform's `apiVersion` (published by the Socket.IO bootstrap and the
+HTTP actions descriptor). There is no separately maintained compatibility
+number, so a breaking API change **must** bump the major version of the package
+it breaks — **including during prereleases** (`5.0.0-alpha.24` → `6.0.0-alpha.0`,
+not `5.0.0-alpha.25`). Describe the break in the release notes as well, but
+package SemVer remains the source of truth.
+
 See [docs/RELEASING.md](RELEASING.md) for release process details.
 
 ## Tips

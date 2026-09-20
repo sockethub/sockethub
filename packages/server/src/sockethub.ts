@@ -10,13 +10,12 @@ import {
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import {
-    AS2_BASE_CONTEXT_URL,
     buildCanonicalContext,
     ERROR_PLATFORM_CONTEXT_URL,
-    SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 import type { Socket } from "socket.io";
+import { buildPlatformRegistryPayload } from "./api-info.js";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
@@ -90,41 +89,12 @@ class Sockethub {
     // rateLimiter.maxConnectionsPerIp.
     private readonly socketsPerIp = new Map<string, number>();
     private activeConnections = 0;
-    private serverVersion?: string;
     private platformRegistryPayloadCache?: {
-        payload: ReturnType<Sockethub["buildPlatformRegistryPayload"]> & {
+        payload: ReturnType<typeof buildPlatformRegistryPayload> & {
             fingerprint: string;
         };
         fingerprint: string;
     };
-
-    /**
-     * Build the platform registry payload sent to clients.
-     * This is the canonical source for base contexts + platform context/schema metadata.
-     */
-    private buildPlatformRegistryPayload() {
-        return {
-            version: this.serverVersion,
-            contexts: {
-                as: AS2_BASE_CONTEXT_URL,
-                sockethub: SOCKETHUB_BASE_CONTEXT_URL,
-            },
-            platforms: Array.from(this.platformRegistry.values()).map(
-                (platform) => ({
-                    id: platform.id,
-                    version: platform.version,
-                    contextUrl: platform.contextUrl,
-                    contextVersion: platform.contextVersion,
-                    schemaVersion: platform.schemaVersion,
-                    types: platform.types,
-                    schemas: {
-                        credentials: platform.schemas.credentials || {},
-                        messages: platform.schemas.messages || {},
-                    },
-                }),
-            ),
-        };
-    }
 
     /**
      * Return the platform registry payload plus a content fingerprint, computed
@@ -135,7 +105,7 @@ class Sockethub {
      */
     private getPlatformRegistryPayload() {
         if (!this.platformRegistryPayloadCache) {
-            const base = this.buildPlatformRegistryPayload();
+            const base = buildPlatformRegistryPayload(this.platformRegistry);
             const fingerprint = createHash("sha256")
                 .update(JSON.stringify(base))
                 .digest("hex")
@@ -176,7 +146,6 @@ class Sockethub {
             return;
         }
 
-        this.serverVersion = init.version;
         this.processManager = new ProcessManager(
             this.parentId,
             this.parentSecret1,
@@ -202,6 +171,7 @@ class Sockethub {
             processManager: this.processManager,
             parentId: this.parentId,
             parentSecret1: this.parentSecret1,
+            platforms: this.platformRegistry,
         });
         janitor.start(); // start cleanup cycle
         log.debug("registering handlers");

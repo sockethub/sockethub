@@ -5,7 +5,7 @@ import { createSandbox, restore } from "sinon";
 import SockethubClient from "./sockethub-client";
 
 const TEST_REGISTRY = {
-    version: "5.0.0-alpha.11",
+    apiVersion: 5,
     contexts: {
         as: "https://example.com/as2",
         sockethub: "https://example.com/sh",
@@ -13,7 +13,7 @@ const TEST_REGISTRY = {
     platforms: [
         {
             id: "test-xmpp",
-            version: "1.0.0",
+            apiVersion: 1,
             contextUrl:
                 "https://example.com/context/platform/test-xmpp/v9.jsonld",
             contextVersion: "9",
@@ -36,7 +36,7 @@ const TEST_REGISTRY = {
         },
         {
             id: "dummy",
-            version: "1.0.0",
+            apiVersion: 1,
             contextUrl: "https://example.com/context/platform/dummy/v1.jsonld",
             contextVersion: "1",
             schemaVersion: "1",
@@ -168,7 +168,7 @@ describe("SockethubClient", () => {
             const info = await sc.ready(2000);
             expect(info.state).to.equal("ready");
             expect(info.reason).to.be.a("string");
-            expect(info.sockethubVersion).to.equal("5.0.0-alpha.11");
+            expect(info.apiVersion).to.equal(5);
             expect(info.platforms).to.be.an("array").with.length.greaterThan(0);
             expect(info.contexts.as).to.equal("https://example.com/as2");
         });
@@ -248,19 +248,65 @@ describe("SockethubClient", () => {
             timeoutSocket.emit("disconnect");
         });
 
-        it("emits ready payload including sockethub and platform versions", (done) => {
+        it("emits ready payload including sockethub and platform API versions", (done) => {
             sc.socket.on("ready", (info: any) => {
                 expect(info.state).to.equal("ready");
-                expect(info.sockethubVersion).to.equal("5.0.0-alpha.11");
+                expect(info.apiVersion).to.equal(5);
                 expect(info.platforms[0]).to.include.keys([
                     "id",
-                    "version",
+                    "apiVersion",
                     "contextVersion",
                     "schemaVersion",
                 ]);
+                expect(info.platforms[0].apiVersion).to.equal(1);
                 done();
             });
             socket.emit("schemas", TEST_REGISTRY);
+        });
+
+        it("never exposes exact package versions, deriving API versions from a legacy registry", (done) => {
+            let registry: any;
+            sc.socket.on("schemas", (payload: any) => {
+                registry = payload;
+            });
+            sc.socket.on("ready", (info: any) => {
+                expect(info.apiVersion).to.equal(5);
+                expect(info).to.not.have.any.keys("version", "sockethubVersion");
+                expect(info.platforms[0].apiVersion).to.equal(2);
+                expect(info.platforms[0]).to.not.have.property("version");
+                expect(registry.apiVersion).to.equal(5);
+                expect(registry).to.not.have.property("version");
+                expect(registry.platforms[0]).to.not.have.property("version");
+                done();
+            });
+            socket.emit("schemas", {
+                ...TEST_REGISTRY,
+                apiVersion: undefined,
+                version: "5.0.0-alpha.11",
+                platforms: TEST_REGISTRY.platforms.map((platform) => ({
+                    ...platform,
+                    apiVersion: undefined,
+                    version: "2.1.3",
+                })),
+            });
+        });
+
+        it("becomes ready without any version information", (done) => {
+            sc.socket.on("ready", (info: any) => {
+                expect(info.state).to.equal("ready");
+                expect(info.apiVersion).to.equal(undefined);
+                expect(info.platforms.map((p: any) => p.id)).to.eql([
+                    "test-xmpp",
+                    "dummy",
+                ]);
+                done();
+            });
+            socket.emit("schemas", {
+                contexts: TEST_REGISTRY.contexts,
+                platforms: TEST_REGISTRY.platforms.map(
+                    ({ apiVersion: _apiVersion, ...platform }) => platform,
+                ),
+            });
         });
 
         it("emits init_error and timeout warning when schemas never arrive", (done) => {
@@ -351,7 +397,7 @@ describe("SockethubClient", () => {
                 done();
             });
             socket.emit("schemas", {
-                version: "5.0.0-alpha.11",
+                apiVersion: 5,
                 contexts: {
                     as: "https://example.com/as2",
                     sockethub: "https://example.com/sh",
@@ -359,7 +405,7 @@ describe("SockethubClient", () => {
                 platforms: [
                     {
                         id: "test-xmpp",
-                        version: "1.0.0",
+                        apiVersion: 1,
                         contextUrl:
                             "https://example.com/context/platform/test-xmpp/v9.jsonld",
                         contextVersion: "9",
@@ -428,7 +474,7 @@ describe("SockethubClient", () => {
         it("emits a CardDAV query with an addressBook target", (done) => {
             (sc.validateActivity as any).restore();
             socket.emit("schemas", {
-                version: "5.0.0-alpha.19",
+                apiVersion: 5,
                 contexts: {
                     as: "https://www.w3.org/ns/activitystreams",
                     sockethub: "https://sockethub.org/ns/context/v1.jsonld",
@@ -436,7 +482,7 @@ describe("SockethubClient", () => {
                 platforms: [
                     {
                         id: "carddav-client-test",
-                        version: "1.0.0-alpha.0",
+                        apiVersion: 1,
                         contextUrl:
                             "https://sockethub.org/ns/context/platform/carddav-client-test/v1.jsonld",
                         contextVersion: "1",
@@ -480,7 +526,7 @@ describe("SockethubClient", () => {
         it("rejects a CardDAV query with an incomplete addressBook target", () => {
             (sc.validateActivity as any).restore();
             socket.emit("schemas", {
-                version: "5.0.0-alpha.19",
+                apiVersion: 5,
                 contexts: {
                     as: "https://www.w3.org/ns/activitystreams",
                     sockethub: "https://sockethub.org/ns/context/v1.jsonld",
@@ -488,7 +534,7 @@ describe("SockethubClient", () => {
                 platforms: [
                     {
                         id: "carddav-client-test",
-                        version: "1.0.0-alpha.0",
+                        apiVersion: 1,
                         contextUrl:
                             "https://sockethub.org/ns/context/platform/carddav-client-test/v1.jsonld",
                         contextVersion: "1",

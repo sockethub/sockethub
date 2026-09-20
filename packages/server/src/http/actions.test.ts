@@ -2,8 +2,13 @@
  * Tests for HTTP actions endpoint idempotency and GET replay behavior.
  */
 import { describe, expect, it } from "bun:test";
+import type { AddressInfo } from "node:net";
 import type { ActivityStream } from "@sockethub/schemas";
+import express from "express";
 
+import { buildPlatformRegistryPayload } from "../api-info.js";
+import type { PlatformMap } from "../bootstrap/load-platforms.js";
+import { apiVersionFromSemver, SOCKETHUB_VERSION } from "../version.js";
 import { registerHttpActionsRoutes } from "./actions.js";
 import {
     hasHttpSessions,
@@ -64,10 +69,41 @@ type ConfigOverrides = Partial<
         | "httpActions:requireRequestId"
         | "httpActions:idempotencyTtlMs"
         | "httpActions:requestTimeoutMs"
-        | "httpActions:idleTimeoutMs",
-        number | boolean
+        | "httpActions:idleTimeoutMs"
+        | "httpActions:enabled"
+        | "httpActions:path"
+        | "sockethub:cors:origin",
+        number | boolean | string
     >
 >;
+
+function fakePlatform(id: string, version: string) {
+    return {
+        id,
+        moduleName: id,
+        config: {},
+        schemas: {
+            name: id,
+            version,
+            contextUrl: `https://sockethub.org/ns/context/platform/${id}/v1.jsonld`,
+            contextVersion: "1",
+            schemaVersion: "1",
+            credentials: {},
+            messages: {},
+        },
+        version,
+        apiVersion: apiVersionFromSemver(version),
+        contextUrl: `https://sockethub.org/ns/context/platform/${id}/v1.jsonld`,
+        contextVersion: "1",
+        schemaVersion: "1",
+        types: ["fetch"],
+    };
+}
+
+const TEST_PLATFORMS: PlatformMap = new Map([
+    ["metadata", fakePlatform("metadata", "2.0.3")],
+    ["caldav", fakePlatform("caldav", "1.0.0-alpha.8")],
+]);
 
 const DEFAULT_CONFIG: Record<string, unknown> = {
     "httpActions:enabled": true,
@@ -158,6 +194,16 @@ function createReqRes({
     return { req, res, writes };
 }
 
+function testConfig(configOverrides: ConfigOverrides) {
+    return (key: string) => {
+        const overrides = configOverrides as Record<string, unknown>;
+        if (key in overrides) {
+            return overrides[key];
+        }
+        return DEFAULT_CONFIG[key];
+    };
+}
+
 function buildHandlers({
     configOverrides = {},
     fakeRedis,
@@ -188,15 +234,10 @@ function buildHandlers({
             processManager: {} as any,
             parentId: "parent",
             parentSecret1: "secret-one",
+            platforms: TEST_PLATFORMS,
         },
         {
-            getConfig: (key: string) => {
-                const overrides = configOverrides as Record<string, unknown>;
-                if (key in overrides) {
-                    return overrides[key];
-                }
-                return DEFAULT_CONFIG[key];
-            },
+            getConfig: testConfig(configOverrides),
             createRateLimiter: () => (_req, _res, next) => next(),
             createMessageHandlers:
                 createMessageHandlersOverride ??
@@ -443,6 +484,130 @@ describe("http actions", () => {
 
         expect(getReqRes.res.headers["x-idempotent-replay"]).toBe("true");
         expect(getReqRes.writes.length).toBe(1);
+    });
+
+    it("accepts GET requestId via header", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({ fakeRedis });
+
+        const requestId = "req-458";
+        const { req, res } = createReqRes({
+            body: [singlePayload],
+            headers: { "x-request-id": requestId },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        for (const header of ["x-request-id", "x-sockethub-request-id"]) {
+            const getReqRes = createReqRes({
+                headers: { [header]: requestId },
+            });
+            await handlers["GET:/sockethub-http"](getReqRes.req, getReqRes.res);
+
+            expect(getReqRes.res.headers["x-idempotent-replay"]).toBe("true");
+            expect(getReqRes.res.headers["content-type"]).toBe(
+                "application/x-ndjson",
+            );
+            expect(getReqRes.writes.length).toBe(1);
+        }
+    });
+
+    it("returns the service descriptor for a GET without a requestId", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({ fakeRedis });
+
+        const { req, res, writes } = createReqRes({});
+        await handlers["GET:/sockethub-http"](req, res);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.headers["cache-control"]).toBe("no-store");
+        expect(res.jsonBody).toEqual({
+            name: "sockethub",
+            apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
+            platforms: [
+                { id: "metadata", apiVersion: 2 },
+                { id: "caldav", apiVersion: 1 },
+            ],
+        });
+        expect(writes.length).toBe(0);
+        // Discovery never touches the idempotency store.
+        expect(fakeRedis.store.size).toBe(0);
+    });
+
+    it("does not publish exact package versions in the descriptor", async () => {
+        const handlers = buildHandlers({ fakeRedis: new FakeRedis() });
+
+        const { req, res } = createReqRes({});
+        await handlers["GET:/sockethub-http"](req, res);
+
+        const serialized = JSON.stringify(res.jsonBody);
+        expect(serialized).not.toContain(SOCKETHUB_VERSION);
+        expect(serialized).not.toContain("2.0.3");
+        expect(serialized).not.toContain("1.0.0-alpha.8");
+    });
+
+    it("rejects an invalid GET requestId instead of returning the descriptor", async () => {
+        const handlers = buildHandlers({ fakeRedis: new FakeRedis() });
+
+        for (const source of [
+            { query: { requestId: "bad id!" } },
+            { params: { requestId: "bad id!" } },
+            { headers: { "x-request-id": "bad id!" } },
+        ]) {
+            const { req, res } = createReqRes(source);
+            await handlers["GET:/sockethub-http"](req, res);
+
+            expect(res.statusCode).toBe(400);
+            expect(res.jsonBody).toEqual({
+                error: "requestId contains invalid characters",
+            });
+        }
+    });
+
+    it("reports the same API versions as the Socket.IO bootstrap", async () => {
+        const handlers = buildHandlers({ fakeRedis: new FakeRedis() });
+
+        const { req, res } = createReqRes({});
+        await handlers["GET:/sockethub-http"](req, res);
+
+        const registry = buildPlatformRegistryPayload(TEST_PLATFORMS);
+        expect(res.jsonBody.apiVersion).toBe(registry.apiVersion);
+        expect(res.jsonBody.platforms).toEqual(
+            registry.platforms.map(({ id, apiVersion }) => ({
+                id,
+                apiVersion,
+            })),
+        );
+        // The bootstrap carries no exact package versions either.
+        expect(registry).not.toHaveProperty("version");
+        for (const platform of registry.platforms) {
+            expect(platform).not.toHaveProperty("version");
+        }
+        expect(JSON.stringify(registry)).not.toContain(SOCKETHUB_VERSION);
+    });
+
+    it("serves the descriptor at a custom path", async () => {
+        const handlers = buildHandlers({
+            fakeRedis: new FakeRedis(),
+            configOverrides: { "httpActions:path": "/custom/actions" },
+        });
+
+        expect(handlers["GET:/sockethub-http"]).toBeUndefined();
+        const { req, res } = createReqRes({});
+        await handlers["GET:/custom/actions"](req, res);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.jsonBody.name).toBe("sockethub");
+    });
+
+    it("registers no descriptor when HTTP actions are disabled", () => {
+        const handlers = buildHandlers({
+            fakeRedis: new FakeRedis(),
+            configOverrides: { "httpActions:enabled": false },
+        });
+
+        expect(Object.keys(handlers)).toEqual([]);
     });
 
     it("rejects requests over maxMessagesPerRequest", async () => {
@@ -924,3 +1089,94 @@ describe("http actions", () => {
 
 // CORS origin resolution is covered in ../cors.test.ts alongside
 // parseCorsOrigins.
+
+describe("http actions service descriptor over HTTP", () => {
+    async function withServer(
+        configOverrides: ConfigOverrides,
+        run: (baseUrl: string) => Promise<void>,
+    ) {
+        const app = express();
+        registerHttpActionsRoutes(
+            app,
+            {
+                processManager: {} as any,
+                parentId: "parent",
+                parentSecret1: "secret-one",
+                platforms: TEST_PLATFORMS,
+            },
+            {
+                getConfig: testConfig(configOverrides),
+                createRateLimiter: () => (_req, _res, next) => next(),
+                getIdempotencyRedisConnection: () => new FakeRedis() as any,
+            },
+        );
+        const server = app.listen(0, "127.0.0.1");
+        await new Promise((resolve) => server.once("listening", resolve));
+        const { port } = server.address() as AddressInfo;
+        try {
+            await run(`http://127.0.0.1:${port}`);
+        } finally {
+            await new Promise((resolve) => server.close(resolve));
+        }
+    }
+
+    it("responds 200 application/json with no-store", async () => {
+        await withServer({}, async (baseUrl) => {
+            const res = await fetch(`${baseUrl}/sockethub-http`);
+
+            expect(res.status).toBe(200);
+            expect(res.headers.get("content-type")).toContain(
+                "application/json",
+            );
+            expect(res.headers.get("cache-control")).toBe("no-store");
+            expect(await res.json()).toEqual({
+                name: "sockethub",
+                apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
+                platforms: [
+                    { id: "metadata", apiVersion: 2 },
+                    { id: "caldav", apiVersion: 1 },
+                ],
+            });
+        });
+    });
+
+    it("applies the HTTP actions CORS policy", async () => {
+        await withServer(
+            { "sockethub:cors:origin": "https://inbox.example" },
+            async (baseUrl) => {
+                const allowed = await fetch(`${baseUrl}/sockethub-http`, {
+                    headers: { Origin: "https://inbox.example" },
+                });
+                expect(allowed.status).toBe(200);
+                expect(allowed.headers.get("access-control-allow-origin")).toBe(
+                    "https://inbox.example",
+                );
+                expect(allowed.headers.get("vary")).toContain("Origin");
+
+                const denied = await fetch(`${baseUrl}/sockethub-http`, {
+                    headers: { Origin: "https://evil.example" },
+                });
+                expect(
+                    denied.headers.get("access-control-allow-origin"),
+                ).toBeNull();
+            },
+        );
+    });
+
+    it("keeps replay lookups on NDJSON/404 semantics, not the descriptor", async () => {
+        await withServer({}, async (baseUrl) => {
+            const byPath = await fetch(`${baseUrl}/sockethub-http/unknown-id`);
+            expect(byPath.status).toBe(404);
+
+            const byQuery = await fetch(
+                `${baseUrl}/sockethub-http?requestId=unknown-id`,
+            );
+            expect(byQuery.status).toBe(404);
+
+            const invalid = await fetch(
+                `${baseUrl}/sockethub-http?requestId=bad%20id`,
+            );
+            expect(invalid.status).toBe(400);
+        });
+    });
+});

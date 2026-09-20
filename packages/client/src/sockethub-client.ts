@@ -63,6 +63,31 @@ interface CustomEmitter extends EventEmitter {
     id: string;
 }
 
+/**
+ * Read an API version off a registry payload or platform entry. Servers that
+ * predate API versions published an exact package `version` instead; its
+ * SemVer major is the same number, so derive it rather than report nothing.
+ */
+function resolveApiVersion(source: unknown): number | undefined {
+    if (!source || typeof source !== "object") {
+        return undefined;
+    }
+    const { apiVersion, version } = source as {
+        apiVersion?: unknown;
+        version?: unknown;
+    };
+    if (typeof apiVersion === "number" && Number.isInteger(apiVersion)) {
+        return apiVersion;
+    }
+    if (typeof version === "string") {
+        const match = /^v?(\d+)(?:[.+-]|$)/.exec(version.trim());
+        if (match) {
+            return Number(match[1]);
+        }
+    }
+    return undefined;
+}
+
 interface PlatformRegistrySchemas {
     credentials?: object;
     messages?: object;
@@ -74,7 +99,9 @@ interface PlatformRegistrySchemas {
  */
 export interface PlatformRegistryEntry {
     id: string;
-    version: string;
+    // Platform API version (the platform package's SemVer major). Absent only
+    // when the server did not report one.
+    apiVersion?: number;
     contextUrl: string;
     contextVersion: string;
     schemaVersion: string;
@@ -83,7 +110,8 @@ export interface PlatformRegistryEntry {
 }
 
 export interface PlatformRegistryPayload {
-    version?: string;
+    // Global Sockethub API version (the server package's SemVer major).
+    apiVersion?: number;
     // Server-computed content fingerprint of the registry. The client echoes
     // this on re-request so the server can reply "unchanged" instead of
     // re-sending the full schema set (#1117).
@@ -101,14 +129,15 @@ export interface PlatformRegistryPayload {
 export interface ClientReadyInfo {
     state: "ready";
     reason: ReadyReason;
-    sockethubVersion: string;
+    // Global Sockethub API version; undefined when the server reported none.
+    apiVersion?: number;
     contexts: {
         as: string;
         sockethub: string;
     };
     platforms: Array<{
         id: string;
-        version: string;
+        apiVersion?: number;
         contextUrl: string;
         contextVersion: string;
         schemaVersion: string;
@@ -207,7 +236,7 @@ export default class SockethubClient {
     private platformRegistry = new Map<string, PlatformRegistryEntry>();
     private asContextUrl?: string;
     private sockethubContextUrl?: string;
-    private sockethubVersion?: string;
+    private apiVersion?: number;
     private initState: InitState = "idle";
     private hasReadyOnce = false;
     private initCycle?: InitializationCycle;
@@ -465,8 +494,7 @@ export default class SockethubClient {
         ) {
             return undefined;
         }
-        this.sockethubVersion =
-            typeof registry.version === "string" ? registry.version : "unknown";
+        this.apiVersion = resolveApiVersion(registry);
         this.asContextUrl = asContextUrl;
         this.sockethubContextUrl = sockethubContextUrl;
 
@@ -476,14 +504,19 @@ export default class SockethubClient {
                 !platform ||
                 typeof platform !== "object" ||
                 typeof platform.id !== "string" ||
-                typeof platform.version !== "string" ||
                 typeof platform.contextUrl !== "string"
             ) {
                 continue;
             }
+            // Rebuilt field by field rather than spread, so nothing the
+            // server sends beyond the bootstrap contract (such as an exact
+            // package version) is retained or re-emitted.
             this.platformRegistry.set(platform.id, {
-                ...platform,
-                version: platform.version,
+                id: platform.id,
+                apiVersion: resolveApiVersion(platform),
+                contextUrl: platform.contextUrl,
+                contextVersion: platform.contextVersion,
+                schemaVersion: platform.schemaVersion,
                 types: Array.isArray(platform.types) ? platform.types : [],
                 schemas: platform.schemas || {},
             });
@@ -574,7 +607,7 @@ export default class SockethubClient {
 
     private buildPlatformRegistryPayload(): PlatformRegistryPayload {
         return {
-            version: this.sockethubVersion,
+            apiVersion: this.apiVersion,
             contexts:
                 this.asContextUrl && this.sockethubContextUrl
                     ? {
@@ -587,24 +620,20 @@ export default class SockethubClient {
     }
 
     private buildReadyInfo(reason: ReadyReason): ClientReadyInfo | undefined {
-        if (
-            !this.sockethubVersion ||
-            !this.asContextUrl ||
-            !this.sockethubContextUrl
-        ) {
+        if (!this.asContextUrl || !this.sockethubContextUrl) {
             return undefined;
         }
         return {
             state: "ready",
             reason,
-            sockethubVersion: this.sockethubVersion,
+            apiVersion: this.apiVersion,
             contexts: {
                 as: this.asContextUrl,
                 sockethub: this.sockethubContextUrl,
             },
             platforms: this.getRegisteredPlatforms().map((platform) => ({
                 id: platform.id,
-                version: platform.version,
+                apiVersion: platform.apiVersion,
                 contextUrl: platform.contextUrl,
                 contextVersion: platform.contextVersion,
                 schemaVersion: platform.schemaVersion,

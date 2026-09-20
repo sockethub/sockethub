@@ -139,6 +139,13 @@ class Listener {
                     path: config.get("public:path"),
                 },
                 platforms: config.get("platforms"),
+                httpActions: {
+                    enabled: Boolean(config.get("httpActions:enabled")),
+                    path:
+                        typeof httpActionsPath === "string"
+                            ? httpActionsPath
+                            : "/sockethub-http",
+                },
             }),
         );
 

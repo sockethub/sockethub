@@ -2,7 +2,12 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { defaultSentryRelease, SOCKETHUB_VERSION } from "./version.js";
+import {
+    apiVersionFromSemver,
+    defaultSentryRelease,
+    SOCKETHUB_API_VERSION,
+    SOCKETHUB_VERSION,
+} from "./version.js";
 
 describe("version", () => {
     const packageJson = JSON.parse(
@@ -23,5 +28,40 @@ describe("version", () => {
 
     it("builds a sentry release identifier from that version", () => {
         expect(defaultSentryRelease()).toBe(`sockethub@${packageJson.version}`);
+    });
+
+    describe("apiVersionFromSemver", () => {
+        it("reports the SemVer major", () => {
+            expect(apiVersionFromSemver("5.2.1")).toBe(5);
+            expect(apiVersionFromSemver("2.0.3")).toBe(2);
+            expect(apiVersionFromSemver("0.4.0")).toBe(0);
+            expect(apiVersionFromSemver("12.0.0")).toBe(12);
+        });
+
+        it("ignores prerelease and build metadata", () => {
+            expect(apiVersionFromSemver("5.0.0-alpha.24")).toBe(5);
+            expect(apiVersionFromSemver("1.0.1-alpha.19")).toBe(1);
+            expect(apiVersionFromSemver("3.1.0+build.7")).toBe(3);
+        });
+
+        it("tolerates a leading v and partial versions", () => {
+            expect(apiVersionFromSemver("v4.1.0")).toBe(4);
+            expect(apiVersionFromSemver("1.0")).toBe(1);
+            expect(apiVersionFromSemver("7")).toBe(7);
+        });
+
+        it("throws when there is no major version to read", () => {
+            for (const bad of ["", "latest", "x.1.0", "1x.0.0", ".5.0"]) {
+                expect(() => apiVersionFromSemver(bad)).toThrow(
+                    "cannot derive API version",
+                );
+            }
+        });
+
+        it("derives the global API version from the server package", () => {
+            expect(SOCKETHUB_API_VERSION).toBe(
+                Number(packageJson.version.split(".")[0]),
+            );
+        });
     });
 });
