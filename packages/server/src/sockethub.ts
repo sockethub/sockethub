@@ -25,7 +25,7 @@ import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
 import { createMessageHandlers } from "./message-handlers.js";
-import { observability } from "./observability.js";
+import { observability, startConnectionTelemetry } from "./observability.js";
 import ProcessManager from "./process-manager.js";
 import {
     cleanupClient,
@@ -294,7 +294,7 @@ class Sockethub {
             return;
         }
         this.activeConnections += 1;
-        observability.count("sockethub.connection.opened");
+        const connectionTelemetry = startConnectionTelemetry();
         observability.gauge(
             "sockethub.connection.active",
             this.activeConnections,
@@ -353,7 +353,7 @@ class Sockethub {
             clearSessionScopes(socket.id);
             this.releaseIpSlot(clientIp);
             this.activeConnections = Math.max(0, this.activeConnections - 1);
-            observability.count("sockethub.connection.closed");
+            connectionTelemetry.end();
             observability.gauge(
                 "sockethub.connection.active",
                 this.activeConnections,
@@ -368,6 +368,9 @@ class Sockethub {
             clientIp,
             // Keep session registration behavior inside ProcessManager.get().
             platformSessionId: socket.id,
+            transport: "socket",
+            onPlatformAction: (platform) =>
+                connectionTelemetry.recordPlatform(platform),
         });
 
         socket.on("credentials", handlers.credentials);

@@ -103,12 +103,24 @@ export function gauge(
     }
 }
 
+export function distribution(
+    name: string,
+    value: number,
+    unit: string,
+    attributes: MetricAttributes = {},
+): void {
+    if (sentryConfig.enableMetrics) {
+        Sentry.metrics.distribution(name, value, { unit, attributes });
+    }
+}
+
 export function startAction(
     platform: string,
     action: string,
+    additionalAttributes: MetricAttributes = {},
 ): (error?: boolean) => void {
     const startedAt = performance.now();
-    const attributes = { platform, action };
+    const attributes = { platform, action, ...additionalAttributes };
     count("sockethub.action.started", 1, attributes);
     const span = Sentry.startInactiveSpan({
         name: `${platform}.${action}`,
@@ -124,12 +136,12 @@ export function startAction(
             1,
             attributes,
         );
-        if (sentryConfig.enableMetrics) {
-            Sentry.metrics.distribution("sockethub.action.duration", duration, {
-                unit: "millisecond",
-                attributes,
-            });
-        }
+        distribution(
+            "sockethub.action.duration",
+            duration,
+            "millisecond",
+            attributes,
+        );
     };
 }
 
@@ -138,4 +150,4 @@ export async function sendTestEvent(): Promise<boolean> {
     return Sentry.flush(5000);
 }
 
-setObservabilityAdapter({ count, gauge, startAction });
+setObservabilityAdapter({ count, gauge, distribution, startAction });

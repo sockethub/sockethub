@@ -7,13 +7,14 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
-import { toError } from "@sockethub/util/error";
+import { markExpectedError, toError } from "@sockethub/util/error";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
 import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
 import {
     type FxTwitterStatus,
+    isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
     parseRedditOEmbed,
@@ -25,8 +26,10 @@ import {
     redditPostImages,
     redditPostVideo,
     resolveRedditJson,
+    resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
+    stripFacebookEngagement,
     tweetToPageObject,
     type YouTubeOEmbed,
     youtubeOEmbedImage,
@@ -64,6 +67,39 @@ const YOUTUBE_OEMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
+const DIRECT_IMAGE_PROBE_TIMEOUT_MS = 5_000;
+
+const IMAGE_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
+    avif: "image/avif",
+    gif: "image/gif",
+    jpeg: "image/jpeg",
+    jpg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+};
+
+/** Build best-effort metadata from a URL with a known image extension. */
+function directImageCandidate(
+    rawUrl: string,
+): { title: string; type: string; url: string } | undefined {
+    try {
+        const url = new URL(rawUrl);
+        if (url.protocol !== "http:" && url.protocol !== "https:") return;
+        const filename = decodeURIComponent(
+            url.pathname.split("/").at(-1) || "",
+        );
+        const extension = filename.match(/\.([a-z0-9]+)$/i)?.[1].toLowerCase();
+        const type = extension && IMAGE_TYPES_BY_EXTENSION[extension];
+        if (!type) return;
+        return {
+            title: filename.slice(0, -(extension.length + 1)),
+            type,
+            url: url.href,
+        };
+    } catch {
+        return;
+    }
+}
 
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
 export function withDeadline<T>(
@@ -167,7 +203,74 @@ export default class Metadata implements PlatformInterface {
             this.scrape(job, cb, undefined, job.actor.id, embed);
             return;
         }
+        const image = directImageCandidate(job.actor.id);
+        if (image) {
+            this.fetchDirectImage(job, image, cb);
+            return;
+        }
         this.scrape(job, cb);
+    }
+
+    /**
+     * Verify likely direct-image links when possible. Origins commonly block
+     * server-side preview agents, so a strong file extension remains a useful
+     * fallback: the client can still request the original resource itself.
+     */
+    private async fetchDirectImage(
+        job: ActivityStream,
+        candidate: { title: string; type: string; url: string },
+        cb: PlatformCallback,
+        timeoutMs = DIRECT_IMAGE_PROBE_TIMEOUT_MS,
+    ) {
+        try {
+            const res = await withDeadline(
+                this.fetchImpl(candidate.url, {
+                    dispatcher: this.getDispatcher(),
+                    headers: {
+                        accept: "image/avif,image/webp,image/*,*/*;q=0.8",
+                        "user-agent": this.userAgent(),
+                    },
+                    signal: AbortSignal.timeout(timeoutMs),
+                } as RequestInit & {
+                    dispatcher: ReturnType<typeof createGuardedDispatcher>;
+                }),
+                timeoutMs,
+            );
+            const contentType = res.headers
+                .get("content-type")
+                ?.split(";", 1)[0]
+                .trim()
+                .toLowerCase();
+            if (res.ok && contentType?.startsWith("text/html")) {
+                if (res.body) await res.body.cancel();
+                this.scrape(job, cb);
+                return;
+            }
+            if (res.ok && contentType && !contentType.startsWith("image/")) {
+                if (res.body) await res.body.cancel();
+                this.scrape(job, cb);
+                return;
+            }
+            if (res.body) await res.body.cancel();
+            if (res.ok && contentType?.startsWith("image/")) {
+                candidate.type = contentType;
+                candidate.url = res.url || candidate.url;
+                job.actor.id = candidate.url;
+            }
+        } catch (err) {
+            this.log.debug(
+                `direct image probe failed for ${candidate.url}: ${String(err)}; using URL metadata`,
+            );
+        }
+        job.object = {
+            type: "page",
+            title: candidate.title.replace(/[_-]+/g, " ").trim(),
+            description: "",
+            image: [{ url: candidate.url, type: candidate.type }],
+            url: candidate.url,
+            favicon: "/favicon.ico",
+        };
+        cb(null, job);
     }
 
     /** Fetch and validate YouTube's official preview metadata. */
@@ -234,6 +337,35 @@ export default class Metadata implements PlatformInterface {
     }
 
     private async fetchReddit(job: ActivityStream, cb: PlatformCallback) {
+        // reddit.com/media?url=… wraps a single hosted image; Reddit serves
+        // neither post JSON nor oEmbed for it, so the network pipeline below
+        // can only fail. The image URL is embedded in the link itself —
+        // answer from it directly.
+        const mediaImage = resolveRedditMedia(job.actor.id);
+        if (mediaImage) {
+            const imagePath = new URL(mediaImage).pathname;
+            let title: string;
+            try {
+                title = decodeURIComponent(imagePath).slice(1);
+            } catch {
+                // Malformed percent-sequences survive URL parsing; the title
+                // is cosmetic, so fall back to the undecoded filename.
+                title = imagePath.slice(1);
+            }
+            job.actor.name = "reddit";
+            job.object = {
+                type: "page",
+                title,
+                name: "reddit",
+                description: "",
+                image: [{ url: mediaImage }],
+                url: job.actor.id,
+                favicon: "/favicon.ico",
+            };
+            this.log.debug(`reddit media link unwrapped for ${job.actor.id}`);
+            cb(null, job);
+            return;
+        }
         const jsonUrl = resolveRedditJson(job.actor.id);
         // Start the title fallback immediately. If the richer post JSON fails,
         // this has usually completed already and does not extend the response
@@ -289,7 +421,13 @@ export default class Metadata implements PlatformInterface {
             cb(null, job);
             return;
         }
-        cb(new Error(`No Reddit metadata available for ${job.actor.id}`));
+        // Expected outcome for deleted/blocked posts and unrecognized Reddit
+        // link shapes, not a server defect — keep it out of Sentry.
+        cb(
+            markExpectedError(
+                new Error(`No Reddit metadata available for ${job.actor.id}`),
+            ),
+        );
     }
 
     /**
@@ -389,9 +527,11 @@ export default class Metadata implements PlatformInterface {
     ) {
         // Reddit serves its OG data (with the post's real preview image)
         // only to recognized embed-crawler user agents — everything else
-        // gets a page without OG tags, or a 403.
+        // gets a page without OG tags, or a 403. Facebook likewise serves
+        // unrecognized scrapers a login interstitial instead of the post.
         const useCompatUserAgent =
             isRedditUrl(job.actor.id) ||
+            isFacebookUrl(job.actor.id) ||
             Boolean(resolveYouTubeOEmbed(job.actor.id));
         const userAgent = useCompatUserAgent
             ? this.compatUserAgent()
@@ -461,20 +601,37 @@ export default class Metadata implements PlatformInterface {
                 const { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
                 const reddit = isRedditUrl(job.actor.id);
+                const facebook = isFacebookUrl(job.actor.id);
                 const embed = reddit ? await redditEmbed : undefined;
                 const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;
+                // Facebook declares no og:site_name, so supply it; its video
+                // titles come prefixed with localized view/reaction counts.
+                const siteName =
+                    result.ogSiteName ?? (facebook ? "Facebook" : undefined);
+                // The og:image alt inherits the same stats prefix as the title.
+                const scrapedImages = facebook
+                    ? result.ogImage?.map((image) => ({
+                          ...image,
+                          alt: stripFacebookEngagement(image.alt),
+                      }))
+                    : result.ogImage;
                 job.actor.name = reddit
                     ? (embed?.provider_name ?? "reddit")
-                    : (result.ogSiteName ?? job.actor.name ?? "");
+                    : (siteName ?? job.actor.name ?? "");
                 job.object = {
                     type: "page",
                     language: result.ogLocale,
-                    title: embed?.title ?? youtube?.title ?? result.ogTitle,
+                    title:
+                        embed?.title ??
+                        youtube?.title ??
+                        (facebook
+                            ? stripFacebookEngagement(result.ogTitle)
+                            : result.ogTitle),
                     name:
                         embed?.provider_name ??
                         youtube?.provider_name ??
-                        result.ogSiteName,
+                        siteName,
                     description: normalizeDescription(
                         result.ogDescription || "",
                     ),
@@ -484,8 +641,8 @@ export default class Metadata implements PlatformInterface {
                     image: reddit
                         ? (redditPostImages(result.ogImage) ??
                           redditOEmbedImage(embed ?? {}))
-                        : result.ogImage?.length
-                          ? result.ogImage
+                        : scrapedImages?.length
+                          ? scrapedImages
                           : youtubeOEmbedImage(youtube),
                     url: reddit ? job.actor.id : result.ogUrl,
                     // Fall back to the conventional location when the page
@@ -544,7 +701,19 @@ export default class Metadata implements PlatformInterface {
                     cb(null, job);
                     return;
                 }
-                cb(err);
+                // Scrape failures are expected operational outcomes of
+                // fetching arbitrary user-supplied URLs — slow sites time
+                // out, bot-blockers return 403s, links go dead. Mark them so
+                // the job handler doesn't report each one to Sentry as a
+                // production error, and name the URL so any report or client
+                // message is self-describing.
+                cb(
+                    markExpectedError(
+                        new Error(
+                            `metadata scrape failed for ${job.actor.id}: ${err.message}`,
+                        ),
+                    ),
+                );
             });
     }
 

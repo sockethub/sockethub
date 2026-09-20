@@ -4,13 +4,14 @@
  *
  * Some large platforms return a generic banner image (X/Twitter), serve
  * their Open Graph data only to recognized embed crawlers (Reddit), or
- * hide post media behind a login (Facebook). Two of those have working
- * strategies:
+ * hide post media behind a login (Facebook):
  *
  * - X/Twitter → FxTwitter's JSON API (api.fxtwitter.com), built for embed
  *   previews, returns the tweet text plus direct photo/video URLs.
  * - Reddit → the regular scrape works, but only when presented with an
  *   embed-crawler user agent (see COMPAT_USER_AGENT in index.ts).
+ * - Facebook → same crawler-UA gating as Reddit, plus its video titles
+ *   arrive polluted with localized engagement stats that need stripping.
  *
  * These are pure URL matchers/mappers — the platform decides what to do
  * with the resolution (call a JSON API vs. pick a scrape user agent).
@@ -31,6 +32,17 @@ const YOUTUBE_HOSTS = new Set([
     "www.youtube.com",
     "m.youtube.com",
     "music.youtube.com",
+]);
+
+/** Hosts that serve Facebook posts, videos, and reels. */
+const FACEBOOK_HOSTS = new Set([
+    "facebook.com",
+    "www.facebook.com",
+    "m.facebook.com",
+    "web.facebook.com",
+    "mbasic.facebook.com",
+    "fb.com",
+    "www.fb.com",
 ]);
 
 /** Hosts that serve Reddit posts. */
@@ -161,6 +173,37 @@ export function youtubeOEmbedImage(
 }
 
 /**
+ * True for Facebook URLs (including fb.watch short links). Facebook serves
+ * an unrecognized scraper a login interstitial instead of the post, but
+ * serves recognized link-preview crawlers the post's Open Graph data —
+ * title, caption, and the video/photo thumbnail — so these URLs scrape
+ * with COMPAT_USER_AGENT (see index.ts), like Reddit.
+ */
+export function isFacebookUrl(url: string): boolean {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    return FACEBOOK_HOSTS.has(host) || host === "fb.watch";
+}
+
+/**
+ * Remove the engagement-stats segment Facebook prepends to video titles:
+ * "2.2M views · 21K reactions | <video title> | <author>". The stats are
+ * localized to the *scraping server's* geo-IP language, so match their
+ * shape — a leading pipe-delimited segment containing a digit and the "·"
+ * separator — rather than any particular wording.
+ */
+export function stripFacebookEngagement(
+    title: string | undefined,
+): string | undefined {
+    return title?.replace(/^[^|]*\p{Nd}[^|]*·[^|]*\|\s*/u, "");
+}
+
+/**
  * True for Reddit URLs (including redd.it short links). Reddit serves its
  * Open Graph tags — with the post's real preview image — only to
  * recognized embed-crawler user agents; everything else gets a page with
@@ -216,6 +259,27 @@ export function resolveRedditJson(url: string): string | null {
     );
     json.searchParams.set("raw_json", "1");
     return json.href;
+}
+
+/**
+ * Unwrap Reddit's media-viewer URL (`reddit.com/media?url=<image>`) to the
+ * image it displays. Reddit serves neither post JSON nor oEmbed for these
+ * links (its oEmbed endpoint returns HTTP 400), but the target image is
+ * embedded in the link itself, so no network request is needed at all.
+ */
+export function resolveRedditMedia(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    if (!REDDIT_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    if (parsed.pathname.replace(/\/+$/, "") !== "/media") return null;
+    return redditMediaUrl(
+        parsed.searchParams.get("url"),
+        new Set(["i.redd.it", "preview.redd.it", "external-preview.redd.it"]),
+    );
 }
 
 export interface RedditPost {

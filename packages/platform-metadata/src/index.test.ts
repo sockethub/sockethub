@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { isExpectedError } from "@sockethub/util/error";
 import { Agent } from "undici";
 
 // Capture the options passed to open-graph-scraper and control its outcome,
@@ -91,7 +92,9 @@ describe("metadata fetch SSRF hardening", () => {
             Promise.reject({ result: { error: new Error("ogs failed") } });
         const { err, result } = await runFetch(makePlatform());
         expect(err).toBeInstanceOf(Error);
-        expect((err as Error).message).toEqual("ogs failed");
+        expect((err as Error).message).toEqual(
+            "metadata scrape failed for https://example.com: ogs failed",
+        );
         expect(result).toBeUndefined();
     });
 
@@ -100,6 +103,18 @@ describe("metadata fetch SSRF hardening", () => {
         const { err } = await runFetch(makePlatform());
         expect(err).toBeInstanceOf(Error);
         expect((err as Error).message).toMatch(/blocked non-public/);
+    });
+
+    it("marks scrape failures as expected operational errors", async () => {
+        // Remote sites timing out or bot-blocking (403) must not be captured
+        // as Sentry production errors by the job handler.
+        ogsBehavior = () =>
+            Promise.reject({ result: { error: new Error("403 Forbidden") } });
+        const { err } = await runFetch(makePlatform());
+        expect(isExpectedError(err)).toBe(true);
+        expect((err as Error).message).toEqual(
+            "metadata scrape failed for https://example.com: 403 Forbidden",
+        );
     });
 });
 
@@ -119,6 +134,205 @@ describe("scrape user agent", () => {
     it("honors a packageConfig userAgent override", async () => {
         await runFetch(makePlatform({ userAgent: "MyDeployment/1.0" }));
         expect(sentUserAgent()).toEqual("MyDeployment/1.0");
+    });
+});
+
+describe("direct image links", () => {
+    const realFetch = globalThis.fetch;
+
+    afterEach(() => {
+        globalThis.fetch = realFetch;
+    });
+
+    it("returns image metadata when the origin confirms an image", async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: controlled image response
+        globalThis.fetch = (() =>
+            Promise.resolve(
+                new Response(null, {
+                    status: 200,
+                    headers: { "content-type": "image/jpeg" },
+                }),
+            )) as any;
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://images.example/A-photo_01.JPG?size=large",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "A photo 01",
+            image: [
+                {
+                    url: "https://images.example/A-photo_01.JPG?size=large",
+                    type: "image/jpeg",
+                },
+            ],
+        });
+    });
+
+    it("uses the final image URL consistently after a redirect", async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: minimal redirected response
+        globalThis.fetch = (() =>
+            Promise.resolve({
+                ok: true,
+                url: "https://cdn.example/final.jpg",
+                headers: new Headers({ "content-type": "image/jpeg" }),
+                body: null,
+            })) as any;
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://images.example/original.jpg",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).actor.id).toEqual(
+            "https://cdn.example/final.jpg",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.url).toEqual(
+            "https://cdn.example/final.jpg",
+        );
+    });
+
+    it("uses extension metadata when a bot-blocked origin returns 403", async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: controlled blocked response
+        globalThis.fetch = (() =>
+            Promise.resolve(new Response("blocked", { status: 403 }))) as any;
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://images.example/a%20real%20photo.webp",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "https://images.example/a%20real%20photo.webp",
+                type: "image/webp",
+            },
+        ]);
+    });
+
+    it("scrapes HTML served from a URL with an image suffix", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({ result: { ogTitle: "Actually a page" } });
+        // biome-ignore lint/suspicious/noExplicitAny: controlled HTML response
+        globalThis.fetch = (() =>
+            Promise.resolve(
+                new Response("<html></html>", {
+                    headers: { "content-type": "text/html" },
+                }),
+            )) as any;
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://example.com/not-really.jpg",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual("Actually a page");
+    });
+
+    it("returns fallback metadata when the image probe never settles", async () => {
+        globalThis.fetch = (() => new Promise(() => {})) as typeof fetch;
+        const platform = makePlatform({ allowPrivateAddresses: true });
+        const job = {
+            "@context": ["x"],
+            type: "fetch",
+            actor: {
+                id: "http://127.0.0.1/stalled.jpg",
+                type: "website",
+            },
+        };
+        const result = await new Promise((resolve) => {
+            // Exercise a short hard deadline without slowing the test suite.
+            // biome-ignore lint/suspicious/noExplicitAny: private method regression test
+            (platform as any).fetchDirectImage(
+                job,
+                {
+                    title: "stalled",
+                    type: "image/jpeg",
+                    url: job.actor.id,
+                },
+                (_err: unknown, produced: unknown) => resolve(produced),
+                5,
+            );
+        });
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.image).toEqual([
+            {
+                url: "http://127.0.0.1/stalled.jpg",
+                type: "image/jpeg",
+            },
+        ]);
+    });
+});
+
+describe("facebook scrape", () => {
+    beforeEach(() => {
+        ogsOptions = undefined;
+        ogsBehavior = () => Promise.resolve({ result: {} });
+    });
+
+    it("presents the compatibility crawler user agent", async () => {
+        await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/v/1JudTFVg5h/?mibextid=wwXIfr",
+        );
+        expect(ogsOptions?.url).toEqual(
+            "https://www.facebook.com/share/v/1JudTFVg5h/?mibextid=wwXIfr",
+        );
+        expect(sentUserAgent()).toMatch(/Discordbot/);
+    });
+
+    it("strips engagement stats from the title and supplies the site name", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle:
+                        "2.2M views · 21K reactions | If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+                    ogDescription: "If YOU Take Vitamin D, You NEED To Stop!",
+                    ogUrl: "https://www.facebook.com/SteveBartlettShow/posts/1607733517402185/",
+                    ogImage: [
+                        {
+                            url: "https://scontent.example/thumb.jpg",
+                            alt: "2.2M views · 21K reactions | If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+                        },
+                    ],
+                },
+            });
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/v/1JudTFVg5h/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).actor.name).toEqual("Facebook");
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+            name: "Facebook",
+            description: "If YOU Take Vitamin D, You NEED To Stop!",
+            image: [
+                {
+                    url: "https://scontent.example/thumb.jpg",
+                    alt: "If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
+                },
+            ],
+        });
+    });
+
+    it("does not rewrite titles on non-facebook pages", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: { ogTitle: "5 things · 3 ideas | A listicle" },
+            });
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://example.com/article",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual(
+            "5 things · 3 ideas | A listicle",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.name).toBeUndefined();
     });
 });
 
@@ -275,6 +489,48 @@ describe("reddit structured metadata", () => {
                 duration: 41,
             },
         });
+    });
+
+    it("unwraps reddit.com/media links without any network request", async () => {
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fgz85tl8860yg1.png",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            type: "page",
+            title: "gz85tl8860yg1.png",
+            name: "reddit",
+            image: [{ url: "https://i.redd.it/gz85tl8860yg1.png" }],
+            url: "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fgz85tl8860yg1.png",
+        });
+        // The image URL came from the link itself: no JSON, oEmbed, or
+        // scrape round-trips.
+        expect(redditJsonUrl).toBeUndefined();
+        expect(fetchCalls).toHaveLength(0);
+        expect(ogsOptions).toBeUndefined();
+    });
+
+    it("marks the no-metadata Reddit failure as expected", async () => {
+        // A Reddit URL shape with no JSON endpoint and a failing oEmbed —
+        // the job fails, but as an expected operational outcome.
+        redditJsonBehavior = () => Promise.reject(new Error("no JSON"));
+        globalThis.fetch = (() =>
+            Promise.resolve({
+                ok: false,
+                status: 400,
+                json: () => Promise.reject(new Error("no body")),
+            })) as any;
+        const { err } = await runFetch(
+            makePlatform(),
+            "https://www.reddit.com/gallery/abc123",
+        );
+        expect(err).toBeInstanceOf(Error);
+        expect((err as Error).message).toEqual(
+            "No Reddit metadata available for https://www.reddit.com/gallery/abc123",
+        );
+        expect(isExpectedError(err)).toBe(true);
     });
 
     it("falls back to oEmbed when Reddit JSON fails", async () => {

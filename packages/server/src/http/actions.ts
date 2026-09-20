@@ -724,6 +724,7 @@ export function registerHttpActionsRoutes(
                 sessionId,
                 sessionSecret,
                 credentialsStore,
+                transport: "http",
                 onPlatformInstance: (platformInstance) => {
                     // Only persistent platforms need lifecycle tracking during
                     // HTTP-only requests.
