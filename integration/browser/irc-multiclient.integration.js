@@ -174,6 +174,51 @@ describe(`IRC Multi-Client Integration Tests at ${config.sockethub.url}`, () => 
             expect(received).to.have.length.at.least(CLIENT_COUNT - 1);
         });
 
+        it("/me from client 1 is received as a CTCP ACTION by all other clients", async () => {
+            // Exercises the real wire format: the server must relay the
+            // \x01ACTION ...\x01 framing intact and irc2as must parse it
+            // back into an object of type "me" with the framing stripped.
+            const actionText = `waves at ${Date.now()}`;
+            const sender = records[0];
+
+            messageLog.length = 0;
+
+            await sendIRCMessage(
+                sender.sockethubClient,
+                sender.actorId,
+                sender.nick,
+                config.irc.channel,
+                `/me ${actionText}`,
+            );
+
+            const isAction = (log) =>
+                log.message?.type === "send" &&
+                log.message?.object?.type === "me" &&
+                log.message?.object?.content === actionText &&
+                log.message?.actor?.name === sender.nick;
+
+            await waitFor(
+                () => messageLog.filter(isAction).length >= CLIENT_COUNT - 1,
+                config.timeouts.multiClientMessage,
+                50,
+                () =>
+                    `Received ${messageLog.filter(isAction).length}/${CLIENT_COUNT - 1} actions; saw: ${JSON.stringify(
+                        messageLog
+                            .filter((log) =>
+                                log.message?.object?.content?.includes(
+                                    actionText,
+                                ),
+                            )
+                            .map((log) => log.message.object),
+                    )}`,
+            );
+
+            const received = messageLog.filter(
+                (log) => isAction(log) && log.clientId !== sender.actorId,
+            );
+            expect(received).to.have.length.at.least(CLIENT_COUNT - 1);
+        });
+
         it("rapid messages from multiple clients are all delivered", async () => {
             const testMessages = [];
             messageLog.length = 0;
