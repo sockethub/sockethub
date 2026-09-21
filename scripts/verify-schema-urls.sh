@@ -63,6 +63,8 @@ echo "Verifying schema artifacts for @sockethub/schemas@$VERSION at $BASE"
 check_schema "$BASE/schemas/$VERSION/sockethub-config.json"
 check_schema "$BASE/schemas/$VERSION/activity-stream.json"
 check_schema "$BASE/schemas/$VERSION/platform.json"
+check_schema "$BASE/schemas/$VERSION/examples-config.json"
+check_schema "$BASE/schemas/$VERSION/service-descriptor.json"
 check_reachable "$BASE/ns/context/v1.jsonld"
 
 if [ "$fail" -ne 0 ]; then
