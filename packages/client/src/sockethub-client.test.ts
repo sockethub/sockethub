@@ -297,30 +297,51 @@ describe("SockethubClient", () => {
         });
 
         for (const invalid of [-1, 1.5, Number.NaN, "5", 2 ** 53]) {
-            it(`omits an invalid apiVersion (${String(invalid)}) instead of publishing it`, (done) => {
-                sc.socket.on("ready", (info: ClientReadyInfo) => {
-                    expect(info.state).to.equal("ready");
-                    expect(info.apiVersion).to.equal(undefined);
-                    for (const platform of info.platforms) {
-                        expect(platform.apiVersion).to.equal(undefined);
-                    }
+            it(`rejects a registry whose apiVersion is invalid (${String(invalid)})`, (done) => {
+                sc.socket.on("ready", () => {
+                    done(new Error("should not become ready"));
+                });
+                sc.socket.on("init_error", (err: { phase: string }) => {
+                    expect(err.phase).to.equal("schemas-apply");
                     done();
                 });
                 socket.emit("schemas", {
                     ...TEST_REGISTRY,
                     apiVersion: invalid,
-                    platforms: TEST_REGISTRY.platforms.map((platform) => ({
-                        ...platform,
-                        apiVersion: invalid,
-                    })),
+                });
+            });
+
+            it(`skips a platform whose apiVersion is invalid (${String(invalid)})`, (done) => {
+                sc.socket.on("ready", (info: ClientReadyInfo) => {
+                    expect(info.apiVersion).to.equal(5);
+                    expect(info.platforms.map((p) => p.id)).to.eql(["dummy"]);
+                    done();
+                });
+                socket.emit("schemas", {
+                    ...TEST_REGISTRY,
+                    platforms: [
+                        { ...TEST_REGISTRY.platforms[0], apiVersion: invalid },
+                        TEST_REGISTRY.platforms[1],
+                    ],
                 });
             });
         }
 
-        it("ignores a malformed legacy version string", (done) => {
-            sc.socket.on("ready", (info: ClientReadyInfo) => {
-                expect(info.apiVersion).to.equal(undefined);
-                done();
+        it("rejects a registry with no API version, including a malformed legacy version", (done) => {
+            let errors = 0;
+            sc.socket.on("ready", () => {
+                done(new Error("should not become ready"));
+            });
+            sc.socket.on("init_error", (err: { phase: string }) => {
+                expect(err.phase).to.equal("schemas-apply");
+                errors += 1;
+                if (errors === 2) {
+                    done();
+                }
+            });
+            socket.emit("schemas", {
+                contexts: TEST_REGISTRY.contexts,
+                platforms: TEST_REGISTRY.platforms,
             });
             socket.emit("schemas", {
                 ...TEST_REGISTRY,
@@ -329,21 +350,40 @@ describe("SockethubClient", () => {
             });
         });
 
-        it("becomes ready without any version information", (done) => {
+        it("skips platform entries with malformed context or schema versions", (done) => {
             sc.socket.on("ready", (info: ClientReadyInfo) => {
-                expect(info.state).to.equal("ready");
-                expect(info.apiVersion).to.equal(undefined);
-                expect(info.platforms.map((p) => p.id)).to.eql([
-                    "test-xmpp",
-                    "dummy",
-                ]);
+                expect(info.platforms.map((p) => p.id)).to.eql(["dummy"]);
                 done();
             });
             socket.emit("schemas", {
-                contexts: TEST_REGISTRY.contexts,
-                platforms: TEST_REGISTRY.platforms.map(
-                    ({ apiVersion: _apiVersion, ...platform }) => platform,
-                ),
+                ...TEST_REGISTRY,
+                platforms: [
+                    { ...TEST_REGISTRY.platforms[0], contextVersion: 9 },
+                    TEST_REGISTRY.platforms[1],
+                    { ...TEST_REGISTRY.platforms[1], id: "no-schema-version", schemaVersion: undefined },
+                ],
+            });
+        });
+
+        it("normalizes malformed nested types and schemas instead of re-emitting them", (done) => {
+            sc.socket.on("schemas", (payload: PlatformRegistryPayload) => {
+                const platform = payload.platforms?.[0];
+                expect(platform?.types).to.eql(["connect", "send"]);
+                expect(platform?.schemas).to.eql({
+                    credentials: undefined,
+                    messages: undefined,
+                });
+                done();
+            });
+            socket.emit("schemas", {
+                ...TEST_REGISTRY,
+                platforms: [
+                    {
+                        ...TEST_REGISTRY.platforms[0],
+                        types: ["connect", 7, null, "send"],
+                        schemas: { credentials: "nope", messages: [1, 2] },
+                    },
+                ],
             });
         });
 

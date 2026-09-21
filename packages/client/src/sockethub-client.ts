@@ -67,6 +67,10 @@ interface CustomEmitter extends EventEmitter {
 const LEGACY_VERSION_PATTERN =
     /^v?(\d+)(?:\.\d+){0,2}(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
+function isPlainObject(value: unknown): value is object {
+    return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
 /** An API version is a SemVer major: a non-negative safe integer. */
 function isApiVersion(value: unknown): value is number {
     return (
@@ -111,9 +115,8 @@ interface PlatformRegistrySchemas {
  */
 export interface PlatformRegistryEntry {
     id: string;
-    // Platform API version (the platform package's SemVer major). Absent only
-    // when the server did not report one.
-    apiVersion?: number;
+    // Platform API version (the platform package's SemVer major).
+    apiVersion: number;
     contextUrl: string;
     contextVersion: string;
     schemaVersion: string;
@@ -141,15 +144,15 @@ export interface PlatformRegistryPayload {
 export interface ClientReadyInfo {
     state: "ready";
     reason: ReadyReason;
-    // Global Sockethub API version; undefined when the server reported none.
-    apiVersion?: number;
+    // Global Sockethub API version (the server package's SemVer major).
+    apiVersion: number;
     contexts: {
         as: string;
         sockethub: string;
     };
     platforms: Array<{
         id: string;
-        apiVersion?: number;
+        apiVersion: number;
         contextUrl: string;
         contextVersion: string;
         schemaVersion: string;
@@ -506,7 +509,13 @@ export default class SockethubClient {
         ) {
             return undefined;
         }
-        this.apiVersion = resolveApiVersion(registry);
+        // Every server reports an API version (legacy ones via `version`), so
+        // a payload without one is malformed rather than merely older.
+        const apiVersion = resolveApiVersion(registry);
+        if (apiVersion === undefined) {
+            return undefined;
+        }
+        this.apiVersion = apiVersion;
         this.asContextUrl = asContextUrl;
         this.sockethubContextUrl = sockethubContextUrl;
 
@@ -516,39 +525,55 @@ export default class SockethubClient {
                 !platform ||
                 typeof platform !== "object" ||
                 typeof platform.id !== "string" ||
-                typeof platform.contextUrl !== "string"
+                typeof platform.contextUrl !== "string" ||
+                typeof platform.contextVersion !== "string" ||
+                typeof platform.schemaVersion !== "string"
             ) {
                 continue;
             }
+            const platformApiVersion = resolveApiVersion(platform);
+            if (platformApiVersion === undefined) {
+                continue;
+            }
+            const schemas = isPlainObject(platform.schemas)
+                ? platform.schemas
+                : {};
             // Rebuilt field by field rather than spread, so nothing the
             // server sends beyond the bootstrap contract (such as an exact
             // package version) is retained or re-emitted.
             this.platformRegistry.set(platform.id, {
                 id: platform.id,
-                apiVersion: resolveApiVersion(platform),
+                apiVersion: platformApiVersion,
                 contextUrl: platform.contextUrl,
                 contextVersion: platform.contextVersion,
                 schemaVersion: platform.schemaVersion,
-                types: Array.isArray(platform.types) ? platform.types : [],
-                schemas: platform.schemas || {},
+                types: Array.isArray(platform.types)
+                    ? platform.types.filter(
+                          (type): type is string => typeof type === "string",
+                      )
+                    : [],
+                schemas: {
+                    credentials: isPlainObject(schemas.credentials)
+                        ? schemas.credentials
+                        : undefined,
+                    messages: isPlainObject(schemas.messages)
+                        ? schemas.messages
+                        : undefined,
+                },
             });
             addPlatformContext(platform.id, platform.contextUrl);
             try {
-                const credSchema = platform.schemas?.credentials;
-                if (
-                    credSchema &&
-                    typeof credSchema === "object" &&
-                    !Array.isArray(credSchema)
-                ) {
-                    addPlatformSchema(credSchema, `${platform.id}/credentials`);
+                if (isPlainObject(schemas.credentials)) {
+                    addPlatformSchema(
+                        schemas.credentials,
+                        `${platform.id}/credentials`,
+                    );
                 }
-                const msgSchema = platform.schemas?.messages;
-                if (
-                    msgSchema &&
-                    typeof msgSchema === "object" &&
-                    !Array.isArray(msgSchema)
-                ) {
-                    addPlatformSchema(msgSchema, `${platform.id}/messages`);
+                if (isPlainObject(schemas.messages)) {
+                    addPlatformSchema(
+                        schemas.messages,
+                        `${platform.id}/messages`,
+                    );
                 }
             } catch (err) {
                 const message =
@@ -632,7 +657,11 @@ export default class SockethubClient {
     }
 
     private buildReadyInfo(reason: ReadyReason): ClientReadyInfo | undefined {
-        if (!this.asContextUrl || !this.sockethubContextUrl) {
+        if (
+            this.apiVersion === undefined ||
+            !this.asContextUrl ||
+            !this.sockethubContextUrl
+        ) {
             return undefined;
         }
         return {
