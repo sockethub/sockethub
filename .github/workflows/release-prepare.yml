@@ -78,6 +78,14 @@ jobs:
       - name: Sync workspace dependency versions
         run: bun run scripts/sync-workspace-deps.js
 
+      - name: Refresh lockfile after version bumps
+        run: |
+          # The earlier install ran against the pre-bump manifests, so the
+          # lockfile must be regenerated or the release PR fails CI's
+          # `bun install --frozen-lockfile`
+          bun install
+          bun install --frozen-lockfile
+
       - name: Format code after version bumps
         run: bun run lint:fix
 
