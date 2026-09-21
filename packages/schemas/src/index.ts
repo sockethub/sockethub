@@ -26,6 +26,11 @@ import {
     SockethubConfigSchemaId,
 } from "./schemas/sockethub-config.js";
 import {
+    type ServiceDescriptor,
+    ServiceDescriptorSchema,
+    validateServiceDescriptor,
+} from "./service-descriptor.js";
+import {
     addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
@@ -61,10 +66,12 @@ export {
     validateActivityStream,
     validateActivityStreamResponse,
     validateExamplesConfig,
+    validateServiceDescriptor,
     validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
     ExamplesConfigSchema,
+    ServiceDescriptorSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     SockethubConfigSchemaId,
@@ -73,6 +80,6 @@ export {
     InternalObjectTypesList,
 };
 
-export type { ExamplesConfig };
+export type { ExamplesConfig, ServiceDescriptor };
 
 export * from "./types.js";

@@ -532,6 +532,12 @@ curl http://localhost:10550/sockethub-http
   `apiVersion` is the major of that platform's package (server `5.2.1` reports
   `5`, a platform at `1.0.1-alpha.19` reports `1`). The Socket.IO `schemas`
   bootstrap reports the same numbers.
+- The descriptor's shape is published as a JSON Schema,
+  `@sockethub/schemas/schemas/json/service-descriptor.json`, with a ready-made
+  validator: `import { validateServiceDescriptor } from
+  "@sockethub/schemas/service-descriptor"`. The schema allows additional
+  members, so a client validating today keeps working when a later server adds
+  fields.
 - Exact package versions are deliberately not published on either transport,
   to avoid making deployments easy to fingerprint. They remain available in
   the server logs and via `sockethub --version`.

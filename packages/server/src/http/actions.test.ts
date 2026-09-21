@@ -3,7 +3,10 @@
  */
 import { describe, expect, it } from "bun:test";
 import type { AddressInfo } from "node:net";
-import type { ActivityStream } from "@sockethub/schemas";
+import {
+    type ActivityStream,
+    validateServiceDescriptor,
+} from "@sockethub/schemas";
 import express from "express";
 
 import { buildPlatformRegistryPayload } from "../api-info.js";
@@ -530,6 +533,8 @@ describe("http actions", () => {
                 { id: "caldav", apiVersion: 1 },
             ],
         });
+        // The served descriptor honours the schema published for clients.
+        expect(validateServiceDescriptor(res.jsonBody)).toBeTrue();
         expect(writes.length).toBe(0);
         // Discovery never touches the idempotency store.
         expect(fakeRedis.store.size).toBe(0);

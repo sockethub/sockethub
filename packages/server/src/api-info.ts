@@ -9,20 +9,15 @@
  */
 import {
     AS2_BASE_CONTEXT_URL,
+    type ServiceDescriptor,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import { SOCKETHUB_API_VERSION } from "./version.js";
 
-export interface ServiceDescriptor {
-    name: "sockethub";
-    apiVersion: number;
-    platforms: Array<{ id: string; apiVersion: number }>;
-}
-
 /**
  * The machine-readable descriptor served on a bare GET of the HTTP actions
- * path.
+ * path. Its shape is published as `ServiceDescriptorSchema`.
  */
 export function buildServiceDescriptor(
     platforms: PlatformMap,

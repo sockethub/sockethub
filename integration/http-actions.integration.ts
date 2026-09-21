@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
 import { join } from "node:path";
+import { validateServiceDescriptor } from "@sockethub/schemas";
 import { io } from "socket.io-client";
 import config from "./config.js";
 
@@ -294,6 +295,7 @@ describe("HTTP actions integration", () => {
         expect(res.headers.get("access-control-allow-origin")).toBeTruthy();
 
         const body = await res.json();
+        expect(validateServiceDescriptor(body)).toBeTrue();
         expect(body.name).toBe("sockethub");
         expect(Number.isInteger(body.apiVersion)).toBeTrue();
         expect(body.platforms.length).toBeGreaterThan(0);
