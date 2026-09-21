@@ -17,6 +17,24 @@ describe("validateExamplesConfig", () => {
         expect(validateExamplesConfig(validConfig)).toBeTrue();
     });
 
+    it("accepts the HTTP actions endpoint", () => {
+        expect(
+            validateExamplesConfig({
+                ...validConfig,
+                httpActions: { enabled: true, path: "/sockethub-http" },
+            }),
+        ).toBeTrue();
+    });
+
+    it("rejects an HTTP actions entry without a path", () => {
+        expect(
+            validateExamplesConfig({
+                ...validConfig,
+                httpActions: { enabled: true },
+            }),
+        ).toBeFalse();
+    });
+
     for (const port of [-1, 0, 1.5, 65536]) {
         it(`rejects invalid port ${port}`, () => {
             expect(

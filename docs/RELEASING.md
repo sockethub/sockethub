@@ -23,6 +23,12 @@ Prereleases use identifiers to mark versions as unstable:
 - **Beta** (`5.0.0-beta.1`): Feature complete, stabilizing API
 - **RC** (`5.0.0-rc.1`): Release candidate, production-ready testing
 
+A prerelease identifier does not exempt a package from SemVer majors: clients
+read each package's **major** as its public `apiVersion`, so a breaking API
+change requires a major bump of the affected package even between prereleases
+(`5.0.0-alpha.24` → `6.0.0-alpha.0`). Call the break out in the release notes
+too. See [Version Bumps](CONTRIBUTING.md#version-bumps).
+
 ### Stable Release
 
 Stable releases have no prerelease identifier (`5.0.0`) and become the default install version.

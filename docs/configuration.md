@@ -506,6 +506,48 @@ Replay using query parameter:
 curl -N "http://localhost:10550/sockethub-http?requestId=12345"
 ```
 
+#### API discovery
+
+A `GET` on the HTTP actions path with no request ID (no path segment, no
+`requestId` query parameter, no `X-Request-Id` / `X-Sockethub-Request-Id`
+header) returns a public service descriptor, so clients can check
+compatibility without opening a WebSocket connection:
+
+```bash
+curl http://localhost:10550/sockethub-http
+```
+
+```json
+{
+  "name": "sockethub",
+  "apiVersion": 5,
+  "platforms": [
+    { "id": "metadata", "apiVersion": 1 },
+    { "id": "caldav", "apiVersion": 1 }
+  ]
+}
+```
+
+- `apiVersion` is the SemVer **major** of the server package; each platform's
+  `apiVersion` is the major of that platform's package (server `5.2.1` reports
+  `5`, a platform at `1.0.1-alpha.19` reports `1`). The Socket.IO `schemas`
+  bootstrap reports the same numbers.
+- The descriptor's shape is published as a JSON Schema,
+  `@sockethub/schemas/schemas/json/service-descriptor.json`, with a ready-made
+  validator: `import { validateServiceDescriptor } from
+  "@sockethub/schemas/service-descriptor"`. The schema allows additional
+  members, so a client validating today keeps working when a later server adds
+  fields.
+- Exact package versions are deliberately not published on either transport,
+  to avoid making deployments easy to fingerprint. They remain available in
+  the server logs and via `sockethub --version`.
+- The response is `200 application/json` with `Cache-Control: no-store`, uses
+  the same CORS policy as the rest of the endpoint, and is served at whatever
+  `httpActions.path` is configured. It is not registered when HTTP actions are
+  disabled.
+- A request that carries an invalid request ID still returns `400`, and a valid
+  one still replays as NDJSON; neither returns the descriptor.
+
 ### Redis Configuration
 
 ```json

@@ -32,11 +32,20 @@
       "import": "./dist/examples-config.js",
       "default": "./dist/examples-config.js"
     },
+    "./service-descriptor": {
+      "types": "./dist/service-descriptor.d.ts",
+      "bun": "./src/service-descriptor.ts",
+      "import": "./dist/service-descriptor.js",
+      "default": "./dist/service-descriptor.js"
+    },
     "./schemas/json/sockethub-config.json": {
       "default": "./dist/schemas/json/sockethub-config.json"
     },
     "./schemas/json/examples-config.json": {
       "default": "./dist/schemas/json/examples-config.json"
+    },
+    "./schemas/json/service-descriptor.json": {
+      "default": "./dist/schemas/json/service-descriptor.json"
     }
   },
   "files": [
@@ -62,7 +71,7 @@
     "@types/bun": "latest"
   },
   "scripts": {
-    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/object-types.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/context.ts src/activity-stream-helper.ts src/examples-config.ts --outdir dist --target browser --format esm --sourcemap=external",
+    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/object-types.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/context.ts src/activity-stream-helper.ts src/examples-config.ts src/service-descriptor.ts --outdir dist --target browser --format esm --sourcemap=external",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules"
   },

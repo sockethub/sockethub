@@ -3,6 +3,8 @@
  *
  * Accepts ActivityStreams via POST, streams NDJSON results as jobs complete,
  * and optionally caches results in Redis for idempotent replay + GET retrieval.
+ * A GET without a request id returns the public service descriptor (API
+ * versions of the server and loaded platforms).
  */
 import type { RedisConfig } from "@sockethub/data-layer";
 import {
@@ -30,6 +32,8 @@ import express, {
 } from "express";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
+import { buildServiceDescriptor } from "../api-info.js";
+import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import config from "../config.js";
 import { clearSessionScopes } from "../connection-scope.js";
 import { parseCorsOrigins, resolveAllowedOrigin } from "../cors.js";
@@ -64,6 +68,8 @@ interface HttpActionsOptions {
     processManager: ProcessManager;
     parentId: string;
     parentSecret1: string;
+    // Loaded platforms, published (id + API version only) by the descriptor.
+    platforms: PlatformMap;
 }
 
 interface HttpActionsDependencies {
@@ -535,6 +541,9 @@ export function registerHttpActionsRoutes(
                 : 100,
     });
 
+    // The registry is static after platform load, so build this once.
+    const serviceDescriptor = buildServiceDescriptor(options.platforms);
+
     const handleGet = async (req: Request, res: Response) => {
         // Allow retrying/late fetching of results by request id.
         const { requestId, error } = resolveRequestIdFromRequest(req);
@@ -543,9 +552,13 @@ export function registerHttpActionsRoutes(
             return;
         }
         if (!requestId) {
-            res.status(400).json({
-                error: "requestId is required",
-            });
+            // No request id from any source (path, query, header): this is a
+            // discovery request rather than a replay, so answer with the
+            // service descriptor. An invalid id never lands here; it was
+            // rejected above.
+            res.status(200);
+            res.setHeader("Cache-Control", "no-store");
+            res.json(serviceDescriptor);
             return;
         }
 

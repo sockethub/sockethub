@@ -13,6 +13,7 @@ const schemas = [
     ["activity-stream", "ActivityStreamSchema"],
     ["platform", "PlatformSchema"],
     ["examples-config", "ExamplesConfigSchema"],
+    ["service-descriptor", "ServiceDescriptorSchema"],
     ["sockethub-config", "SockethubConfigSchema"],
 ];
 

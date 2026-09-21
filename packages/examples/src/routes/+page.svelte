@@ -1,5 +1,6 @@
 <script>
 import { base } from "$app/paths";
+import ApiInfo from "../components/ApiInfo.svelte";
 import Intro from "../components/Intro.svelte";
 </script>
 
@@ -111,6 +112,8 @@ import Intro from "../components/Intro.svelte";
                 </div>
             </div>
         </div>
+
+        <ApiInfo />
 
         <div class="text-center text-gray-600 text-sm bg-gray-50 p-4 rounded-lg">
             💡 <strong>Tip:</strong> Watch the connection status at the top and the activity log at the bottom of each example to understand what's happening behind the scenes.

@@ -100,8 +100,8 @@ const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 sc.socket.on('message', (msg) => console.log(msg));
 sc.socket.on('ready', (info) => {
-    console.log('Sockethub ready:', info.reason, info.sockethubVersion,
-        info.platforms.map((p) => ({ id: p.id, version: p.version })));
+    console.log('Sockethub ready:', info.reason, `API v${info.apiVersion}`,
+        info.platforms.map((p) => ({ id: p.id, apiVersion: p.apiVersion })));
 });
 sc.socket.on('init_error', (e) => {
     console.warn('Sockethub init issue:', e.error);

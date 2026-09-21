@@ -9,6 +9,12 @@ export default defineConfig({
             "@sockethub/schemas/examples-config": fileURLToPath(
                 new URL("../schemas/src/examples-config.ts", import.meta.url),
             ),
+            "@sockethub/schemas/service-descriptor": fileURLToPath(
+                new URL(
+                    "../schemas/src/service-descriptor.ts",
+                    import.meta.url,
+                ),
+            ),
         },
     },
     optimizeDeps: {

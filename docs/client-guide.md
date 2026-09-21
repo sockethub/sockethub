@@ -48,8 +48,8 @@ const sc = new SockethubClient(
 sc.socket.on('message', (msg) => console.log('Received:', msg));
 
 sc.socket.on('ready', (info) => {
-  console.log('Sockethub ready:', info.reason, info.sockethubVersion,
-    info.platforms.map((p) => ({ id: p.id, version: p.version })));
+  console.log('Sockethub ready:', info.reason, `API v${info.apiVersion}`,
+    info.platforms.map((p) => ({ id: p.id, apiVersion: p.apiVersion })));
 });
 
 sc.socket.on('init_error', (e) => {
@@ -311,6 +311,10 @@ sc.socket.emit('message', {
 ## Client Features
 
 - **Schema-driven init**: `ready()` resolves when the server's schema registry is loaded
+- **API versions, not package versions**: the bootstrap reports `apiVersion` for
+  Sockethub and for each platform — the SemVer major of the corresponding
+  package. Use these for compatibility checks; exact package versions are not
+  published to clients
 - **Registry caching**: the registry is fetched once and cached; on reconnect the
   client echoes a fingerprint so the server skips re-sending an unchanged registry
 - **Context composition**: `contextFor(platform)` builds canonical `@context` arrays

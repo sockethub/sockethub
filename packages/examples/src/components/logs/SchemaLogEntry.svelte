@@ -37,16 +37,17 @@ function summarize(payload: unknown): string {
         const ids = platforms
             .map((pl: Record<string, unknown>) => pl?.id)
             .filter(Boolean);
-        const version = typeof p.version === "string" ? p.version : "";
-        return `v${version} — ${ids.length} platform${ids.length !== 1 ? "s" : ""}: ${ids.join(", ")}`;
+        const version =
+            typeof p.apiVersion === "number" ? p.apiVersion : "unknown";
+        return `API v${version} — ${ids.length} platform${ids.length !== 1 ? "s" : ""}: ${ids.join(", ")}`;
     }
 
     if (entry._logType === "ready") {
         const reason = typeof p.reason === "string" ? p.reason : "";
         const version =
-            typeof p.sockethubVersion === "string" ? p.sockethubVersion : "";
+            typeof p.apiVersion === "number" ? p.apiVersion : "unknown";
         const platforms = Array.isArray(p.platforms) ? p.platforms.length : 0;
-        return `${reason} — Sockethub v${version}, ${platforms} platform${platforms !== 1 ? "s" : ""}`;
+        return `${reason} — Sockethub API v${version}, ${platforms} platform${platforms !== 1 ? "s" : ""}`;
     }
 
     if (entry._logType === "init_error") {

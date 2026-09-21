@@ -11,6 +11,12 @@ export interface ExamplesConfig {
         path: string;
     };
     platforms?: string[];
+    // Where the HTTP actions endpoint is served, so the examples can run API
+    // discovery against it. Absent when written by an older server.
+    httpActions?: {
+        enabled: boolean;
+        path: string;
+    };
 }
 
 const port = {
@@ -50,6 +56,15 @@ export const ExamplesConfigSchema = {
         platforms: {
             type: "array",
             items: { type: "string" },
+        },
+        httpActions: {
+            type: "object",
+            required: ["enabled", "path"],
+            additionalProperties: false,
+            properties: {
+                enabled: { type: "boolean" },
+                path: { type: "string" },
+            },
         },
     },
 } as const;

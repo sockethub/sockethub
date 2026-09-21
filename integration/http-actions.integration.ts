@@ -5,6 +5,8 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
 import { join } from "node:path";
+import { validateServiceDescriptor } from "@sockethub/schemas";
+import { io } from "socket.io-client";
 import config from "./config.js";
 
 const socketUrl = config.sockethub.url;
@@ -276,6 +278,93 @@ describe("HTTP actions integration", () => {
         expect(getRes.headers.get("x-idempotent-replay")).toBe("true");
         const lines = parseNdjson(await getRes.text());
         expect(lines.length).toBe(1);
+    });
+
+    it("returns the service descriptor for a bare GET", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const res = await fetch(httpUrl, {
+            headers: { origin: "http://example.test" },
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.headers.get("content-type")).toContain("application/json");
+        expect(res.headers.get("cache-control")).toBe("no-store");
+        expect(res.headers.get("access-control-allow-origin")).toBeTruthy();
+
+        const body = await res.json();
+        expect(validateServiceDescriptor(body)).toBeTrue();
+        expect(body.name).toBe("sockethub");
+        expect(Number.isInteger(body.apiVersion)).toBeTrue();
+        expect(body.platforms.length).toBeGreaterThan(0);
+        for (const platform of body.platforms) {
+            expect(Object.keys(platform).sort()).toEqual(["apiVersion", "id"]);
+            expect(Number.isInteger(platform.apiVersion)).toBeTrue();
+        }
+        expect(Object.keys(body).sort()).toEqual([
+            "apiVersion",
+            "name",
+            "platforms",
+        ]);
+    });
+
+    it("reports the same API versions as the Socket.IO bootstrap", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const descriptor = await (await fetch(httpUrl)).json();
+
+        const socket = io(socketUrl, {
+            path: "/sockethub",
+            transports: ["websocket"],
+        });
+        type Registry = {
+            apiVersion: number;
+            platforms: Array<{ id: string; apiVersion: number }>;
+        };
+        let registry: Registry;
+        try {
+            registry = await new Promise<Registry>((resolve, reject) => {
+                const timeoutId = setTimeout(
+                    () => reject(new Error("schemas bootstrap timed out")),
+                    5000,
+                );
+                socket.on("connect_error", reject);
+                socket.on("connect", () => {
+                    socket.emit("schemas", undefined, (payload: unknown) => {
+                        clearTimeout(timeoutId);
+                        resolve(payload as Registry);
+                    });
+                });
+            });
+        } finally {
+            socket.disconnect();
+        }
+
+        expect(registry.apiVersion).toBe(descriptor.apiVersion);
+        expect(
+            registry.platforms.map((p) => ({
+                id: p.id,
+                apiVersion: p.apiVersion,
+            })),
+        ).toEqual(descriptor.platforms);
+        // Neither transport publishes exact package versions.
+        expect(registry).not.toHaveProperty("version");
+        for (const platform of registry.platforms) {
+            expect(platform).not.toHaveProperty("version");
+        }
+    });
+
+    it("rejects an invalid GET request id instead of describing the service", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const res = await fetch(`${httpUrl}?requestId=bad%20id`);
+        expect(res.status).toBe(400);
     });
 
     it("rejects missing request ids", async () => {
