@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+    extractYouTubeDescription,
     isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
@@ -79,6 +80,37 @@ describe("YouTube oEmbed metadata", () => {
                 thumbnail_width: -1,
             }),
         ).toBeNull();
+    });
+});
+
+describe("extractYouTubeDescription", () => {
+    it("decodes the full description from videoDetails", () => {
+        const html =
+            '<script>var ui={"videoDetails":{"renderer":{}}};</script>' +
+            "x".repeat(100_001) +
+            String.raw`<script>var player={"videoDetails":{"title":"Video","shortDescription":"First line\n\nSecond line with \"quotes\" and \\ slash","lengthSeconds":"10"}};</script>`;
+        expect(extractYouTubeDescription(html)).toEqual(
+            'First line\n\nSecond line with "quotes" and \\ slash',
+        );
+    });
+
+    it("ignores malformed, unrelated, and oversized values", () => {
+        expect(extractYouTubeDescription("<html></html>")).toBeUndefined();
+        expect(
+            extractYouTubeDescription(
+                '<script>{"shortDescription":"not video metadata"}</script>',
+            ),
+        ).toBeUndefined();
+        expect(
+            extractYouTubeDescription(
+                '<script>{"videoDetails":{"shortDescription":42}}</script>',
+            ),
+        ).toBeUndefined();
+        expect(
+            extractYouTubeDescription(
+                `<script>{"videoDetails":{"shortDescription":"${"x".repeat(20_001)}"}}</script>`,
+            ),
+        ).toBeUndefined();
     });
 });
 

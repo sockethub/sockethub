@@ -173,6 +173,61 @@ export function youtubeOEmbedImage(
 }
 
 /**
+ * Extract YouTube's full video description from the player bootstrap JSON.
+ * This data is embedded in the watch HTML while the Open Graph description is
+ * intentionally truncated. Return undefined when the undocumented payload
+ * shape changes so callers can safely fall back to Open Graph metadata.
+ */
+export function extractYouTubeDescription(html: string): string | undefined {
+    const detailsMarker = '"videoDetails":';
+    const marker = '"shortDescription":';
+    let detailsIndex = html.indexOf(detailsMarker);
+    while (detailsIndex >= 0) {
+        const descriptionIndex = html.indexOf(marker, detailsIndex);
+        // YouTube uses the videoDetails key for unrelated UI renderers too.
+        // Only accept a nearby shortDescription belonging to a player-details
+        // object, otherwise continue to the next occurrence.
+        if (
+            descriptionIndex >= 0 &&
+            descriptionIndex - detailsIndex <= 100_000
+        ) {
+            let start = descriptionIndex + marker.length;
+            while (/\s/.test(html[start] ?? "")) start++;
+            if (html[start] !== '"') return undefined;
+
+            let escaped = false;
+            for (let end = start + 1; end < html.length; end++) {
+                const char = html[end];
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (char === "\\") {
+                    escaped = true;
+                    continue;
+                }
+                if (char !== '"') continue;
+                try {
+                    const description = JSON.parse(html.slice(start, end + 1));
+                    return typeof description === "string" &&
+                        description.length <= 20_000
+                        ? description
+                        : undefined;
+                } catch {
+                    return undefined;
+                }
+            }
+            return undefined;
+        }
+        detailsIndex = html.indexOf(
+            detailsMarker,
+            detailsIndex + detailsMarker.length,
+        );
+    }
+    return undefined;
+}
+
+/**
  * True for Facebook URLs (including fb.watch short links). Facebook serves
  * an unrecognized scraper a login interstitial instead of the post, but
  * serves recognized link-preview crawlers the post's Open Graph data —
