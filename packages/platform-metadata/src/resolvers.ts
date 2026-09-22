@@ -172,6 +172,93 @@ export function youtubeOEmbedImage(
         : undefined;
 }
 
+/** Largest `videoDetails` object worth parsing out of the watch HTML. */
+const YOUTUBE_DETAILS_MAX_CHARS = 100_000;
+
+/** Upper bound on an accepted description, matching YouTube's own limit. */
+const YOUTUBE_DESCRIPTION_MAX_CHARS = 20_000;
+
+/**
+ * Return the source offsets of the JSON object that follows `"key":`, or null
+ * when the value is not a brace-delimited object or its closing brace is not
+ * within `limit` characters. Quoted strings are skipped so that braces inside
+ * a value (a description containing "{") do not unbalance the scan.
+ */
+function jsonObjectSpan(
+    html: string,
+    valueIndex: number,
+    limit: number,
+): { start: number; end: number } | null {
+    let start = valueIndex;
+    while (/\s/.test(html[start] ?? "")) start++;
+    if (html[start] !== "{") return null;
+
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    const stop = Math.min(html.length, start + limit);
+    for (let i = start; i < stop; i++) {
+        const char = html[i];
+        if (inString) {
+            if (escaped) escaped = false;
+            else if (char === "\\") escaped = true;
+            else if (char === '"') inString = false;
+            continue;
+        }
+        if (char === '"') inString = true;
+        else if (char === "{") depth++;
+        else if (char === "}" && --depth === 0) {
+            return { start, end: i + 1 };
+        }
+    }
+    return null;
+}
+
+/**
+ * Extract YouTube's full video description from the player bootstrap JSON.
+ * This data is embedded in the watch HTML while the Open Graph description is
+ * intentionally truncated. Return undefined when the undocumented payload
+ * shape changes so callers can safely fall back to Open Graph metadata.
+ */
+export function extractYouTubeDescription(html: string): string | undefined {
+    const detailsMarker = '"videoDetails":';
+    // YouTube uses the videoDetails key for unrelated UI renderers too, so
+    // parse each occurrence in isolation and keep looking until one yields a
+    // usable description. Bounding the parse to the object's own closing brace
+    // is what stops a shortDescription from a *later*, unrelated object being
+    // picked up when this one has none.
+    let detailsIndex = html.indexOf(detailsMarker);
+    while (detailsIndex >= 0) {
+        const span = jsonObjectSpan(
+            html,
+            detailsIndex + detailsMarker.length,
+            YOUTUBE_DETAILS_MAX_CHARS,
+        );
+        if (span) {
+            try {
+                const details: unknown = JSON.parse(
+                    html.slice(span.start, span.end),
+                );
+                const description = (details as Record<string, unknown>)
+                    ?.shortDescription;
+                if (
+                    typeof description === "string" &&
+                    description.length <= YOUTUBE_DESCRIPTION_MAX_CHARS
+                ) {
+                    return description;
+                }
+            } catch {
+                // Not the player payload (or truncated) — try the next one.
+            }
+        }
+        detailsIndex = html.indexOf(
+            detailsMarker,
+            detailsIndex + detailsMarker.length,
+        );
+    }
+    return undefined;
+}
+
 /**
  * True for Facebook URLs (including fb.watch short links). Facebook serves
  * an unrecognized scraper a login interstitial instead of the post, but

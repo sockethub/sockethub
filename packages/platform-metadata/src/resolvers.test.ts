@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+    extractYouTubeDescription,
     isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
@@ -79,6 +80,58 @@ describe("YouTube oEmbed metadata", () => {
                 thumbnail_width: -1,
             }),
         ).toBeNull();
+    });
+});
+
+describe("extractYouTubeDescription", () => {
+    it("decodes the full description from videoDetails", () => {
+        const html =
+            '<script>var ui={"videoDetails":{"renderer":{}}};</script>' +
+            "x".repeat(100_001) +
+            String.raw`<script>var player={"videoDetails":{"title":"Video","shortDescription":"First line\n\nSecond line with \"quotes\" and \\ slash","lengthSeconds":"10"}};</script>`;
+        expect(extractYouTubeDescription(html)).toEqual(
+            'First line\n\nSecond line with "quotes" and \\ slash',
+        );
+    });
+
+    it("ignores a shortDescription outside the videoDetails object", () => {
+        const html =
+            '<script>var player={"videoDetails":{"title":"Video"}};</script>' +
+            '<script>var other={"shortDescription":"unrelated"};</script>';
+        expect(extractYouTubeDescription(html)).toBeUndefined();
+    });
+
+    it("keeps looking when an earlier videoDetails object has no description", () => {
+        const html =
+            '<script>var ui={"videoDetails":{"renderer":{}}};</script>' +
+            String.raw`<script>var player={"videoDetails":{"shortDescription":"The real one"}};</script>`;
+        expect(extractYouTubeDescription(html)).toEqual("The real one");
+    });
+
+    it("keeps braces that appear inside the description text", () => {
+        const html = String.raw`<script>var player={"videoDetails":{"shortDescription":"Use {braces} and \"quotes\"","lengthSeconds":"10"}};</script>`;
+        expect(extractYouTubeDescription(html)).toEqual(
+            'Use {braces} and "quotes"',
+        );
+    });
+
+    it("ignores malformed, unrelated, and oversized values", () => {
+        expect(extractYouTubeDescription("<html></html>")).toBeUndefined();
+        expect(
+            extractYouTubeDescription(
+                '<script>{"shortDescription":"not video metadata"}</script>',
+            ),
+        ).toBeUndefined();
+        expect(
+            extractYouTubeDescription(
+                '<script>{"videoDetails":{"shortDescription":42}}</script>',
+            ),
+        ).toBeUndefined();
+        expect(
+            extractYouTubeDescription(
+                `<script>{"videoDetails":{"shortDescription":"${"x".repeat(20_001)}"}}</script>`,
+            ),
+        ).toBeUndefined();
     });
 });
 

@@ -588,7 +588,9 @@ describe("scrape deadline", () => {
 
 describe("youtube video resolution", () => {
     const realFetch = globalThis.fetch;
-    let fetchedUrl: string | undefined;
+    let fetchedUrls: string[] = [];
+    let watchUserAgent: string | undefined;
+    let youtubeHtml = "";
 
     beforeEach(() => {
         ogsOptions = undefined;
@@ -601,10 +603,23 @@ describe("youtube video resolution", () => {
                     ogUrl: "https://www.youtube.com/watch?v=eJnBBLKCLjE",
                 },
             });
-        fetchedUrl = undefined;
+        fetchedUrls = [];
+        watchUserAgent = undefined;
+        youtubeHtml = String.raw`<script>var player={"videoDetails":{"shortDescription":"Full video description\n\nSecond paragraph"}};</script>`;
         // biome-ignore lint/suspicious/noExplicitAny: controlled YouTube fetch stub
-        globalThis.fetch = ((url: string) => {
-            fetchedUrl = String(url);
+        globalThis.fetch = ((url: string, options?: RequestInit) => {
+            const fetchedUrl = String(url);
+            fetchedUrls.push(fetchedUrl);
+            if (!fetchedUrl.includes("/oembed?")) {
+                watchUserAgent = (
+                    options?.headers as Record<string, string> | undefined
+                )?.["user-agent"];
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    text: () => Promise.resolve(youtubeHtml),
+                });
+            }
             return Promise.resolve({
                 ok: true,
                 status: 200,
@@ -625,22 +640,25 @@ describe("youtube video resolution", () => {
         globalThis.fetch = realFetch;
     });
 
-    it("combines the scraped description with the official thumbnail", async () => {
+    it("combines the full video description with the official thumbnail", async () => {
         const { err, result } = await runFetch(
             makePlatform(),
             "https://www.youtube.com/watch?v=eJnBBLKCLjE",
         );
 
         expect(err).toBeNull();
-        expect(fetchedUrl).toEqual(
+        expect(fetchedUrls).toContain(
             "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DeJnBBLKCLjE&format=json",
         );
-        expect(sentUserAgent()).toMatch(/Discordbot/);
+        expect(fetchedUrls).toContain(
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+        );
+        expect(watchUserAgent).toMatch(/Discordbot/);
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object).toMatchObject({
             title: "oEmbed title",
             name: "YouTube",
-            description: "The video description",
+            description: "Full video description\n\nSecond paragraph",
             image: [
                 {
                     url: "https://i.ytimg.com/vi/eJnBBLKCLjE/hqdefault.jpg",
@@ -649,6 +667,20 @@ describe("youtube video resolution", () => {
                 },
             ],
         });
+    });
+
+    it("falls back to the Open Graph description when player data is absent", async () => {
+        youtubeHtml = "<html><head></head><body></body></html>";
+
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://www.youtube.com/watch?v=eJnBBLKCLjE",
+        );
+
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.description).toEqual(
+            "The video description",
+        );
     });
 
     it("keeps a higher-quality scraped thumbnail when available", async () => {

@@ -13,6 +13,7 @@ import ogs from "open-graph-scraper";
 import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
 import {
+    extractYouTubeDescription,
     type FxTwitterStatus,
     isFacebookUrl,
     isRedditUrl,
@@ -529,10 +530,11 @@ export default class Metadata implements PlatformInterface {
         // only to recognized embed-crawler user agents — everything else
         // gets a page without OG tags, or a 403. Facebook likewise serves
         // unrecognized scrapers a login interstitial instead of the post.
+        const youtubeVideo = Boolean(resolveYouTubeOEmbed(job.actor.id));
         const useCompatUserAgent =
             isRedditUrl(job.actor.id) ||
             isFacebookUrl(job.actor.id) ||
-            Boolean(resolveYouTubeOEmbed(job.actor.id));
+            youtubeVideo;
         const userAgent = useCompatUserAgent
             ? this.compatUserAgent()
             : this.userAgent();
@@ -543,6 +545,9 @@ export default class Metadata implements PlatformInterface {
         // redirect hops) and caps the response body. The escape hatch is set
         // via packageConfig — see the package README.
         const dispatcher = this.getDispatcher();
+        // YouTube truncates its Open Graph description; the full text lives
+        // in the watch page's player JSON, so capture it while scraping.
+        let youtubeDescription: string | undefined;
         this.log.debug(`scrape started for ${job.actor.id} via ${scrapeUrl}`);
         const options = {
             url: scrapeUrl,
@@ -580,22 +585,28 @@ export default class Metadata implements PlatformInterface {
         // development runtime even after its AbortSignal fires. Reddit is the
         // path where this is reproducible, so fetch that HTML with the same
         // explicit Undici client used by oEmbed and let OGS only parse it.
-        const scrape = isRedditUrl(job.actor.id)
-            ? this.fetchImpl(scrapeUrl, {
-                  dispatcher,
-                  headers: { "user-agent": userAgent },
-                  signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
-              } as RequestInit & {
-                  dispatcher: ReturnType<typeof createGuardedDispatcher>;
-              }).then(async (res) => {
-                  if (!res.ok) {
-                      throw new Error(
-                          `metadata scrape returned HTTP ${res.status}`,
-                      );
-                  }
-                  return ogs({ html: await res.text() });
-              })
-            : ogs(options);
+        // YouTube takes the same path so the player JSON is available here.
+        const scrape =
+            isRedditUrl(job.actor.id) || youtubeVideo
+                ? this.fetchImpl(scrapeUrl, {
+                      dispatcher,
+                      headers: { "user-agent": userAgent },
+                      signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+                  } as RequestInit & {
+                      dispatcher: ReturnType<typeof createGuardedDispatcher>;
+                  }).then(async (res) => {
+                      if (!res.ok) {
+                          throw new Error(
+                              `metadata scrape returned HTTP ${res.status}`,
+                          );
+                      }
+                      const html = await res.text();
+                      if (youtubeVideo) {
+                          youtubeDescription = extractYouTubeDescription(html);
+                      }
+                      return ogs({ html });
+                  })
+                : ogs(options);
         withDeadline(scrape, SCRAPE_TIMEOUT_MS)
             .then(async (data) => {
                 const { result } = data;
@@ -633,7 +644,7 @@ export default class Metadata implements PlatformInterface {
                         youtube?.provider_name ??
                         siteName,
                     description: normalizeDescription(
-                        result.ogDescription || "",
+                        youtubeDescription || result.ogDescription || "",
                     ),
                     // Reddit increasingly returns a generic site hero as its
                     // OG image. Its optional official oEmbed thumbnail is the
