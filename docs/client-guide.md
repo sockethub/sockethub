@@ -325,8 +325,116 @@ sc.socket.emit('message', {
   are normalized before delivery
 - **Connection state**: Check `sc.socket.connected` for status
 
+## HTTP Actions (no WebSocket)
+
+For one-shot work such as fetching a feed, extracting page metadata, or a
+CalDAV query, a client can skip the WebSocket and `POST` ActivityStreams
+messages over plain HTTP. The messages go through the same validation,
+credential handling, and platform pipeline as the Socket.IO transport. Only
+the transport differs: a request carries a batch of messages, and the response
+streams one result per message as NDJSON (newline-delimited JSON).
+
+HTTP actions are off by default; the operator enables them with
+`httpActions.enabled` (see [Configuration](configuration.md#http-actions)).
+The server info page at the root URL shows the endpoint when it is on, and a
+`GET` with no request ID returns the service descriptor so a client can check
+for it programmatically:
+
+```js
+const res = await fetch('http://localhost:10550/sockethub-http');
+if (res.ok) {
+    const { apiVersion, platforms } = await res.json();
+    // platforms: [{ id: 'feeds', apiVersion: 4 }, ...]
+}
+```
+
+### Sending a request
+
+`POST` a JSON array of messages (a single object also works) with a request ID
+that is unique and unguessable, such as a UUID. The ID can travel in the
+`X-Request-Id` header, the `X-Sockethub-Request-Id` header, or a `requestId`
+field in the body. Anyone who knows the ID can replay the results until they
+expire, so treat it like a secret.
+
+```js
+const requestId = crypto.randomUUID();
+const res = await fetch('http://localhost:10550/sockethub-http', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-Request-Id': requestId,
+    },
+    body: JSON.stringify([
+        {
+            '@context': [
+                'https://www.w3.org/ns/activitystreams',
+                'https://sockethub.org/ns/context/v1.jsonld',
+                'https://sockethub.org/ns/context/platform/feeds/v1.jsonld',
+            ],
+            type: 'fetch',
+            actor: { id: 'https://example.com/feed.xml', type: 'feed' },
+        },
+    ]),
+});
+```
+
+Messages that need credentials send them the same way as over Socket.IO: put a
+`credentials` message first in the array, then the messages that use them. The
+response acknowledges the credentials with a minimal `credentials-ack`; the
+credential object itself is never echoed back or cached.
+
+### Reading the response
+
+The body is `application/x-ndjson`, one complete JSON object per line, streamed
+as results arrive. Read it incrementally rather than waiting for the whole
+body:
+
+```js
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+let buffered = '';
+while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffered += decoder.decode(value, { stream: true });
+    const lines = buffered.split('\n');
+    buffered = lines.pop();
+    for (const line of lines) {
+        if (line.trim()) handle(JSON.parse(line));
+    }
+}
+```
+
+Each line is an ActivityStreams object. Errors arrive as a line with
+`type: 'error'` and an `error` string rather than as an HTTP error status, so
+a `200` means the request was accepted, not that every message succeeded.
+
+### Replaying results
+
+Results are cached under the request ID for the operator's `idempotencyTtlMs`
+(five minutes by default). If the connection drops mid-stream, fetch them again
+by path or query string:
+
+```bash
+curl -N http://localhost:10550/sockethub-http/<requestId>
+curl -N "http://localhost:10550/sockethub-http?requestId=<requestId>"
+```
+
+Repeating the original `POST` with the same ID replays the cached results too.
+If the request is still running you get `409` instead.
+
+### Limits and CORS
+
+The operator controls the maximum messages per request, payload size, total
+request timeout, and idle timeout between streamed lines. Browser apps on a
+different origin need that origin allowed in `sockethub.cors.origin`, the same
+setting that governs Socket.IO connections. Details and defaults are in
+[Configuration](configuration.md#http-actions).
+
 ## Reference
 
 - **[Client Package](../packages/client/)** - Full API documentation
 - **[Schemas Package](../packages/schemas/)** - Activity stream validation, normalization, and JSON schemas
+- **[HTTP Actions configuration](configuration.md#http-actions)** - Operator settings,
+  request/response reference, API discovery
 - **[ActivityStreams Spec](https://www.w3.org/TR/activitystreams-core/)** - Message format specification

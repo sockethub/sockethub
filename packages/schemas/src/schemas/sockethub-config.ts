@@ -22,6 +22,58 @@ export const SockethubConfigSchema = {
             default: false,
             description: "Display Sockethub runtime information",
         },
+        // Operator-supplied details shown on the server info page served at
+        // the root URL. Every field is optional; empty values are omitted.
+        about: {
+            type: "object",
+            additionalProperties: false,
+            description:
+                "Details about this deployment shown on the root info page",
+            properties: {
+                name: {
+                    type: "string",
+                    default: "",
+                    description: "Display name of this Sockethub instance",
+                },
+                description: {
+                    type: "string",
+                    default: "",
+                    description:
+                        "Short description of who this instance is for",
+                },
+                contact: {
+                    type: "string",
+                    default: "",
+                    description: "Operator contact (email address or URL)",
+                },
+                links: {
+                    type: "array",
+                    default: [],
+                    description:
+                        "Extra links (privacy policy, terms, website) shown " +
+                        "on the info page",
+                    items: {
+                        type: "object",
+                        additionalProperties: false,
+                        required: ["label", "url"],
+                        properties: {
+                            label: { type: "string", minLength: 1 },
+                            url: {
+                                type: "string",
+                                pattern: "^https?://",
+                            },
+                        },
+                    },
+                },
+                showVersion: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                        "Show the exact server version and uptime on the " +
+                        "info page (off by default to limit fingerprinting)",
+                },
+            },
+        },
         logging: {
             type: "object",
             additionalProperties: false,

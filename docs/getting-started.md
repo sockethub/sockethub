@@ -25,11 +25,13 @@ bun install
 bun run dev
 ```
 
-Both methods start Sockethub on `http://localhost:10550`.
+Both methods start Sockethub on `http://localhost:10550`. The root URL shows a
+short server info page with the connection details; the examples live under
+`/examples`.
 
 ## Try the Examples
 
-Browse to `http://localhost:10550` to see interactive examples for each platform:
+Browse to `http://localhost:10550/examples` to see interactive examples for each platform:
 
 - **Dummy Platform**: Test basic connectivity with echo messages
 - **Feeds Platform**: Fetch and display RSS/Atom feeds

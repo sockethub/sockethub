@@ -30,6 +30,13 @@ does not start).
 {
   "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
   "examples": true,
+  "about": {
+    "name": "",
+    "description": "",
+    "contact": "",
+    "links": [],
+    "showVersion": false
+  },
   "logging": {
     "level": "info",
     "fileLevel": "debug",
@@ -570,13 +577,51 @@ For authentication:
 
 ### Examples
 
-Enable/disable example pages:
+Enable/disable the interactive example pages, served under `/examples`:
 
 ```json
 {
   "examples": false  // Set to false for production
 }
 ```
+
+When enabled, the server info page at the root URL links to them.
+
+### Server Info Page
+
+The root URL (`/`) always serves a small HTML page telling visitors that this
+is a Sockethub server and how to connect: the public Socket.IO URL, the HTTP
+actions path when enabled, a link to the examples when enabled, the API
+version, and the enabled platforms with their API versions. It is the
+human-readable counterpart of [API discovery](#api-discovery).
+
+Operators can add details about their deployment through the `about` block.
+Every field is optional and empty values are left off the page:
+
+```json
+{
+  "about": {
+    "name": "Kosmos Sockethub",
+    "description": "Members-only gateway for kosmos.org users",
+    "contact": "ops@kosmos.org",
+    "links": [
+      { "label": "Privacy", "url": "https://kosmos.org/privacy" }
+    ],
+    "showVersion": false
+  }
+}
+```
+
+- `contact` is rendered as a `mailto:` link for email addresses and as a link
+  for URLs; anything else is shown as text.
+- `links` entries must use `http://` or `https://` URLs.
+- `showVersion` adds the exact server version and process uptime. It is off by
+  default because publishing release numbers makes deployments easier to
+  fingerprint; only the SemVer major API version is shown otherwise.
+
+A request to `/` with `Accept: application/json` returns the same service
+descriptor as API discovery, so clients can discover the API version from the
+root even when HTTP actions are disabled.
 
 ### Logging
 
@@ -781,6 +826,13 @@ export SENTRY_RELEASE=sockethub@5.0.0   # optional; defaults to the running vers
 ```json
 {
   "examples": false,
+  "about": {
+    "name": "Example Sockethub",
+    "contact": "ops@example.com",
+    "links": [
+      { "label": "Privacy", "url": "https://example.com/privacy" }
+    ]
+  },
   "logging": {
     "level": "warn",
     "fileLevel": "info",

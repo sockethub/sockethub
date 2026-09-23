@@ -1,5 +1,6 @@
 import adapterStatic from "@sveltejs/adapter-static";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { EXAMPLES_BASE_PATH } from "./base-path.js";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -13,7 +14,9 @@ const config = {
             fallback: "index.html",
         }),
         paths: {
-            base: "",
+            // Served by the Sockethub server under this prefix; the root URL
+            // is the server info page.
+            base: EXAMPLES_BASE_PATH,
         },
         alias: {
             $components: "src/components",

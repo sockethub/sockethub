@@ -24,6 +24,14 @@ export const basePaths: IRoutePaths = {
         "sockethub-client.js",
     ),
     "/socket.io.js": path.resolve(__dirname, "..", "res", "socket.io.js"),
+    // Used by the server info page at the root.
+    "/favicon.ico": path.resolve(__dirname, "..", "static", "favicon.ico"),
+    "/sockethub-logo.svg": path.resolve(
+        __dirname,
+        "..",
+        "static",
+        "sockethub-logo.svg",
+    ),
 };
 
 type RouteDefinition = {
@@ -45,7 +53,9 @@ function prepFileRoutes(pathMap: IRoutePaths): Array<RouteDefinition> {
             route: (req: Request, res: Response) => {
                 logger.debug(`serving resource ${req.url}`);
                 res.setHeader("Access-Control-Allow-Origin", "*");
-                res.sendFile(pathMap[req.url]);
+                // The install location is not user input, so dot-segments in
+                // it (~/.bun, ~/.nvm, ...) must not make `send` 404 the file.
+                res.sendFile(pathMap[req.url], { dotfiles: "allow" });
             },
         });
     }
