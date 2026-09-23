@@ -82,8 +82,10 @@ jobs:
           # Any prerelease (alpha, beta, rc, ...) publishes under the single
           # `next` dist-tag; stable versions publish under `latest`. Users
           # track prereleases with `npm install sockethub@next` regardless of
-          # the prerelease identifier.
-          if echo "$VERSION" | grep -qE -- '-[0-9A-Za-z.-]+$'; then
+          # the prerelease identifier. Anchor on the version core so SemVer
+          # build metadata (`1.2.3+build.5`, `1.2.3-rc.1+build.5`) can't
+          # change the channel.
+          if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+-'; then
             DIST_TAG="next"
           else
             DIST_TAG="latest"
