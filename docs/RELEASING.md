@@ -39,10 +39,12 @@ npm dist-tags are determined automatically from the version string:
 
 | Version Pattern | Dist-Tag | Install Command |
 | --- | --- | --- |
-| `X.Y.Z-alpha.N` | `@alpha` | `npm install sockethub@alpha` |
-| `X.Y.Z-beta.N` | `@beta` | `npm install sockethub@beta` |
-| `X.Y.Z-rc.N` | `@next` | `npm install sockethub@next` |
+| `X.Y.Z-<preid>.N` (alpha, beta, rc, ...) | `@next` | `npm install sockethub@next` |
 | `X.Y.Z` | `@latest` | `npm install sockethub` |
+
+All prereleases share the single `next` dist-tag regardless of their identifier, so users on
+`@next` always get the newest prerelease. Docker images mirror this: `ghcr.io/sockethub/sockethub:next`
+and `:latest`.
 
 ## Quick Start
 
@@ -131,7 +133,7 @@ If anything fails:
    - Bump type: `prerelease`
    - Preid: `alpha`
 2. Review PR `release/v5.0.0-alpha.5`
-3. Merge → Publishes to `npm install sockethub@alpha`
+3. Merge → Publishes to `npm install sockethub@next`
 
 ### Example 2: First Beta Release
 
@@ -142,7 +144,7 @@ If anything fails:
    - Bump type: `preminor` (or `prerelease` if already on beta)
    - Preid: `beta`
 2. Review PR `release/v5.0.0-beta.0`
-3. Merge → Publishes to `npm install sockethub@beta`
+3. Merge → Publishes to `npm install sockethub@next`
 
 ### Example 3: First Stable Release
 
@@ -385,16 +387,16 @@ interactive 2FA one-time-pass, even in CI, so it can never work here. Only these
 
 ### Wrong Dist-Tag
 
-**Problem**: Published with wrong dist-tag (e.g., `alpha` instead of `beta`)
+**Problem**: Published with wrong dist-tag (e.g., a prerelease landed on `latest`)
 
 **Solution**:
 
 ```bash
 # Add correct tag
-npm dist-tag add @sockethub/client@5.0.0-beta.1 beta
+npm dist-tag add @sockethub/client@5.0.0-beta.1 next
 
-# Remove wrong tag
-npm dist-tag rm @sockethub/client alpha
+# Point the wrong tag back at the previous correct version
+npm dist-tag add @sockethub/client@4.1.0 latest
 ```
 
 ### Missing Draft Release
@@ -455,14 +457,15 @@ npm dist-tag rm @sockethub/client alpha
 5. GitHub repo → Settings → Secrets and variables → Actions
 6. Update `NPM_TOKEN` secret
 
-### Migrate Dist-Tags
+### Retire Legacy Dist-Tags
 
-When transitioning from alpha to beta or beta to stable:
+Releases up to `5.0.0-alpha.25` were published under an `alpha` dist-tag. Prereleases now
+publish under `next`, so the stale `alpha` tag should be removed from each package once a
+`next` release exists:
 
 ```bash
-# Example: Migrating from 'next' tag (old alpha) to 'alpha' tag
-npm dist-tag add sockethub@5.0.0-alpha.5 alpha
-npm dist-tag rm sockethub next
+# Per package (sockethub, @sockethub/client, @sockethub/server, ...)
+npm dist-tag rm sockethub alpha
 
 # Verify
 npm dist-tag ls sockethub
