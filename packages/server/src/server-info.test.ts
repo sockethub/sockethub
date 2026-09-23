@@ -114,7 +114,7 @@ describe("server-info", () => {
         it("includes operator fields, version and uptime when configured", () => {
             const info = buildServerInfo(platforms, {
                 getConfig: getConfigWith({
-                    "about:name": "  Kosmos  ",
+                    "about:name": "  Example Box  ",
                     "about:description": "Members only",
                     "about:contact": "ops@example.org",
                     "about:links": [
@@ -124,7 +124,7 @@ describe("server-info", () => {
                 }),
                 uptimeSeconds: () => 90061.7,
             });
-            expect(info.name).toBe("Kosmos");
+            expect(info.name).toBe("Example Box");
             expect(info.description).toBe("Members only");
             expect(info.contact).toBe("ops@example.org");
             expect(info.links).toEqual([
