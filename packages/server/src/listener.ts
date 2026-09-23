@@ -141,10 +141,12 @@ class Listener {
         // uses the same base path), leaving the root URL to the server info
         // page registered by the main Sockethub bootstrap.
         // `redirect: false` so a request for the bare prefix falls through to
-        // the SPA fallback instead of a 301 to a trailing slash.
+        // the SPA fallback instead of a 301 to a trailing slash. Static files
+        // are not rate limited: a single page load fetches dozens of chunks,
+        // so the per-minute budget below would starve the app itself. Only
+        // the fallback, which reads the filesystem for arbitrary paths, is.
         app.use(
             EXAMPLES_PATH,
-            limiter,
             express.static(examplesPath, { redirect: false }),
         );
 

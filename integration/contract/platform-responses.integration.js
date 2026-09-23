@@ -82,7 +82,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
                     type: "fetch",
                     actor: {
                         type: "feed",
-                        id: `${config.sockethub.url}/feed.xml`,
+                        id: `${config.sockethub.url}/examples/feed.xml`,
                     },
                 },
                 { label: "feeds contract" },
@@ -140,7 +140,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
             // scraper's URL validator, but that broke when Sockethub binds only to
             // IPv6 localhost (::1) — the IPv4 fetch was refused. The metadata
             // platform now accepts TLD-less hosts, so localhost works everywhere.
-            const fixtureUrl = `${config.sockethub.url}/metadata-test.html`;
+            const fixtureUrl = `${config.sockethub.url}/examples/metadata-test.html`;
             const msg = await emitWithAck(
                 sc.socket,
                 "message",

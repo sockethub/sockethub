@@ -128,7 +128,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             type: "fetch",
                             actor: {
                                 type: "feed",
-                                id: `${config.sockethub.url}/feed.xml`,
+                                id: `${config.sockethub.url}/examples/feed.xml`,
                             },
                         },
                         { label: "feeds fetch" },
