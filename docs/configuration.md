@@ -601,11 +601,11 @@ Every field is optional and empty values are left off the page:
 ```json
 {
   "about": {
-    "name": "Kosmos Sockethub",
-    "description": "Members-only gateway for kosmos.org users",
-    "contact": "ops@kosmos.org",
+    "name": "Example Sockethub",
+    "description": "Members-only gateway for example.com users",
+    "contact": "ops@example.com",
     "links": [
-      { "label": "Privacy", "url": "https://kosmos.org/privacy" }
+      { "label": "Privacy", "url": "https://example.com/privacy" }
     ],
     "showVersion": false
   }
