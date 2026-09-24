@@ -2,6 +2,7 @@ import Ajv, { type ValidateFunction } from "ajv";
 import {
     type ServiceDescriptor,
     ServiceDescriptorSchema,
+    type ServiceEndpoints,
 } from "./schemas/service-descriptor.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
@@ -15,4 +16,4 @@ export function validateServiceDescriptor(
 }
 
 export { ServiceDescriptorSchema };
-export type { ServiceDescriptor };
+export type { ServiceDescriptor, ServiceEndpoints };

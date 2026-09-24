@@ -28,6 +28,7 @@ import {
 import {
     type ServiceDescriptor,
     ServiceDescriptorSchema,
+    type ServiceEndpoints,
     validateServiceDescriptor,
 } from "./service-descriptor.js";
 import {
@@ -80,6 +81,6 @@ export {
     InternalObjectTypesList,
 };
 
-export type { ExamplesConfig, ServiceDescriptor };
+export type { ExamplesConfig, ServiceDescriptor, ServiceEndpoints };
 
 export * from "./types.js";

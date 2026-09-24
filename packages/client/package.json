@@ -38,9 +38,9 @@
   ],
   "scripts": {
     "build": "bun run clean && bun run build:esm && bun run build:browser && bun run build:minify",
-    "build:esm": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ ",
-    "build:browser": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.browser.js",
-    "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.min.js --minify",
+    "build:esm": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ --external socket.io-client",
+    "build:browser": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.browser.js --external socket.io-client",
+    "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.min.js --minify --external socket.io-client",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules",
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
@@ -48,6 +48,14 @@
   "dependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.25",
     "eventemitter3": "^5.0.4"
+  },
+  "peerDependencies": {
+    "socket.io-client": "^4.8.3"
+  },
+  "peerDependenciesMeta": {
+    "socket.io-client": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/bun": "latest",

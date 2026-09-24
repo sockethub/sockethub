@@ -8,11 +8,18 @@
  * from the `about` config block. Exact package versions stay off the page
  * unless the operator opts in with `about.showVersion`.
  */
+import type { ServiceEndpoints } from "@sockethub/schemas";
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
-import { buildServiceDescriptor } from "./api-info.js";
+import {
+    buildServiceDescriptor,
+    publicEndpoints,
+    publicOrigin,
+    publicSocketEndpoint,
+} from "./api-info.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config.js";
+import { createCorsMiddleware } from "./cors.js";
 import { SOCKETHUB_API_VERSION, SOCKETHUB_VERSION } from "./version.js";
 
 export const EXAMPLES_PATH = "/examples";
@@ -36,17 +43,13 @@ export type ServerInfo = {
     /** Only present when `about.showVersion` is enabled. */
     uptimeSeconds?: number;
     platforms: Array<{ id: string; apiVersion: number }>;
-    endpoints: {
-        /**
-         * Socket.IO needs the origin and the transport path as separate
-         * `io()` arguments: a path appended to the URL would be read as a
-         * namespace, not as the server's path.
-         */
-        socket: { origin: string; path: string };
-        httpActions?: string;
-        examples?: string;
-    };
+    /** The advertised connection endpoints, plus the examples path when on. */
+    endpoints: ServiceEndpoints & { examples?: string };
 };
+
+// The URL builders live in api-info.ts so the descriptor and this page share
+// them; re-exported here for callers that reach them through the page module.
+export { publicOrigin, publicSocketEndpoint };
 
 export type ServerInfoOptions = {
     platforms: PlatformMap;
@@ -56,8 +59,6 @@ export type ServerInfoDependencies = {
     getConfig?: (key: string) => unknown;
     uptimeSeconds?: () => number;
 };
-
-const DEFAULT_PORTS: Record<string, number> = { http: 80, https: 443 };
 
 function nonEmptyString(value: unknown): string | undefined {
     return typeof value === "string" && value.trim() !== ""
@@ -84,33 +85,6 @@ function safeLinks(value: unknown): Array<InfoLink> {
     return links;
 }
 
-/**
- * Origin clients reach this server at, built from the `public` settings so it
- * is right behind a reverse proxy. The port is omitted when it is the protocol
- * default.
- */
-export function publicOrigin(getConfig: (key: string) => unknown): string {
-    const protocol = nonEmptyString(getConfig("public:protocol")) ?? "http";
-    const host = nonEmptyString(getConfig("public:host")) ?? "localhost";
-    const port = Number(getConfig("public:port"));
-    const portSuffix =
-        Number.isFinite(port) && port > 0 && DEFAULT_PORTS[protocol] !== port
-            ? `:${port}`
-            : "";
-    return `${protocol}://${host}${portSuffix}`;
-}
-
-/** The origin and transport path a client hands to `io(origin, { path })`. */
-export function publicSocketEndpoint(getConfig: (key: string) => unknown): {
-    origin: string;
-    path: string;
-} {
-    return {
-        origin: publicOrigin(getConfig),
-        path: nonEmptyString(getConfig("sockethub:path")) ?? "/",
-    };
-}
-
 export function buildServerInfo(
     platforms: PlatformMap,
     deps: ServerInfoDependencies = {},
@@ -118,7 +92,6 @@ export function buildServerInfo(
     const getConfig = deps.getConfig ?? ((key: string) => config.get(key));
     const uptime = deps.uptimeSeconds ?? (() => process.uptime());
     const showVersion = Boolean(getConfig("about:showVersion"));
-    const httpActionsPath = nonEmptyString(getConfig("httpActions:path"));
 
     const info: ServerInfo = {
         name: nonEmptyString(getConfig("about:name")),
@@ -130,16 +103,11 @@ export function buildServerInfo(
             id: platform.id,
             apiVersion: platform.apiVersion,
         })),
-        endpoints: {
-            socket: publicSocketEndpoint(getConfig),
-        },
+        endpoints: publicEndpoints(getConfig),
     };
     if (showVersion) {
         info.version = SOCKETHUB_VERSION;
         info.uptimeSeconds = Math.floor(uptime());
-    }
-    if (Boolean(getConfig("httpActions:enabled")) && httpActionsPath) {
-        info.endpoints.httpActions = `${publicOrigin(getConfig)}${httpActionsPath}`;
     }
     if (getConfig("examples")) {
         info.endpoints.examples = EXAMPLES_PATH;
@@ -328,13 +296,16 @@ ${table("Server Software", softwareRows)}
 /**
  * Register `GET /`. Browsers get the HTML page; a client that explicitly asks
  * for JSON gets the same service descriptor the HTTP actions path serves, so
- * discovery works from the root even when HTTP actions are disabled.
+ * discovery works from the root even when HTTP actions are disabled. The
+ * route honours the `sockethub:cors:origin` policy so a browser app on an
+ * allowed origin can run discovery with `SockethubClient.connect()`.
  */
 export function registerServerInfoRoute(
     app: Express,
     options: ServerInfoOptions,
     deps: ServerInfoDependencies = {},
 ) {
+    const getConfig = deps.getConfig ?? ((key: string) => config.get(key));
     // Same budget as the examples static files: this is a page for humans.
     const limiter = rateLimit({
         windowMs: 60 * 1000,
@@ -343,9 +314,11 @@ export function registerServerInfoRoute(
         legacyHeaders: false,
     });
     // The registry is static after platform load, so build this once.
-    const descriptor = buildServiceDescriptor(options.platforms);
+    const descriptor = buildServiceDescriptor(options.platforms, getConfig);
+    const cors = createCorsMiddleware(getConfig);
 
-    app.get("/", limiter, (req: Request, res: Response) => {
+    app.options("/", cors);
+    app.get("/", cors, limiter, (req: Request, res: Response) => {
         res.setHeader("Cache-Control", "no-store");
         if (req.accepts(["html", "json"]) === "json") {
             res.status(200).json(descriptor);

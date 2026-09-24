@@ -328,12 +328,99 @@ describe("server-info", () => {
             expect(body).toEqual({
                 name: "sockethub",
                 apiVersion: SOCKETHUB_API_VERSION,
+                endpoints: {
+                    socket: {
+                        origin: "http://localhost:10550",
+                        path: "/sockethub",
+                    },
+                },
                 platforms: [
                     { id: "dummy", apiVersion: 3 },
                     { id: "irc", apiVersion: 4 },
                 ],
             });
             expect(JSON.stringify(body)).not.toContain(SOCKETHUB_VERSION);
+        });
+
+        it("advertises the HTTP actions endpoint in the descriptor when enabled", async () => {
+            const app = express();
+            registerServerInfoRoute(
+                app,
+                { platforms },
+                {
+                    getConfig: getConfigWith({
+                        "public:protocol": "https",
+                        "public:host": "sh.example.org",
+                        "public:port": 443,
+                        "sockethub:path": "/ws",
+                        "httpActions:enabled": true,
+                        "httpActions:path": "/actions",
+                    }),
+                },
+            );
+            const other = await new Promise<Server>((resolve) => {
+                const s = app.listen(0, "127.0.0.1", () => resolve(s));
+            });
+            try {
+                const { port } = other.address() as AddressInfo;
+                const res = await fetch(`http://127.0.0.1:${port}/`, {
+                    headers: { accept: "application/json" },
+                });
+                const body = await res.json();
+                expect(validateServiceDescriptor(body)).toBeTrue();
+                expect(body.endpoints).toEqual({
+                    socket: { origin: "https://sh.example.org", path: "/ws" },
+                    httpActions: "https://sh.example.org/actions",
+                });
+            } finally {
+                await new Promise<void>((resolve, reject) =>
+                    other.close((err) => (err ? reject(err) : resolve())),
+                );
+            }
+        });
+
+        it("applies the CORS policy to the descriptor", async () => {
+            const app = express();
+            registerServerInfoRoute(
+                app,
+                { platforms },
+                {
+                    getConfig: getConfigWith({
+                        "sockethub:cors:origin": "https://app.example",
+                    }),
+                },
+            );
+            const other = await new Promise<Server>((resolve) => {
+                const s = app.listen(0, "127.0.0.1", () => resolve(s));
+            });
+            try {
+                const { port } = other.address() as AddressInfo;
+                const allowed = await fetch(`http://127.0.0.1:${port}/`, {
+                    headers: {
+                        accept: "application/json",
+                        origin: "https://app.example",
+                    },
+                });
+                expect(allowed.status).toBe(200);
+                expect(allowed.headers.get("access-control-allow-origin")).toBe(
+                    "https://app.example",
+                );
+                expect(allowed.headers.get("vary")).toContain("Origin");
+
+                const denied = await fetch(`http://127.0.0.1:${port}/`, {
+                    headers: {
+                        accept: "application/json",
+                        origin: "https://evil.example",
+                    },
+                });
+                expect(
+                    denied.headers.get("access-control-allow-origin"),
+                ).toBeNull();
+            } finally {
+                await new Promise<void>((resolve, reject) =>
+                    other.close((err) => (err ? reject(err) : resolve())),
+                );
+            }
         });
 
         it("leaves other paths unhandled", async () => {
