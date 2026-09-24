@@ -17,11 +17,6 @@ export const SockethubConfigSchema = {
             description:
                 "Enable the examples pages served at [host]:[port]/examples",
         },
-        info: {
-            type: "boolean",
-            default: false,
-            description: "Display Sockethub runtime information",
-        },
         logging: {
             type: "object",
             additionalProperties: false,

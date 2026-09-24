@@ -60,7 +60,6 @@ convict.addFormat({
 const OVERLAY: Record<string, OverlayEntry> = {
     $schema: { default: "" },
     examples: { arg: "examples" },
-    info: { arg: "info" },
     "logging.level": { env: "LOG_LEVEL", emptyEnvIsUnset: true },
     "logging.fileLevel": { env: "LOG_FILE_LEVEL", emptyEnvIsUnset: true },
     "logging.file": { env: "LOG_FILE", emptyEnvIsUnset: true },
