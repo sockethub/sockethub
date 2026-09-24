@@ -420,6 +420,10 @@ Request id sources, in priority order:
 > authentication on replay. Use unguessable ids (e.g. UUIDs); never sequential
 > or otherwise predictable values, or one caller could read another's cached
 > results. The `12345` id used in the examples below is illustrative only.
+> Sockethub's own logs record only a short prefix of each id, but a reverse
+> proxy or ingress in front of it will log full request URLs, so prefer the
+> header form over path or query replay in production and treat access logs
+> as sensitive.
 
 Conflict behavior:
 

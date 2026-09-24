@@ -241,6 +241,18 @@ function resolveRequestId(req: Request, body: unknown): RequestIdResolution {
 /**
  * Pull request id from GET path/query first, then headers/body.
  */
+/**
+ * A request id is a replay capability (see docs/configuration.md), so it must
+ * never land in logs whole. Keep a short prefix for correlating log lines with
+ * a client's own records; it is not enough to replay the results.
+ */
+export function redactRequestId(requestId: string): string {
+    const visible = 8;
+    return requestId.length <= visible
+        ? `${requestId.slice(0, 4)}…`
+        : `${requestId.slice(0, visible)}…`;
+}
+
 function resolveRequestIdFromRequest(req: Request): RequestIdResolution {
     // GET endpoints may supply request id via path or query.
     const paramId = normalizeRequestId(
@@ -592,7 +604,7 @@ export function registerHttpActionsRoutes(
             });
         } catch (err) {
             log.error(
-                `idempotency lookup error for ${requestId}: ${String(err)}`,
+                `idempotency lookup error for ${redactRequestId(requestId)}: ${String(err)}`,
             );
             res.status(503).json({
                 error: "idempotency store unavailable",
@@ -709,7 +721,7 @@ export function registerHttpActionsRoutes(
                     );
                 } catch (err) {
                     log.error(
-                        `idempotency store error for ${requestId}: ${String(err)}`,
+                        `idempotency store error for ${redactRequestId(requestId)}: ${String(err)}`,
                     );
                     res.status(503).json({
                         error: "idempotency store unavailable",
@@ -825,7 +837,7 @@ export function registerHttpActionsRoutes(
                         )
                         .catch((err) => {
                             log.error(
-                                `failed to finalize idempotency for ${requestId}: ${String(
+                                `failed to finalize idempotency for ${redactRequestId(requestId)}: ${String(
                                     err,
                                 )}`,
                             );
@@ -881,7 +893,7 @@ export function registerHttpActionsRoutes(
                     )
                     .catch((err) => {
                         log.error(
-                            `failed to persist idempotency result for ${requestId}: ${String(
+                            `failed to persist idempotency result for ${redactRequestId(requestId)}: ${String(
                                 err,
                             )}`,
                         );
@@ -967,7 +979,9 @@ export function registerHttpActionsRoutes(
 
             req.on("close", () => {
                 if (!responseClosed) {
-                    log.debug(`http actions request closed early ${requestId}`);
+                    log.debug(
+                        `http actions request closed early ${redactRequestId(requestId)}`,
+                    );
                 }
                 // Keep platform-session tracking alive until queued jobs finish,
                 // regardless of idempotency mode; only stop writing to the
@@ -1024,7 +1038,7 @@ export function registerHttpActionsRoutes(
             // sees it when credentialsDone settles first.
             credentialsDone.catch((err: unknown) => {
                 log.error(
-                    `credentials phase failed for ${requestId}: ${String(err)}`,
+                    `credentials phase failed for ${redactRequestId(requestId)}: ${String(err)}`,
                 );
             });
 
