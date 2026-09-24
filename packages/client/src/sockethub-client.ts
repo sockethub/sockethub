@@ -136,40 +136,47 @@ export async function discoverSockethub(
     }
     const controller = new AbortController();
     const timeoutMs = options.discoveryTimeoutMs ?? 10000;
+    // The timer covers the whole exchange: fetch() resolves once headers
+    // arrive, and a stalled body would otherwise hang discovery forever.
     const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timedOut = () => controller.signal.aborted;
 
-    let response: Response;
-    try {
-        response = await doFetch(url.href, {
-            headers: { accept: "application/json" },
-            signal: controller.signal,
-        });
-    } catch (cause) {
-        const reason = controller.signal.aborted
-            ? `timed out after ${timeoutMs}ms`
-            : cause instanceof Error
-              ? cause.message
-              : String(cause);
-        throw new DiscoveryError(
-            `Sockethub discovery failed: could not reach ${url.href} (${reason})`,
-            { cause },
-        );
-    } finally {
-        clearTimeout(timer);
-    }
-    if (!response.ok) {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: ${url.href} answered ${response.status}`,
-        );
-    }
     let descriptor: unknown;
     try {
-        descriptor = await response.json();
-    } catch (cause) {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: ${url.href} did not return JSON; is it a Sockethub server?`,
-            { cause },
-        );
+        let response: Response;
+        try {
+            response = await doFetch(url.href, {
+                headers: { accept: "application/json" },
+                signal: controller.signal,
+            });
+        } catch (cause) {
+            const reason = timedOut()
+                ? `timed out after ${timeoutMs}ms`
+                : cause instanceof Error
+                  ? cause.message
+                  : String(cause);
+            throw new DiscoveryError(
+                `Sockethub discovery failed: could not reach ${url.href} (${reason})`,
+                { cause },
+            );
+        }
+        if (!response.ok) {
+            throw new DiscoveryError(
+                `Sockethub discovery failed: ${url.href} answered ${response.status}`,
+            );
+        }
+        try {
+            descriptor = await response.json();
+        } catch (cause) {
+            throw new DiscoveryError(
+                timedOut()
+                    ? `Sockethub discovery failed: ${url.href} timed out after ${timeoutMs}ms while sending the descriptor`
+                    : `Sockethub discovery failed: ${url.href} did not return JSON; is it a Sockethub server?`,
+                { cause },
+            );
+        }
+    } finally {
+        clearTimeout(timer);
     }
     if (!validateServiceDescriptor(descriptor)) {
         throw new DiscoveryError(
