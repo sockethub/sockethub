@@ -1,5 +1,6 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { fileURLToPath } from "node:url";
+import { SERVER_ASSET_PATHS } from "./base-path.js";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -26,5 +27,14 @@ export default defineConfig({
     server: {
         strictPort: true,
         port: 10551,
+        // Branding assets live in the server package and are served from the
+        // Sockethub root; when the app runs standalone, fetch them from the
+        // server it is pointed at.
+        proxy: Object.fromEntries(
+            SERVER_ASSET_PATHS.map((assetPath) => [
+                assetPath,
+                "http://localhost:10550",
+            ]),
+        ),
     },
 });

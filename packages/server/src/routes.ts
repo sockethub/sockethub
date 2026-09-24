@@ -24,8 +24,9 @@ export const basePaths: IRoutePaths = {
         "sockethub-client.js",
     ),
     "/socket.io.js": path.resolve(__dirname, "..", "res", "socket.io.js"),
-    // Used by the server info page at the root.
+    // Branding assets, used by the server info page and the examples app.
     "/favicon.ico": path.resolve(__dirname, "..", "static", "favicon.ico"),
+    "/favicon.svg": path.resolve(__dirname, "..", "static", "favicon.svg"),
     "/sockethub-logo.svg": path.resolve(
         __dirname,
         "..",
