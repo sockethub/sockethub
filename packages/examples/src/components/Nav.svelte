@@ -1,8 +1,9 @@
 <script lang="ts">
 import { base } from "$app/paths";
 import { page } from "$app/stores";
-import { onMount } from "svelte";
-import { loadExamplesConfig, platformId } from "$lib/examples-config";
+import { apiDiscovery } from "$lib/api-discovery";
+// Importing the client module starts discovery and fills the store.
+import "$lib/sockethub";
 
 const navItems = [
     ["🏠", "Home", "/", "Start here to understand Sockethub", undefined],
@@ -15,26 +16,18 @@ const navItems = [
     ["📨", "XMPP", "/xmpp", "Extensible messaging • Advanced", "xmpp"],
 ] as const;
 
-let enabledPlatforms: Set<string> | undefined = $state();
-let configLoaded = $state(false);
-
-onMount(async () => {
-    try {
-        const { platforms } = await loadExamplesConfig();
-        enabledPlatforms = platforms
-            ? new Set(platforms.map(platformId))
-            : undefined;
-    } catch {
-        enabledPlatforms = new Set();
-    }
-    configLoaded = true;
-});
+// Platforms the server reports in its service descriptor. Platform links stay
+// disabled until discovery has answered, and all of them if it failed.
+const enabledPlatforms = $derived(
+    $apiDiscovery?.state === "available"
+        ? new Set($apiDiscovery.descriptor.platforms.map((p) => p.id))
+        : $apiDiscovery
+          ? new Set<string>()
+          : undefined,
+);
 
 function isEnabled(platform: string | undefined): boolean {
-    return (
-        !platform ||
-        (configLoaded && (!enabledPlatforms || enabledPlatforms.has(platform)))
-    );
+    return !platform || (enabledPlatforms?.has(platform) ?? false);
 }
 
 function tooltip(description: string, enabled: boolean): string {
