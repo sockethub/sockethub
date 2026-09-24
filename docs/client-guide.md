@@ -354,7 +354,10 @@ if (res.ok) {
 that is unique and unguessable, such as a UUID. The ID can travel in the
 `X-Request-Id` header, the `X-Sockethub-Request-Id` header, or a `requestId`
 field in the body. Anyone who knows the ID can replay the results until they
-expire, so treat it like a secret.
+expire, so treat it like a secret: prefer the header over the path or query
+string when replaying, since URLs are routinely written to proxy and access
+logs, and keep server log files at least as protected as the results they
+would unlock.
 
 ```js
 const requestId = crypto.randomUUID();

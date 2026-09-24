@@ -3,7 +3,12 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
-import express, { type Express, type Request, type Response } from "express";
+import express, {
+    type Express,
+    type NextFunction,
+    type Request,
+    type Response,
+} from "express";
 import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
 import config from "./config.js";
@@ -102,6 +107,14 @@ class Listener {
         }
 
         const httpActionsPath = config.get("httpActions:path");
+        // An operator may configure the HTTP actions path under the examples
+        // prefix. Those requests must reach their own route, which enforces
+        // the configured `rateLimiter`, instead of the SPA fallback or the
+        // examples file-access limiter below.
+        const isHttpActionsPath = (reqPath: string) =>
+            typeof httpActionsPath === "string" &&
+            (reqPath === httpActionsPath ||
+                reqPath.startsWith(`${httpActionsPath}/`));
 
         // Set up rate limiter to prevent DoS attacks on file system access
         const limiter = rateLimit({
@@ -109,6 +122,7 @@ class Listener {
             max: 60, // max 60 requests per windowMs
             standardHeaders: true,
             legacyHeaders: false,
+            skip: (req) => isHttpActionsPath(req.path),
         });
 
         // Write runtime config for the examples app
@@ -157,7 +171,11 @@ class Listener {
         app.get(
             /^\/examples(\/.*)?$/,
             limiter,
-            (req: Request, res: Response) => {
+            (req: Request, res: Response, next: NextFunction) => {
+                if (isHttpActionsPath(req.path)) {
+                    next();
+                    return;
+                }
                 log.debug(`examples request ${req.path}`);
                 // The install location is not user input, so dot-segments in
                 // it (~/.bun, ~/.nvm, ...) must not make `send` 404 the file.

@@ -10,7 +10,7 @@ import {
     escapeHtml,
     EXAMPLES_PATH,
     formatUptime,
-    publicSocketUrl,
+    publicSocketEndpoint,
     registerServerInfoRoute,
     renderServerInfoPage,
 } from "./server-info.js";
@@ -70,23 +70,24 @@ function getConfigWith(overrides: Record<string, unknown> = {}) {
 }
 
 describe("server-info", () => {
-    describe("publicSocketUrl", () => {
-        it("includes a non-default port", () => {
-            expect(publicSocketUrl(getConfigWith())).toBe(
-                "http://localhost:10550/sockethub",
-            );
+    describe("publicSocketEndpoint", () => {
+        it("includes a non-default port and keeps the path separate", () => {
+            expect(publicSocketEndpoint(getConfigWith())).toEqual({
+                origin: "http://localhost:10550",
+                path: "/sockethub",
+            });
         });
 
         it("omits the protocol default port", () => {
             expect(
-                publicSocketUrl(
+                publicSocketEndpoint(
                     getConfigWith({
                         "public:protocol": "https",
                         "public:host": "sockethub.example.com",
                         "public:port": 443,
                     }),
-                ),
-            ).toBe("https://sockethub.example.com/sockethub");
+                ).origin,
+            ).toBe("https://sockethub.example.com");
         });
     });
 
@@ -107,7 +108,7 @@ describe("server-info", () => {
                 { id: "irc", apiVersion: 4 },
             ]);
             expect(info.endpoints).toEqual({
-                socket: "http://localhost:10550/sockethub",
+                socket: { origin: "http://localhost:10550", path: "/sockethub" },
             });
         });
 
@@ -232,7 +233,9 @@ describe("server-info", () => {
             expect(html).not.toContain("open the examples");
             expect(html).not.toContain("HTTP actions</th>");
             expect(html).toContain(`API version</th><td>${SOCKETHUB_API_VERSION}</td>`);
-            expect(html).toContain("<code>http://localhost:10550/sockethub</code>");
+            expect(html).toContain(
+                '<code>io("http://localhost:10550", { path: "/sockethub" })</code>',
+            );
             expect(html).toContain("dummy <small>v3</small>");
             expect(html).toContain("irc <small>v4</small>");
             expect(html).toContain("<caption>Connect</caption>");

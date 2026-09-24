@@ -39,7 +39,12 @@ export type ServerInfo = {
     uptimeSeconds?: number;
     platforms: Array<{ id: string; apiVersion: number }>;
     endpoints: {
-        socket: string;
+        /**
+         * Socket.IO needs the origin and the transport path as separate
+         * `io()` arguments: a path appended to the URL would be read as a
+         * namespace, not as the server's path.
+         */
+        socket: { origin: string; path: string };
         httpActions?: string;
         examples?: string;
     };
@@ -97,10 +102,15 @@ export function publicOrigin(getConfig: (key: string) => unknown): string {
     return `${protocol}://${host}${portSuffix}`;
 }
 
-/** The Socket.IO URL a client should hand to `io()`. */
-export function publicSocketUrl(getConfig: (key: string) => unknown): string {
-    const socketPath = nonEmptyString(getConfig("sockethub:path")) ?? "/";
-    return `${publicOrigin(getConfig)}${socketPath}`;
+/** The origin and transport path a client hands to `io(origin, { path })`. */
+export function publicSocketEndpoint(getConfig: (key: string) => unknown): {
+    origin: string;
+    path: string;
+} {
+    return {
+        origin: publicOrigin(getConfig),
+        path: nonEmptyString(getConfig("sockethub:path")) ?? "/",
+    };
 }
 
 export function buildServerInfo(
@@ -123,7 +133,7 @@ export function buildServerInfo(
             apiVersion: platform.apiVersion,
         })),
         endpoints: {
-            socket: publicSocketUrl(getConfig),
+            socket: publicSocketEndpoint(getConfig),
         },
     };
     if (showVersion) {
@@ -250,7 +260,12 @@ export function renderServerInfoPage(info: ServerInfo): string {
     }
 
     const connectRows: Array<string> = [
-        row("Socket.IO", `<code>${escapeHtml(info.endpoints.socket)}</code>`),
+        // Shown as the actual client call: the path is an `io()` option, and
+        // appending it to the URL would select a namespace instead.
+        row(
+            "Socket.IO",
+            `<code>io(${JSON.stringify(escapeHtml(info.endpoints.socket.origin))}, { path: ${JSON.stringify(escapeHtml(info.endpoints.socket.path))} })</code>`,
+        ),
     ];
     if (info.endpoints.httpActions) {
         connectRows.push(
