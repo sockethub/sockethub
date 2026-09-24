@@ -225,7 +225,7 @@ describe("server-info", () => {
             );
             expect(html).not.toContain("<caption>Server</caption>");
             expect(html).toContain('<span class="sr-only">Sockethub</span>');
-            expect(html).toContain("<svg ");
+            expect(html).toContain('<img src="/sockethub-logo.svg"');
             expect(html).toContain('href="/favicon.svg"');
             expect(html).toContain('href="/favicon.ico"');
             expect(html).not.toContain("Version</th>");

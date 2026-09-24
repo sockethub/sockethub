@@ -8,20 +8,18 @@
  * from the `about` config block. Exact package versions stay off the page
  * unless the operator opts in with `about.showVersion`.
  */
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { buildServiceDescriptor } from "./api-info.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config.js";
-import { __dirname } from "./util.js";
 import { SOCKETHUB_API_VERSION, SOCKETHUB_VERSION } from "./version.js";
 
 export const EXAMPLES_PATH = "/examples";
 
 const DOCS_URL = "https://sockethub.org";
 const SOURCE_URL = "https://github.com/sockethub/sockethub";
+const ACTIVITYSTREAMS_URL = "https://www.w3.org/TR/activitystreams-core/";
 const CLIENT_GUIDE_URL =
     "https://github.com/sockethub/sockethub/blob/master/docs/client-guide.md";
 
@@ -199,16 +197,6 @@ function link(url: string, text: string): string {
     return `<a href="${escapeHtml(url)}" rel="noopener">${escapeHtml(text)}</a>`;
 }
 
-/**
- * The wordmark, inlined so its text follows the page's colour scheme
- * (`currentColor`) instead of turning invisible in dark mode. Read once at
- * startup; the same file is also served at `/sockethub-logo.svg`.
- */
-const LOGO_SVG: string = readFileSync(
-    path.resolve(__dirname, "..", "static", "sockethub-logo.svg"),
-    "utf8",
-).trim();
-
 const STYLES = `
 :root { color-scheme: light dark; --fg: #111; --muted: #5b5751; --bg: #fff; --stripe: #f6f4f0; --line: #e2ddd5; --head: #e9e4dc; --head-fg: #2b2825; --accent: #f23c00; }
 @media (prefers-color-scheme: dark) { :root { --fg: #ece8e1; --muted: #a39d94; --bg: #151412; --stripe: #1c1a17; --line: #302d28; --head: #2a2723; --head-fg: #ece8e1; --accent: #ff7a45; } }
@@ -217,7 +205,8 @@ body { margin: 0; padding: 2rem 1.25rem 4rem; background: var(--bg); color: var(
 main { max-width: 52rem; margin: 0 auto; }
 header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; margin: .5rem 0 2.25rem; }
 h1 { margin: 0; line-height: 0; }
-h1 svg { width: 240px; max-width: 100%; height: auto; display: block; }
+h1 img { width: 240px; max-width: 100%; height: auto; display: block; }
+@media (prefers-color-scheme: dark) { h1 img { filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff); } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .connect { margin: 0; font-size: 1.15rem; font-weight: 600; }
 .connect a { color: var(--accent); }
@@ -322,14 +311,14 @@ export function renderServerInfoPage(info: ServerInfo): string {
 <body>
 <main>
 <header>
-<h1><a href="${DOCS_URL}" rel="noopener" title="Sockethub"><span class="sr-only">Sockethub</span>${LOGO_SVG}</a></h1>
+<h1><a href="${DOCS_URL}" rel="noopener" title="Sockethub"><span class="sr-only">Sockethub</span><img src="/sockethub-logo.svg" alt="" width="240" height="75"></a></h1>
 <p class="connect">Please use a <a href="${CLIENT_GUIDE_URL}" rel="noopener">Sockethub client</a> to connect.</p>
 </header>
 ${examplesNotice}
 ${serverTable}
 ${table("Connect", connectRows)}
 ${table("Server Software", softwareRows)}
-<footer><a href="${DOCS_URL}" rel="noopener">Sockethub</a> is a multi-protocol gateway for the Web, speaking ActivityStreams. <a href="${SOURCE_URL}" rel="noopener">Source</a>.</footer>
+<footer><a href="${DOCS_URL}" rel="noopener">Sockethub</a> is a multi-protocol gateway for the Web, speaking <a href="${ACTIVITYSTREAMS_URL}" rel="noopener">ActivityStreams 2.0</a>. <a href="${SOURCE_URL}" rel="noopener">Source</a>.</footer>
 </main>
 </body>
 </html>
