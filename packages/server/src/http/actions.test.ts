@@ -75,7 +75,11 @@ type ConfigOverrides = Partial<
         | "httpActions:idleTimeoutMs"
         | "httpActions:enabled"
         | "httpActions:path"
-        | "sockethub:cors:origin",
+        | "sockethub:cors:origin"
+        | "sockethub:path"
+        | "public:protocol"
+        | "public:host"
+        | "public:port",
         number | boolean | string
     >
 >;
