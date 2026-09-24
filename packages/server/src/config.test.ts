@@ -135,6 +135,13 @@ describe("config", () => {
         expect(() => new Config()).toThrow(/Config file not found/);
     });
 
+    it("reports the absolute path when a relative config path is missing", () => {
+        process.env.SOCKETHUB_CONFIG = "no/such/config.json";
+        expect(() => new Config()).toThrow(
+            `Config file not found: ${path.resolve("no/such/config.json")}`,
+        );
+    });
+
     it("throws a clear error when --config is given without a path", () => {
         process.argv = ["node", "test", "--config"];
         expect(() => new Config()).toThrow(/requires a file path/);

@@ -66,7 +66,7 @@ export class Config {
             this.log.debug(`reading config file at ${resolved}`);
             this.conf.loadFile(resolved);
         } else if (explicit) {
-            throw new Error(`Config file not found: ${file}`);
+            throw new Error(`Config file not found: ${path.resolve(file)}`);
         }
 
         // Coerce + validate top-level keys/types. `strict` makes an unknown or

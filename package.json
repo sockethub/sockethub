@@ -45,7 +45,7 @@
     "build:server:post": "rm -rf packages/server/res && mkdir -p packages/server/res && cp node_modules/@sockethub/client/dist/sockethub-client.min.js packages/server/res/sockethub-client.js && cp node_modules/socket.io-client/dist/socket.io.js packages/server/res/socket.io.js",
     "clean": "bun run --filter='*' clean",
     "clean:deps": "bun run --filter='*' clean:deps && rm -rf node_modules",
-    "dev": "bun run build:runtime && cd packages/sockethub && bun run dev",
+    "dev": "bun run build:runtime && SOCKETHUB_HTTP_ACTIONS_ENABLED=true bun run --hot packages/sockethub/bin/sockethub --examples",
     "doc": "bun run --filter='*' doc",
     "docker:start": "bun run docker:start:xmpp && bun run docker:start:irc && bun run docker:start:caldav && docker compose up sockethub -d",
     "docker:start:xmpp": "bash scripts/docker-compose-retry.sh up prosody -d",
