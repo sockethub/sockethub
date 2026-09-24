@@ -89,7 +89,10 @@ export interface ConnectOptions
      * Allow connecting to an `http://` socket origin discovered from an
      * `https://` base URL. Off by default: a server whose `public` settings
      * were left at their defaults would otherwise send credentials over
-     * plaintext to whatever answers on the advertised origin.
+     * plaintext to whatever answers on the advertised origin. This only lifts
+     * the client's own check; a browser page served over https still blocks
+     * plaintext transports as mixed content (loopback excepted), so it mainly
+     * helps Node clients and local development.
      */
     allowInsecureSocket?: boolean;
 }

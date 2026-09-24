@@ -67,7 +67,11 @@ invalid descriptor, or (older servers) does not advertise its endpoints. It
 also refuses to step down from an `https://` base URL to an `http://` socket
 origin, which is what a server with its `public` settings left at the
 `localhost` defaults advertises; fix the server configuration, or pass
-`allowInsecureSocket: true` if the plaintext hop is intentional.
+`allowInsecureSocket: true` if the plaintext hop is intentional. That opt-out
+only lifts the client's own check: a browser page served over `https://`
+blocks plaintext polling and WebSocket transports as mixed content (loopback
+addresses excepted), so browser apps need an `https://` socket endpoint
+regardless.
 
 **Explicit socket**: if your app already knows the Socket.IO path, or needs
 full control over the socket, create it yourself and hand it to the
