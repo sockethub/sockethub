@@ -125,6 +125,35 @@ describe("discoverSockethub", () => {
         expect(err.message).to.contain("timed out after 10ms");
     });
 
+    it("rejects when the body stalls after the headers arrived", async () => {
+        const doFetch = ((_url: string, init?: RequestInit) => {
+            // Headers arrive at once; the body never does unless aborted.
+            const body = new ReadableStream<Uint8Array>({
+                start(controller) {
+                    init?.signal?.addEventListener("abort", () =>
+                        controller.error(
+                            new DOMException("aborted", "AbortError"),
+                        ),
+                    );
+                },
+            });
+            return Promise.resolve(
+                new Response(body, {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                }),
+            );
+        }) as unknown as typeof fetch;
+        const err = await rejection(
+            discoverSockethub("https://slow.example", {
+                fetch: doFetch,
+                discoveryTimeoutMs: 10,
+            }),
+        );
+        expect(err).to.be.instanceOf(DiscoveryError);
+        expect(err.message).to.contain("timed out after 10ms while sending");
+    });
+
     it("rejects a non-2xx answer", async () => {
         const err = await rejection(
             discoverSockethub("https://sh.example.org", {
