@@ -305,9 +305,34 @@ describe("HTTP actions integration", () => {
         }
         expect(Object.keys(body).sort()).toEqual([
             "apiVersion",
+            "endpoints",
             "name",
             "platforms",
         ]);
+        // Endpoint discovery: the descriptor tells clients where to connect.
+        expect(body.endpoints).toEqual({
+            socket: { origin: socketUrl, path: "/sockethub" },
+            httpActions: httpUrl,
+        });
+    });
+
+    it("serves the same descriptor at the root for JSON clients", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const res = await fetch(`${socketUrl}/`, {
+            headers: {
+                accept: "application/json",
+                origin: "http://example.test",
+            },
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.headers.get("content-type")).toContain("application/json");
+        expect(res.headers.get("cache-control")).toBe("no-store");
+        expect(res.headers.get("access-control-allow-origin")).toBeTruthy();
+        expect(await res.json()).toEqual(await (await fetch(httpUrl)).json());
     });
 
     it("reports the same API versions as the Socket.IO bootstrap", async () => {
