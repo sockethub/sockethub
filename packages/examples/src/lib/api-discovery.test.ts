@@ -16,15 +16,27 @@ describe("api discovery", () => {
     });
 
     it("uses the origin the app was loaded from as the server base URL", () => {
-        expect(serverBaseUrl({ origin: "https://sh.example.org" })).toBe(
-            "https://sh.example.org",
-        );
+        expect(
+            serverBaseUrl({ origin: "https://sh.example.org" }, undefined),
+        ).toBe("https://sh.example.org");
     });
 
     it("has no base URL for opaque origins or outside a browser", () => {
-        expect(serverBaseUrl({ origin: "null" })).toBeUndefined();
-        expect(serverBaseUrl({})).toBeUndefined();
-        expect(serverBaseUrl(undefined)).toBeUndefined();
+        expect(serverBaseUrl({ origin: "null" }, undefined)).toBeUndefined();
+        expect(serverBaseUrl({}, undefined)).toBeUndefined();
+        expect(serverBaseUrl(undefined, undefined)).toBeUndefined();
+    });
+
+    it("prefers a VITE_SOCKETHUB_URL override for standalone development", () => {
+        expect(
+            serverBaseUrl(
+                { origin: "http://localhost:10551" },
+                " http://localhost:10550 ",
+            ),
+        ).toBe("http://localhost:10550");
+        expect(
+            serverBaseUrl({ origin: "http://localhost:10551" }, ""),
+        ).toBe("http://localhost:10551");
     });
 
     it("describes failures by their message", () => {

@@ -12,12 +12,21 @@ export type ApiDiscovery =
  */
 export const apiDiscovery = writable<ApiDiscovery | undefined>(undefined);
 
-/** The base URL of the server serving this app, or undefined outside a browser. */
+/**
+ * The base URL of the Sockethub server to discover. Normally the origin this
+ * app was loaded from, since the server serves the app itself; `VITE_SOCKETHUB_URL`
+ * overrides it for standalone development on the Vite dev server. Undefined
+ * outside a browser.
+ */
 export function serverBaseUrl(
     location: { origin?: string } | undefined = (
         globalThis as { location?: Location }
     ).location,
+    override: string | undefined = import.meta.env?.VITE_SOCKETHUB_URL,
 ): string | undefined {
+    if (typeof override === "string" && override.trim() !== "") {
+        return override.trim();
+    }
     const origin = location?.origin;
     return origin && origin !== "null" ? origin : undefined;
 }
