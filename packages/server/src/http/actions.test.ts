@@ -1194,8 +1194,10 @@ describe("redactRequestId", () => {
         expect(redacted).not.toContain(id.slice(8));
     });
 
-    it("never echoes a short id in full", () => {
-        expect(redactRequestId("12345")).toBe("1234…");
-        expect(redactRequestId("abcdefgh")).toBe("abcd…");
+    it("hides short ids completely", () => {
+        expect(redactRequestId("1")).toBe("…");
+        expect(redactRequestId("12345")).toBe("…");
+        expect(redactRequestId("abcdefghijkl")).toBe("…");
+        expect(redactRequestId("abcdefghijklm")).toBe("abcdefgh…");
     });
 });

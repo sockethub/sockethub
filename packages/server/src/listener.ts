@@ -159,9 +159,19 @@ class Listener {
         // are not rate limited: a single page load fetches dozens of chunks,
         // so the per-minute budget below would starve the app itself. Only
         // the fallback, which reads the filesystem for arbitrary paths, is.
+        const examplesStatic = express.static(examplesPath, {
+            redirect: false,
+        });
         app.use(
             EXAMPLES_PATH,
-            express.static(examplesPath, { redirect: false }),
+            (req: Request, res: Response, next: NextFunction) => {
+                // Inside a mounted handler `req.path` is relative to the mount.
+                if (isHttpActionsPath(`${req.baseUrl}${req.path}`)) {
+                    next();
+                    return;
+                }
+                examplesStatic(req, res, next);
+            },
         );
 
         const examplesIndex = path.join(examplesPath, "index.html");

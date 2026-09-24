@@ -248,9 +248,11 @@ function resolveRequestId(req: Request, body: unknown): RequestIdResolution {
  */
 export function redactRequestId(requestId: string): string {
     const visible = 8;
-    return requestId.length <= visible
-        ? `${requestId.slice(0, 4)}…`
-        : `${requestId.slice(0, visible)}…`;
+    // A prefix of a short id would be most of the id, so log nothing of it.
+    if (requestId.length <= visible + 4) {
+        return "…";
+    }
+    return `${requestId.slice(0, visible)}…`;
 }
 
 function resolveRequestIdFromRequest(req: Request): RequestIdResolution {
