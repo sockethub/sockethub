@@ -56,7 +56,11 @@ export const ServiceDescriptorSchema = {
                     required: ["origin", "path"],
                     additionalProperties: true,
                     properties: {
-                        origin: nonEmptyString,
+                        // An origin only: scheme and host, no path or query.
+                        origin: {
+                            type: "string",
+                            pattern: "^https?://[^/?#\\s]+$",
+                        },
                         path: nonEmptyString,
                     },
                 },

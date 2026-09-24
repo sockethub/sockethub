@@ -108,6 +108,23 @@ describe("validateServiceDescriptor endpoints", () => {
         ).toBeTrue();
     });
 
+    it("rejects a socket origin that is not a bare http(s) origin", () => {
+        for (const origin of [
+            "ftp://sh.example.org",
+            "javascript:alert(1)",
+            "https://sh.example.org/sockethub",
+            "sh.example.org",
+            "",
+        ]) {
+            expect(
+                validateServiceDescriptor({
+                    ...validDescriptor,
+                    endpoints: { socket: { origin, path: "/sockethub" } },
+                }),
+            ).toBeFalse();
+        }
+    });
+
     it("rejects endpoints without a socket transport", () => {
         expect(
             validateServiceDescriptor({

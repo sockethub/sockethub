@@ -229,6 +229,79 @@ describe("SockethubClient.connect", () => {
         expect(err.message).to.contain("does not advertise a Socket.IO endpoint");
     });
 
+    it("rejects a downgrade from an https base URL to an http socket origin", async () => {
+        let created = false;
+        const insecure = {
+            ...descriptor,
+            endpoints: {
+                socket: { origin: "http://localhost:10550", path: "/sockethub" },
+            },
+        };
+        const err = await rejection(
+            SockethubClient.connect("https://sh.example.org", {
+                io: (() => {
+                    created = true;
+                    return fakeSocket();
+                }) as never,
+                fetch: fetchReturning(jsonResponse(insecure)).doFetch,
+            }),
+        );
+        expect(err).to.be.instanceOf(DiscoveryError);
+        expect(err.message).to.contain("plaintext socket origin");
+        expect(err.message).to.contain("allowInsecureSocket");
+        expect(created).to.equal(false);
+    });
+
+    it("accepts the downgrade when allowInsecureSocket is set", async () => {
+        const insecure = {
+            ...descriptor,
+            endpoints: {
+                socket: { origin: "http://localhost:10550", path: "/sockethub" },
+            },
+        };
+        const ioCalls: Array<string> = [];
+        const sc = await SockethubClient.connect("https://sh.example.org", {
+            io: ((uri: string) => {
+                ioCalls.push(uri);
+                return fakeSocket();
+            }) as never,
+            fetch: fetchReturning(jsonResponse(insecure)).doFetch,
+            allowInsecureSocket: true,
+        });
+        expect(sc).to.be.instanceOf(SockethubClient);
+        expect(ioCalls).to.deep.equal(["http://localhost:10550"]);
+    });
+
+    it("allows http to http, as in local development", async () => {
+        const local = {
+            ...descriptor,
+            endpoints: {
+                socket: { origin: "http://localhost:10550", path: "/sockethub" },
+            },
+        };
+        const sc = await SockethubClient.connect("http://localhost:10550", {
+            io: (() => fakeSocket()) as never,
+            fetch: fetchReturning(jsonResponse(local)).doFetch,
+        });
+        expect(sc).to.be.instanceOf(SockethubClient);
+    });
+
+    it("rejects a socket origin that is not an http(s) URL", async () => {
+        for (const origin of ["ftp://sh.example.org", "javascript:alert(1)", "not a url"]) {
+            const bad = {
+                ...descriptor,
+                endpoints: { socket: { origin, path: "/sockethub" } },
+            };
+            const err = await rejection(
+                SockethubClient.connect("https://sh.example.org", {
+                    io: (() => fakeSocket()) as never,
+                    fetch: fetchReturning(jsonResponse(bad)).doFetch,
+                }),
+            );
+            expect(err, origin).to.be.instanceOf(DiscoveryError);
+        }
+    });
+
     it("uses a global io() when none is passed", async () => {
         const g = globalThis as { io?: unknown };
         const previous = g.io;
