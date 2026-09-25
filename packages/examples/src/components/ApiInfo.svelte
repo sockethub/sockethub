@@ -9,13 +9,13 @@ import "$lib/sockethub";
     {#if !$apiDiscovery}
         <p class="text-gray-600 text-sm">Discovering server endpoints…</p>
     {:else if $apiDiscovery.state === "available"}
-        {@const descriptor = $apiDiscovery.descriptor}
+        {@const { descriptor, serverOrigin } = $apiDiscovery}
         <dl class="text-sm text-gray-700 space-y-2">
             {#if descriptor.endpoints}
                 <div>
                     <dt class="font-semibold inline">Socket.IO endpoint:</dt>
                     <dd class="inline">
-                        <code data-testid="api-info-socket">io({JSON.stringify(location.origin)}, &#123; path: {JSON.stringify(descriptor.endpoints.socketIO)} &#125;)</code>
+                        <code data-testid="api-info-socket">io({JSON.stringify(serverOrigin)}, &#123; path: {JSON.stringify(descriptor.endpoints.socketIO)} &#125;)</code>
                     </dd>
                 </div>
             {/if}
@@ -23,7 +23,7 @@ import "$lib/sockethub";
                 <dt class="font-semibold inline">HTTP actions endpoint:</dt>
                 <dd class="inline">
                     {#if descriptor.endpoints?.httpActions}
-                        <code data-testid="api-info-endpoint">{new URL(descriptor.endpoints.httpActions, location.origin).href}</code>
+                        <code data-testid="api-info-endpoint">{new URL(descriptor.endpoints.httpActions, serverOrigin).href}</code>
                     {:else}
                         <span data-testid="api-info-endpoint-off">not enabled on this server</span>
                     {/if}

@@ -40,8 +40,10 @@ const apiVersion = {
 
 const nonEmptyString = { type: "string", minLength: 1 } as const;
 
-// A server-absolute path: starts with "/" and carries no scheme or host.
-const absolutePath = { type: "string", pattern: "^/" } as const;
+// A server-absolute path: starts with a single "/" and carries no scheme or
+// host. "//host/x" and "/\\host/x" are rejected because URL resolution would
+// read them as protocol-relative and send the client to another origin.
+const absolutePath = { type: "string", pattern: "^/(?![/\\\\])" } as const;
 
 export const ServiceDescriptorSchema = {
     $id: "https://sockethub.org/schemas/v/service-descriptor.json",

@@ -2,7 +2,12 @@ import type { ServiceDescriptor } from "@sockethub/schemas/service-descriptor";
 import { writable } from "svelte/store";
 
 export type ApiDiscovery =
-    | { state: "available"; descriptor: ServiceDescriptor }
+    | {
+          state: "available";
+          descriptor: ServiceDescriptor;
+          /** Origin the descriptor came from; endpoint paths resolve against it. */
+          serverOrigin: string;
+      }
     | { state: "unavailable"; reason: string };
 
 /**
