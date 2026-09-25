@@ -85,16 +85,6 @@ export interface ConnectOptions
      * from the discovered descriptor.
      */
     socketOptions?: Partial<ManagerOptions & SocketOptions>;
-    /**
-     * Allow connecting to an `http://` socket origin discovered from an
-     * `https://` base URL. Off by default: a server whose `public` settings
-     * were left at their defaults would otherwise send credentials over
-     * plaintext to whatever answers on the advertised origin. This only lifts
-     * the client's own check; a browser page served over https still blocks
-     * plaintext transports as mixed content (loopback excepted), so it mainly
-     * helps Node clients and local development.
-     */
-    allowInsecureSocket?: boolean;
 }
 
 /** Thrown when a server's descriptor cannot be fetched or is not usable. */
@@ -184,42 +174,6 @@ export async function discoverSockethub(
         );
     }
     return descriptor;
-}
-
-/**
- * The advertised socket origin must be an http(s) origin, and must not step
- * down from the https base URL the client trusted for discovery unless the
- * caller opts in. A misconfigured server (public settings left at the
- * `http://localhost:10550` default) is the common way to hit this.
- */
-export function checkSocketOrigin(
-    origin: string,
-    baseUrl: URL,
-    allowInsecure: boolean,
-): void {
-    let url: URL;
-    try {
-        url = new URL(origin);
-    } catch (cause) {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: ${baseUrl.href} advertises an invalid socket origin ${JSON.stringify(origin)}`,
-            { cause },
-        );
-    }
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: ${baseUrl.href} advertises a socket origin that is not http(s): ${JSON.stringify(origin)}`,
-        );
-    }
-    if (
-        baseUrl.protocol === "https:" &&
-        url.protocol === "http:" &&
-        !allowInsecure
-    ) {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: ${baseUrl.href} advertises a plaintext socket origin ${JSON.stringify(origin)}; fix the server's \`public\` settings, or pass allowInsecureSocket: true to accept it`,
-        );
-    }
 }
 
 async function resolveSocketFactory(
@@ -448,6 +402,13 @@ export default class SockethubClient {
      * clients built from a ready-made socket.
      */
     public readonly descriptor?: ServiceDescriptor;
+    /**
+     * The origin the descriptor was discovered from and the socket connects
+     * to. Resolve the descriptor's endpoint paths against it, for example
+     * `new URL(sc.descriptor.endpoints.httpActions, sc.serverOrigin)`.
+     * Undefined for clients built from a ready-made socket.
+     */
+    public readonly serverOrigin?: string;
     private readonly options: Required<SockethubClientOptions>;
     private platformRegistry = new Map<string, PlatformRegistryEntry>();
     private asContextUrl?: string;
@@ -470,11 +431,11 @@ export default class SockethubClient {
      * Discover a server's endpoints from its base URL and connect to it.
      *
      * Fetches the base URL with `Accept: application/json`, validates the
-     * service descriptor, and opens a Socket.IO connection with the advertised
-     * origin and path. The descriptor is exposed as `client.descriptor`.
-     * Rejects with a `DiscoveryError` when the server is unreachable, does not
-     * answer with JSON, does not advertise a Socket.IO endpoint, or advertises
-     * a plaintext origin from an https base URL (see `allowInsecureSocket`).
+     * service descriptor, and opens a Socket.IO connection to the base URL's
+     * origin with the advertised path. The descriptor is exposed as
+     * `client.descriptor` and the origin as `client.serverOrigin`. Rejects
+     * with a `DiscoveryError` when the server is unreachable, does not answer
+     * with JSON, or does not advertise a Socket.IO endpoint.
      *
      * @example
      * ```typescript
@@ -482,7 +443,7 @@ export default class SockethubClient {
      *   initTimeoutMs: 5000,
      * });
      * await sc.ready();
-     * console.log(sc.descriptor.endpoints.httpActions);
+     * console.log(new URL(sc.descriptor.endpoints.httpActions, sc.serverOrigin).href);
      * ```
      */
     public static async connect(
@@ -494,42 +455,43 @@ export default class SockethubClient {
             socketOptions,
             fetch,
             discoveryTimeoutMs,
-            allowInsecureSocket,
             ...clientOptions
         } = options;
         const descriptor = await discoverSockethub(baseUrl, {
             fetch,
             discoveryTimeoutMs,
         });
-        const socketEndpoint = descriptor.endpoints?.socket;
-        if (!socketEndpoint) {
+        const socketPath = descriptor.endpoints?.socketIO;
+        if (!socketPath) {
             throw new DiscoveryError(
                 `Sockethub discovery failed: ${baseUrl} does not advertise a Socket.IO endpoint (older server?); pass a socket to the constructor instead`,
             );
         }
-        checkSocketOrigin(
-            socketEndpoint.origin,
-            new URL(baseUrl),
-            allowInsecureSocket === true,
-        );
+        // The socket goes to the origin that answered discovery; the
+        // descriptor only says which path Socket.IO is mounted on there.
+        const serverOrigin = new URL(baseUrl).origin;
         const createSocket = await resolveSocketFactory(io);
-        const socket = createSocket(socketEndpoint.origin, {
+        const socket = createSocket(serverOrigin, {
             ...socketOptions,
-            path: socketEndpoint.path,
+            path: socketPath,
         });
-        return new SockethubClient(socket, clientOptions, descriptor);
+        return new SockethubClient(socket, clientOptions, {
+            descriptor,
+            serverOrigin,
+        });
     }
 
     constructor(
         socket: Socket,
         options: SockethubClientOptions = {},
-        descriptor?: ServiceDescriptor,
+        discovered?: { descriptor: ServiceDescriptor; serverOrigin: string },
     ) {
         if (!socket) {
             throw new Error("SockethubClient requires a socket.io instance");
         }
         this._socket = socket;
-        this.descriptor = descriptor;
+        this.descriptor = discovered?.descriptor;
+        this.serverOrigin = discovered?.serverOrigin;
         this.options = {
             initTimeoutMs: options.initTimeoutMs ?? 5000,
             maxQueuedOutbound: options.maxQueuedOutbound ?? 1000,
