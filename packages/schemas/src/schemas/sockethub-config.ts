@@ -64,8 +64,15 @@ export const SockethubConfigSchema = {
                     type: "boolean",
                     default: false,
                     description:
-                        "Show the exact server version and uptime on the " +
-                        "info page (off by default to limit fingerprinting)",
+                        "Show the exact server version on the info page " +
+                        "(off by default to limit fingerprinting)",
+                },
+                showUptime: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                        "Show the process uptime on the info page (off by " +
+                        "default: it reveals when the server last restarted)",
                 },
             },
         },

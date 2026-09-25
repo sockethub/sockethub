@@ -35,7 +35,8 @@ does not start).
     "description": "",
     "contact": "",
     "links": [],
-    "showVersion": false
+    "showVersion": false,
+    "showUptime": false
   },
   "logging": {
     "level": "info",
@@ -611,7 +612,8 @@ Every field is optional and empty values are left off the page:
     "links": [
       { "label": "Privacy", "url": "https://example.com/privacy" }
     ],
-    "showVersion": false
+    "showVersion": false,
+    "showUptime": true
   }
 }
 ```
@@ -619,9 +621,11 @@ Every field is optional and empty values are left off the page:
 - `contact` is rendered as a `mailto:` link for email addresses and as a link
   for URLs; anything else is shown as text.
 - `links` entries must use `http://` or `https://` URLs.
-- `showVersion` adds the exact server version and process uptime. It is off by
-  default because publishing release numbers makes deployments easier to
-  fingerprint; only the SemVer major API version is shown otherwise.
+- `showVersion` adds the exact server version. It is off by default because
+  publishing release numbers makes deployments easier to fingerprint; only the
+  SemVer major API version is shown otherwise.
+- `showUptime` adds the process uptime. It is off by default because it reveals
+  when the server last restarted; it is independent of `showVersion`.
 
 A request to `/` with `Accept: application/json` returns the same service
 descriptor as API discovery, so clients can discover the API version from the
