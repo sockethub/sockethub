@@ -17,11 +17,6 @@ export const SockethubConfigSchema = {
             description:
                 "Enable the examples pages served at [host]:[port]/examples",
         },
-        info: {
-            type: "boolean",
-            default: false,
-            description: "Display Sockethub runtime information",
-        },
         // Operator-supplied details shown on the server info page served at
         // the root URL. Every field is optional; empty values are omitted.
         about: {

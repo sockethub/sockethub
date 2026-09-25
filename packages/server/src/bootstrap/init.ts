@@ -179,7 +179,9 @@ async function __loadInit(): Promise<IInitObject> {
 
     await redisCheck(config.get("redis") as RedisConfig);
 
-    if (config.get("info")) {
+    // --info is a one-shot command-line action, not a config setting, so it
+    // is read from argv rather than the config schema.
+    if (process.argv.includes("--info")) {
         printSettingsInfo(packageJSON.default.version, platforms);
     }
     log.debug("finished init routines");

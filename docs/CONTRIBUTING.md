@@ -325,7 +325,8 @@ bun run docker:stop        # Stop all Docker services
 
 ## Key Files to Understand
 
-- `packages/sockethub/sockethub.config.json` - Main configuration file
+- `sockethub.config.json` (repo root; create with `bun run start -- --write-config`) -
+  Main configuration file
 - `packages/server/src/sockethub.ts` - Main server class handling Socket.IO connections
 - `packages/server/src/platform-instance.ts` - Platform process management
 - `packages/server/src/middleware/` - Request processing pipeline
