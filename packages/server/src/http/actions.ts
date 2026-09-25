@@ -36,7 +36,7 @@ import { buildServiceDescriptor } from "../api-info.js";
 import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import config from "../config.js";
 import { clearSessionScopes } from "../connection-scope.js";
-import { parseCorsOrigins, resolveAllowedOrigin } from "../cors.js";
+import { createCorsMiddleware } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
 import type ProcessManager from "../process-manager.js";
 import {
@@ -59,10 +59,6 @@ const MAX_REQUEST_ID_LENGTH = 128;
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]+$/;
 // CORS: the endpoint is a browser-facing API, so it honors the same
 // `sockethub:cors:origin` config that governs socket.io.
-const CORS_ALLOWED_METHODS = "GET, POST, OPTIONS";
-const CORS_ALLOWED_HEADERS =
-    "Content-Type, X-Request-Id, X-Sockethub-Request-Id";
-const CORS_EXPOSED_HEADERS = "X-Request-Id, X-Idempotent-Replay";
 
 interface HttpActionsOptions {
     processManager: ProcessManager;
@@ -313,45 +309,6 @@ function resolveConfigNumber(
     return fallback;
 }
 
-/**
- * CORS middleware for the HTTP actions routes, honoring the same
- * `sockethub:cors:origin` config that governs socket.io. Emits the allow
- * headers and answers preflight `OPTIONS` requests so browser clients on a
- * configured origin can call the endpoint.
- */
-function createCorsMiddleware(
-    getConfig: (key: string) => unknown,
-): RequestHandler {
-    // Parse the allow-list (and log any config warnings) once at route
-    // registration rather than on every request.
-    const allowedOrigins = parseCorsOrigins(
-        getConfig("sockethub:cors:origin") as string | undefined,
-    );
-    return (req, res, next) => {
-        const allowOrigin = resolveAllowedOrigin(
-            allowedOrigins,
-            req.headers.origin,
-        );
-        if (allowOrigin) {
-            res.setHeader("Access-Control-Allow-Origin", allowOrigin);
-            if (allowOrigin !== "*") {
-                // Response varies by origin, so it must not be cached and served
-                // to a different origin.
-                res.setHeader("Vary", "Origin");
-            }
-        }
-        res.setHeader("Access-Control-Allow-Methods", CORS_ALLOWED_METHODS);
-        res.setHeader("Access-Control-Allow-Headers", CORS_ALLOWED_HEADERS);
-        res.setHeader("Access-Control-Expose-Headers", CORS_EXPOSED_HEADERS);
-        res.setHeader("Access-Control-Max-Age", "600");
-        if (req.method === "OPTIONS") {
-            res.status(204).end();
-            return;
-        }
-        next();
-    };
-}
-
 function getIdempotencyRedisConnection() {
     // Keep HTTP idempotency on its own shared connection so credentials stores
     // retain their per-store connection naming and lifecycle.
@@ -556,7 +513,10 @@ export function registerHttpActionsRoutes(
     });
 
     // The registry is static after platform load, so build this once.
-    const serviceDescriptor = buildServiceDescriptor(options.platforms);
+    const serviceDescriptor = buildServiceDescriptor(
+        options.platforms,
+        getConfig,
+    );
 
     const handleGet = async (req: Request, res: Response) => {
         // Allow retrying/late fetching of results by request id.

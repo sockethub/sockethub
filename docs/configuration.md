@@ -520,19 +520,27 @@ curl -N "http://localhost:10550/sockethub-http?requestId=12345"
 
 #### API discovery
 
-A `GET` on the HTTP actions path with no request ID (no path segment, no
-`requestId` query parameter, no `X-Request-Id` / `X-Sockethub-Request-Id`
-header) returns a public service descriptor, so clients can check
-compatibility without opening a WebSocket connection:
+The server publishes a public service descriptor that tells clients which API
+it speaks and where to connect. It is served in two places, with the same
+content:
+
+- `GET /` with an `Accept: application/json` header, always.
+- A `GET` on the HTTP actions path with no request ID (no path segment, no
+  `requestId` query parameter, no `X-Request-Id` / `X-Sockethub-Request-Id`
+  header), when HTTP actions are enabled.
 
 ```bash
-curl http://localhost:10550/sockethub-http
+curl -H 'Accept: application/json' https://sh.example.org/
 ```
 
 ```json
 {
   "name": "sockethub",
   "apiVersion": 5,
+  "endpoints": {
+    "socketIO": "/sockethub",
+    "httpActions": "/sockethub-http"
+  },
   "platforms": [
     { "id": "metadata", "apiVersion": 1 },
     { "id": "caldav", "apiVersion": 1 }
@@ -540,6 +548,16 @@ curl http://localhost:10550/sockethub-http
 }
 ```
 
+- `endpoints` are server-absolute paths on the origin the descriptor was
+  fetched from; no origin is advertised, so a client always connects to the
+  server that answered and a wrong `public` block cannot misdirect it.
+  `endpoints.socketIO` is `sockethub.path`, to be passed as the `path` option
+  of `io()` (appended to the URL it would select a namespace instead).
+  `SockethubClient.connect(baseUrl)` does this, so an app needs only the
+  server's base URL and keeps working when the paths change.
+- `endpoints.httpActions` is `httpActions.path`. It is present only when HTTP
+  actions are enabled, so a client can tell "off" from "unknown" without
+  probing.
 - `apiVersion` is the SemVer **major** of the server package; each platform's
   `apiVersion` is the major of that platform's package (server `5.2.1` reports
   `5`, a platform at `1.0.1-alpha.19` reports `1`). The Socket.IO `schemas`
@@ -553,10 +571,11 @@ curl http://localhost:10550/sockethub-http
 - Exact package versions are deliberately not published on either transport,
   to avoid making deployments easy to fingerprint. They remain available in
   the server logs and via `sockethub --version`.
-- The response is `200 application/json` with `Cache-Control: no-store`, uses
-  the same CORS policy as the rest of the endpoint, and is served at whatever
-  `httpActions.path` is configured. It is not registered when HTTP actions are
-  disabled.
+- Both responses are `200 application/json` with `Cache-Control: no-store`
+  and honour the `sockethub.cors.origin` policy, so a browser app on an
+  allowed origin can run discovery. The HTTP actions variant is served at
+  whatever `httpActions.path` is configured and is not registered when HTTP
+  actions are disabled; the root variant is always available.
 - A request that carries an invalid request ID still returns `400`, and a valid
   one still replays as NDJSON; neither returns the descriptor.
 
@@ -628,8 +647,10 @@ Every field is optional and empty values are left off the page:
   when the server last restarted; it is independent of `showVersion`.
 
 A request to `/` with `Accept: application/json` returns the same service
-descriptor as API discovery, so clients can discover the API version from the
-root even when HTTP actions are disabled.
+descriptor as [API discovery](#api-discovery), so clients can discover the
+endpoints and API version from the root even when HTTP actions are disabled.
+The page and the descriptor are built from the same settings, so they cannot
+disagree about where to connect.
 
 ### Logging
 

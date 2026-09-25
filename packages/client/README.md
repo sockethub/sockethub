@@ -8,6 +8,8 @@ reconnection, and credential replay.
 ## What's Included
 
 - `SockethubClient` for connection and message handling
+- `SockethubClient.connect(baseUrl)` discovers the server's Socket.IO endpoint
+  from its service descriptor, so apps need only the base URL
 - Schema-driven validation of outbound ActivityStreams messages (via `@sockethub/schemas`)
 - `contextFor(platform)` builds canonical `@context` arrays from server metadata
 - `ready()` promise and `ready`/`init_error` observability events
@@ -55,10 +57,12 @@ everything between your app and the Sockethub server:
 
 ```javascript
 import SockethubClient from '@sockethub/client';
-import { io } from 'socket.io-client';
-const SOCKETHUB_SERVER = 'http://localhost:10550';
-const sc = new SockethubClient(io(SOCKETHUB_SERVER));
+const sc = await SockethubClient.connect('http://localhost:10550');
 ```
+
+`socket.io-client` is an optional peer dependency: `connect()` imports it when
+no `io` global is present, and the constructor accepts a socket you created
+yourself.
 
 ### Browser
 
@@ -93,10 +97,14 @@ const sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub'
 
 ```javascript
 import SockethubClient from '@sockethub/client';
-import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:10550', { path: '/sockethub' });
-const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
+// Discover the Socket.IO endpoint from the server's base URL. The fetched
+// service descriptor (API versions, platforms, HTTP actions URL) is kept as
+// sc.descriptor. To supply your own socket instead:
+//   new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }))
+const sc = await SockethubClient.connect('http://localhost:10550', {
+    initTimeoutMs: 5000,
+});
 
 sc.socket.on('message', (msg) => console.log(msg));
 sc.socket.on('ready', (info) => {

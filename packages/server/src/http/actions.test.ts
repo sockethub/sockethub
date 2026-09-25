@@ -75,7 +75,11 @@ type ConfigOverrides = Partial<
         | "httpActions:idleTimeoutMs"
         | "httpActions:enabled"
         | "httpActions:path"
-        | "sockethub:cors:origin",
+        | "sockethub:cors:origin"
+        | "sockethub:path"
+        | "public:protocol"
+        | "public:host"
+        | "public:port",
         number | boolean | string
     >
 >;
@@ -109,6 +113,10 @@ const TEST_PLATFORMS: PlatformMap = new Map([
 ]);
 
 const DEFAULT_CONFIG: Record<string, unknown> = {
+    "public:protocol": "http",
+    "public:host": "localhost",
+    "public:port": 10550,
+    "sockethub:path": "/sockethub",
     "httpActions:enabled": true,
     "httpActions:path": "/sockethub-http",
     "httpActions:requireRequestId": true,
@@ -528,6 +536,7 @@ describe("http actions", () => {
         expect(res.jsonBody).toEqual({
             name: "sockethub",
             apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
+            endpoints: { socketIO: "/sockethub", httpActions: "/sockethub-http" },
             platforms: [
                 { id: "metadata", apiVersion: 2 },
                 { id: "caldav", apiVersion: 1 },
@@ -604,6 +613,29 @@ describe("http actions", () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.jsonBody.name).toBe("sockethub");
+        expect(res.jsonBody.endpoints.httpActions).toBe("/custom/actions");
+    });
+
+    it("advertises configured paths without an origin", async () => {
+        const handlers = buildHandlers({
+            fakeRedis: new FakeRedis(),
+            configOverrides: {
+                "public:protocol": "https",
+                "public:host": "sh.example.org",
+                "public:port": 443,
+                "sockethub:path": "/ws",
+                "httpActions:path": "/actions",
+            },
+        });
+
+        const { req, res } = createReqRes({});
+        await handlers["GET:/actions"](req, res);
+
+        expect(res.jsonBody.endpoints).toEqual({
+            socketIO: "/ws",
+            httpActions: "/actions",
+        });
+        expect(JSON.stringify(res.jsonBody)).not.toContain("sh.example.org");
     });
 
     it("registers no descriptor when HTTP actions are disabled", () => {
@@ -1137,6 +1169,10 @@ describe("http actions service descriptor over HTTP", () => {
             expect(await res.json()).toEqual({
                 name: "sockethub",
                 apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
+                endpoints: {
+                    socketIO: "/sockethub",
+                    httpActions: "/sockethub-http",
+                },
                 platforms: [
                     { id: "metadata", apiVersion: 2 },
                     { id: "caldav", apiVersion: 1 },

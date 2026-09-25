@@ -24,16 +24,54 @@ These scripts set `io` and `SockethubClient` as globals.
 
 ### Basic Setup
 
-**Browser** (using globals from script tags):
+**Discovery** (recommended): give the client the server's base URL and let it
+find the Socket.IO endpoint. The client fetches the root URL with
+`Accept: application/json`, validates the service descriptor the server
+publishes there, and opens the socket to that same origin on the advertised
+path. An operator can move `sockethub.path` or `httpActions.path` without
+breaking your app.
 
 ```javascript
-const sc = new SockethubClient(
-    io('http://localhost:10550', { path: '/sockethub' }),
-    { initTimeoutMs: 5000 },
-);
+// Browser, using the io and SockethubClient globals from the script tags
+const sc = await SockethubClient.connect('http://localhost:10550', {
+    initTimeoutMs: 5000,
+});
 ```
 
-**Node.js / bundler** (using ESM imports):
+```javascript
+// Node.js / bundler
+import SockethubClient from '@sockethub/client';
+
+const sc = await SockethubClient.connect('http://localhost:10550', {
+    initTimeoutMs: 5000,
+});
+```
+
+`connect()` looks for `io()` on the global object first (set by
+`/socket.io.js`), then imports `socket.io-client`; pass it explicitly with the
+`io` option when neither applies. Extra Socket.IO options such as `auth` or
+`transports` go in `socketOptions`. The fetched descriptor is available as
+`sc.descriptor`, so the HTTP actions path and the platform API versions are at
+hand without a second request. Endpoints are paths on the server's origin,
+which `sc.serverOrigin` holds:
+
+```javascript
+console.log(sc.descriptor.apiVersion);            // 5
+console.log(sc.descriptor.endpoints.socketIO);    // '/sockethub'
+console.log(sc.descriptor.endpoints.httpActions); // '/sockethub-http', or undefined when off
+console.log(sc.descriptor.platforms);             // [{ id, apiVersion }, ...]
+const { httpActions } = sc.descriptor.endpoints;
+const httpActionsUrl = httpActions && new URL(httpActions, sc.serverOrigin);
+```
+
+`connect()` rejects with a `DiscoveryError` that says what went wrong when the
+server is unreachable, answers with something other than JSON, returns an
+invalid descriptor, or (older servers) does not advertise its endpoints.
+
+**Explicit socket**: if your app already knows the Socket.IO path, or needs
+full control over the socket, create it yourself and hand it to the
+constructor. Remember that the path is an `io()` option; appending it to the
+URL would select a namespace instead.
 
 ```javascript
 import SockethubClient from '@sockethub/client';
@@ -43,7 +81,11 @@ const sc = new SockethubClient(
     io('http://localhost:10550', { path: '/sockethub' }),
     { initTimeoutMs: 5000 },
 );
+```
 
+**Handling events** works the same either way:
+
+```javascript
 // Handle messages
 sc.socket.on('message', (msg) => console.log('Received:', msg));
 
@@ -310,6 +352,8 @@ sc.socket.emit('message', {
 
 ## Client Features
 
+- **Endpoint discovery**: `SockethubClient.connect(baseUrl)` finds the Socket.IO
+  endpoint from the server's service descriptor; `sc.descriptor` keeps it
 - **Schema-driven init**: `ready()` resolves when the server's schema registry is loaded
 - **API versions, not package versions**: the bootstrap reports `apiVersion` for
   Sockethub and for each platform — the SemVer major of the corresponding
@@ -336,17 +380,25 @@ streams one result per message as NDJSON (newline-delimited JSON).
 
 HTTP actions are off by default; the operator enables them with
 `httpActions.enabled` (see [Configuration](configuration.md#http-actions)).
-The server info page at the root URL shows the endpoint when it is on, and a
-`GET` with no request ID returns the service descriptor so a client can check
-for it programmatically:
+The service descriptor advertises the endpoint path when it is on, so a
+client needs only the server's base URL. `SockethubClient.connect()` exposes it
+as `sc.descriptor.endpoints.httpActions`; a client that never opens a socket
+can fetch the descriptor itself:
 
 ```js
-const res = await fetch('http://localhost:10550/sockethub-http');
-if (res.ok) {
-    const { apiVersion, platforms } = await res.json();
-    // platforms: [{ id: 'feeds', apiVersion: 4 }, ...]
-}
+import { discoverSockethub } from '@sockethub/client';
+
+const base = 'http://localhost:10550';
+const { endpoints, apiVersion, platforms } = await discoverSockethub(base);
+// endpoints.httpActions: '/sockethub-http', or undefined when disabled
+// platforms: [{ id: 'feeds', apiVersion: 4 }, ...]
+const httpActionsUrl = endpoints.httpActions && new URL(endpoints.httpActions, base);
 ```
+
+Without the client library, `GET` the base URL with
+`Accept: application/json`, or the HTTP actions path with no request ID; both
+return the same descriptor. The server info page at the root URL shows the
+same endpoints to humans.
 
 ### Sending a request
 

@@ -69,3 +69,81 @@ describe("validateServiceDescriptor", () => {
         }
     });
 });
+
+describe("validateServiceDescriptor endpoints", () => {
+    const endpoints = { socketIO: "/sockethub", httpActions: "/sockethub-http" };
+
+    it("accepts a descriptor with Socket.IO and HTTP actions paths", () => {
+        expect(
+            validateServiceDescriptor({ ...validDescriptor, endpoints }),
+        ).toBeTrue();
+    });
+
+    it("accepts endpoints without HTTP actions", () => {
+        expect(
+            validateServiceDescriptor({
+                ...validDescriptor,
+                endpoints: { socketIO: "/sockethub" },
+            }),
+        ).toBeTrue();
+    });
+
+    it("accepts a descriptor without endpoints, as written by older servers", () => {
+        expect(validateServiceDescriptor(validDescriptor)).toBeTrue();
+    });
+
+    it("accepts endpoint members added by a later server", () => {
+        expect(
+            validateServiceDescriptor({
+                ...validDescriptor,
+                endpoints: { ...endpoints, webhooks: "/hooks" },
+            }),
+        ).toBeTrue();
+    });
+
+    it("rejects endpoints without a Socket.IO path", () => {
+        expect(
+            validateServiceDescriptor({
+                ...validDescriptor,
+                endpoints: { httpActions: "/sockethub-http" },
+            }),
+        ).toBeFalse();
+    });
+
+    for (const socketIO of [
+        "",
+        "sockethub",
+        "//other.example/sockethub",
+        "/\\other.example/sockethub",
+        "https://sh.example.org/sockethub",
+        { origin: "https://sh.example.org", path: "/sockethub" },
+        42,
+    ]) {
+        it(`rejects Socket.IO endpoint ${JSON.stringify(socketIO)}`, () => {
+            expect(
+                validateServiceDescriptor({
+                    ...validDescriptor,
+                    endpoints: { socketIO },
+                }),
+            ).toBeFalse();
+        });
+    }
+
+    for (const httpActions of [
+        "",
+        "sockethub-http",
+        "//other.example/sockethub-http",
+        "/\\other.example/sockethub-http",
+        "https://sh.example.org/sockethub-http",
+        42,
+    ]) {
+        it(`rejects HTTP actions endpoint ${JSON.stringify(httpActions)}`, () => {
+            expect(
+                validateServiceDescriptor({
+                    ...validDescriptor,
+                    endpoints: { socketIO: "/sockethub", httpActions },
+                }),
+            ).toBeFalse();
+        });
+    }
+});

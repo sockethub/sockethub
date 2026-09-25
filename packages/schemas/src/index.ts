@@ -10,11 +10,6 @@ import {
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "./context.js";
 import {
-    type ExamplesConfig,
-    ExamplesConfigSchema,
-    validateExamplesConfig,
-} from "./examples-config.js";
-import {
     InternalObjectTypesList,
     ObjectTypesList,
     ObjectTypesSchema,
@@ -28,6 +23,7 @@ import {
 import {
     type ServiceDescriptor,
     ServiceDescriptorSchema,
+    type ServiceEndpoints,
     validateServiceDescriptor,
 } from "./service-descriptor.js";
 import {
@@ -65,12 +61,10 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityStreamResponse,
-    validateExamplesConfig,
     validateServiceDescriptor,
     validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
-    ExamplesConfigSchema,
     ServiceDescriptorSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
@@ -80,6 +74,6 @@ export {
     InternalObjectTypesList,
 };
 
-export type { ExamplesConfig, ServiceDescriptor };
+export type { ServiceDescriptor, ServiceEndpoints };
 
 export * from "./types.js";
