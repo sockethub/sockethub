@@ -71,12 +71,9 @@ describe("validateServiceDescriptor", () => {
 });
 
 describe("validateServiceDescriptor endpoints", () => {
-    const endpoints = {
-        socket: { origin: "https://sh.example.org", path: "/sockethub" },
-        httpActions: "https://sh.example.org/sockethub-http",
-    };
+    const endpoints = { socketIO: "/sockethub", httpActions: "/sockethub-http" };
 
-    it("accepts a descriptor with socket and HTTP actions endpoints", () => {
+    it("accepts a descriptor with Socket.IO and HTTP actions paths", () => {
         expect(
             validateServiceDescriptor({ ...validDescriptor, endpoints }),
         ).toBeTrue();
@@ -86,7 +83,7 @@ describe("validateServiceDescriptor endpoints", () => {
         expect(
             validateServiceDescriptor({
                 ...validDescriptor,
-                endpoints: { socket: endpoints.socket },
+                endpoints: { socketIO: "/sockethub" },
             }),
         ).toBeTrue();
     });
@@ -99,64 +96,48 @@ describe("validateServiceDescriptor endpoints", () => {
         expect(
             validateServiceDescriptor({
                 ...validDescriptor,
-                endpoints: {
-                    ...endpoints,
-                    socket: { ...endpoints.socket, transports: ["websocket"] },
-                    webhooks: "https://sh.example.org/hooks",
-                },
+                endpoints: { ...endpoints, webhooks: "/hooks" },
             }),
         ).toBeTrue();
     });
 
-    it("rejects a socket origin that is not a bare http(s) origin", () => {
-        for (const origin of [
-            "ftp://sh.example.org",
-            "javascript:alert(1)",
-            "https://sh.example.org/sockethub",
-            "sh.example.org",
-            "",
-        ]) {
-            expect(
-                validateServiceDescriptor({
-                    ...validDescriptor,
-                    endpoints: { socket: { origin, path: "/sockethub" } },
-                }),
-            ).toBeFalse();
-        }
-    });
-
-    it("rejects endpoints without a socket transport", () => {
+    it("rejects endpoints without a Socket.IO path", () => {
         expect(
             validateServiceDescriptor({
                 ...validDescriptor,
-                endpoints: { httpActions: endpoints.httpActions },
+                endpoints: { httpActions: "/sockethub-http" },
             }),
         ).toBeFalse();
     });
 
-    for (const socket of [
-        { origin: "https://sh.example.org" },
-        { path: "/sockethub" },
-        { origin: "", path: "/sockethub" },
-        { origin: "https://sh.example.org", path: "" },
+    for (const socketIO of [
+        "",
+        "sockethub",
         "https://sh.example.org/sockethub",
+        { origin: "https://sh.example.org", path: "/sockethub" },
+        42,
     ]) {
-        it(`rejects socket endpoint ${JSON.stringify(socket)}`, () => {
+        it(`rejects Socket.IO endpoint ${JSON.stringify(socketIO)}`, () => {
             expect(
                 validateServiceDescriptor({
                     ...validDescriptor,
-                    endpoints: { socket },
+                    endpoints: { socketIO },
                 }),
             ).toBeFalse();
         });
     }
 
-    for (const httpActions of ["", 42, { url: "https://sh.example.org" }]) {
-        it(`rejects httpActions endpoint ${JSON.stringify(httpActions)}`, () => {
+    for (const httpActions of [
+        "",
+        "sockethub-http",
+        "https://sh.example.org/sockethub-http",
+        42,
+    ]) {
+        it(`rejects HTTP actions endpoint ${JSON.stringify(httpActions)}`, () => {
             expect(
                 validateServiceDescriptor({
                     ...validDescriptor,
-                    endpoints: { socket: endpoints.socket, httpActions },
+                    endpoints: { socketIO: "/sockethub", httpActions },
                 }),
             ).toBeFalse();
         });
