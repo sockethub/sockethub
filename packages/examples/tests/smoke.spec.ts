@@ -1,8 +1,22 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("examples smoke against sockethub --examples", () => {
-    test("home page loads", async ({ page }) => {
+    test("root URL serves the server info page linking to the examples", async ({
+        page,
+    }) => {
         await page.goto("/");
+        await expect(page.getByRole("heading", { level: 1 })).toContainText(
+            "Sockethub",
+        );
+        await page.getByRole("link", { name: "open the examples" }).click();
+        await expect(page).toHaveURL(/\/examples$/);
+        await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+            "Sockethub Examples",
+        );
+    });
+
+    test("home page loads", async ({ page }) => {
+        await page.goto("/examples");
         await expect(page.getByRole("heading", { level: 1 })).toHaveText(
             "Sockethub Examples",
         );
@@ -21,7 +35,7 @@ test.describe("examples smoke against sockethub --examples", () => {
             }
         });
 
-        await page.goto("/feeds");
+        await page.goto("/examples/feeds");
         // Use a separate local fixture server to avoid Sockethub deadlocking when
         // the feeds platform fetches from the same HTTP port as the examples app.
         await page
@@ -52,7 +66,7 @@ test.describe("examples smoke against sockethub --examples", () => {
     });
 
     test("caldav page exposes the simple create flow", async ({ page }) => {
-        await page.goto("/caldav");
+        await page.goto("/examples/caldav");
         await expect(
             page.getByRole("heading", { name: "CalDAV Platform Example" }),
         ).toBeVisible();
@@ -82,7 +96,7 @@ test.describe("examples smoke against sockethub --examples", () => {
     test("carddav page exposes the address-book query flow", async ({
         page,
     }) => {
-        await page.goto("/carddav");
+        await page.goto("/examples/carddav");
         await expect(
             page.getByRole("heading", { name: "CardDAV Platform Example" }),
         ).toBeVisible();

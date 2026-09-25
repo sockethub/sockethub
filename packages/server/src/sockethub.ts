@@ -31,6 +31,7 @@ import {
     createRateLimiter,
     stopCleanup,
 } from "./rate-limiter.js";
+import { registerServerInfoRoute } from "./server-info.js";
 
 const log = createLogger("server:core");
 
@@ -167,6 +168,9 @@ class Sockethub {
 
         log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
+        registerServerInfoRoute(listener.getApp(), {
+            platforms: this.platformRegistry,
+        });
         registerHttpActionsRoutes(listener.getApp(), {
             processManager: this.processManager,
             parentId: this.parentId,

@@ -20,7 +20,8 @@
   "files": [
     "dist/",
     "bin/",
-    "res/"
+    "res/",
+    "static/"
   ],
   "bin": "bin/sockethub",
   "preferGlobal": true,
