@@ -15,7 +15,7 @@ import "$lib/sockethub";
                 <div>
                     <dt class="font-semibold inline">Socket.IO endpoint:</dt>
                     <dd class="inline">
-                        <code data-testid="api-info-socket">io({JSON.stringify(descriptor.endpoints.socket.origin)}, &#123; path: {JSON.stringify(descriptor.endpoints.socket.path)} &#125;)</code>
+                        <code data-testid="api-info-socket">io({JSON.stringify(location.origin)}, &#123; path: {JSON.stringify(descriptor.endpoints.socketIO)} &#125;)</code>
                     </dd>
                 </div>
             {/if}
@@ -23,7 +23,7 @@ import "$lib/sockethub";
                 <dt class="font-semibold inline">HTTP actions endpoint:</dt>
                 <dd class="inline">
                     {#if descriptor.endpoints?.httpActions}
-                        <code data-testid="api-info-endpoint">{descriptor.endpoints.httpActions}</code>
+                        <code data-testid="api-info-endpoint">{new URL(descriptor.endpoints.httpActions, location.origin).href}</code>
                     {:else}
                         <span data-testid="api-info-endpoint-off">not enabled on this server</span>
                     {/if}

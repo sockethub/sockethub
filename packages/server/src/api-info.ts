@@ -46,30 +46,35 @@ export function publicOrigin(getConfig: GetConfig = defaultGetConfig): string {
     return `${protocol}://${host}${portSuffix}`;
 }
 
-/** The origin and transport path a client hands to `io(origin, { path })`. */
-export function publicSocketEndpoint(
-    getConfig: GetConfig = defaultGetConfig,
-): ServiceEndpoints["socket"] {
+/**
+ * The origin and transport path a client hands to `io(origin, { path })`,
+ * as shown to humans on the info page.
+ */
+export function publicSocketEndpoint(getConfig: GetConfig = defaultGetConfig): {
+    origin: string;
+    path: string;
+} {
     return {
         origin: publicOrigin(getConfig),
-        path: nonEmptyString(getConfig("sockethub:path")) ?? "/",
+        path: publicEndpoints(getConfig).socketIO,
     };
 }
 
 /**
- * The connection endpoints advertised to clients. `httpActions` is present
- * only when that transport is enabled, so a client can tell "off" from
- * "unknown" without probing.
+ * The connection endpoints advertised to clients, as server-absolute paths
+ * on whatever origin the client reached us at. `httpActions` is present only
+ * when that transport is enabled, so a client can tell "off" from "unknown"
+ * without probing.
  */
 export function publicEndpoints(
     getConfig: GetConfig = defaultGetConfig,
 ): ServiceEndpoints {
     const endpoints: ServiceEndpoints = {
-        socket: publicSocketEndpoint(getConfig),
+        socketIO: nonEmptyString(getConfig("sockethub:path")) ?? "/",
     };
     const httpActionsPath = nonEmptyString(getConfig("httpActions:path"));
     if (Boolean(getConfig("httpActions:enabled")) && httpActionsPath) {
-        endpoints.httpActions = `${publicOrigin(getConfig)}${httpActionsPath}`;
+        endpoints.httpActions = httpActionsPath;
     }
     return endpoints;
 }

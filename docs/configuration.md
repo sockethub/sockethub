@@ -537,8 +537,8 @@ curl -H 'Accept: application/json' https://sh.example.org/
   "name": "sockethub",
   "apiVersion": 5,
   "endpoints": {
-    "socket": { "origin": "https://sh.example.org", "path": "/sockethub" },
-    "httpActions": "https://sh.example.org/sockethub-http"
+    "socketIO": "/sockethub",
+    "httpActions": "/sockethub-http"
   },
   "platforms": [
     { "id": "metadata", "apiVersion": 1 },
@@ -547,15 +547,16 @@ curl -H 'Accept: application/json' https://sh.example.org/
 }
 ```
 
-- `endpoints.socket` is the Socket.IO transport. `origin` is built from the
-  `public` settings (default ports omitted) and `path` is `sockethub.path`.
-  They are separate members because they are separate `io()` arguments: a
-  path appended to the URL would be read by Socket.IO as a namespace.
-  `SockethubClient.connect(baseUrl)` uses these, so an app needs only the
+- `endpoints` are server-absolute paths on the origin the descriptor was
+  fetched from; no origin is advertised, so a client always connects to the
+  server that answered and a wrong `public` block cannot misdirect it.
+  `endpoints.socketIO` is `sockethub.path`, to be passed as the `path` option
+  of `io()` (appended to the URL it would select a namespace instead).
+  `SockethubClient.connect(baseUrl)` does this, so an app needs only the
   server's base URL and keeps working when the paths change.
-- `endpoints.httpActions` is the absolute HTTP actions URL. It is present only
-  when HTTP actions are enabled, so a client can tell "off" from "unknown"
-  without probing.
+- `endpoints.httpActions` is `httpActions.path`. It is present only when HTTP
+  actions are enabled, so a client can tell "off" from "unknown" without
+  probing.
 - `apiVersion` is the SemVer **major** of the server package; each platform's
   `apiVersion` is the major of that platform's package (server `5.2.1` reports
   `5`, a platform at `1.0.1-alpha.19` reports `1`). The Socket.IO `schemas`

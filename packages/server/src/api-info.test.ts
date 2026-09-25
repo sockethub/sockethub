@@ -98,13 +98,13 @@ describe("api-info", () => {
     });
 
     describe("publicEndpoints", () => {
-        it("omits httpActions when disabled", () => {
+        it("advertises paths only, without an origin", () => {
             expect(publicEndpoints(getConfigWith())).toEqual({
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
+                socketIO: "/sockethub",
             });
         });
 
-        it("adds the absolute HTTP actions URL when enabled", () => {
+        it("adds the HTTP actions path when enabled", () => {
             expect(
                 publicEndpoints(
                     getConfigWith({
@@ -112,10 +112,13 @@ describe("api-info", () => {
                         "httpActions:path": "/actions",
                     }),
                 ),
-            ).toEqual({
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-                httpActions: "http://localhost:10550/actions",
-            });
+            ).toEqual({ socketIO: "/sockethub", httpActions: "/actions" });
+        });
+
+        it("falls back to the root path when no Socket.IO path is set", () => {
+            expect(
+                publicEndpoints(getConfigWith({ "sockethub:path": "" })).socketIO,
+            ).toBe("/");
         });
 
         it("omits httpActions when enabled without a path", () => {
@@ -146,8 +149,8 @@ describe("api-info", () => {
                 name: "sockethub",
                 apiVersion: SOCKETHUB_API_VERSION,
                 endpoints: {
-                    socket: { origin: "https://sh.example.org", path: "/sockethub" },
-                    httpActions: "https://sh.example.org/sockethub-http",
+                    socketIO: "/sockethub",
+                    httpActions: "/sockethub-http",
                 },
                 platforms: [{ id: "dummy", apiVersion: 3 }],
             });

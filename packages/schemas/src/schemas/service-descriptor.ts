@@ -16,14 +16,19 @@ export interface ServiceDescriptor {
     platforms: Array<{ id: string; apiVersion: number }>;
 }
 
+/**
+ * Where to connect, as server-absolute paths (leading `/`) on the origin the
+ * descriptor was fetched from. No origin is advertised: a client has already
+ * reached the server, and resolving paths against that same origin cannot be
+ * misdirected by a misconfigured `public` block.
+ */
 export interface ServiceEndpoints {
     /**
-     * The Socket.IO transport. The origin and the server path are separate
-     * members because they are separate `io()` arguments: a path appended to
-     * the URL would be read by Socket.IO as a namespace, not the server path.
+     * The Socket.IO server path, to be passed as the `path` option of `io()`
+     * (a path appended to the URL would select a namespace instead).
      */
-    socket: { origin: string; path: string };
-    /** Absolute URL of the HTTP actions endpoint. Present only when enabled. */
+    socketIO: string;
+    /** The HTTP actions path. Present only when that transport is enabled. */
     httpActions?: string;
 }
 
@@ -34,6 +39,9 @@ const apiVersion = {
 } as const;
 
 const nonEmptyString = { type: "string", minLength: 1 } as const;
+
+// A server-absolute path: starts with "/" and carries no scheme or host.
+const absolutePath = { type: "string", pattern: "^/" } as const;
 
 export const ServiceDescriptorSchema = {
     $id: "https://sockethub.org/schemas/v/service-descriptor.json",
@@ -48,23 +56,11 @@ export const ServiceDescriptorSchema = {
         apiVersion,
         endpoints: {
             type: "object",
-            required: ["socket"],
+            required: ["socketIO"],
             additionalProperties: true,
             properties: {
-                socket: {
-                    type: "object",
-                    required: ["origin", "path"],
-                    additionalProperties: true,
-                    properties: {
-                        // An origin only: scheme and host, no path or query.
-                        origin: {
-                            type: "string",
-                            pattern: "^https?://[^/?#\\s]+$",
-                        },
-                        path: nonEmptyString,
-                    },
-                },
-                httpActions: nonEmptyString,
+                socketIO: absolutePath,
+                httpActions: absolutePath,
             },
         },
         platforms: {

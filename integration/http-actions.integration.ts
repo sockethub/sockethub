@@ -311,8 +311,8 @@ describe("HTTP actions integration", () => {
         ]);
         // Endpoint discovery: the descriptor tells clients where to connect.
         expect(body.endpoints).toEqual({
-            socket: { origin: socketUrl, path: "/sockethub" },
-            httpActions: httpUrl,
+            socketIO: "/sockethub",
+            httpActions: httpPath,
         });
     });
 

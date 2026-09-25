@@ -8,7 +8,6 @@
  * from the `about` config block. Exact package versions stay off the page
  * unless the operator opts in with `about.showVersion`.
  */
-import type { ServiceEndpoints } from "@sockethub/schemas";
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import {
@@ -43,8 +42,15 @@ export type ServerInfo = {
     /** Only present when `about.showVersion` is enabled. */
     uptimeSeconds?: number;
     platforms: Array<{ id: string; apiVersion: number }>;
-    /** The advertised connection endpoints, plus the examples path when on. */
-    endpoints: ServiceEndpoints & { examples?: string };
+    /**
+     * Absolute forms of the advertised endpoints for humans: the descriptor
+     * publishes paths, the page shows the full `io()` call and URLs.
+     */
+    endpoints: {
+        socket: { origin: string; path: string };
+        httpActions?: string;
+        examples?: string;
+    };
 };
 
 // The URL builders live in api-info.ts so the descriptor and this page share
@@ -103,8 +109,14 @@ export function buildServerInfo(
             id: platform.id,
             apiVersion: platform.apiVersion,
         })),
-        endpoints: publicEndpoints(getConfig),
+        endpoints: {
+            socket: publicSocketEndpoint(getConfig),
+        },
     };
+    const httpActionsPath = publicEndpoints(getConfig).httpActions;
+    if (httpActionsPath) {
+        info.endpoints.httpActions = `${publicOrigin(getConfig)}${httpActionsPath}`;
+    }
     if (showVersion) {
         info.version = SOCKETHUB_VERSION;
         info.uptimeSeconds = Math.floor(uptime());

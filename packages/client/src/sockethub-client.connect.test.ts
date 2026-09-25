@@ -9,10 +9,7 @@ import SockethubClient, {
 const descriptor = {
     name: "sockethub",
     apiVersion: 5,
-    endpoints: {
-        socket: { origin: "https://sh.example.org", path: "/ws" },
-        httpActions: "https://sh.example.org/actions",
-    },
+    endpoints: { socketIO: "/ws", httpActions: "/actions" },
     platforms: [{ id: "dummy", apiVersion: 3 }],
 };
 
@@ -183,7 +180,8 @@ describe("discoverSockethub", () => {
         for (const bad of [
             { name: "other", apiVersion: 5, platforms: [] },
             { ...descriptor, apiVersion: "5" },
-            { ...descriptor, endpoints: { socket: { origin: "x" } } },
+            { ...descriptor, endpoints: { socketIO: "ws" } },
+            { ...descriptor, endpoints: { httpActions: "/actions" } },
             [],
             null,
         ]) {
@@ -199,7 +197,7 @@ describe("discoverSockethub", () => {
 });
 
 describe("SockethubClient.connect", () => {
-    it("connects with the discovered origin and path and exposes the descriptor", async () => {
+    it("connects to the base origin with the discovered path and exposes the descriptor", async () => {
         const socket = fakeSocket();
         const ioCalls: Array<{ uri: string; opts?: object }> = [];
         const io = ((uri: string, opts?: object) => {
@@ -222,10 +220,28 @@ describe("SockethubClient.connect", () => {
         ]);
         expect(sc).to.be.instanceOf(SockethubClient);
         expect(sc.descriptor).to.deep.equal(descriptor);
-        expect(sc.descriptor?.endpoints?.httpActions).to.equal(
-            "https://sh.example.org/actions",
-        );
+        expect(sc.serverOrigin).to.equal("https://sh.example.org");
+        expect(
+            new URL(sc.descriptor?.endpoints?.httpActions ?? "", sc.serverOrigin)
+                .href,
+        ).to.equal("https://sh.example.org/actions");
         expect(sc.getInitState()).to.equal("idle");
+    });
+
+    it("ignores a path prefix on the base URL and connects to its origin", async () => {
+        const uris: Array<string> = [];
+        const sc = await SockethubClient.connect(
+            "http://localhost:10550/some/prefix/",
+            {
+                io: ((uri: string) => {
+                    uris.push(uri);
+                    return fakeSocket();
+                }) as never,
+                fetch: fetchReturning(jsonResponse(descriptor)).doFetch,
+            },
+        );
+        expect(uris).to.deep.equal(["http://localhost:10550"]);
+        expect(sc.serverOrigin).to.equal("http://localhost:10550");
     });
 
     it("rejects without creating a socket when discovery fails", async () => {
@@ -258,79 +274,6 @@ describe("SockethubClient.connect", () => {
         expect(err.message).to.contain("does not advertise a Socket.IO endpoint");
     });
 
-    it("rejects a downgrade from an https base URL to an http socket origin", async () => {
-        let created = false;
-        const insecure = {
-            ...descriptor,
-            endpoints: {
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-            },
-        };
-        const err = await rejection(
-            SockethubClient.connect("https://sh.example.org", {
-                io: (() => {
-                    created = true;
-                    return fakeSocket();
-                }) as never,
-                fetch: fetchReturning(jsonResponse(insecure)).doFetch,
-            }),
-        );
-        expect(err).to.be.instanceOf(DiscoveryError);
-        expect(err.message).to.contain("plaintext socket origin");
-        expect(err.message).to.contain("allowInsecureSocket");
-        expect(created).to.equal(false);
-    });
-
-    it("accepts the downgrade when allowInsecureSocket is set", async () => {
-        const insecure = {
-            ...descriptor,
-            endpoints: {
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-            },
-        };
-        const ioCalls: Array<string> = [];
-        const sc = await SockethubClient.connect("https://sh.example.org", {
-            io: ((uri: string) => {
-                ioCalls.push(uri);
-                return fakeSocket();
-            }) as never,
-            fetch: fetchReturning(jsonResponse(insecure)).doFetch,
-            allowInsecureSocket: true,
-        });
-        expect(sc).to.be.instanceOf(SockethubClient);
-        expect(ioCalls).to.deep.equal(["http://localhost:10550"]);
-    });
-
-    it("allows http to http, as in local development", async () => {
-        const local = {
-            ...descriptor,
-            endpoints: {
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-            },
-        };
-        const sc = await SockethubClient.connect("http://localhost:10550", {
-            io: (() => fakeSocket()) as never,
-            fetch: fetchReturning(jsonResponse(local)).doFetch,
-        });
-        expect(sc).to.be.instanceOf(SockethubClient);
-    });
-
-    it("rejects a socket origin that is not an http(s) URL", async () => {
-        for (const origin of ["ftp://sh.example.org", "javascript:alert(1)", "not a url"]) {
-            const bad = {
-                ...descriptor,
-                endpoints: { socket: { origin, path: "/sockethub" } },
-            };
-            const err = await rejection(
-                SockethubClient.connect("https://sh.example.org", {
-                    io: (() => fakeSocket()) as never,
-                    fetch: fetchReturning(jsonResponse(bad)).doFetch,
-                }),
-            );
-            expect(err, origin).to.be.instanceOf(DiscoveryError);
-        }
-    });
-
     it("uses a global io() when none is passed", async () => {
         const g = globalThis as { io?: unknown };
         const previous = g.io;
@@ -355,8 +298,9 @@ describe("SockethubClient.connect", () => {
         }
     });
 
-    it("leaves the descriptor undefined for a client built from a socket", () => {
+    it("leaves the descriptor and origin undefined for a client built from a socket", () => {
         const sc = new SockethubClient(fakeSocket() as never);
         expect(sc.descriptor).to.equal(undefined);
+        expect(sc.serverOrigin).to.equal(undefined);
     });
 });

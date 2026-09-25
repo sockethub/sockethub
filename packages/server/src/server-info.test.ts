@@ -328,12 +328,7 @@ describe("server-info", () => {
             expect(body).toEqual({
                 name: "sockethub",
                 apiVersion: SOCKETHUB_API_VERSION,
-                endpoints: {
-                    socket: {
-                        origin: "http://localhost:10550",
-                        path: "/sockethub",
-                    },
-                },
+                endpoints: { socketIO: "/sockethub" },
                 platforms: [
                     { id: "dummy", apiVersion: 3 },
                     { id: "irc", apiVersion: 4 },
@@ -369,8 +364,8 @@ describe("server-info", () => {
                 const body = await res.json();
                 expect(validateServiceDescriptor(body)).toBeTrue();
                 expect(body.endpoints).toEqual({
-                    socket: { origin: "https://sh.example.org", path: "/ws" },
-                    httpActions: "https://sh.example.org/actions",
+                    socketIO: "/ws",
+                    httpActions: "/actions",
                 });
             } finally {
                 await new Promise<void>((resolve, reject) =>

@@ -536,10 +536,7 @@ describe("http actions", () => {
         expect(res.jsonBody).toEqual({
             name: "sockethub",
             apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
-            endpoints: {
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-                httpActions: "http://localhost:10550/sockethub-http",
-            },
+            endpoints: { socketIO: "/sockethub", httpActions: "/sockethub-http" },
             platforms: [
                 { id: "metadata", apiVersion: 2 },
                 { id: "caldav", apiVersion: 1 },
@@ -616,12 +613,10 @@ describe("http actions", () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.jsonBody.name).toBe("sockethub");
-        expect(res.jsonBody.endpoints.httpActions).toBe(
-            "http://localhost:10550/custom/actions",
-        );
+        expect(res.jsonBody.endpoints.httpActions).toBe("/custom/actions");
     });
 
-    it("advertises the public origin in the endpoints", async () => {
+    it("advertises configured paths without an origin", async () => {
         const handlers = buildHandlers({
             fakeRedis: new FakeRedis(),
             configOverrides: {
@@ -637,9 +632,10 @@ describe("http actions", () => {
         await handlers["GET:/actions"](req, res);
 
         expect(res.jsonBody.endpoints).toEqual({
-            socket: { origin: "https://sh.example.org", path: "/ws" },
-            httpActions: "https://sh.example.org/actions",
+            socketIO: "/ws",
+            httpActions: "/actions",
         });
+        expect(JSON.stringify(res.jsonBody)).not.toContain("sh.example.org");
     });
 
     it("registers no descriptor when HTTP actions are disabled", () => {
@@ -1174,11 +1170,8 @@ describe("http actions service descriptor over HTTP", () => {
                 name: "sockethub",
                 apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
                 endpoints: {
-                    socket: {
-                        origin: "http://localhost:10550",
-                        path: "/sockethub",
-                    },
-                    httpActions: "http://localhost:10550/sockethub-http",
+                    socketIO: "/sockethub",
+                    httpActions: "/sockethub-http",
                 },
                 platforms: [
                     { id: "metadata", apiVersion: 2 },

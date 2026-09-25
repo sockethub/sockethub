@@ -27,9 +27,9 @@ These scripts set `io` and `SockethubClient` as globals.
 **Discovery** (recommended): give the client the server's base URL and let it
 find the Socket.IO endpoint. The client fetches the root URL with
 `Accept: application/json`, validates the service descriptor the server
-publishes there, and opens the socket with the advertised origin and path. An
-operator can move `sockethub.path` or `httpActions.path` without breaking your
-app.
+publishes there, and opens the socket to that same origin on the advertised
+path. An operator can move `sockethub.path` or `httpActions.path` without
+breaking your app.
 
 ```javascript
 // Browser, using the io and SockethubClient globals from the script tags
@@ -51,27 +51,21 @@ const sc = await SockethubClient.connect('http://localhost:10550', {
 `/socket.io.js`), then imports `socket.io-client`; pass it explicitly with the
 `io` option when neither applies. Extra Socket.IO options such as `auth` or
 `transports` go in `socketOptions`. The fetched descriptor is available as
-`sc.descriptor`, so the HTTP actions URL and the platform API versions are at
-hand without a second request:
+`sc.descriptor`, so the HTTP actions path and the platform API versions are at
+hand without a second request. Endpoints are paths on the server's origin,
+which `sc.serverOrigin` holds:
 
 ```javascript
 console.log(sc.descriptor.apiVersion);            // 5
-console.log(sc.descriptor.endpoints.socket);      // { origin, path }
-console.log(sc.descriptor.endpoints.httpActions); // URL, or undefined when off
+console.log(sc.descriptor.endpoints.socketIO);    // '/sockethub'
+console.log(sc.descriptor.endpoints.httpActions); // '/sockethub-http', or undefined when off
 console.log(sc.descriptor.platforms);             // [{ id, apiVersion }, ...]
+const httpActionsUrl = new URL(sc.descriptor.endpoints.httpActions, sc.serverOrigin);
 ```
 
 `connect()` rejects with a `DiscoveryError` that says what went wrong when the
 server is unreachable, answers with something other than JSON, returns an
-invalid descriptor, or (older servers) does not advertise its endpoints. It
-also refuses to step down from an `https://` base URL to an `http://` socket
-origin, which is what a server with its `public` settings left at the
-`localhost` defaults advertises; fix the server configuration, or pass
-`allowInsecureSocket: true` if the plaintext hop is intentional. That opt-out
-only lifts the client's own check: a browser page served over `https://`
-blocks plaintext polling and WebSocket transports as mixed content (loopback
-addresses excepted), so browser apps need an `https://` socket endpoint
-regardless.
+invalid descriptor, or (older servers) does not advertise its endpoints.
 
 **Explicit socket**: if your app already knows the Socket.IO path, or needs
 full control over the socket, create it yourself and hand it to the
@@ -385,18 +379,19 @@ streams one result per message as NDJSON (newline-delimited JSON).
 
 HTTP actions are off by default; the operator enables them with
 `httpActions.enabled` (see [Configuration](configuration.md#http-actions)).
-The service descriptor advertises the endpoint when it is on, so a client
-needs only the server's base URL. `SockethubClient.connect()` exposes it as
-`sc.descriptor.endpoints.httpActions`; a client that never opens a socket can
-fetch the descriptor itself:
+The service descriptor advertises the endpoint path when it is on, so a
+client needs only the server's base URL. `SockethubClient.connect()` exposes it
+as `sc.descriptor.endpoints.httpActions`; a client that never opens a socket
+can fetch the descriptor itself:
 
 ```js
 import { discoverSockethub } from '@sockethub/client';
 
-const { endpoints, apiVersion, platforms } =
-    await discoverSockethub('http://localhost:10550');
-// endpoints.httpActions: 'http://localhost:10550/sockethub-http', or undefined
+const base = 'http://localhost:10550';
+const { endpoints, apiVersion, platforms } = await discoverSockethub(base);
+// endpoints.httpActions: '/sockethub-http', or undefined when disabled
 // platforms: [{ id: 'feeds', apiVersion: 4 }, ...]
+const httpActionsUrl = endpoints.httpActions && new URL(endpoints.httpActions, base);
 ```
 
 Without the client library, `GET` the base URL with
