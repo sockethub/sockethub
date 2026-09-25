@@ -6,7 +6,8 @@
  * of the same public API information the HTTP actions service descriptor
  * publishes to machines (see `api-info.ts`), plus operator-supplied details
  * from the `about` config block. Exact package versions stay off the page
- * unless the operator opts in with `about.showVersion`.
+ * unless the operator opts in with `about.showVersion`, and uptime unless
+ * they opt in with `about.showUptime`.
  */
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
@@ -39,7 +40,7 @@ export type ServerInfo = {
     apiVersion: number;
     /** Only present when `about.showVersion` is enabled. */
     version?: string;
-    /** Only present when `about.showVersion` is enabled. */
+    /** Only present when `about.showUptime` is enabled. */
     uptimeSeconds?: number;
     platforms: Array<{ id: string; apiVersion: number }>;
     /**
@@ -98,6 +99,7 @@ export function buildServerInfo(
     const getConfig = deps.getConfig ?? ((key: string) => config.get(key));
     const uptime = deps.uptimeSeconds ?? (() => process.uptime());
     const showVersion = Boolean(getConfig("about:showVersion"));
+    const showUptime = Boolean(getConfig("about:showUptime"));
 
     const info: ServerInfo = {
         name: nonEmptyString(getConfig("about:name")),
@@ -119,6 +121,8 @@ export function buildServerInfo(
     }
     if (showVersion) {
         info.version = SOCKETHUB_VERSION;
+    }
+    if (showUptime) {
         info.uptimeSeconds = Math.floor(uptime());
     }
     if (getConfig("examples")) {

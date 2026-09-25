@@ -62,6 +62,7 @@ const defaults: Record<string, unknown> = {
     "about:contact": "",
     "about:links": [],
     "about:showVersion": false,
+    "about:showUptime": false,
 };
 
 function getConfigWith(overrides: Record<string, unknown> = {}) {
@@ -122,6 +123,7 @@ describe("server-info", () => {
                         { label: "Privacy", url: "https://example.org/p" },
                     ],
                     "about:showVersion": true,
+                    "about:showUptime": true,
                 }),
                 uptimeSeconds: () => 90061.7,
             });
@@ -133,6 +135,22 @@ describe("server-info", () => {
             ]);
             expect(info.version).toBe(SOCKETHUB_VERSION);
             expect(info.uptimeSeconds).toBe(90061);
+        });
+
+        it("gates version and uptime independently", () => {
+            const versionOnly = buildServerInfo(platforms, {
+                getConfig: getConfigWith({ "about:showVersion": true }),
+                uptimeSeconds: () => 100,
+            });
+            expect(versionOnly.version).toBe(SOCKETHUB_VERSION);
+            expect(versionOnly.uptimeSeconds).toBeUndefined();
+
+            const uptimeOnly = buildServerInfo(platforms, {
+                getConfig: getConfigWith({ "about:showUptime": true }),
+                uptimeSeconds: () => 100,
+            });
+            expect(uptimeOnly.version).toBeUndefined();
+            expect(uptimeOnly.uptimeSeconds).toBe(100);
         });
 
         it("drops links that are not http(s) or are malformed", () => {
@@ -250,6 +268,7 @@ describe("server-info", () => {
                         examples: true,
                         "httpActions:enabled": true,
                         "about:showVersion": true,
+                        "about:showUptime": true,
                         "about:contact": "ops@example.org",
                     }),
                     uptimeSeconds: () => 7200,
