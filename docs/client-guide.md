@@ -60,7 +60,8 @@ console.log(sc.descriptor.apiVersion);            // 5
 console.log(sc.descriptor.endpoints.socketIO);    // '/sockethub'
 console.log(sc.descriptor.endpoints.httpActions); // '/sockethub-http', or undefined when off
 console.log(sc.descriptor.platforms);             // [{ id, apiVersion }, ...]
-const httpActionsUrl = new URL(sc.descriptor.endpoints.httpActions, sc.serverOrigin);
+const { httpActions } = sc.descriptor.endpoints;
+const httpActionsUrl = httpActions && new URL(httpActions, sc.serverOrigin);
 ```
 
 `connect()` rejects with a `DiscoveryError` that says what went wrong when the

@@ -113,6 +113,8 @@ describe("validateServiceDescriptor endpoints", () => {
     for (const socketIO of [
         "",
         "sockethub",
+        "//other.example/sockethub",
+        "/\\other.example/sockethub",
         "https://sh.example.org/sockethub",
         { origin: "https://sh.example.org", path: "/sockethub" },
         42,
@@ -130,6 +132,8 @@ describe("validateServiceDescriptor endpoints", () => {
     for (const httpActions of [
         "",
         "sockethub-http",
+        "//other.example/sockethub-http",
+        "/\\other.example/sockethub-http",
         "https://sh.example.org/sockethub-http",
         42,
     ]) {

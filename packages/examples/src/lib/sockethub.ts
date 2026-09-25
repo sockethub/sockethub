@@ -158,8 +158,12 @@ async function sockethubConnect(baseUrl: string) {
         });
         return;
     }
-    if (sc.descriptor) {
-        apiDiscovery.set({ state: "available", descriptor: sc.descriptor });
+    if (sc.descriptor && sc.serverOrigin) {
+        apiDiscovery.set({
+            state: "available",
+            descriptor: sc.descriptor,
+            serverOrigin: sc.serverOrigin,
+        });
     }
     sc.socket.on("connect", stateChange("connect"));
     sc.socket.on("error", stateChange("error"));

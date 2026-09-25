@@ -405,7 +405,8 @@ export default class SockethubClient {
     /**
      * The origin the descriptor was discovered from and the socket connects
      * to. Resolve the descriptor's endpoint paths against it, for example
-     * `new URL(sc.descriptor.endpoints.httpActions, sc.serverOrigin)`.
+     * `new URL(path, sc.serverOrigin)`, guarding optional members such as
+     * `endpoints.httpActions` first since they may be absent.
      * Undefined for clients built from a ready-made socket.
      */
     public readonly serverOrigin?: string;
@@ -443,7 +444,10 @@ export default class SockethubClient {
      *   initTimeoutMs: 5000,
      * });
      * await sc.ready();
-     * console.log(new URL(sc.descriptor.endpoints.httpActions, sc.serverOrigin).href);
+     * const { httpActions } = sc.descriptor.endpoints;
+     * if (httpActions) {
+     *   console.log(new URL(httpActions, sc.serverOrigin).href);
+     * }
      * ```
      */
     public static async connect(
