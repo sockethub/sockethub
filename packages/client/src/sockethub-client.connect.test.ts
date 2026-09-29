@@ -4,6 +4,7 @@ import EventEmitter from "eventemitter3";
 import SockethubClient, {
     DiscoveryError,
     discoverSockethub,
+    resolveEndpoint,
 } from "./sockethub-client";
 
 const descriptor = {
@@ -221,10 +222,12 @@ describe("SockethubClient.connect", () => {
         expect(sc).to.be.instanceOf(SockethubClient);
         expect(sc.descriptor).to.deep.equal(descriptor);
         expect(sc.serverOrigin).to.equal("https://sh.example.org");
-        expect(
-            new URL(sc.descriptor?.endpoints?.httpActions ?? "", sc.serverOrigin)
-                .href,
-        ).to.equal("https://sh.example.org/actions");
+        expect(sc.endpointUrl("httpActions")).to.equal(
+            "https://sh.example.org/actions",
+        );
+        expect(sc.endpointUrl("socketIO")).to.equal(
+            "https://sh.example.org/ws",
+        );
         expect(sc.getInitState()).to.equal("idle");
     });
 
@@ -302,5 +305,42 @@ describe("SockethubClient.connect", () => {
         const sc = new SockethubClient(fakeSocket() as never);
         expect(sc.descriptor).to.equal(undefined);
         expect(sc.serverOrigin).to.equal(undefined);
+        expect(sc.endpointUrl("httpActions")).to.equal(undefined);
+    });
+
+    it("returns undefined from endpointUrl for endpoints the server does not advertise", async () => {
+        const sc = await SockethubClient.connect("https://sh.example.org", {
+            io: (() => fakeSocket()) as never,
+            fetch: fetchReturning(
+                jsonResponse({ ...descriptor, endpoints: { socketIO: "/ws" } }),
+            ).doFetch,
+        });
+        expect(sc.endpointUrl("httpActions")).to.equal(undefined);
+    });
+});
+
+describe("resolveEndpoint", () => {
+    it("resolves a path against the server origin", () => {
+        expect(resolveEndpoint("https://sh.example.org", "/actions")).to.equal(
+            "https://sh.example.org/actions",
+        );
+        expect(
+            resolveEndpoint("http://localhost:10550/prefix", "/x/y?z=1"),
+        ).to.equal("http://localhost:10550/x/y?z=1");
+    });
+
+    it("refuses paths that resolve to another origin", () => {
+        for (const path of [
+            "//evil.example/collect",
+            "/\\evil.example/collect",
+            "/\t/evil.example/collect",
+            "/\r\n\\evil.example/collect",
+            "https://evil.example/collect",
+        ]) {
+            expect(() => resolveEndpoint("https://sh.example.org", path)).to.throw(
+                DiscoveryError,
+                "resolves to https://evil.example",
+            );
+        }
     });
 });

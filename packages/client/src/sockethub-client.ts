@@ -1,4 +1,8 @@
-import type { ActivityStream, ServiceDescriptor } from "@sockethub/schemas";
+import type {
+    ActivityStream,
+    ServiceDescriptor,
+    ServiceEndpoints,
+} from "@sockethub/schemas";
 import {
     addPlatformContext,
     addPlatformSchema,
@@ -11,7 +15,7 @@ import {
 import EventEmitter from "eventemitter3";
 import type { ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 
-export type { ServiceDescriptor };
+export type { ServiceDescriptor, ServiceEndpoints };
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
@@ -174,6 +178,22 @@ export async function discoverSockethub(
         );
     }
     return descriptor;
+}
+
+/**
+ * Resolve an advertised endpoint path against the server origin, refusing any
+ * result that lands on another origin. The schema already rejects paths that
+ * URL resolution would read as protocol-relative; this is the belt to that
+ * brace for callers that build URLs from descriptor values.
+ */
+export function resolveEndpoint(serverOrigin: string, path: string): string {
+    const url = new URL(path, serverOrigin);
+    if (url.origin !== new URL(serverOrigin).origin) {
+        throw new DiscoveryError(
+            `Sockethub discovery failed: endpoint path ${JSON.stringify(path)} resolves to ${url.origin}, not ${serverOrigin}`,
+        );
+    }
+    return url.href;
 }
 
 async function resolveSocketFactory(
@@ -404,12 +424,32 @@ export default class SockethubClient {
     public readonly descriptor?: ServiceDescriptor;
     /**
      * The origin the descriptor was discovered from and the socket connects
-     * to. Resolve the descriptor's endpoint paths against it, for example
-     * `new URL(path, sc.serverOrigin)`, guarding optional members such as
-     * `endpoints.httpActions` first since they may be absent.
+     * to. `endpointUrl()` resolves the descriptor's endpoint paths against it.
      * Undefined for clients built from a ready-made socket.
      */
     public readonly serverOrigin?: string;
+
+    /**
+     * Absolute URL of an advertised endpoint, resolved against
+     * `serverOrigin`, or undefined when the server does not advertise it (for
+     * example `httpActions` while HTTP actions are disabled) or when this
+     * client was not created by `connect()`.
+     *
+     * @example
+     * ```typescript
+     * const url = sc.endpointUrl('httpActions');
+     * if (url) {
+     *   await fetch(url, { method: 'POST', body });
+     * }
+     * ```
+     */
+    public endpointUrl(name: keyof ServiceEndpoints): string | undefined {
+        const path = this.descriptor?.endpoints?.[name];
+        if (!this.serverOrigin || !path) {
+            return undefined;
+        }
+        return resolveEndpoint(this.serverOrigin, path);
+    }
     private readonly options: Required<SockethubClientOptions>;
     private platformRegistry = new Map<string, PlatformRegistryEntry>();
     private asContextUrl?: string;
@@ -444,10 +484,7 @@ export default class SockethubClient {
      *   initTimeoutMs: 5000,
      * });
      * await sc.ready();
-     * const { httpActions } = sc.descriptor.endpoints;
-     * if (httpActions) {
-     *   console.log(new URL(httpActions, sc.serverOrigin).href);
-     * }
+     * console.log(sc.endpointUrl('httpActions')); // absolute URL, or undefined
      * ```
      */
     public static async connect(
