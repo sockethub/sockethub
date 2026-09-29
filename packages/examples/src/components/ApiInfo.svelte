@@ -1,5 +1,6 @@
 <script lang="ts">
 import { apiDiscovery } from "$lib/api-discovery";
+import { resolveEndpoint } from "@sockethub/client";
 // Importing the client module starts discovery and fills the store.
 import "$lib/sockethub";
 </script>
@@ -23,7 +24,7 @@ import "$lib/sockethub";
                 <dt class="font-semibold inline">HTTP actions endpoint:</dt>
                 <dd class="inline">
                     {#if descriptor.endpoints?.httpActions}
-                        <code data-testid="api-info-endpoint">{new URL(descriptor.endpoints.httpActions, serverOrigin).href}</code>
+                        <code data-testid="api-info-endpoint">{resolveEndpoint(serverOrigin, descriptor.endpoints.httpActions)}</code>
                     {:else}
                         <span data-testid="api-info-endpoint-off">not enabled on this server</span>
                     {/if}

@@ -40,10 +40,15 @@ const apiVersion = {
 
 const nonEmptyString = { type: "string", minLength: 1 } as const;
 
-// A server-absolute path: starts with a single "/" and carries no scheme or
-// host. "//host/x" and "/\\host/x" are rejected because URL resolution would
-// read them as protocol-relative and send the client to another origin.
-const absolutePath = { type: "string", pattern: "^/(?![/\\\\])" } as const;
+// A server-absolute path: a single leading "/" followed by no whitespace and
+// no backslash. Anything URL resolution could read as protocol-relative is
+// rejected: "//host/x", "/\\host/x", and "/<tab>/host/x" (the WHATWG parser
+// strips tab, CR and LF before parsing and treats "\\" as "/"), any of which
+// would send a client to another origin.
+const absolutePath = {
+    type: "string",
+    pattern: "^/(?![/\\\\])[^\\s\\\\]*$",
+} as const;
 
 export const ServiceDescriptorSchema = {
     $id: "https://sockethub.org/schemas/v/service-descriptor.json",

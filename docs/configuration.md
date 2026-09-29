@@ -548,9 +548,9 @@ curl -H 'Accept: application/json' https://sh.example.org/
 }
 ```
 
-- `endpoints` are server-absolute paths on the origin the descriptor was
-  fetched from; no origin is advertised, so a client always connects to the
-  server that answered and a wrong `public` block cannot misdirect it.
+- `endpoints` are paths, not URLs. A client resolves them against the origin
+  it fetched the descriptor from, so it always connects to the server that
+  answered; the `public` settings play no part in it.
   `endpoints.socketIO` is `sockethub.path`, to be passed as the `path` option
   of `io()` (appended to the URL it would select a namespace instead).
   `SockethubClient.connect(baseUrl)` does this, so an app needs only the
