@@ -322,7 +322,7 @@ ${examplesNotice}
 ${serverTable}
 ${table("Connect", connectRows)}
 ${table("Server Software", softwareRows)}
-<footer><a href="${DOCS_URL}" rel="noopener">Sockethub</a> is a multi-protocol gateway for the Web, speaking <a href="${ACTIVITYSTREAMS_URL}" rel="noopener">ActivityStreams 2.0</a>. <a href="${SOURCE_URL}" rel="noopener">Source</a>.</footer>
+<footer><a href="${DOCS_URL}" rel="noopener">Sockethub</a> is a multi-protocol gateway for the Web, speaking <a href="${ACTIVITYSTREAMS_URL}" rel="noopener">ActivityStreams 2.0</a>.</footer>
 </main>
 </body>
 </html>
