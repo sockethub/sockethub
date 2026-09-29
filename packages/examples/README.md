@@ -27,7 +27,7 @@ credentials, connect, join, and send.
 
 ## Prerequisites
 
-- Sockethub server (from repo root: `bun run dev` serves examples at `http://localhost:10550`)
+- Sockethub server (from repo root: `bun run dev` serves examples at `http://localhost:10550/examples`)
 - Redis (required by the server)
 
 ## Run standalone (optional)

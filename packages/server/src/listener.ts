@@ -14,6 +14,7 @@ import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import { parseCorsOrigins } from "./cors.js";
 import routes from "./routes.js";
+import { EXAMPLES_PATH } from "./server-info.js";
 import { resolveTrustProxy } from "./trust-proxy.js";
 import { SOCKETHUB_VERSION } from "./version.js";
 
@@ -27,7 +28,7 @@ log.info(`sockethub v${SOCKETHUB_VERSION}`);
  * Handles the initialization and access of Sockethub resources.
  *
  *  - HTTP Server
- *  - Express (serves resources and example routes)
+ *  - Express (serves resources, the server info page and example routes)
  *  - Socket.io (bidirectional websocket communication)
  */
 class Listener {
@@ -106,9 +107,10 @@ class Listener {
         }
 
         const httpActionsPath = config.get("httpActions:path");
-        // HTTP actions requests fall through this catch-all to their own route,
-        // which enforces the configured `rateLimiter`. They must not also be
-        // gated by the examples file-access limiter below.
+        // An operator may configure the HTTP actions path under the examples
+        // prefix. Those requests must reach their own route, which enforces
+        // the configured `rateLimiter`, instead of the SPA fallback or the
+        // examples file-access limiter below.
         const isHttpActionsPath = (reqPath: string) =>
             typeof httpActionsPath === "string" &&
             (reqPath === httpActionsPath ||
@@ -149,15 +151,35 @@ class Listener {
             }),
         );
 
-        app.use(express.static(examplesPath));
+        // The examples app lives under its own prefix (its SvelteKit build
+        // uses the same base path), leaving the root URL to the server info
+        // page registered by the main Sockethub bootstrap.
+        // `redirect: false` so a request for the bare prefix falls through to
+        // the SPA fallback instead of a 301 to a trailing slash. Static files
+        // are not rate limited: a single page load fetches dozens of chunks,
+        // so the per-minute budget below would starve the app itself. Only
+        // the fallback, which reads the filesystem for arbitrary paths, is.
+        const examplesStatic = express.static(examplesPath, {
+            redirect: false,
+        });
+        app.use(
+            EXAMPLES_PATH,
+            (req: Request, res: Response, next: NextFunction) => {
+                // Inside a mounted handler `req.path` is relative to the mount.
+                if (isHttpActionsPath(`${req.baseUrl}${req.path}`)) {
+                    next();
+                    return;
+                }
+                examplesStatic(req, res, next);
+            },
+        );
 
         const examplesIndex = path.join(examplesPath, "index.html");
-        // SPA fallback: serve index.html for any unmatched GET. Express 5 /
-        // path-to-regexp v8 no longer accept the bare "*" string path, so use a
-        // regex that matches every path instead. HTTP actions requests fall
-        // through to their own route rather than the examples index.
+        // SPA fallback: serve index.html for any unmatched GET below the
+        // examples prefix. Express 5 / path-to-regexp v8 no longer accept
+        // string wildcards, so match the prefix with a regex.
         app.get(
-            /.*/,
+            /^\/examples(\/.*)?$/,
             limiter,
             (req: Request, res: Response, next: NextFunction) => {
                 if (isHttpActionsPath(req.path)) {
@@ -165,14 +187,16 @@ class Listener {
                     return;
                 }
                 log.debug(`examples request ${req.path}`);
-                res.sendFile(examplesIndex);
+                // The install location is not user input, so dot-segments in
+                // it (~/.bun, ~/.nvm, ...) must not make `send` 404 the file.
+                res.sendFile(examplesIndex, { dotfiles: "allow" });
             },
         );
 
         log.info(
             `examples served at http://${config.get("sockethub:host")}:${config.get(
                 "sockethub:port",
-            )}`,
+            )}${EXAMPLES_PATH}`,
         );
     }
 

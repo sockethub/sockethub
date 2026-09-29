@@ -9,6 +9,7 @@ import {
 } from "@sockethub/schemas";
 import chalk from "chalk";
 import config from "../config.js";
+import { EXAMPLES_PATH } from "../server-info.js";
 import loadPlatforms, {
     type PlatformMap,
     type PlatformSchemaRegistry,
@@ -53,9 +54,9 @@ export function printSettingsInfo(
     const wsUrl = `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}${config.get("sockethub:path")}`;
     logFn(`${chalk.cyan("websocket:")} ${chalk.blue(wsUrl)}`);
 
-    const examplesUrl = `http://${config.get("public:host")}:${config.get(
-        "public:port",
-    )}${config.get("public:path")}`;
+    const examplesUrl = `${config.get("public:protocol")}://${config.get(
+        "public:host",
+    )}:${config.get("public:port")}${EXAMPLES_PATH}`;
     logFn(
         `${chalk.cyan("examples:")} ${config.get("examples") ? chalk.blue(examplesUrl) : "disabled"}`,
     );

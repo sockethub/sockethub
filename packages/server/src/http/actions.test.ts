@@ -12,7 +12,7 @@ import express from "express";
 import { buildPlatformRegistryPayload } from "../api-info.js";
 import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import { apiVersionFromSemver, SOCKETHUB_VERSION } from "../version.js";
-import { registerHttpActionsRoutes } from "./actions.js";
+import { redactRequestId, registerHttpActionsRoutes } from "./actions.js";
 import {
     hasHttpSessions,
     unregisterHttpSession,
@@ -1183,5 +1183,21 @@ describe("http actions service descriptor over HTTP", () => {
             );
             expect(invalid.status).toBe(400);
         });
+    });
+});
+
+describe("redactRequestId", () => {
+    it("keeps only a short prefix of long ids", () => {
+        const id = "3f9c2b7e-1a4d-4c8e-9f0b-6d2a8e5c1b47";
+        const redacted = redactRequestId(id);
+        expect(redacted).toBe("3f9c2b7e…");
+        expect(redacted).not.toContain(id.slice(8));
+    });
+
+    it("hides short ids completely", () => {
+        expect(redactRequestId("1")).toBe("…");
+        expect(redactRequestId("12345")).toBe("…");
+        expect(redactRequestId("abcdefghijkl")).toBe("…");
+        expect(redactRequestId("abcdefghijklm")).toBe("abcdefgh…");
     });
 });

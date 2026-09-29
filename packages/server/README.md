@@ -198,6 +198,9 @@ For production, with examples disabled.
 
 `$ LOG_LEVEL=debug bin/sockethub`
 
+The root URL always serves a server info page (see `about` in
+[`docs/configuration.md`](../../docs/configuration.md#server-info-page)).
+
 ## License
 
 Sockethub is licensed under the

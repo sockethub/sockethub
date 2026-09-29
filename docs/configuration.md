@@ -30,6 +30,14 @@ does not start).
 {
   "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
   "examples": true,
+  "about": {
+    "name": "",
+    "description": "",
+    "contact": "",
+    "links": [],
+    "showVersion": false,
+    "showUptime": false
+  },
   "logging": {
     "level": "info",
     "fileLevel": "debug",
@@ -413,6 +421,10 @@ Request id sources, in priority order:
 > authentication on replay. Use unguessable ids (e.g. UUIDs); never sequential
 > or otherwise predictable values, or one caller could read another's cached
 > results. The `12345` id used in the examples below is illustrative only.
+> Sockethub's own logs record only a short prefix of each id, but a reverse
+> proxy or ingress in front of it will log full request URLs, so prefer the
+> header form over path or query replay in production and treat access logs
+> as sensitive.
 
 Conflict behavior:
 
@@ -570,13 +582,54 @@ For authentication:
 
 ### Examples
 
-Enable/disable example pages:
+Enable/disable the interactive example pages, served under `/examples`:
 
 ```json
 {
   "examples": false  // Set to false for production
 }
 ```
+
+When enabled, the server info page at the root URL links to them.
+
+### Server Info Page
+
+The root URL (`/`) always serves a small HTML page telling visitors that this
+is a Sockethub server and how to connect: the public Socket.IO URL, the HTTP
+actions path when enabled, a link to the examples when enabled, the API
+version, and the enabled platforms with their API versions. It is the
+human-readable counterpart of [API discovery](#api-discovery).
+
+Operators can add details about their deployment through the `about` block.
+Every field is optional and empty values are left off the page:
+
+```json
+{
+  "about": {
+    "name": "Example Sockethub",
+    "description": "Members-only gateway for example.com users",
+    "contact": "ops@example.com",
+    "links": [
+      { "label": "Privacy", "url": "https://example.com/privacy" }
+    ],
+    "showVersion": false,
+    "showUptime": true
+  }
+}
+```
+
+- `contact` is rendered as a `mailto:` link for email addresses and as a link
+  for URLs; anything else is shown as text.
+- `links` entries must use `http://` or `https://` URLs.
+- `showVersion` adds the exact server version. It is off by default because
+  publishing release numbers makes deployments easier to fingerprint; only the
+  SemVer major API version is shown otherwise.
+- `showUptime` adds the process uptime. It is off by default because it reveals
+  when the server last restarted; it is independent of `showVersion`.
+
+A request to `/` with `Accept: application/json` returns the same service
+descriptor as API discovery, so clients can discover the API version from the
+root even when HTTP actions are disabled.
 
 ### Logging
 
@@ -781,6 +834,13 @@ export SENTRY_RELEASE=sockethub@5.0.0   # optional; defaults to the running vers
 ```json
 {
   "examples": false,
+  "about": {
+    "name": "Example Sockethub",
+    "contact": "ops@example.com",
+    "links": [
+      { "label": "Privacy", "url": "https://example.com/privacy" }
+    ]
+  },
   "logging": {
     "level": "warn",
     "fileLevel": "info",

@@ -149,7 +149,8 @@ bun install        # install workspace dependencies
 bun run dev        # dev server with examples, HTTP actions, and hot reload
 ```
 
-Open `http://localhost:10550` for the interactive examples.
+Open `http://localhost:10550/examples` for the interactive examples. The root
+URL serves a server info page.
 
 ### Environment Variables
 

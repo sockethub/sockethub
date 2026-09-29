@@ -2,6 +2,7 @@ import {
     type ExamplesConfig,
     validateExamplesConfig,
 } from "@sockethub/schemas/examples-config";
+import { EXAMPLES_BASE_PATH } from "../../base-path.js";
 
 export type { ExamplesConfig };
 
@@ -23,7 +24,9 @@ let examplesConfigPromise: Promise<ExamplesConfig> | undefined;
 
 export function loadExamplesConfig(): Promise<ExamplesConfig> {
     if (!examplesConfigPromise) {
-        examplesConfigPromise = fetch("/examples-config.json")
+        examplesConfigPromise = fetch(
+            `${EXAMPLES_BASE_PATH}/examples-config.json`,
+        )
             .then(async (response) => {
                 if (!response.ok) {
                     throw new Error(
