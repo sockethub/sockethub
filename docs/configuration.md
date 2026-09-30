@@ -614,10 +614,11 @@ When enabled, the server info page at the root URL links to them.
 ### Server Info Page
 
 The root URL (`/`) always serves a small HTML page telling visitors that this
-is a Sockethub server and how to connect: the public Socket.IO URL, the HTTP
-actions path when enabled, a link to the examples when enabled, the API
-version, and the enabled platforms with their API versions. It is the
-human-readable counterpart of [API discovery](#api-discovery).
+is a Sockethub server and how to connect: the `SockethubClient.connect()`
+call for this server, the Socket.IO path, the HTTP actions URL when enabled,
+a link to the examples when enabled, the API version, and the enabled
+platforms with their API versions. It is the human-readable counterpart of
+[API discovery](#api-discovery).
 
 Operators can add details about their deployment through the `about` block.
 Every field is optional and empty values are left off the page:

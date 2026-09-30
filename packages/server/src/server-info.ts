@@ -233,11 +233,17 @@ export function renderServerInfoPage(info: ServerInfo): string {
     }
 
     const connectRows: Array<string> = [
-        // Shown as the actual client call: the path is an `io()` option, and
-        // appending it to the URL would select a namespace instead.
+        // Lead with the call an app should make: the client discovers the
+        // Socket.IO path from this server, so the base URL is all it needs.
         row(
-            "Socket.IO",
-            `<code>io(${JSON.stringify(escapeHtml(info.endpoints.socket.origin))}, { path: ${JSON.stringify(escapeHtml(info.endpoints.socket.path))} })</code>`,
+            "Client",
+            `<code>SockethubClient.connect(${JSON.stringify(escapeHtml(info.endpoints.socket.origin))})</code>`,
+        ),
+        // The raw path, for the rare app that builds its own Socket.IO
+        // connection. It is an `io()` option, not part of the URL.
+        row(
+            "Socket.IO path",
+            `<code>${escapeHtml(info.endpoints.socket.path)}</code>`,
         ),
     ];
     if (info.endpoints.httpActions) {
