@@ -538,8 +538,8 @@ describe("http actions", () => {
             apiVersion: apiVersionFromSemver(SOCKETHUB_VERSION),
             endpoints: { socketIO: "/sockethub", httpActions: "/sockethub-http" },
             platforms: [
-                { id: "metadata", apiVersion: 2 },
                 { id: "caldav", apiVersion: 1 },
+                { id: "metadata", apiVersion: 2 },
             ],
         });
         // The served descriptor honours the schema published for clients.
@@ -1174,8 +1174,8 @@ describe("http actions service descriptor over HTTP", () => {
                     httpActions: "/sockethub-http",
                 },
                 platforms: [
-                    { id: "metadata", apiVersion: 2 },
                     { id: "caldav", apiVersion: 1 },
+                    { id: "metadata", apiVersion: 2 },
                 ],
             });
         });

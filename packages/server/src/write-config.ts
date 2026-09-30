@@ -32,15 +32,26 @@ export function parseWriteConfigTarget(
     return undefined;
 }
 
+/** The test and demo platform, which does not belong in a deployment. */
+const DUMMY_PLATFORM = "@sockethub/platform-dummy";
+
 /**
  * The full default configuration as a JSON document, with a `$schema`
- * reference to the published schema for this version.
+ * reference to the published schema for this version. The `dummy` platform
+ * is left out of `platforms`: a written config is the starting point for a
+ * real deployment, where it should not be enabled.
  */
 export function renderDefaultConfig(): string {
-    const config = {
+    const defaults = getDefaultConfig() as Record<string, unknown>;
+    const config: Record<string, unknown> = {
         $schema: SockethubConfigSchemaId,
-        ...getDefaultConfig(),
+        ...defaults,
     };
+    if (Array.isArray(defaults.platforms)) {
+        config.platforms = defaults.platforms.filter(
+            (name) => name !== DUMMY_PLATFORM,
+        );
+    }
     return `${JSON.stringify(config, null, 4)}\n`;
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { apiDiscovery } from "$lib/api-discovery";
+import { apiDiscovery, sortPlatforms } from "$lib/api-discovery";
 import { resolveEndpoint } from "@sockethub/client";
 // Importing the client module starts discovery and fills the store.
 import "$lib/sockethub";
@@ -38,7 +38,7 @@ import "$lib/sockethub";
                 <dt class="font-semibold">Enabled platforms:</dt>
                 <dd>
                     <ul class="mt-1 flex flex-wrap gap-2" data-testid="api-info-platforms">
-                        {#each descriptor.platforms as platform (platform.id)}
+                        {#each sortPlatforms(descriptor.platforms) as platform (platform.id)}
                             <li class="bg-white border rounded px-2 py-1">
                                 {platform.id}
                                 <span class="text-gray-500">API v{platform.apiVersion}</span>

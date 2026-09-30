@@ -9,13 +9,13 @@
  * unless the operator opts in with `about.showVersion`, and uptime unless
  * they opt in with `about.showUptime`.
  */
+import type { ServiceEndpoints } from "@sockethub/schemas";
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import {
     buildServiceDescriptor,
     publicEndpoints,
-    publicOrigin,
-    publicSocketEndpoint,
+    sortedPlatforms,
 } from "./api-info.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config.js";
@@ -44,19 +44,12 @@ export type ServerInfo = {
     uptimeSeconds?: number;
     platforms: Array<{ id: string; apiVersion: number }>;
     /**
-     * Absolute forms of the advertised endpoints for humans: the descriptor
-     * publishes paths, the page shows the full `io()` call and URLs.
+     * The advertised endpoint paths, plus the examples path when on. Paths
+     * only, like the descriptor: the visitor's address bar already holds the
+     * origin, and the `public` settings could get it wrong.
      */
-    endpoints: {
-        socket: { origin: string; path: string };
-        httpActions?: string;
-        examples?: string;
-    };
+    endpoints: ServiceEndpoints & { examples?: string };
 };
-
-// The URL builders live in api-info.ts so the descriptor and this page share
-// them; re-exported here for callers that reach them through the page module.
-export { publicOrigin, publicSocketEndpoint };
 
 export type ServerInfoOptions = {
     platforms: PlatformMap;
@@ -107,18 +100,12 @@ export function buildServerInfo(
         contact: nonEmptyString(getConfig("about:contact")),
         links: safeLinks(getConfig("about:links")),
         apiVersion: SOCKETHUB_API_VERSION,
-        platforms: Array.from(platforms.values()).map((platform) => ({
+        platforms: sortedPlatforms(platforms).map((platform) => ({
             id: platform.id,
             apiVersion: platform.apiVersion,
         })),
-        endpoints: {
-            socket: publicSocketEndpoint(getConfig),
-        },
+        endpoints: publicEndpoints(getConfig),
     };
-    const httpActionsPath = publicEndpoints(getConfig).httpActions;
-    if (httpActionsPath) {
-        info.endpoints.httpActions = `${publicOrigin(getConfig)}${httpActionsPath}`;
-    }
     if (showVersion) {
         info.version = SOCKETHUB_VERSION;
     }
@@ -237,19 +224,19 @@ export function renderServerInfoPage(info: ServerInfo): string {
         // Socket.IO path from this server, so the base URL is all it needs.
         row(
             "Client",
-            `<code>SockethubClient.connect(${JSON.stringify(escapeHtml(info.endpoints.socket.origin))})</code>`,
+            "<code>SockethubClient.connect(url)</code>, with this page's address as <code>url</code>",
         ),
         // The raw path, for the rare app that builds its own Socket.IO
         // connection. It is an `io()` option, not part of the URL.
         row(
             "Socket.IO path",
-            `<code>${escapeHtml(info.endpoints.socket.path)}</code>`,
+            `<code>${escapeHtml(info.endpoints.socketIO)}</code>`,
         ),
     ];
     if (info.endpoints.httpActions) {
         connectRows.push(
             row(
-                "HTTP actions",
+                "HTTP actions path",
                 `<code>${escapeHtml(info.endpoints.httpActions)}</code>`,
             ),
         );

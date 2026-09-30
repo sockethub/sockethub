@@ -4,6 +4,7 @@ import {
     apiDiscovery,
     describeDiscoveryFailure,
     serverBaseUrl,
+    sortPlatforms,
 } from "./api-discovery";
 
 afterEach(() => {
@@ -37,6 +38,21 @@ describe("api discovery", () => {
         expect(
             serverBaseUrl({ origin: "http://localhost:10551" }, ""),
         ).toBe("http://localhost:10551");
+    });
+
+    it("lists dummy first and the other platforms alphabetically", () => {
+        const ids = ["xmpp", "feeds", "dummy", "caldav", "irc"].map((id) => ({
+            id,
+        }));
+        expect(sortPlatforms(ids).map((p) => p.id)).toEqual([
+            "dummy",
+            "caldav",
+            "feeds",
+            "irc",
+            "xmpp",
+        ]);
+        // The input is left untouched.
+        expect(ids[0].id).toBe("xmpp");
     });
 
     it("describes failures by their message", () => {

@@ -7,12 +7,13 @@ import "$lib/sockethub";
 
 const navItems = [
     ["🏠", "Home", "/", "Start here to understand Sockethub", undefined],
+    // Dummy leads as the place to start; the rest are alphabetical.
     ["🔧", "Dummy", "/dummy", "Basic examples • Start here", "dummy"],
-    ["📰", "Feeds", "/feeds", "RSS/ATOM feed parsing", "feeds"],
-    ["🔍", "Metadata", "/metadata", "Web page metadata extraction", "metadata"],
     ["📅", "CalDAV", "/caldav", "Calendars and tasks", "caldav"],
     ["👤", "CardDAV", "/carddav", "Address books and contacts", "carddav"],
+    ["📰", "Feeds", "/feeds", "RSS/ATOM feed parsing", "feeds"],
     ["💬", "IRC", "/irc", "Internet Relay Chat • Advanced", "irc"],
+    ["🔍", "Metadata", "/metadata", "Web page metadata extraction", "metadata"],
     ["📨", "XMPP", "/xmpp", "Extensible messaging • Advanced", "xmpp"],
 ] as const;
 

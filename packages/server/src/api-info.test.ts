@@ -3,8 +3,7 @@ import { validateServiceDescriptor } from "@sockethub/schemas";
 import {
     buildServiceDescriptor,
     publicEndpoints,
-    publicOrigin,
-    publicSocketEndpoint,
+    sortedPlatforms,
 } from "./api-info.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import { SOCKETHUB_API_VERSION, SOCKETHUB_VERSION } from "./version.js";
@@ -42,61 +41,6 @@ function getConfigWith(overrides: Record<string, unknown> = {}) {
 }
 
 describe("api-info", () => {
-    describe("publicOrigin", () => {
-        it("includes a non-default port", () => {
-            expect(publicOrigin(getConfigWith())).toBe("http://localhost:10550");
-        });
-
-        it("omits the protocol default port for http and https", () => {
-            expect(
-                publicOrigin(
-                    getConfigWith({ "public:port": 80, "public:host": "a.example" }),
-                ),
-            ).toBe("http://a.example");
-            expect(
-                publicOrigin(
-                    getConfigWith({
-                        "public:protocol": "https",
-                        "public:host": "sh.example.org",
-                        "public:port": 443,
-                    }),
-                ),
-            ).toBe("https://sh.example.org");
-        });
-
-        it("keeps a non-default https port", () => {
-            expect(
-                publicOrigin(
-                    getConfigWith({
-                        "public:protocol": "https",
-                        "public:host": "sh.example.org",
-                        "public:port": 8443,
-                    }),
-                ),
-            ).toBe("https://sh.example.org:8443");
-        });
-
-        it("falls back to http://localhost when public settings are missing", () => {
-            expect(publicOrigin(() => undefined)).toBe("http://localhost");
-        });
-    });
-
-    describe("publicSocketEndpoint", () => {
-        it("keeps the Socket.IO path separate from the origin", () => {
-            expect(publicSocketEndpoint(getConfigWith())).toEqual({
-                origin: "http://localhost:10550",
-                path: "/sockethub",
-            });
-        });
-
-        it("reflects a custom path", () => {
-            expect(
-                publicSocketEndpoint(getConfigWith({ "sockethub:path": "/ws" }))
-                    .path,
-            ).toBe("/ws");
-        });
-    });
-
     describe("publicEndpoints", () => {
         it("advertises paths only, without an origin", () => {
             expect(publicEndpoints(getConfigWith())).toEqual({
@@ -130,6 +74,38 @@ describe("api-info", () => {
                     }),
                 ).httpActions,
             ).toBeUndefined();
+        });
+    });
+
+    describe("sortedPlatforms", () => {
+        const entry = (id: string) =>
+            [id, { ...platforms.get("dummy"), id }] as [
+                string,
+                PlatformMap extends Map<string, infer V> ? V : never,
+            ];
+
+        it("puts dummy first and the rest in alphabetical order", () => {
+            const loaded: PlatformMap = new Map(
+                ["xmpp", "feeds", "dummy", "caldav", "irc", "carddav"].map(entry),
+            );
+            expect(sortedPlatforms(loaded).map((p) => p.id)).toEqual([
+                "dummy",
+                "caldav",
+                "carddav",
+                "feeds",
+                "irc",
+                "xmpp",
+            ]);
+        });
+
+        it("sorts alphabetically when dummy is not loaded", () => {
+            const loaded: PlatformMap = new Map(
+                ["metadata", "caldav"].map(entry),
+            );
+            expect(sortedPlatforms(loaded).map((p) => p.id)).toEqual([
+                "caldav",
+                "metadata",
+            ]);
         });
     });
 

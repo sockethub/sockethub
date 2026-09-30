@@ -24,6 +24,10 @@ sockethub --write-config -               # prints to stdout
 It refuses to overwrite an existing file, and exits after writing (the server
 does not start).
 
+The generated file lists every bundled platform except `dummy`. That platform
+exists for tests and the examples and should not be enabled in production;
+add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
+
 ### Default Configuration Structure
 
 ```json
@@ -615,10 +619,12 @@ When enabled, the server info page at the root URL links to them.
 
 The root URL (`/`) always serves a small HTML page telling visitors that this
 is a Sockethub server and how to connect: the `SockethubClient.connect()`
-call for this server, the Socket.IO path, the HTTP actions URL when enabled,
-a link to the examples when enabled, the API version, and the enabled
-platforms with their API versions. It is the human-readable counterpart of
-[API discovery](#api-discovery).
+call, the Socket.IO path, the HTTP actions path when enabled, a link to the
+examples when enabled, the API version, and the enabled platforms with their
+API versions (`dummy` first, then alphabetical). Like the descriptor it shows
+paths rather than full URLs: the visitor's address bar already holds the
+server's address, so the page does not depend on the `public` settings. It is
+the human-readable counterpart of [API discovery](#api-discovery).
 
 Operators can add details about their deployment through the `about` block.
 Every field is optional and empty values are left off the page:
