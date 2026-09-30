@@ -226,9 +226,8 @@ describe("server-info", () => {
             expect(html).not.toContain("open the examples");
             expect(html).not.toContain("HTTP actions path</th>");
             expect(html).toContain(`API version</th><td>${SOCKETHUB_API_VERSION}</td>`);
-            expect(html).toContain(
-                "Client</th><td><code>SockethubClient.connect(url)</code>, with this page's address as <code>url</code>",
-            );
+            // Technical details only; how to use the client lives in the docs.
+            expect(html).not.toContain("SockethubClient.connect");
             // Paths only: the page never prints an origin from the config.
             expect(html).not.toContain("localhost");
             expect(html).toContain(
