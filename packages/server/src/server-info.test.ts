@@ -253,8 +253,13 @@ describe("server-info", () => {
             expect(html).not.toContain("HTTP actions</th>");
             expect(html).toContain(`API version</th><td>${SOCKETHUB_API_VERSION}</td>`);
             expect(html).toContain(
-                '<code>io("http://localhost:10550", { path: "/sockethub" })</code>',
+                'Client</th><td><code>SockethubClient.connect("http://localhost:10550")</code>',
             );
+            expect(html).toContain(
+                "Socket.IO path</th><td><code>/sockethub</code>",
+            );
+            // The hand-built socket call is no longer the advertised way in.
+            expect(html).not.toContain("io(");
             expect(html).toContain("dummy <small>v3</small>");
             expect(html).toContain("irc <small>v4</small>");
             expect(html).toContain("<caption>Connect</caption>");
