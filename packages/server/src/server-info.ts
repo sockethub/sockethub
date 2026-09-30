@@ -220,14 +220,7 @@ export function renderServerInfoPage(info: ServerInfo): string {
     }
 
     const connectRows: Array<string> = [
-        // Lead with the call an app should make: the client discovers the
-        // Socket.IO path from this server, so the base URL is all it needs.
-        row(
-            "Client",
-            "<code>SockethubClient.connect(url)</code>, with this page's address as <code>url</code>",
-        ),
-        // The raw path, for the rare app that builds its own Socket.IO
-        // connection. It is an `io()` option, not part of the URL.
+        // The Socket.IO server path: an `io()` option, not part of the URL.
         row(
             "Socket.IO path",
             `<code>${escapeHtml(info.endpoints.socketIO)}</code>`,

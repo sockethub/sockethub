@@ -618,8 +618,8 @@ When enabled, the server info page at the root URL links to them.
 ### Server Info Page
 
 The root URL (`/`) always serves a small HTML page telling visitors that this
-is a Sockethub server and how to connect: the `SockethubClient.connect()`
-call, the Socket.IO path, the HTTP actions path when enabled, a link to the
+is a Sockethub server, with its technical details: the Socket.IO path, the
+HTTP actions path when enabled, a link to the client guide, a link to the
 examples when enabled, the API version, and the enabled platforms with their
 API versions (`dummy` first, then alphabetical). Like the descriptor it shows
 paths rather than full URLs: the visitor's address bar already holds the
