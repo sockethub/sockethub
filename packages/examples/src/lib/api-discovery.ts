@@ -18,6 +18,19 @@ export type ApiDiscovery =
 export const apiDiscovery = writable<ApiDiscovery | undefined>(undefined);
 
 /**
+ * Platforms in display order: `dummy` first, since it is the test platform
+ * and the place to start, then the rest alphabetically by id.
+ */
+export function sortPlatforms<T extends { id: string }>(platforms: T[]): T[] {
+    return [...platforms].sort((a, b) => {
+        if (a.id === "dummy" || b.id === "dummy") {
+            return a.id === b.id ? 0 : a.id === "dummy" ? -1 : 1;
+        }
+        return a.id.localeCompare(b.id);
+    });
+}
+
+/**
  * The base URL of the Sockethub server to discover. Normally the origin this
  * app was loaded from, since the server serves the app itself; `VITE_SOCKETHUB_URL`
  * overrides it for standalone development on the Vite dev server. Undefined

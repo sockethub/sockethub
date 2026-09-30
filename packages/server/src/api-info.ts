@@ -22,42 +22,27 @@ export type GetConfig = (key: string) => unknown;
 
 const defaultGetConfig: GetConfig = (key) => config.get(key);
 
-const DEFAULT_PORTS: Record<string, number> = { http: 80, https: 443 };
-
 function nonEmptyString(value: unknown): string | undefined {
     return typeof value === "string" && value.trim() !== ""
         ? value.trim()
         : undefined;
 }
 
-/**
- * Origin clients reach this server at, built from the `public` settings so it
- * is right behind a reverse proxy. The port is omitted when it is the protocol
- * default.
- */
-export function publicOrigin(getConfig: GetConfig = defaultGetConfig): string {
-    const protocol = nonEmptyString(getConfig("public:protocol")) ?? "http";
-    const host = nonEmptyString(getConfig("public:host")) ?? "localhost";
-    const port = Number(getConfig("public:port"));
-    const portSuffix =
-        Number.isFinite(port) && port > 0 && DEFAULT_PORTS[protocol] !== port
-            ? `:${port}`
-            : "";
-    return `${protocol}://${host}${portSuffix}`;
-}
+/** The test and demo platform; it leads every platform listing. */
+const DUMMY_PLATFORM_ID = "dummy";
 
 /**
- * The origin and transport path a client hands to `io(origin, { path })`,
- * as shown to humans on the info page.
+ * Loaded platforms in display order: `dummy` first, because it is the odd
+ * one out that should not be enabled in production, then the rest
+ * alphabetically by id. Every public listing uses this order.
  */
-export function publicSocketEndpoint(getConfig: GetConfig = defaultGetConfig): {
-    origin: string;
-    path: string;
-} {
-    return {
-        origin: publicOrigin(getConfig),
-        path: publicEndpoints(getConfig).socketIO,
-    };
+export function sortedPlatforms(platforms: PlatformMap) {
+    return Array.from(platforms.values()).sort((a, b) => {
+        if (a.id === DUMMY_PLATFORM_ID || b.id === DUMMY_PLATFORM_ID) {
+            return a.id === b.id ? 0 : a.id === DUMMY_PLATFORM_ID ? -1 : 1;
+        }
+        return a.id.localeCompare(b.id);
+    });
 }
 
 /**
@@ -92,7 +77,7 @@ export function buildServiceDescriptor(
         name: "sockethub",
         apiVersion: SOCKETHUB_API_VERSION,
         endpoints: publicEndpoints(getConfig),
-        platforms: Array.from(platforms.values()).map((platform) => ({
+        platforms: sortedPlatforms(platforms).map((platform) => ({
             id: platform.id,
             apiVersion: platform.apiVersion,
         })),
@@ -110,7 +95,7 @@ export function buildPlatformRegistryPayload(platforms: PlatformMap) {
             as: AS2_BASE_CONTEXT_URL,
             sockethub: SOCKETHUB_BASE_CONTEXT_URL,
         },
-        platforms: Array.from(platforms.values()).map((platform) => ({
+        platforms: sortedPlatforms(platforms).map((platform) => ({
             id: platform.id,
             apiVersion: platform.apiVersion,
             contextUrl: platform.contextUrl,

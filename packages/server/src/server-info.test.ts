@@ -10,7 +10,6 @@ import {
     escapeHtml,
     EXAMPLES_PATH,
     formatUptime,
-    publicSocketEndpoint,
     registerServerInfoRoute,
     renderServerInfoPage,
 } from "./server-info.js";
@@ -71,27 +70,6 @@ function getConfigWith(overrides: Record<string, unknown> = {}) {
 }
 
 describe("server-info", () => {
-    describe("publicSocketEndpoint", () => {
-        it("includes a non-default port and keeps the path separate", () => {
-            expect(publicSocketEndpoint(getConfigWith())).toEqual({
-                origin: "http://localhost:10550",
-                path: "/sockethub",
-            });
-        });
-
-        it("omits the protocol default port", () => {
-            expect(
-                publicSocketEndpoint(
-                    getConfigWith({
-                        "public:protocol": "https",
-                        "public:host": "sockethub.example.com",
-                        "public:port": 443,
-                    }),
-                ).origin,
-            ).toBe("https://sockethub.example.com");
-        });
-    });
-
     describe("buildServerInfo", () => {
         it("omits empty operator fields and the version by default", () => {
             const info = buildServerInfo(platforms, {
@@ -108,9 +86,7 @@ describe("server-info", () => {
                 { id: "dummy", apiVersion: 3 },
                 { id: "irc", apiVersion: 4 },
             ]);
-            expect(info.endpoints).toEqual({
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-            });
+            expect(info.endpoints).toEqual({ socketIO: "/sockethub" });
         });
 
         it("includes operator fields, version and uptime when configured", () => {
@@ -184,9 +160,7 @@ describe("server-info", () => {
                     examples: true,
                 }),
             });
-            expect(on.endpoints.httpActions).toBe(
-                "http://localhost:10550/custom-http",
-            );
+            expect(on.endpoints.httpActions).toBe("/custom-http");
             expect(on.endpoints.examples).toBe(EXAMPLES_PATH);
         });
     });
@@ -250,11 +224,13 @@ describe("server-info", () => {
             expect(html).not.toContain("Uptime</th>");
             expect(html).not.toContain(SOCKETHUB_VERSION);
             expect(html).not.toContain("open the examples");
-            expect(html).not.toContain("HTTP actions</th>");
+            expect(html).not.toContain("HTTP actions path</th>");
             expect(html).toContain(`API version</th><td>${SOCKETHUB_API_VERSION}</td>`);
             expect(html).toContain(
-                'Client</th><td><code>SockethubClient.connect("http://localhost:10550")</code>',
+                "Client</th><td><code>SockethubClient.connect(url)</code>, with this page's address as <code>url</code>",
             );
+            // Paths only: the page never prints an origin from the config.
+            expect(html).not.toContain("localhost");
             expect(html).toContain(
                 "Socket.IO path</th><td><code>/sockethub</code>",
             );
@@ -281,7 +257,7 @@ describe("server-info", () => {
             );
             expect(html).toContain(`href="${EXAMPLES_PATH}"`);
             expect(html).toContain(
-                "<code>http://localhost:10550/sockethub-http</code>",
+                "HTTP actions path</th><td><code>/sockethub-http</code>",
             );
             expect(html).toContain(`Version</th><td>${SOCKETHUB_VERSION}</td>`);
             expect(html).toContain("Uptime</th><td>2 hours</td>");
