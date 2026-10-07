@@ -8,8 +8,10 @@ import { Agent } from "undici";
 let ogsOptions: Record<string, unknown> | undefined;
 let ogsBehavior: (
     options: Record<string, unknown>,
-) => Promise<{ result: Record<string, unknown> }> = () =>
-    Promise.resolve({ result: {} });
+) => Promise<{
+    result: Record<string, unknown>;
+    response?: { url?: string };
+}> = () => Promise.resolve({ result: {} });
 let redditJsonBehavior: ((url: string) => Promise<unknown>) | undefined;
 
 mock.module("open-graph-scraper", () => ({
@@ -395,6 +397,53 @@ describe("facebook scrape", () => {
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object).toMatchObject({
             title: "Reel by Someone",
+            image: [{ url: "https://scontent.example/share.jpg" }],
+            url: "https://www.facebook.com/reel/123/",
+        });
+    });
+
+    it("keeps Facebook share metadata when the canonical page is a login wall", async () => {
+        ogsBehavior = (options) =>
+            options.url === "https://www.facebook.com/share/r/abc/"
+                ? Promise.resolve({
+                      result: {
+                          ogTitle: "Reel by Someone",
+                          ogDescription: "A real caption",
+                          ogUrl: "https://www.facebook.com/reel/123/",
+                          ogImage: [
+                              { url: "https://scontent.example/share.jpg" },
+                          ],
+                      },
+                  })
+                : Promise.resolve({
+                      response: {
+                          url: "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Freel%2F123%2F",
+                      },
+                      result: {
+                          ogTitle: "Log in or sign up to view",
+                          ogDescription:
+                              "See posts, photos and more on Facebook.",
+                          // open-graph-scraper copies <link rel="canonical">
+                          // when og:url is absent. The login document's
+                          // canonical URL is the login page itself.
+                          ogUrl: "https://www.facebook.com/login/",
+                      },
+                  });
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/r/abc/",
+        );
+
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).actor.id).toEqual(
+            "https://www.facebook.com/reel/123/",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "Reel by Someone",
+            description: "A real caption",
             image: [{ url: "https://scontent.example/share.jpg" }],
             url: "https://www.facebook.com/reel/123/",
         });
