@@ -400,6 +400,29 @@ describe("facebook scrape", () => {
         });
     });
 
+    it("does not re-scrape a Facebook URL changed only by tracking parameters", async () => {
+        const scrapedUrls: unknown[] = [];
+        ogsBehavior = (options) => {
+            scrapedUrls.push(options.url);
+            return Promise.resolve({
+                result: {
+                    ogTitle: "A reel",
+                    ogUrl: "https://www.facebook.com/reel/123/?v=1",
+                },
+            });
+        };
+
+        const { err } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/reel/123/?mibextid=abc&v=1#comments",
+        );
+
+        expect(err).toBeNull();
+        expect(scrapedUrls).toEqual([
+            "https://www.facebook.com/reel/123/?mibextid=abc&v=1#comments",
+        ]);
+    });
+
     it("does not rewrite titles on non-facebook pages", async () => {
         ogsBehavior = () =>
             Promise.resolve({

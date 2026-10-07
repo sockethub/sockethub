@@ -69,6 +69,7 @@ const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
 const DIRECT_IMAGE_PROBE_TIMEOUT_MS = 5_000;
+const FACEBOOK_TRACKING_PARAMS = ["_fb_noscript", "fbclid", "mibextid"];
 
 const IMAGE_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
     avif: "image/avif",
@@ -100,6 +101,16 @@ function directImageCandidate(
     } catch {
         return;
     }
+}
+
+function normalizeFacebookUrl(rawUrl: string): string {
+    const url = new URL(rawUrl);
+    url.hash = "";
+    for (const param of FACEBOOK_TRACKING_PARAMS) {
+        url.searchParams.delete(param);
+    }
+    url.searchParams.sort();
+    return url.href;
 }
 
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
@@ -622,8 +633,9 @@ export default class Metadata implements PlatformInterface {
                     facebook &&
                     scrapeUrl === job.actor.id &&
                     result.ogUrl &&
-                    result.ogUrl !== scrapeUrl &&
-                    isFacebookUrl(result.ogUrl)
+                    isFacebookUrl(result.ogUrl) &&
+                    normalizeFacebookUrl(result.ogUrl) !==
+                        normalizeFacebookUrl(scrapeUrl)
                 ) {
                     try {
                         const canonical = await withDeadline(
