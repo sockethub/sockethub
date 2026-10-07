@@ -51,7 +51,7 @@ export type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
  * `Transport.prototype.socketParameters(uri)`, so wrapping the prototypes
  * covers them. Safe to mutate: each platform process serves one actor, so
  * there is one JID domain per process. Remove once xmpp.js sets `servername`
- * upstream (https://github.com/xmppjs/xmpp.js).
+ * upstream (xmppjs/xmpp.js#1128) and `@xmpp/*` is bumped.
  */
 export function setTlsServername(
     client: XmppClientInstance,
