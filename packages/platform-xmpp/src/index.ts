@@ -49,34 +49,44 @@ export type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
  * SRV/A lookups, so direct TLS (`xmpps://`) is validated against the IP and
  * fails (ERR_TLS_CERT_ALTNAME_INVALID). Both connect paths call
  * `Transport.prototype.socketParameters(uri)`, so wrapping the prototypes
- * covers them. Safe to mutate: each platform process serves one actor, so
- * there is one JID domain per process. Remove once xmpp.js sets `servername`
+ * covers them.
+ *
+ * The transport classes are shared module-level prototypes, so the wrapper is
+ * installed once per prototype and keeps the active domain in prototype state.
+ * That state is refreshed on every call: a later client for a different JID
+ * domain must not reuse the first wrapper's servername, and an IP-literal
+ * domain must send no SNI at all. Remove once xmpp.js sets `servername`
  * upstream (xmppjs/xmpp.js#1128) and `@xmpp/*` is bumped.
  */
 export function setTlsServername(
     client: XmppClientInstance,
     domain: string,
 ): void {
-    if (isIP(domain)) {
-        return; // SNI must be a hostname; tls.connect throws on IP literals (Node >= 21)
-    }
+    // SNI must be a hostname; tls.connect throws on IP literals (Node >= 21).
+    const servername = isIP(domain) ? undefined : domain;
     for (const transport of client.transports ?? []) {
         const proto = transport.prototype as {
             socketParameters(service: string): unknown;
-            __sockethubSni?: boolean;
+            __sockethubSniOriginal?: (service: string) => unknown;
+            __sockethubSniServername?: string;
         };
-        if (proto.__sockethubSni) {
-            continue;
+        if (!proto.__sockethubSniOriginal) {
+            const original = proto.socketParameters;
+            proto.__sockethubSniOriginal = original;
+            proto.socketParameters = function (service: string) {
+                const params = original.call(this, service);
+                if (
+                    params &&
+                    typeof params === "object" &&
+                    proto.__sockethubSniServername !== undefined
+                ) {
+                    (params as { servername?: string }).servername =
+                        proto.__sockethubSniServername;
+                }
+                return params;
+            };
         }
-        const original = proto.socketParameters;
-        proto.socketParameters = function (service: string) {
-            const params = original.call(this, service);
-            if (params && typeof params === "object") {
-                (params as { servername?: string }).servername = domain;
-            }
-            return params;
-        };
-        proto.__sockethubSni = true;
+        proto.__sockethubSniServername = servername;
     }
 }
 

@@ -174,6 +174,27 @@ describe("setTlsServername", () => {
         expect(Tls.prototype.socketParameters("xmpp://1.2.3.4")).toBeUndefined();
     });
 
+    test("updates the servername when a later connection uses a different domain", () => {
+        const { client, Tls } = makeClient();
+        setTlsServername(client, "first.example.org");
+        setTlsServername(client, "second.example.org");
+        expect(Tls.prototype.socketParameters("xmpps://1.2.3.4:5223")).toEqual({
+            host: "1.2.3.4",
+            port: 5223,
+            servername: "second.example.org",
+        });
+    });
+
+    test("stops sending servername after an IP-literal domain", () => {
+        const { client, Tls } = makeClient();
+        setTlsServername(client, "example.org");
+        setTlsServername(client, "10.0.0.5");
+        expect(Tls.prototype.socketParameters("xmpps://10.0.0.5")).toEqual({
+            host: "1.2.3.4",
+            port: 5223,
+        });
+    });
+
     test("leaves string params (websocket) untouched", () => {
         const { client, Ws } = makeClient();
         setTlsServername(client, "example.org");
