@@ -27,8 +27,15 @@ declare module "@xmpp/client" {
         writable: boolean;
     }
 
+    export interface XmppTransport {
+        prototype: {
+            socketParameters(service: string): unknown;
+        };
+    }
+
     export interface XmppClientInstance {
         socket?: XmppSocket;
+        transports: XmppTransport[];
         status: string;
         on(event: string, handler: (...args: unknown[]) => void): void;
         removeAllListeners(): void;
@@ -39,6 +46,7 @@ declare module "@xmpp/client" {
 
     export interface XmppClientOptions {
         service: string;
+        domain?: string;
         username: string;
         password: string;
         resource?: string;

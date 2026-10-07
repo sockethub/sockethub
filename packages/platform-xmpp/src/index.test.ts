@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import sinon from "sinon";
 import { buildCanonicalContext } from "@sockethub/schemas";
 
-import XMPP from "./index.js";
+import XMPP, { setTlsServername } from "./index.js";
 import { PlatformSchema } from "./schema.js";
 import type { XmppClientInstance, XmppElement } from "@xmpp/client";
 
@@ -146,6 +146,46 @@ const job = {
         },
     },
 };
+
+describe("setTlsServername", () => {
+    const makeClient = () => {
+        class Tls {
+            socketParameters(service: string) {
+                return service.startsWith("xmpps:") ? { host: "1.2.3.4", port: 5223 } : undefined;
+            }
+        }
+        class Ws {
+            socketParameters(service: string) {
+                return service.startsWith("ws") ? service : undefined;
+            }
+        }
+        return { client: { transports: [Tls, Ws] } as unknown as XmppClientInstance, Tls, Ws };
+    };
+
+    test("sets servername to the JID domain on object params, both call paths", () => {
+        const { client, Tls } = makeClient();
+        setTlsServername(client, "example.org");
+        setTlsServername(client, "example.org"); // idempotent
+        expect(Tls.prototype.socketParameters("xmpps://1.2.3.4:5223")).toEqual({
+            host: "1.2.3.4",
+            port: 5223,
+            servername: "example.org",
+        });
+        expect(Tls.prototype.socketParameters("xmpp://1.2.3.4")).toBeUndefined();
+    });
+
+    test("leaves string params (websocket) untouched", () => {
+        const { client, Ws } = makeClient();
+        setTlsServername(client, "example.org");
+        expect(Ws.prototype.socketParameters("wss://example.org/ws")).toBe("wss://example.org/ws");
+    });
+
+    test("skips IP-literal domains", () => {
+        const { client, Tls } = makeClient();
+        setTlsServername(client, "10.0.0.5");
+        expect(Tls.prototype.socketParameters("xmpps://10.0.0.5")).toEqual({ host: "1.2.3.4", port: 5223 });
+    });
+});
 
 describe("XMPP", () => {
     let clientFake: ReturnType<typeof sinon.fake>;

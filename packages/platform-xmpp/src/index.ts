@@ -17,6 +17,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { isIP } from "node:net";
 import type {
     ActivityStream,
     Logger,
@@ -42,6 +43,42 @@ import type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
 import { utils } from "./utils.js";
 
 export type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
+
+/**
+ * xmpp.js never sets TLS SNI, and `@xmpp/resolve` connects to raw IPs from
+ * SRV/A lookups, so direct TLS (`xmpps://`) is validated against the IP and
+ * fails (ERR_TLS_CERT_ALTNAME_INVALID). Both connect paths call
+ * `Transport.prototype.socketParameters(uri)`, so wrapping the prototypes
+ * covers them. Safe to mutate: each platform process serves one actor, so
+ * there is one JID domain per process. Remove once xmpp.js sets `servername`
+ * upstream (https://github.com/xmppjs/xmpp.js).
+ */
+export function setTlsServername(
+    client: XmppClientInstance,
+    domain: string,
+): void {
+    if (isIP(domain)) {
+        return; // SNI must be a hostname; tls.connect throws on IP literals (Node >= 21)
+    }
+    for (const transport of client.transports ?? []) {
+        const proto = transport.prototype as {
+            socketParameters(service: string): unknown;
+            __sockethubSni?: boolean;
+        };
+        if (proto.__sockethubSni) {
+            continue;
+        }
+        const original = proto.socketParameters;
+        proto.socketParameters = function (service: string) {
+            const params = original.call(this, service);
+            if (params && typeof params === "object") {
+                (params as { servername?: string }).servername = domain;
+            }
+            return params;
+        };
+        proto.__sockethubSni = true;
+    }
+}
 
 /**
  * Handles all actions related to communication via. the XMPP protocol.
@@ -236,6 +273,7 @@ export default class XMPP implements PersistentPlatformInterface {
                 timeout: this.config.connectTimeoutMs,
                 tls: false,
             });
+            setTlsServername(this.__client, xmppCreds.domain);
             this.log.debug(
                 `XMPP client created successfully for ${job.actor.id}`,
             );

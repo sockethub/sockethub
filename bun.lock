@@ -342,10 +342,6 @@
       },
     },
   },
-  "patchedDependencies": {
-    "@xmpp/client-core@0.13.3": "patches/@xmpp%2Fclient-core@0.13.3.patch",
-    "@xmpp/resolve@0.13.3": "patches/@xmpp%2Fresolve@0.13.3.patch",
-  },
   "overrides": {
     "engine.io": "6.6.8",
     "node-fetch": "3.3.2",

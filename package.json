@@ -96,9 +96,5 @@
   },
   "workspaces": [
     "packages/*"
-  ],
-  "patchedDependencies": {
-    "@xmpp/resolve@0.13.3": "patches/@xmpp%2Fresolve@0.13.3.patch",
-    "@xmpp/client-core@0.13.3": "patches/@xmpp%2Fclient-core@0.13.3.patch"
-  }
+  ]
 }
