@@ -105,6 +105,22 @@ function extractEmbeddedIpv4(groups: Array<number>): string | null {
     return `${g >> 8}.${g & 0xff}.${h >> 8}.${h & 0xff}`;
 }
 
+/**
+ * IPv4 address embedded in the RFC 8215 local-use NAT64 prefix
+ * `64:ff9b:1::/48`, or null when `groups` is outside that prefix.
+ *
+ * A /48 prefix uses the RFC 6052 §2.2 layout: the first 16 bits of the IPv4
+ * address, an ignored "u" octet at bits 64–71, then the remaining 16 bits.
+ * Translators ignore a non-zero suffix, so the suffix is not consulted.
+ * On a network that routes this prefix, `64:ff9b:1:a9fe:a9:fe00::` is
+ * delivered to 169.254.169.254.
+ */
+function embeddedIpv4FromLocalNat64(groups: Array<number>): string | null {
+    const [a, b, c, d, e, f] = groups;
+    if (a !== 0x64 || b !== 0xff9b || c !== 0x0001) return null;
+    return `${d >> 8}.${d & 0xff}.${e & 0xff}.${f >> 8}`;
+}
+
 function isBlockedIpv6(ip: string): boolean {
     // Strip zone index (e.g. fe80::1%eth0).
     const addr = ip.split("%")[0];
@@ -116,11 +132,17 @@ function isBlockedIpv6(ip: string): boolean {
         // Not a parseable IPv6 literal; block conservatively.
         return true;
     }
-    // Embedded IPv4 (mapped/compat/NAT64) -> apply IPv4 rules. This also
-    // covers :: (0.0.0.0) and ::1 (0.0.0.1), both within blocked 0.0.0.0/8.
+    // Embedded IPv4 (mapped, compatible, or the NAT64 well-known prefix) ->
+    // apply IPv4 rules. This also covers :: (0.0.0.0) and ::1 (0.0.0.1),
+    // both within blocked 0.0.0.0/8.
     const embedded = extractEmbeddedIpv4(groups);
     if (embedded) {
         return isBlockedIpv4(embedded);
+    }
+    // The local-use NAT64 prefix uses the /48 layout, not the last 32 bits.
+    const localNat64 = embeddedIpv4FromLocalNat64(groups);
+    if (localNat64) {
+        return isBlockedIpv4(localNat64);
     }
     // fc00::/7 unique-local.
     if ((groups[0] & 0xfe00) === 0xfc00) return true;

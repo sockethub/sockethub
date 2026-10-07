@@ -74,7 +74,12 @@ describe("createGuardedDispatcher", () => {
     });
 
     it("blocks private IP literals before invoking the connector", () => {
-        for (const hostname of ["127.0.0.1", "169.254.169.254", "[::1]"]) {
+        for (const hostname of [
+            "127.0.0.1",
+            "169.254.169.254",
+            "[::1]",
+            "[64:ff9b:1:a9fe:a9:fe00::]",
+        ]) {
             let connected = false;
             const connector = createGuardedConnector(false, () => {
                 connected = true;
