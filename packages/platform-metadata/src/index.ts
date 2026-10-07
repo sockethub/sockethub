@@ -609,10 +609,45 @@ export default class Metadata implements PlatformInterface {
                 : ogs(options);
         withDeadline(scrape, SCRAPE_TIMEOUT_MS)
             .then(async (data) => {
-                const { result } = data;
+                let { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
                 const reddit = isRedditUrl(job.actor.id);
                 const facebook = isFacebookUrl(job.actor.id);
+                // Facebook share links are landing pages whose OG payload is
+                // often limited to engagement counts and a thumbnail. Their
+                // og:url points at the canonical post, which usually includes
+                // the caption. Keep the landing-page fields as fallbacks since
+                // some canonical pages expose less data or reject the request.
+                if (
+                    facebook &&
+                    scrapeUrl === job.actor.id &&
+                    result.ogUrl &&
+                    result.ogUrl !== scrapeUrl &&
+                    isFacebookUrl(result.ogUrl)
+                ) {
+                    try {
+                        const canonical = await withDeadline(
+                            ogs({ ...options, url: result.ogUrl }),
+                            SCRAPE_TIMEOUT_MS,
+                        );
+                        result = {
+                            ...result,
+                            ...canonical.result,
+                            ogTitle: canonical.result.ogTitle || result.ogTitle,
+                            ogDescription:
+                                canonical.result.ogDescription ||
+                                result.ogDescription,
+                            ogImage: canonical.result.ogImage?.length
+                                ? canonical.result.ogImage
+                                : result.ogImage,
+                            ogUrl: canonical.result.ogUrl || result.ogUrl,
+                        };
+                    } catch (err) {
+                        this.log.debug(
+                            `facebook canonical scrape failed for ${result.ogUrl}: ${String(err)}; using share metadata`,
+                        );
+                    }
+                }
                 const embed = reddit ? await redditEmbed : undefined;
                 const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;

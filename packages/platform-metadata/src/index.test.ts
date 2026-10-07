@@ -6,14 +6,16 @@ import { Agent } from "undici";
 // so we can assert the platform injects a guarded dispatcher and reports
 // errors robustly — without any network access.
 let ogsOptions: Record<string, unknown> | undefined;
-let ogsBehavior: () => Promise<{ result: Record<string, unknown> }> = () =>
+let ogsBehavior: (
+    options: Record<string, unknown>,
+) => Promise<{ result: Record<string, unknown> }> = () =>
     Promise.resolve({ result: {} });
 let redditJsonBehavior: ((url: string) => Promise<unknown>) | undefined;
 
 mock.module("open-graph-scraper", () => ({
     default: (options: Record<string, unknown>) => {
         ogsOptions = options;
-        return ogsBehavior();
+        return ogsBehavior(options);
     },
 }));
 
@@ -315,6 +317,86 @@ describe("facebook scrape", () => {
                     alt: "If YOU Take Vitamin D, You NEED To Stop! | Steven Bartlett",
                 },
             ],
+        });
+    });
+
+    it("follows the canonical URL to enrich Facebook share metadata", async () => {
+        const scrapedUrls: unknown[] = [];
+        ogsBehavior = (options) => {
+            scrapedUrls.push(options.url);
+            return Promise.resolve(
+                options.url ===
+                    "https://www.facebook.com/share/r/1K8CTTJrT2/"
+                    ? {
+                          result: {
+                              ogTitle:
+                                  "192 tis. zhlédnutí | Reel by The Diary of a CEO",
+                              ogUrl: "https://www.facebook.com/reel/1051388454367973/",
+                              ogImage: [
+                                  { url: "https://scontent.example/share.jpg" },
+                              ],
+                          },
+                      }
+                    : {
+                          result: {
+                              ogTitle:
+                                  "192 tis. zhlédnutí · 1 tis. reakcí | Call out this handshake! | The Diary of a CEO",
+                              ogDescription: "Call out this handshake!",
+                              ogUrl: "https://www.facebook.com/reel/1051388454367973/",
+                              ogImage: [
+                                  {
+                                      url: "https://scontent.example/canonical.jpg",
+                                  },
+                              ],
+                          },
+                      },
+            );
+        };
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/r/1K8CTTJrT2/",
+        );
+
+        expect(err).toBeNull();
+        expect(scrapedUrls).toEqual([
+            "https://www.facebook.com/share/r/1K8CTTJrT2/",
+            "https://www.facebook.com/reel/1051388454367973/",
+        ]);
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "Call out this handshake! | The Diary of a CEO",
+            description: "Call out this handshake!",
+            image: [{ url: "https://scontent.example/canonical.jpg" }],
+            url: "https://www.facebook.com/reel/1051388454367973/",
+        });
+    });
+
+    it("keeps Facebook share metadata when the canonical scrape fails", async () => {
+        ogsBehavior = (options) =>
+            options.url === "https://www.facebook.com/share/r/abc/"
+                ? Promise.resolve({
+                      result: {
+                          ogTitle: "Reel by Someone",
+                          ogUrl: "https://www.facebook.com/reel/123/",
+                          ogImage: [
+                              { url: "https://scontent.example/share.jpg" },
+                          ],
+                      },
+                  })
+                : Promise.reject(new Error("blocked"));
+
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/share/r/abc/",
+        );
+
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "Reel by Someone",
+            image: [{ url: "https://scontent.example/share.jpg" }],
+            url: "https://www.facebook.com/reel/123/",
         });
     });
 
