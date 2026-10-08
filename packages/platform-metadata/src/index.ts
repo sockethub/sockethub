@@ -113,6 +113,29 @@ function normalizeFacebookUrl(rawUrl: string): string {
     return url.href;
 }
 
+/**
+ * Facebook answers some permalinks with HTTP 200 on `/login` (a redirect the
+ * scraper follows). That document has its own Open Graph title and a canonical
+ * link of `/login`, so treating it as a successful enrichment replaces the
+ * share preview with a login wall and rewrites the page URL.
+ */
+function isFacebookLoginUrl(rawUrl: string | undefined): boolean {
+    if (!rawUrl || !isFacebookUrl(rawUrl)) {
+        return false;
+    }
+    const path = new URL(rawUrl).pathname;
+    return (
+        path === "/login" || path.startsWith("/login/") || path === "/login.php"
+    );
+}
+
+function fetchResponseUrl(response: unknown): string | undefined {
+    if (!response || typeof response !== "object" || !("url" in response)) {
+        return undefined;
+    }
+    return typeof response.url === "string" ? response.url : undefined;
+}
+
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
 export function withDeadline<T>(
     promise: Promise<T>,
@@ -642,18 +665,36 @@ export default class Metadata implements PlatformInterface {
                             ogs({ ...options, url: result.ogUrl }),
                             SCRAPE_TIMEOUT_MS,
                         );
-                        result = {
-                            ...result,
-                            ...canonical.result,
-                            ogTitle: canonical.result.ogTitle || result.ogTitle,
-                            ogDescription:
-                                canonical.result.ogDescription ||
-                                result.ogDescription,
-                            ogImage: canonical.result.ogImage?.length
-                                ? canonical.result.ogImage
-                                : result.ogImage,
-                            ogUrl: canonical.result.ogUrl || result.ogUrl,
-                        };
+                        const canonicalOgUrl =
+                            typeof canonical.result.ogUrl === "string"
+                                ? canonical.result.ogUrl
+                                : undefined;
+                        // A login interstitial is a successful document, not a
+                        // thrown scrape error. Keep the share-page fields.
+                        if (
+                            isFacebookLoginUrl(
+                                fetchResponseUrl(canonical.response),
+                            ) ||
+                            isFacebookLoginUrl(canonicalOgUrl)
+                        ) {
+                            this.log.debug(
+                                `facebook canonical scrape landed on a login page for ${result.ogUrl}; using share metadata`,
+                            );
+                        } else {
+                            result = {
+                                ...result,
+                                ...canonical.result,
+                                ogTitle:
+                                    canonical.result.ogTitle || result.ogTitle,
+                                ogDescription:
+                                    canonical.result.ogDescription ||
+                                    result.ogDescription,
+                                ogImage: canonical.result.ogImage?.length
+                                    ? canonical.result.ogImage
+                                    : result.ogImage,
+                                ogUrl: canonicalOgUrl || result.ogUrl,
+                            };
+                        }
                     } catch (err) {
                         this.log.debug(
                             `facebook canonical scrape failed for ${result.ogUrl}: ${String(err)}; using share metadata`,

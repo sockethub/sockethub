@@ -83,6 +83,8 @@ describe("write-config", () => {
             const parsed = JSON.parse(renderDefaultConfig());
             expect(parsed.sockethub.port).toBe(10550);
             expect(parsed.platforms).toContain("@sockethub/platform-feeds");
+            // The test platform is not part of a generated deployment config.
+            expect(parsed.platforms).not.toContain("@sockethub/platform-dummy");
             expect(parsed.httpActions.enabled).toBe(false);
             expect(parsed.redis.maxRetriesPerRequest).toBeNull();
         });

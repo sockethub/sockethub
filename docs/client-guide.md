@@ -24,26 +24,31 @@ These scripts set `io` and `SockethubClient` as globals.
 
 ### Basic Setup
 
-**Browser** (using globals from script tags):
+Give the client the server's base URL. It discovers the Socket.IO endpoint
+from there and connects:
 
 ```javascript
-const sc = new SockethubClient(
-    io('http://localhost:10550', { path: '/sockethub' }),
-    { initTimeoutMs: 5000 },
-);
+// Browser, using the io and SockethubClient globals from the script tags
+const sc = await SockethubClient.connect('http://localhost:10550');
 ```
 
-**Node.js / bundler** (using ESM imports):
+```javascript
+// Node.js / bundler
+import SockethubClient from '@sockethub/client';
+
+const sc = await SockethubClient.connect('http://localhost:10550');
+```
+
+`connect()` rejects with a `DiscoveryError` that says what went wrong when the
+server cannot be reached or is not a Sockethub server. Options such as
+`initTimeoutMs`, or Socket.IO settings under `socketOptions`, go in a second
+argument. The server's descriptor (API version, platforms, endpoints) is kept
+as `sc.descriptor`; see [Bringing your own socket](#bringing-your-own-socket)
+if you need to construct the Socket.IO connection yourself.
+
+**Handling events**:
 
 ```javascript
-import SockethubClient from '@sockethub/client';
-import { io } from 'socket.io-client';
-
-const sc = new SockethubClient(
-    io('http://localhost:10550', { path: '/sockethub' }),
-    { initTimeoutMs: 5000 },
-);
-
 // Handle messages
 sc.socket.on('message', (msg) => console.log('Received:', msg));
 
@@ -310,6 +315,8 @@ sc.socket.emit('message', {
 
 ## Client Features
 
+- **Endpoint discovery**: `SockethubClient.connect(baseUrl)` finds the Socket.IO
+  endpoint from the server's service descriptor; `sc.descriptor` keeps it
 - **Schema-driven init**: `ready()` resolves when the server's schema registry is loaded
 - **API versions, not package versions**: the bootstrap reports `apiVersion` for
   Sockethub and for each platform — the SemVer major of the corresponding
@@ -336,17 +343,29 @@ streams one result per message as NDJSON (newline-delimited JSON).
 
 HTTP actions are off by default; the operator enables them with
 `httpActions.enabled` (see [Configuration](configuration.md#http-actions)).
-The server info page at the root URL shows the endpoint when it is on, and a
-`GET` with no request ID returns the service descriptor so a client can check
-for it programmatically:
+The service descriptor advertises the endpoint path when it is on, so a
+client needs only the server's base URL. `sc.endpointUrl('httpActions')`
+returns the absolute URL, or `undefined` when the server has it off. A client
+that never opens a socket can fetch the descriptor itself:
 
 ```js
-const res = await fetch('http://localhost:10550/sockethub-http');
-if (res.ok) {
-    const { apiVersion, platforms } = await res.json();
-    // platforms: [{ id: 'feeds', apiVersion: 4 }, ...]
-}
+import { discoverSockethub, resolveEndpoint } from '@sockethub/client';
+
+const base = 'http://localhost:10550';
+const { endpoints, apiVersion, platforms } = await discoverSockethub(base);
+// endpoints.httpActions: '/sockethub-http', or undefined when disabled
+// platforms: [{ id: 'feeds', apiVersion: 4 }, ...]
+const httpActionsUrl =
+    endpoints.httpActions && resolveEndpoint(base, endpoints.httpActions);
 ```
+
+`resolveEndpoint()` refuses a path that would resolve to another origin, so
+requests carrying credentials cannot be redirected by a bad descriptor.
+
+Without the client library, `GET` the base URL with
+`Accept: application/json`, or the HTTP actions path with no request ID; both
+return the same descriptor. The server info page at the root URL shows the
+same endpoints to humans.
 
 ### Sending a request
 
@@ -433,6 +452,28 @@ request timeout, and idle timeout between streamed lines. Browser apps on a
 different origin need that origin allowed in `sockethub.cors.origin`, the same
 setting that governs Socket.IO connections. Details and defaults are in
 [Configuration](configuration.md#http-actions).
+
+## Bringing your own socket
+
+`connect()` is the normal way in. Construct the Socket.IO connection yourself
+only when discovery cannot work for you: the server is older than endpoint
+discovery, a proxy exposes the Socket.IO path but not the server root, or you
+need to share one Socket.IO `Manager` with other namespaces. Hand the socket
+to the constructor. The Socket.IO path is an `io()` option; appended to the
+URL it would select a namespace instead.
+
+```javascript
+import SockethubClient from '@sockethub/client';
+import { io } from 'socket.io-client';
+
+const sc = new SockethubClient(
+    io('http://localhost:10550', { path: '/sockethub' }),
+    { initTimeoutMs: 5000 },
+);
+```
+
+A client built this way has no `descriptor`; fetch it with
+`discoverSockethub()` if you need it.
 
 ## Reference
 
