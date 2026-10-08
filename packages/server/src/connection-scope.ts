@@ -335,6 +335,44 @@ export function reassignAnonymousScopes(
     }
 }
 
+/**
+ * Moves a session's pending credential scope onto a new actor id.
+ *
+ * A nick change re-keys the live worker under the new actor, but the scope
+ * that selects it was registered under the actor the client authenticated as.
+ * The next command carries the new actor and would otherwise miss that
+ * pending scope, fall through to a session-derived one, and fork a second
+ * worker while the first still holds the connection.
+ *
+ * The scope value itself stays the original credential fingerprint. It is not
+ * recomputed from the renamed credentials: the worker was forked with the
+ * original fingerprint, and a new one would not find it.
+ *
+ * An entry the session has already opened for the new actor is left alone, so
+ * a deliberate re-authentication is not replaced by the pre-rename scope.
+ */
+export function reassignPendingScopes(
+    sessionIds: Iterable<string>,
+    platform: string,
+    fromActorId: string,
+    toActorId: string,
+): void {
+    const from = scopeKey(platform, fromActorId);
+    const to = scopeKey(platform, toActorId);
+    if (from === to) {
+        return;
+    }
+    for (const sessionId of sessionIds) {
+        const bySession = pendingScopes.get(sessionId);
+        const pending = bySession?.get(from);
+        if (!bySession || !pending || bySession.has(to)) {
+            continue;
+        }
+        bySession.delete(from);
+        bySession.set(to, pending);
+    }
+}
+
 /** Drops every scope pointing at an instance that is going away. */
 export function forgetAnonymousScopes(instanceId: string): void {
     for (const [key, record] of anonymousScopes) {
