@@ -71,16 +71,6 @@ import Intro from "../components/Intro.svelte";
                     </div>
                 </a>
                 <div class="grid md:grid-cols-2 gap-3">
-                    <a href="{base}/feeds" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">📰 RSS/ATOM Feeds</div>
-                        <div class="text-purple-600">Fetch and parse web feeds</div>
-                    </a>
-                    <a href="{base}/metadata" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">🔍 Metadata</div>
-                        <div class="text-purple-600">Extract metadata from web pages</div>
-                    </a>
-                </div>
-                <div class="grid md:grid-cols-2 gap-3">
                     <a href="{base}/caldav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
                         <div class="font-semibold text-purple-800">📅 CalDAV Calendars</div>
                         <div class="text-purple-600">Discover calendars and create events or tasks</div>
@@ -91,6 +81,10 @@ import Intro from "../components/Intro.svelte";
                     </a>
                 </div>
                 <div class="grid md:grid-cols-2 gap-3">
+                    <a href="{base}/feeds" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                        <div class="font-semibold text-purple-800">📰 RSS/ATOM Feeds</div>
+                        <div class="text-purple-600">Fetch and parse web feeds</div>
+                    </a>
                     <a href="{base}/irc" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors border-l-4 border-l-orange-400">
                         <div class="flex items-center justify-between">
                             <div>
@@ -99,6 +93,12 @@ import Intro from "../components/Intro.svelte";
                             </div>
                             <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">Advanced</span>
                         </div>
+                    </a>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <a href="{base}/metadata" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                        <div class="font-semibold text-purple-800">🔍 Metadata</div>
+                        <div class="text-purple-600">Extract metadata from web pages</div>
                     </a>
                     <a href="{base}/xmpp" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors border-l-4 border-l-orange-400">
                         <div class="flex items-center justify-between">

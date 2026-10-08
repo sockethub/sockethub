@@ -38,8 +38,9 @@ bun install
 bun run dev
 ```
 
-Point the app at a running Sockethub by editing `static/examples-config.json` or using the
-default `localhost:10550`.
+The app discovers the server's endpoints from the origin it was loaded from. When
+running standalone on the Vite dev server, point it at a running Sockethub with
+`VITE_SOCKETHUB_URL=http://localhost:10550 bun run dev`.
 
 ## Code layout
 
