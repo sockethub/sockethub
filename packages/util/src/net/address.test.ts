@@ -65,6 +65,13 @@ describe("isBlockedAddress", () => {
         expect(isBlockedAddress("64:ff9b:1:6464:64:c800::")).toBe(true);
     });
 
+    it("blocks local-use NAT64 with more-specific /96 and /64 sub-prefixes", () => {
+        // /96 sub-prefix 64:ff9b:1:808:8:800::/96 — IPv4 in the last 32 bits.
+        expect(isBlockedAddress("64:ff9b:1:808:8:800:a9fe:a9fe")).toBe(true);
+        // /64 sub-prefix 64:ff9b:1:808::/64 — IPv4 in groups e–f.
+        expect(isBlockedAddress("64:ff9b:1:808:a9fe:a9fe")).toBe(true);
+    });
+
     it("blocks unparseable literals conservatively", () => {
         expect(isBlockedAddress("not-an-ip")).toBe(true);
         expect(isBlockedAddress("999.1.1.1")).toBe(true);

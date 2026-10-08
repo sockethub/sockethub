@@ -106,19 +106,59 @@ function extractEmbeddedIpv4(groups: Array<number>): string | null {
 }
 
 /**
- * IPv4 address embedded in the RFC 8215 local-use NAT64 prefix
- * `64:ff9b:1::/48`, or null when `groups` is outside that prefix.
- *
- * A /48 prefix uses the RFC 6052 §2.2 layout: the first 16 bits of the IPv4
- * address, an ignored "u" octet at bits 64–71, then the remaining 16 bits.
- * Translators ignore a non-zero suffix, so the suffix is not consulted.
- * On a network that routes this prefix, `64:ff9b:1:a9fe:a9:fe00::` is
- * delivered to 169.254.169.254.
+ * True when `groups` fall under the RFC 8215 local-use NAT64 prefix
+ * `64:ff9b:1::/48`.
  */
-function embeddedIpv4FromLocalNat64(groups: Array<number>): string | null {
-    const [a, b, c, d, e, f] = groups;
-    if (a !== 0x64 || b !== 0xff9b || c !== 0x0001) return null;
+function isLocalUseNat64(groups: Array<number>): boolean {
+    const [a, b, c] = groups;
+    return a === 0x64 && b === 0xff9b && c === 0x0001;
+}
+
+/** RFC 6052 §2.2 /48 layout: IPv4 spans groups d–f with an ignored u-octet. */
+function extractIpv4At48(groups: Array<number>): string {
+    const [, , , d, e, f] = groups;
     return `${d >> 8}.${d & 0xff}.${e & 0xff}.${f >> 8}`;
+}
+
+/** RFC 6052 §2.2 /64 layout: IPv4 in groups e–f after a 64-bit prefix. */
+function extractIpv4At64(groups: Array<number>): string {
+    const [, , , , e, f] = groups;
+    return `${e >> 8}.${e & 0xff}.${f >> 8}.${f & 0xff}`;
+}
+
+/** RFC 6052 §2.2 /96 layout: IPv4 in the last 32 bits (groups g–h). */
+function extractIpv4At96(groups: Array<number>): string {
+    const [, , , , , , g, h] = groups;
+    return `${g >> 8}.${g & 0xff}.${h >> 8}.${h & 0xff}`;
+}
+
+/**
+ * Whether a local-use NAT64 address could reach a blocked IPv4 target.
+ *
+ * RFC 8215 allocates `64:ff9b:1::/48` for site-local translators, but
+ * deployments may use more-specific RFC 6052 prefix lengths (/48, /64, /96).
+ * Without knowing the configured length, try every layout that the address
+ * bit pattern can plausibly represent and block when any decode is private.
+ */
+function isBlockedLocalNat64(groups: Array<number>): boolean {
+    if (!isLocalUseNat64(groups)) return false;
+
+    const [, , , , e, , g, h] = groups;
+
+    if (isBlockedIpv4(extractIpv4At48(groups))) return true;
+
+    // /96 sub-prefix: suffix holds the IPv4 (e.g. 64:ff9b:1:808:8:800:a9fe:a9fe).
+    if (g !== 0 || h !== 0) {
+        if (isBlockedIpv4(extractIpv4At96(groups))) return true;
+    }
+
+    // /64 sub-prefix: IPv4 in e–f when e's high byte is part of the address
+    // rather than the /48 u-octet (e.g. 64:ff9b:1:808:a9fe:a9fe).
+    if ((e >> 8) !== 0) {
+        if (isBlockedIpv4(extractIpv4At64(groups))) return true;
+    }
+
+    return false;
 }
 
 function isBlockedIpv6(ip: string): boolean {
@@ -139,10 +179,9 @@ function isBlockedIpv6(ip: string): boolean {
     if (embedded) {
         return isBlockedIpv4(embedded);
     }
-    // The local-use NAT64 prefix uses the /48 layout, not the last 32 bits.
-    const localNat64 = embeddedIpv4FromLocalNat64(groups);
-    if (localNat64) {
-        return isBlockedIpv4(localNat64);
+    // Local-use NAT64 may embed IPv4 at /48, /64, or /96 per RFC 6052 §2.2.
+    if (isBlockedLocalNat64(groups)) {
+        return true;
     }
     // fc00::/7 unique-local.
     if ((groups[0] & 0xfe00) === 0xfc00) return true;

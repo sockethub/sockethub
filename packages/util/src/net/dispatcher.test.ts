@@ -79,6 +79,7 @@ describe("createGuardedDispatcher", () => {
             "169.254.169.254",
             "[::1]",
             "[64:ff9b:1:a9fe:a9:fe00::]",
+            "[64:ff9b:1:808:8:800:a9fe:a9fe]",
         ]) {
             let connected = false;
             const connector = createGuardedConnector(false, () => {
