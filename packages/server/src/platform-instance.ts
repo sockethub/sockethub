@@ -1,11 +1,16 @@
 import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
 
-import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
+import {
+    CredentialsStore,
+    type JobDataDecrypted,
+    JobQueue,
+} from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import type {
     ActivityStream,
     CompletedJobHandler,
+    CredentialsObject,
     InternalActivityStream,
     Logger,
     PlatformConfig,
@@ -15,13 +20,20 @@ import {
     INTERNAL_PLATFORM_CONTEXT_URL,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 import { errorMessage } from "@sockethub/util/error";
 import config from "./config.js";
 import {
     forgetAnonymousScopes,
     reassignAnonymousScopes,
+    reassignPendingScopes,
 } from "./connection-scope.js";
 import { getSocket } from "./listener.js";
+import {
+    derivePlatformCredentialsSecret,
+    migrateRenamedActorCredentials,
+    renameActorCredentialsInStore,
+} from "./platform.js";
 import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
 import { __dirname } from "./util.js";
 
@@ -32,7 +44,13 @@ export interface PlatformInstanceParams {
     identifier: string;
     platform: string;
     parentId?: string;
+    parentSecret1?: string;
     actor?: string;
+    /**
+     * Reuse an existing worker's Redis queue when replacing a dead instance
+     * for the same routing identifier (#1166). Omitted for brand-new workers.
+     */
+    queueId?: string;
     /**
      * Server-derived value mixed into `identifier`. Forwarded to the child so
      * it derives the same identifier when it re-keys on an actor change.
@@ -49,15 +67,27 @@ type EnvFormat = {
     SOCKETHUB_PLATFORM_SCOPE?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
+    SOCKETHUB_QUEUE_INSTANCE_ID?: string;
     SOCKETHUB_SENTRY_CONFIG?: string;
 };
 
 type MessageFromPlatform =
-    | ["updateActor", string | null | undefined, string]
+    | [
+          "updateActor",
+          string | null | undefined,
+          string,
+          CredentialsObject?,
+          string?,
+      ]
     | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
+
+export type MessageToPlatformChild =
+    | ["secrets", { parentSecret1: string; parentSecret2: string }]
+    | ["updateActorAck"]
+    | ["updateActorFailed", string];
 
 export interface MessageFromParent extends Array<string | unknown> {
     0: string;
@@ -77,6 +107,11 @@ const HEARTBEAT_TIMEOUT_MS = Number(
 
 export default class PlatformInstance {
     id: string;
+    /**
+     * Immutable Redis queue name for this worker. Distinct from `id`, which
+     * moves when the actor is renamed and can be reused by a later connection.
+     */
+    readonly queueId: string;
     flaggedForTermination = false;
     queue: JobQueue;
     JobQueue: typeof JobQueue;
@@ -92,8 +127,10 @@ export default class PlatformInstance {
     process: ChildProcess;
     readonly log: Logger;
     readonly parentId: string;
+    private readonly parentSecret1?: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
+    private readonly sessionSecrets: Map<string, string> = new Map();
     private processMessageListener?: (message: MessageFromPlatform) => void;
     private processCloseListener?: (e: unknown) => void;
     private heartbeatLastSeen = Date.now();
@@ -102,12 +139,19 @@ export default class PlatformInstance {
     private heartbeatFailureHandled = false;
     private replaced = false;
     private shutdownResult?: Promise<void>;
-    private readonly actor?: string;
+    /**
+     * Actor this instance was opened for. Updated when the platform re-keys
+     * (IRC nick change) so a later rename moves the credential scope off the
+     * actor the client is using now, not the one from process start.
+     */
+    private actor?: string;
 
     constructor(params: PlatformInstanceParams) {
         this.id = params.identifier;
+        this.queueId = params.queueId ?? crypto.randId(16);
         this.name = params.platform;
         this.parentId = params.parentId;
+        this.parentSecret1 = params.parentSecret1;
         if (params.actor) {
             this.actor = params.actor;
         } else {
@@ -118,6 +162,7 @@ export default class PlatformInstance {
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
             SOCKETHUB_PLATFORM_CHILD: "1",
+            SOCKETHUB_QUEUE_INSTANCE_ID: this.queueId,
         };
         if (params.scope) {
             env.SOCKETHUB_PLATFORM_SCOPE = params.scope;
@@ -296,7 +341,7 @@ export default class PlatformInstance {
     public initQueue(secret: string) {
         this.queue = new this.JobQueue(
             this.parentId,
-            this.id,
+            this.queueId,
             secret,
             config.get("redis"),
         );
@@ -374,6 +419,19 @@ export default class PlatformInstance {
     }
 
     /**
+     * Records the per-session secret used to derive that session's credential
+     * store. Required so an actor rename can persist the renamed credentials
+     * for every session sharing this connection, not only the one that issued
+     * the nick change.
+     */
+    public rememberSessionSecret(sessionId: string, sessionSecret: string) {
+        if (!sessionId || !sessionSecret) {
+            return;
+        }
+        this.sessionSecrets.set(sessionId, sessionSecret);
+    }
+
+    /**
      * Stop delivering this instance's messages to a session. Used when the
      * session loses (or never had) the right to be attached; the janitor
      * separately drops sessions whose sockets have gone away.
@@ -383,6 +441,7 @@ export default class PlatformInstance {
             return;
         }
         this.sessionIps.delete(sessionId);
+        this.sessionSecrets.delete(sessionId);
         this.log.debug(`deregistered session ${sessionId}`);
     }
 
@@ -561,11 +620,80 @@ export default class PlatformInstance {
     }
 
     /**
+     * Persists renamed credentials for every attached session except the one
+     * that already stored them in the platform child before reporting the
+     * actor change.
+     */
+    private async migratePeerActorCredentials(
+        credentials: CredentialsObject,
+        previousActorId: string,
+        originatingSessionId?: string,
+    ): Promise<void> {
+        if (!this.parentSecret1) {
+            return;
+        }
+        const redisConfig = config.get("redis");
+        const ttlMs = config.get("credentials:ttlMs") as number | undefined;
+        const writers = [];
+        for (const sessionId of this.sessions) {
+            if (sessionId === originatingSessionId) {
+                continue;
+            }
+            const sessionSecret = this.sessionSecrets.get(sessionId);
+            if (!sessionSecret) {
+                continue;
+            }
+            const store = new CredentialsStore(
+                this.parentId,
+                sessionId,
+                derivePlatformCredentialsSecret(
+                    this.parentSecret1,
+                    sessionSecret,
+                ),
+                redisConfig,
+                { ttlMs },
+            );
+            writers.push({
+                sessionId,
+                renameActorCredentials: (
+                    fromActorId: string,
+                    renamed: CredentialsObject,
+                ) =>
+                    renameActorCredentialsInStore(
+                        store,
+                        this.name,
+                        fromActorId,
+                        renamed,
+                    ),
+            });
+        }
+        await migrateRenamedActorCredentials(
+            this.name,
+            previousActorId,
+            credentials,
+            writers,
+        );
+    }
+
+    /**
      * Updates the instance with a new identifier, updating the platformInstances mapping as well.
+     *
+     * The Redis queue stays on the identifier this process was forked with.
+     * `this.queue` captured that name in `initQueue()`, and the child worker
+     * keeps consuming it. Rebinding either side here would leave jobs on a
+     * queue nobody reads.
+     *
      * @param identifier
      */
     private updateIdentifier(identifier: string, actorId?: string) {
+        if (typeof identifier !== "string" || identifier.length === 0) {
+            this.log.error(
+                `ignoring actor change with an invalid identifier platform=${this.name}`,
+            );
+            return;
+        }
         const previousId = this.id;
+        const previousActor = this.actor;
         platformInstances.delete(this.id);
         this.id = identifier;
         platformInstances.set(this.id, this);
@@ -573,6 +701,20 @@ export default class PlatformInstance {
         // and the old actor; move it so a refresh still finds this connection,
         // and so teardown can still clear it.
         reassignAnonymousScopes(previousId, this.id, this.name, actorId);
+        if (
+            previousActor &&
+            typeof actorId === "string" &&
+            actorId.length > 0 &&
+            actorId !== previousActor
+        ) {
+            reassignPendingScopes(
+                this.sessions,
+                this.name,
+                previousActor,
+                actorId,
+            );
+            this.actor = actorId;
+        }
     }
 
     /**
@@ -584,6 +726,24 @@ export default class PlatformInstance {
      * per platform emit, plus MaxListenersExceeded warnings past ten
      * sessions on shared (e.g. global) platforms.
      */
+    private sendUpdateActorAck() {
+        this.sendToChild(["updateActorAck"]);
+    }
+
+    private sendUpdateActorFailed(message: string) {
+        this.sendToChild(["updateActorFailed", message]);
+    }
+
+    private sendToChild(message: MessageToPlatformChild) {
+        if (!this.process?.send) {
+            this.log.error(
+                `unable to send ${message[0]} to platform child: no IPC channel`,
+            );
+            return;
+        }
+        this.process.send(message);
+    }
+
     private attachProcessListeners() {
         if (!this.process?.on) {
             return;
@@ -626,14 +786,49 @@ export default class PlatformInstance {
         first,
         second,
         third,
+        fourth,
+        fifth,
     ]: MessageFromPlatform) {
         if (first === "updateActor") {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
-            this.updateIdentifier(
-                third,
-                typeof second === "string" ? second : undefined,
-            );
+            if (typeof third !== "string" || third.length === 0) {
+                const message = `actor change rejected: invalid identifier platform=${this.name}`;
+                this.log.error(message);
+                this.sendUpdateActorFailed(message);
+                return;
+            }
+            try {
+                const credentials = fourth;
+                const originatingSessionId =
+                    typeof fifth === "string" && fifth.length > 0
+                        ? fifth
+                        : undefined;
+                const previousActor = this.actor;
+                if (credentials) {
+                    if (
+                        typeof previousActor !== "string" ||
+                        previousActor.length === 0
+                    ) {
+                        throw new Error(
+                            `cannot migrate peer credentials for ${this.name} without a previous actor`,
+                        );
+                    }
+                    await this.migratePeerActorCredentials(
+                        credentials,
+                        previousActor,
+                        originatingSessionId,
+                    );
+                }
+                this.updateIdentifier(
+                    third,
+                    typeof second === "string" ? second : undefined,
+                );
+                this.sendUpdateActorAck();
+            } catch (err) {
+                this.sendUpdateActorFailed(errorMessage(err));
+                throw err;
+            }
         } else if (first === "sessionUnauthorized") {
             if (
                 typeof third !== "string" ||
