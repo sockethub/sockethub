@@ -464,6 +464,113 @@ describe("Initialize IRC Platform", () => {
             ).toEqual("##a-room");
         });
 
+        it("fails a join when the server replies that the channel is unavailable", async () => {
+            let failure: unknown;
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: targetRoom,
+                },
+                (err: unknown) => {
+                    failure = err;
+                },
+            );
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(() => {
+                platform.irc2as.input(
+                    ":irc.example.com 473 testingham #a-room :Cannot join channel (+i)",
+                );
+            }).not.toThrow();
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(failure).toEqual("Cannot join channel (+i)");
+            expect(platform.jobQueue.length).toEqual(0);
+            expect(platform.channels.has("#a-room")).toEqual(false);
+        });
+
+        it("does not let the PONG from a failed join complete the next join", () => {
+            let first: unknown = "pending";
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: targetRoom,
+                },
+                (err: unknown) => {
+                    first = err;
+                },
+            );
+            platform.irc2as.input(
+                ":irc.example.com 473 testingham #a-room :Cannot join channel (+i)",
+            );
+            expect(first).toEqual("Cannot join channel (+i)");
+
+            const otherRoom = {
+                type: "room",
+                id: "#other-room@irc.example.com",
+                name: "#other-room",
+            };
+            let second: unknown = "pending";
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: otherRoom,
+                },
+                (err: unknown) => {
+                    second = err ?? null;
+                },
+            );
+
+            // This PONG answers the PING sent with the failed join. The next
+            // join is already queued, which is what happens when the client
+            // pipelines a second command and Redis starts it before the
+            // remote PONG arrives.
+            platform.irc2as.input(
+                ":irc.example.com PONG irc.example.com :testingham",
+            );
+            expect(second).toEqual("pending");
+            expect(platform.channels.has("#other-room")).toEqual(false);
+            expect(platform.jobQueue.length).toEqual(1);
+
+            platform.irc2as.input(
+                ":irc.example.com PONG irc.example.com :testingham",
+            );
+            expect(second).toEqual(null);
+            expect(platform.channels.has("#other-room")).toEqual(true);
+            expect(platform.jobQueue.length).toEqual(0);
+        });
+
+        it("does not skip a join acknowledgement when a numeric error had no command in flight", () => {
+            platform.irc2as.input(
+                ":irc.example.com 473 testingham #secret :Cannot join channel (+i)",
+            );
+
+            let result: unknown = "pending";
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: targetRoom,
+                },
+                (err: unknown) => {
+                    result = err ?? null;
+                },
+            );
+            platform.irc2as.input(
+                ":irc.example.com PONG irc.example.com :testingham",
+            );
+
+            expect(result).toEqual(null);
+            expect(platform.channels.has("#a-room")).toEqual(true);
+        });
+
         describe("after join", () => {
             beforeEach((done) => {
                 platform.join(
@@ -763,6 +870,54 @@ describe("Initialize IRC Platform", () => {
                 expect(failure).toEqual("Nickname is already in use");
                 expect(platform.handledActors.has(actor.id)).toEqual(true);
                 expect(platform.handledActors.has(newActor.id)).toEqual(false);
+            });
+
+            it("fails a nick change when the server replies that the nick is in use", async () => {
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // irc2as emits this on `error` with the text on `error`, not
+                // `object.content`. Reading the wrong field used to throw out
+                // of the socket listener (fatal to the platform process) and,
+                // because a nick change only completes on nickAck, the PONG
+                // for the trailing PING never unblocked the command.
+                expect(() => {
+                    platform.irc2as.input(
+                        ":irc.example.com 433 testingham testler :Nickname is already in use.",
+                    );
+                }).not.toThrow();
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual("Nickname is already in use.");
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(platform.handledActors.has(actor.id)).toEqual(true);
+                expect(platform.handledActors.has(newActor.id)).toEqual(false);
+                expect(creds.object.nick).toEqual("testingham");
+                expect(creds.actor.id).toEqual(actor.id);
+            });
+
+            it("does not throw when a numeric error arrives with no command in flight", () => {
+                platform.ircConnect(validCredentials, () => {});
+                expect(() => {
+                    platform.irc2as.input(
+                        ":irc.example.com 473 testingham #a-room :Cannot join channel (+i)",
+                    );
+                }).not.toThrow();
+                expect(platform.jobQueue.length).toEqual(0);
             });
 
             it("delivers a server-initiated nick change while idle", async () => {
