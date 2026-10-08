@@ -90,6 +90,7 @@ class ProcessManager {
             identifier: identifier,
             platform: platform,
             parentId: this.parentId,
+            parentSecret1: this.parentSecret1,
             actor: actor,
             scope: scope,
         };

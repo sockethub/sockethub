@@ -11,6 +11,7 @@ import type { JobDataDecrypted } from "@sockethub/data-layer";
 import {
     derivePlatformCredentialsSecret,
     mergePackageConfig,
+    migrateRenamedActorCredentials,
     storeActorCredentials,
 } from "./platform.js";
 
@@ -64,6 +65,33 @@ describe("platform.ts credential handling", () => {
             expect(saved).toEqual([
                 { key: "irc:alice_away@irc.example.org", creds: renamed },
             ]);
+        });
+
+        it("migrates renamed credentials for every peer session writer", async () => {
+            const renamed: CredentialsObject = {
+                type: "credentials",
+                "@context": [],
+                actor: {
+                    id: "alice_away@irc.example.org",
+                    type: "person",
+                    name: "alice_away",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "alice_away",
+                    password: "hunter2",
+                },
+            };
+            const saved: string[] = [];
+            await migrateRenamedActorCredentials("irc", renamed, [
+                {
+                    sessionId: "s2",
+                    saveRenamedCredentials: async () => {
+                        saved.push("s2");
+                    },
+                },
+            ]);
+            expect(saved).toEqual(["s2"]);
         });
     });
     let sandbox: sinon.SinonSandbox;

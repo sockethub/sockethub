@@ -86,6 +86,35 @@ export async function storeActorCredentials(
     await store.save(buildCredentialsKey(platformName, actorId), credentials);
 }
 
+export interface SessionCredentialWriter {
+    sessionId: string;
+    saveRenamedCredentials(credentials: CredentialsObject): Promise<unknown>;
+}
+
+/**
+ * Persists renamed credentials for every attached session except the one that
+ * already stored them in the platform child before reporting the actor change.
+ */
+export async function migrateRenamedActorCredentials(
+    platformName: string,
+    credentials: CredentialsObject,
+    writers: Iterable<SessionCredentialWriter>,
+): Promise<void> {
+    const failures: string[] = [];
+    for (const writer of writers) {
+        try {
+            await writer.saveRenamedCredentials(credentials);
+        } catch (err) {
+            failures.push(`${writer.sessionId}: ${errorMessage(err)}`);
+        }
+    }
+    if (failures.length > 0) {
+        throw new Error(
+            `failed to migrate renamed ${platformName} credentials for ${failures.length} session(s): ${failures.join("; ")}`,
+        );
+    }
+}
+
 async function startPlatformProcess() {
     // command-line params
     const parentId = process.argv[2];
@@ -161,11 +190,15 @@ async function startPlatformProcess() {
     // a renamed actor before the job callback returns. Persistent platforms
     // run one job at a time, so a single slot is unambiguous.
     let credentialsStoreForActorUpdate: CredentialsStore | undefined;
-    // The parent JobQueue is built with the identifier this process was
-    // forked with and is never rebuilt. Later actor renames change
-    // `identifier` (the map key) but must not move the worker onto a queue
-    // the parent does not write.
-    let queueInstanceId: string | undefined;
+    // Session that owns the in-flight credentialed job. Forwarded with the
+    // actor-change IPC so the parent can migrate credentials for every other
+    // session sharing this connection.
+    let actorUpdateSessionId: string | undefined;
+    // Immutable queue name allocated when this worker was forked. Distinct
+    // from `identifier`, which moves on actor rename and can be reused by a
+    // later connection with the original actor.
+    const queueInstanceId =
+        process.env.SOCKETHUB_QUEUE_INSTANCE_ID ?? identifier;
 
     logger.debug(
         `platform handler initializing for ${platformName} ${identifier}`,
@@ -485,12 +518,14 @@ async function startPlatformProcess() {
                         )
                         .then((credentials) => {
                             credentialsStoreForActorUpdate = credentialStore;
+                            actorUpdateSessionId = job.sessionId;
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (
                                 err: Error | null,
                                 result: null | ActivityStream,
                             ): void => {
                                 credentialsStoreForActorUpdate = undefined;
+                                actorUpdateSessionId = undefined;
                                 if (!err && isPersistentPlatform(platform)) {
                                     // Update credentialsHash after successful platform call.
                                     // Only persistent platforms track credential state across requests.
@@ -509,6 +544,7 @@ async function startPlatformProcess() {
                             );
                             if (!handler) {
                                 credentialsStoreForActorUpdate = undefined;
+                                actorUpdateSessionId = undefined;
                                 doneCallback(
                                     new Error(
                                         `platform method ${job.msg.type} not available`,
@@ -528,6 +564,7 @@ async function startPlatformProcess() {
                                 );
                             } catch (err) {
                                 credentialsStoreForActorUpdate = undefined;
+                                actorUpdateSessionId = undefined;
                                 doneCallback(toError(err), null);
                             }
                         })
@@ -671,7 +708,11 @@ async function startPlatformProcess() {
         // identifier's queue — which the parent never writes — so every
         // later send, join, or topic sat unconsumed. It also closed the
         // worker while this job's handler was still running.
-        await sendUpdateActor(credentials.actor.id, nextIdentifier);
+        await sendUpdateActor(
+            credentials,
+            nextIdentifier,
+            actorUpdateSessionId,
+        );
         identifier = nextIdentifier;
         logger.info(
             `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
@@ -689,9 +730,16 @@ async function startPlatformProcess() {
      * if the IPC channel is gone or the write fails.
      */
     function sendUpdateActor(
-        actorId: string,
+        credentials: CredentialsObject,
         newIdentifier: string,
+        originatingSessionId?: string,
     ): Promise<void> {
+        const actorId = credentials.actor?.id;
+        if (typeof actorId !== "string" || actorId.length === 0) {
+            return Promise.reject(
+                new Error("unable to report actor change without an actor id"),
+            );
+        }
         return new Promise((resolve, reject) => {
             if (!process.send) {
                 reject(
@@ -702,7 +750,13 @@ async function startPlatformProcess() {
                 return;
             }
             process.send(
-                ["updateActor", actorId, newIdentifier],
+                [
+                    "updateActor",
+                    actorId,
+                    newIdentifier,
+                    credentials,
+                    originatingSessionId,
+                ],
                 (err: Error | null) => {
                     if (err) {
                         reject(err);
@@ -730,7 +784,6 @@ async function startPlatformProcess() {
                 return;
             }
         }
-        queueInstanceId ??= identifier;
         const concurrency = getWorkerConcurrency();
         jobWorker = new JobWorker(
             parentId,

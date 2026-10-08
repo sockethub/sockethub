@@ -214,6 +214,48 @@ describe("PlatformInstance", () => {
             expect(pi.queue).toBeDefined();
         });
 
+        test("binds the queue to an immutable id separate from the routing identifier", () => {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            let queueInstanceId: string | undefined;
+            class QueueCapturingInstance extends TestPlatformInstance {
+                createQueue() {
+                    this.JobQueue = sandbox.stub().callsFake(function (
+                        _parentId: string,
+                        instanceId: string,
+                    ) {
+                        queueInstanceId = instanceId;
+                        return {
+                            shutdown: sandbox.stub(),
+                            disconnect: sandbox.stub(),
+                            on: sandbox.stub(),
+                        };
+                    }) as typeof TestPlatformInstance.prototype.JobQueue;
+                }
+            }
+            const instance = new QueueCapturingInstance({
+                identifier: "routing identifier",
+                platform: "irc",
+                parentId: "parent",
+            });
+            expect(instance.queueId).not.toEqual("routing identifier");
+            instance.initQueue("a secret");
+            expect(queueInstanceId).toEqual(instance.queueId);
+            void instance.shutdown();
+        });
+
+        test("forwards the immutable queue id to the platform child", async () => {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            const instance = new TestPlatformInstance({
+                identifier: "routing identifier",
+                platform: "irc",
+                parentId: "parent",
+            });
+            expect(forkFake.lastCall.args[2].SOCKETHUB_QUEUE_INSTANCE_ID).toEqual(
+                instance.queueId,
+            );
+            await instance.shutdown();
+        });
+
         test("cleans up its references when shutdown", async () => {
             pi.initQueue("a secret");
             expect(pi.queue).toBeDefined();
@@ -281,9 +323,11 @@ describe("PlatformInstance", () => {
         test("actor rename keeps the job queue the process was forked with", () => {
             pi.initQueue("a secret");
             const queue = pi.queue;
+            const queueId = pi.queueId;
             pi.updateIdentifier("renamed identifier", "alice_away@irc.example.org");
             expect(pi.id).toEqual("renamed identifier");
             expect(pi.queue).toBe(queue);
+            expect(pi.queueId).toEqual(queueId);
         });
 
         test("ignores an actor change with no identifier", () => {
@@ -604,10 +648,14 @@ describe("PlatformInstance", () => {
             test("message events from platform thread are routed based on command: updateActor", async () => {
                 await pi.handleProcessMessage([
                     "updateActor",
-                    undefined,
-                    { foo: "bar" },
+                    "alice_away@irc.example.org",
+                    "renamed identifier",
                 ]);
-                sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
+                sandbox.assert.calledWith(
+                    pi.updateIdentifier,
+                    "renamed identifier",
+                    "alice_away@irc.example.org",
+                );
             });
 
             it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {

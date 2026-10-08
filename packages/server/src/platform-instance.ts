@@ -1,11 +1,16 @@
 import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
 
-import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
+import {
+    CredentialsStore,
+    type JobDataDecrypted,
+    JobQueue,
+} from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import type {
     ActivityStream,
     CompletedJobHandler,
+    CredentialsObject,
     InternalActivityStream,
     Logger,
     PlatformConfig,
@@ -15,6 +20,7 @@ import {
     INTERNAL_PLATFORM_CONTEXT_URL,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 import { errorMessage } from "@sockethub/util/error";
 import config from "./config.js";
 import {
@@ -23,6 +29,11 @@ import {
     reassignPendingScopes,
 } from "./connection-scope.js";
 import { getSocket } from "./listener.js";
+import {
+    derivePlatformCredentialsSecret,
+    migrateRenamedActorCredentials,
+    storeActorCredentials,
+} from "./platform.js";
 import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
 import { __dirname } from "./util.js";
 
@@ -33,6 +44,7 @@ export interface PlatformInstanceParams {
     identifier: string;
     platform: string;
     parentId?: string;
+    parentSecret1?: string;
     actor?: string;
     /**
      * Server-derived value mixed into `identifier`. Forwarded to the child so
@@ -50,11 +62,18 @@ type EnvFormat = {
     SOCKETHUB_PLATFORM_SCOPE?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
+    SOCKETHUB_QUEUE_INSTANCE_ID?: string;
     SOCKETHUB_SENTRY_CONFIG?: string;
 };
 
 type MessageFromPlatform =
-    | ["updateActor", string | null | undefined, string]
+    | [
+          "updateActor",
+          string | null | undefined,
+          string,
+          CredentialsObject?,
+          string?,
+      ]
     | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
     | ["heartbeat", ActivityStream]
@@ -78,6 +97,11 @@ const HEARTBEAT_TIMEOUT_MS = Number(
 
 export default class PlatformInstance {
     id: string;
+    /**
+     * Immutable Redis queue name for this worker. Distinct from `id`, which
+     * moves when the actor is renamed and can be reused by a later connection.
+     */
+    readonly queueId: string;
     flaggedForTermination = false;
     queue: JobQueue;
     JobQueue: typeof JobQueue;
@@ -93,8 +117,10 @@ export default class PlatformInstance {
     process: ChildProcess;
     readonly log: Logger;
     readonly parentId: string;
+    private readonly parentSecret1?: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
+    private readonly sessionSecrets: Map<string, string> = new Map();
     private processMessageListener?: (message: MessageFromPlatform) => void;
     private processCloseListener?: (e: unknown) => void;
     private heartbeatLastSeen = Date.now();
@@ -112,8 +138,10 @@ export default class PlatformInstance {
 
     constructor(params: PlatformInstanceParams) {
         this.id = params.identifier;
+        this.queueId = crypto.randId(16);
         this.name = params.platform;
         this.parentId = params.parentId;
+        this.parentSecret1 = params.parentSecret1;
         if (params.actor) {
             this.actor = params.actor;
         } else {
@@ -124,6 +152,7 @@ export default class PlatformInstance {
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
             SOCKETHUB_PLATFORM_CHILD: "1",
+            SOCKETHUB_QUEUE_INSTANCE_ID: this.queueId,
         };
         if (params.scope) {
             env.SOCKETHUB_PLATFORM_SCOPE = params.scope;
@@ -302,7 +331,7 @@ export default class PlatformInstance {
     public initQueue(secret: string) {
         this.queue = new this.JobQueue(
             this.parentId,
-            this.id,
+            this.queueId,
             secret,
             config.get("redis"),
         );
@@ -380,6 +409,19 @@ export default class PlatformInstance {
     }
 
     /**
+     * Records the per-session secret used to derive that session's credential
+     * store. Required so an actor rename can persist the renamed credentials
+     * for every session sharing this connection, not only the one that issued
+     * the nick change.
+     */
+    public rememberSessionSecret(sessionId: string, sessionSecret: string) {
+        if (!sessionId || !sessionSecret) {
+            return;
+        }
+        this.sessionSecrets.set(sessionId, sessionSecret);
+    }
+
+    /**
      * Stop delivering this instance's messages to a session. Used when the
      * session loses (or never had) the right to be attached; the janitor
      * separately drops sessions whose sockets have gone away.
@@ -389,6 +431,7 @@ export default class PlatformInstance {
             return;
         }
         this.sessionIps.delete(sessionId);
+        this.sessionSecrets.delete(sessionId);
         this.log.debug(`deregistered session ${sessionId}`);
     }
 
@@ -567,6 +610,48 @@ export default class PlatformInstance {
     }
 
     /**
+     * Persists renamed credentials for every attached session except the one
+     * that already stored them in the platform child before reporting the
+     * actor change.
+     */
+    private async migratePeerActorCredentials(
+        credentials: CredentialsObject,
+        originatingSessionId?: string,
+    ): Promise<void> {
+        if (!this.parentSecret1) {
+            return;
+        }
+        const redisConfig = config.get("redis");
+        const ttlMs = config.get("credentials:ttlMs") as number | undefined;
+        const writers = [];
+        for (const sessionId of this.sessions) {
+            if (sessionId === originatingSessionId) {
+                continue;
+            }
+            const sessionSecret = this.sessionSecrets.get(sessionId);
+            if (!sessionSecret) {
+                continue;
+            }
+            const store = new CredentialsStore(
+                this.parentId,
+                sessionId,
+                derivePlatformCredentialsSecret(
+                    this.parentSecret1,
+                    sessionSecret,
+                ),
+                redisConfig,
+                { ttlMs },
+            );
+            writers.push({
+                sessionId,
+                saveRenamedCredentials: (renamed: CredentialsObject) =>
+                    storeActorCredentials(store, this.name, renamed),
+            });
+        }
+        await migrateRenamedActorCredentials(this.name, credentials, writers);
+    }
+
+    /**
      * Updates the instance with a new identifier, updating the platformInstances mapping as well.
      *
      * The Redis queue stays on the identifier this process was forked with.
@@ -659,10 +744,29 @@ export default class PlatformInstance {
         first,
         second,
         third,
+        fourth,
+        fifth,
     ]: MessageFromPlatform) {
         if (first === "updateActor") {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
+            if (typeof third !== "string" || third.length === 0) {
+                this.log.error(
+                    `ignoring actor change with an invalid identifier platform=${this.name}`,
+                );
+                return;
+            }
+            const credentials = fourth;
+            const originatingSessionId =
+                typeof fifth === "string" && fifth.length > 0
+                    ? fifth
+                    : undefined;
+            if (credentials) {
+                await this.migratePeerActorCredentials(
+                    credentials,
+                    originatingSessionId,
+                );
+            }
             this.updateIdentifier(
                 third,
                 typeof second === "string" ? second : undefined,

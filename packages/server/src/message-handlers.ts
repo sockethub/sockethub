@@ -186,6 +186,10 @@ export function createMessageHandlers(
                 if (onPlatformInstance) {
                     onPlatformInstance(platformInstance);
                 }
+                platformInstance.rememberSessionSecret(
+                    sessionId,
+                    sessionSecret,
+                );
                 // job validated and queued, stores the callback for when the job completes
                 try {
                     const job = await platformInstance.queue.add(
