@@ -100,6 +100,23 @@ function ircLineBreakError(values: Array<unknown>): string | undefined {
     }
 }
 
+/**
+ * irc2as puts numeric-reply text on `error`, not `object.content`. Reading
+ * `object.content` throws, and the platform process treats that as fatal.
+ * A non-empty string is required so a nick-change handler takes its failure
+ * path instead of adopting a nick the server rejected.
+ */
+function ircFailureMessage(asObject: ActivityStream): string {
+    if (typeof asObject.error === "string" && asObject.error.length > 0) {
+        return asObject.error;
+    }
+    const content = asObject.object?.content;
+    if (typeof content === "string" && content.length > 0) {
+        return content;
+    }
+    return "IRC error";
+}
+
 interface IrcSocketOptionsCapabilities {
     requires: string[];
 }
@@ -146,6 +163,9 @@ export class IRC implements PersistentPlatformInterface {
     private initialized = false;
     private client?: IrcSocketInstance;
     private jobQueue: Array<QueuedJob> = []; // handlers waiting for a matching ack
+    // A numeric error completes the in-flight command before its PING is
+    // answered. That PONG must not acknowledge the command that runs next.
+    private pongAcksToSkip = 0;
     private channels = new Set();
     private handledActors = new Set();
     private credentials?: PlatformIrcCredentialsObject;
@@ -231,7 +251,10 @@ export class IRC implements PersistentPlatformInterface {
             // join channel
             this.jobQueue.push({
                 ack: "pong",
-                handler: () => {
+                handler: (err?: Error | string) => {
+                    if (err) {
+                        return done(err);
+                    }
                     this.hasJoined(channel);
                     done();
                 },
@@ -502,6 +525,7 @@ export class IRC implements PersistentPlatformInterface {
     cleanup(done: PlatformCallback) {
         this.log.debug("cleanup() called");
         this.initialized = false;
+        this.pongAcksToSkip = 0;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
             if (typeof this.client.end === "function") {
@@ -835,14 +859,25 @@ export class IRC implements PersistentPlatformInterface {
         // however for irc2as this event delivers an AS object of type `error`.
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
-            this.log.debug(`message error response ${asObject.object.content}`);
+            const message = ircFailureMessage(asObject);
+            this.log.debug(`message error response ${message}`);
             if (this.jobQueue.length > 0) {
-                this.completeJob(asObject.object.content);
+                // join, send, topic, and nick each write a PING after queueing.
+                // The numeric reply arrives first, so this PONG is still in
+                // flight. On a remote server it lands after the worker has
+                // already started the next queued command, and it would
+                // complete that command with success.
+                this.pongAcksToSkip += 1;
+                this.completeJob(message);
             }
         });
 
         this.irc2as.events.on("pong", (timestamp: string) => {
             this.log.debug(`received PONG at ${timestamp}`);
+            if (this.pongAcksToSkip > 0) {
+                this.pongAcksToSkip -= 1;
+                return;
+            }
             if (this.jobQueue[0]?.ack === "pong") {
                 this.completeJob();
             }
