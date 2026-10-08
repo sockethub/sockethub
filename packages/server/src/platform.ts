@@ -113,7 +113,7 @@ export async function renameActorCredentialsInStore(
     platformName: string,
     previousActorId: string,
     renamed: CredentialsObject,
-    options?: { missingPrevious?: "skip" | "throw" },
+    options?: { missingPrevious?: "skip" | "throw"; dryRun?: boolean },
 ): Promise<"migrated" | "skipped"> {
     const newActorId = renamed.actor?.id;
     if (typeof newActorId !== "string" || newActorId.length === 0) {
@@ -156,6 +156,9 @@ export async function renameActorCredentialsInStore(
         }
     }
 
+    if (options?.dryRun) {
+        return "migrated";
+    }
     await store.save(newKey, renamed);
     return "migrated";
 }
@@ -355,6 +358,7 @@ async function startPlatformProcess() {
         log: logger, // Reuse the logger created above
         sendToClient: getSendFunction("message"),
         updateActor: updateActor,
+        prepareActorUpdate: prepareActorUpdate,
     };
 
     const platform: PlatformInterface = await (async () => {
@@ -811,6 +815,33 @@ async function startPlatformProcess() {
                 );
             }
         };
+    }
+
+    /**
+     * Reject a proposed rename that would overwrite a different account in this
+     * session's store. Does not write. The IRC platform calls this before
+     * sending NICK, so a collision never changes the nick on the server.
+     */
+    async function prepareActorUpdate(
+        credentials: CredentialsObject,
+    ): Promise<void> {
+        const store = credentialsStoreForActorUpdate;
+        const previousActorId = actorUpdatePreviousActorId;
+        if (!store) {
+            return;
+        }
+        if (!previousActorId) {
+            throw new Error(
+                `cannot store updated credentials for ${platformName} without the previous actor id`,
+            );
+        }
+        await renameActorCredentialsInStore(
+            store,
+            platformName,
+            previousActorId,
+            credentials,
+            { missingPrevious: "throw", dryRun: true },
+        );
     }
 
     /**

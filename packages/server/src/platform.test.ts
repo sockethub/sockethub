@@ -321,6 +321,57 @@ describe("platform.ts credential handling", () => {
             ]);
         });
 
+        it("does not write when a rename is only being checked", async () => {
+            const renamed: CredentialsObject = {
+                type: "credentials",
+                "@context": [],
+                actor: {
+                    id: "alice_away@irc.example.org",
+                    type: "person",
+                    name: "alice_away",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "alice_away",
+                    password: "hunter2",
+                },
+            };
+            const saved: Array<string> = [];
+            const store = {
+                get: async (key: string) => {
+                    if (key === "irc:alice@irc.example.org") {
+                        return {
+                            type: "credentials" as const,
+                            "@context": [],
+                            actor: {
+                                id: "alice@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials" as const,
+                                nick: "alice",
+                                password: "hunter2",
+                            },
+                        };
+                    }
+                    throw new Error(`credentials not found for ${key}`);
+                },
+                save: async (key: string) => {
+                    saved.push(key);
+                    return 1;
+                },
+            };
+            const result = await renameActorCredentialsInStore(
+                store,
+                "irc",
+                "alice@irc.example.org",
+                renamed,
+                { missingPrevious: "throw", dryRun: true },
+            );
+            expect(result).toEqual("migrated");
+            expect(saved).toEqual([]);
+        });
+
         it("does not report a rename when the previous actor is missing", async () => {
             const renamed: CredentialsObject = {
                 type: "credentials",
