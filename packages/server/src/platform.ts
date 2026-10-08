@@ -64,6 +64,28 @@ export function derivePlatformCredentialsSecret(
     return crypto.deriveSecret(parentSecret, sessionSecret);
 }
 
+/**
+ * Write credentials after the platform has renamed the actor (IRC nick
+ * change). The next credentialed command loads this key and compares the
+ * object to `credentialsHash`; leaving Redis under the pre-rename actor
+ * fails that check and detaches the session from the live connection.
+ */
+export async function storeActorCredentials(
+    store: {
+        save(key: string, creds: CredentialsObject): Promise<unknown>;
+    },
+    platformName: string,
+    credentials: CredentialsObject,
+): Promise<void> {
+    const actorId = credentials.actor?.id;
+    if (typeof actorId !== "string" || actorId.length === 0) {
+        throw new Error(
+            `cannot store updated credentials for ${platformName} without an actor id`,
+        );
+    }
+    await store.save(buildCredentialsKey(platformName, actorId), credentials);
+}
+
 async function startPlatformProcess() {
     // command-line params
     const parentId = process.argv[2];
@@ -135,6 +157,15 @@ async function startPlatformProcess() {
     let jobWorkerStarted = false;
     let parentSecret1: string;
     let parentSecret2: string;
+    // Set for the duration of a credentialed job so updateActor can persist
+    // a renamed actor before the job callback returns. Persistent platforms
+    // run one job at a time, so a single slot is unambiguous.
+    let credentialsStoreForActorUpdate: CredentialsStore | undefined;
+    // The parent JobQueue is built with the identifier this process was
+    // forked with and is never rebuilt. Later actor renames change
+    // `identifier` (the map key) but must not move the worker onto a queue
+    // the parent does not write.
+    let queueInstanceId: string | undefined;
 
     logger.debug(
         `platform handler initializing for ${platformName} ${identifier}`,
@@ -453,14 +484,18 @@ async function startPlatformProcess() {
                             credentialsHash,
                         )
                         .then((credentials) => {
+                            credentialsStoreForActorUpdate = credentialStore;
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (
                                 err: Error | null,
                                 result: null | ActivityStream,
                             ): void => {
+                                credentialsStoreForActorUpdate = undefined;
                                 if (!err && isPersistentPlatform(platform)) {
                                     // Update credentialsHash after successful platform call.
                                     // Only persistent platforms track credential state across requests.
+                                    // A nick change already stored the renamed object and set this
+                                    // hash; hashing again observes that same object.
                                     platform.credentialsHash =
                                         crypto.objectHash(credentials.object);
                                 }
@@ -473,6 +508,7 @@ async function startPlatformProcess() {
                                 job.msg.type,
                             );
                             if (!handler) {
+                                credentialsStoreForActorUpdate = undefined;
                                 doneCallback(
                                     new Error(
                                         `platform method ${job.msg.type} not available`,
@@ -481,12 +517,19 @@ async function startPlatformProcess() {
                                 );
                                 return;
                             }
-                            (handler as PlatformHandlerWithCredentials).call(
-                                platform,
-                                job.msg,
-                                credentials,
-                                wrappedCallback,
-                            );
+                            try {
+                                (
+                                    handler as PlatformHandlerWithCredentials
+                                ).call(
+                                    platform,
+                                    job.msg,
+                                    credentials,
+                                    wrappedCallback,
+                                );
+                            } catch (err) {
+                                credentialsStoreForActorUpdate = undefined;
+                                doneCallback(toError(err), null);
+                            }
                         })
                         .catch((err) => {
                             // Credential store error (invalid/missing credentials)
@@ -597,45 +640,48 @@ async function startPlatformProcess() {
      * @param credentials
      */
     async function updateActor(credentials: CredentialsObject): Promise<void> {
-        const previousIdentifier = identifier;
         // Same scope the parent mixed into the identifier this child was
         // forked with, so both sides derive the same value.
-        identifier = getPlatformId(
+        const nextIdentifier = getPlatformId(
             platformName,
             credentials.actor.id,
             process.env.SOCKETHUB_PLATFORM_SCOPE,
         );
-        logger.info(
-            `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
-        );
-        // Update context with new identifier
-        setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
-        logger = createLogger("main");
-
-        // Update credentialsHash for persistent platforms (tracks actor-specific state)
-        if (isPersistentPlatform(platform)) {
-            platform.credentialsHash = crypto.objectHash(credentials.object);
+        // Persist the renamed credentials before publishing the new hash or
+        // telling the parent the actor moved. A failure leaves Redis, the
+        // hash, and the instance key where they were, so the session can
+        // still present the pre-rename actor.
+        const store = credentialsStoreForActorUpdate;
+        if (store) {
+            await storeActorCredentials(store, platformName, credentials);
         }
 
         // The actor travels with the new identifier: the parent keys anonymous
-        // resumption records on it and has no other way to learn it changed.
+        // resumption records and the credential scope on it and has no other
+        // way to learn it changed.
         //
-        // Not safeProcessSend(): that logs and continues, which would leave the
-        // parent routing to the old queue while this child listens on the new
-        // one, so jobs would be queued that nobody consumes. On failure, roll
-        // the identifier back and leave the queue listener where it is, so both
-        // sides stay on the identifier the parent still knows.
-        try {
-            await sendUpdateActor(credentials.actor.id, identifier);
-        } catch (err) {
-            identifier = previousIdentifier;
-            setLoggerContext(
-                `sockethub:platform:${platformName}:${identifier}`,
-            );
-            logger = createLogger("main");
-            throw err;
+        // Not safeProcessSend(): that logs and continues, which would report
+        // success while the parent still serves the old actor. On failure,
+        // nothing local has moved yet (the credential write above is under
+        // the new actor key; the pre-rename key is still intact).
+        //
+        // Do not restart the queue listener. `queueInstanceId` (and the
+        // parent's JobQueue) stay on the identifier this process was forked
+        // with. Restarting here used to subscribe the worker to the *new*
+        // identifier's queue — which the parent never writes — so every
+        // later send, join, or topic sat unconsumed. It also closed the
+        // worker while this job's handler was still running.
+        await sendUpdateActor(credentials.actor.id, nextIdentifier);
+        identifier = nextIdentifier;
+        logger.info(
+            `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
+        );
+        setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
+        logger = createLogger("main");
+
+        if (isPersistentPlatform(platform)) {
+            platform.credentialsHash = crypto.objectHash(credentials.object);
         }
-        await startQueueListener(true);
     }
 
     /**
@@ -669,9 +715,11 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Starts listening on the queue for incoming jobs
-     * @param refresh boolean if the param is true, we re-init the `queue.process`
-     * (used when identifier changes)
+     * Starts listening on the queue for incoming jobs.
+     *
+     * @param refresh replace the current worker. The queue name stays the one
+     * captured on the first start (`queueInstanceId`), even if `identifier`
+     * has since changed for an actor rename.
      */
     async function startQueueListener(refresh = false) {
         if (jobWorkerStarted) {
@@ -682,10 +730,11 @@ async function startPlatformProcess() {
                 return;
             }
         }
+        queueInstanceId ??= identifier;
         const concurrency = getWorkerConcurrency();
         jobWorker = new JobWorker(
             parentId,
-            identifier,
+            queueInstanceId,
             parentSecret1 + parentSecret2,
             { url: redisUrl },
             { concurrency },

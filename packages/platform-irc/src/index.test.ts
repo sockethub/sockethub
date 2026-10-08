@@ -646,6 +646,26 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            it("update() nick change reports an actor-update failure", (done) => {
+                platform.updateActor = () =>
+                    Promise.reject(new Error("redis down"));
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    validCredentials,
+                    (err: unknown) => {
+                        expect(err).toEqual("redis down");
+                        done();
+                    },
+                );
+                platform.completeJob();
+            });
+
             describe("query() attendance", () => {
                 let rawCalls;
                 beforeEach(() => {

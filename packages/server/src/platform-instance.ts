@@ -20,6 +20,7 @@ import config from "./config.js";
 import {
     forgetAnonymousScopes,
     reassignAnonymousScopes,
+    reassignPendingScopes,
 } from "./connection-scope.js";
 import { getSocket } from "./listener.js";
 import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
@@ -102,7 +103,12 @@ export default class PlatformInstance {
     private heartbeatFailureHandled = false;
     private replaced = false;
     private shutdownResult?: Promise<void>;
-    private readonly actor?: string;
+    /**
+     * Actor this instance was opened for. Updated when the platform re-keys
+     * (IRC nick change) so a later rename moves the credential scope off the
+     * actor the client is using now, not the one from process start.
+     */
+    private actor?: string;
 
     constructor(params: PlatformInstanceParams) {
         this.id = params.identifier;
@@ -562,10 +568,23 @@ export default class PlatformInstance {
 
     /**
      * Updates the instance with a new identifier, updating the platformInstances mapping as well.
+     *
+     * The Redis queue stays on the identifier this process was forked with.
+     * `this.queue` captured that name in `initQueue()`, and the child worker
+     * keeps consuming it. Rebinding either side here would leave jobs on a
+     * queue nobody reads.
+     *
      * @param identifier
      */
     private updateIdentifier(identifier: string, actorId?: string) {
+        if (typeof identifier !== "string" || identifier.length === 0) {
+            this.log.error(
+                `ignoring actor change with an invalid identifier platform=${this.name}`,
+            );
+            return;
+        }
         const previousId = this.id;
+        const previousActor = this.actor;
         platformInstances.delete(this.id);
         this.id = identifier;
         platformInstances.set(this.id, this);
@@ -573,6 +592,20 @@ export default class PlatformInstance {
         // and the old actor; move it so a refresh still finds this connection,
         // and so teardown can still clear it.
         reassignAnonymousScopes(previousId, this.id, this.name, actorId);
+        if (
+            previousActor &&
+            typeof actorId === "string" &&
+            actorId.length > 0 &&
+            actorId !== previousActor
+        ) {
+            reassignPendingScopes(
+                this.sessions,
+                this.name,
+                previousActor,
+                actorId,
+            );
+            this.actor = actorId;
+        }
     }
 
     /**

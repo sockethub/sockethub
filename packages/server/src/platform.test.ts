@@ -11,6 +11,7 @@ import type { JobDataDecrypted } from "@sockethub/data-layer";
 import {
     derivePlatformCredentialsSecret,
     mergePackageConfig,
+    storeActorCredentials,
 } from "./platform.js";
 
 /**
@@ -32,6 +33,37 @@ describe("platform.ts credential handling", () => {
             expect(secret).toBe(
                 crypto.deriveSecret("parent-secret", "session-secret"),
             );
+        });
+
+        it("stores renamed credentials under the new platform-scoped actor", async () => {
+            const saved: Array<{ key: string; creds: CredentialsObject }> = [];
+            const renamed: CredentialsObject = {
+                type: "credentials",
+                "@context": [],
+                actor: {
+                    id: "alice_away@irc.example.org",
+                    type: "person",
+                    name: "alice_away",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "alice_away",
+                    password: "hunter2",
+                },
+            };
+            await storeActorCredentials(
+                {
+                    save: (key, creds) => {
+                        saved.push({ key, creds });
+                        return Promise.resolve(1);
+                    },
+                },
+                "irc",
+                renamed,
+            );
+            expect(saved).toEqual([
+                { key: "irc:alice_away@irc.example.org", creds: renamed },
+            ]);
         });
     });
     let sandbox: sinon.SinonSandbox;

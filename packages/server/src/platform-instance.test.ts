@@ -4,6 +4,7 @@ import {
     addPlatformContext,
     addPlatformSchema,
     buildCanonicalContext,
+    type CredentialsObject,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
 
@@ -19,6 +20,11 @@ addPlatformContext("respplat", RESPONSES_CTX);
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
+import {
+    beginCredentialScope,
+    resetConnectionScopes,
+    resolveConnectionScope,
+} from "./connection-scope.js";
 import config from "./config.js";
 import PlatformInstance, { platformInstances } from "./platform-instance.js";
 
@@ -270,6 +276,77 @@ describe("PlatformInstance", () => {
             expect(pi.id).toEqual("foo bar");
             expect(platformInstances.has("platform identifier")).toBeFalse();
             expect(platformInstances.has("foo bar")).toBeTrue();
+        });
+
+        test("actor rename keeps the job queue the process was forked with", () => {
+            pi.initQueue("a secret");
+            const queue = pi.queue;
+            pi.updateIdentifier("renamed identifier", "alice_away@irc.example.org");
+            expect(pi.id).toEqual("renamed identifier");
+            expect(pi.queue).toBe(queue);
+        });
+
+        test("ignores an actor change with no identifier", () => {
+            pi.updateIdentifier("");
+            expect(pi.id).toEqual("platform identifier");
+            expect(platformInstances.has("platform identifier")).toBeTrue();
+        });
+
+        test("nick change keeps the credential scope on the new actor", async () => {
+            resetConnectionScopes();
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            const instance = new TestPlatformInstance({
+                identifier: "old-id",
+                platform: "irc",
+                parentId: "parent",
+                actor: "alice@irc.example.org",
+            });
+            const creds = {
+                "@context": [],
+                type: "credentials",
+                actor: {
+                    id: "alice@irc.example.org",
+                    type: "person",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "alice",
+                    password: "hunter2",
+                },
+            } as CredentialsObject;
+            try {
+                instance.registerSession("s1");
+                beginCredentialScope(
+                    "s1",
+                    "irc",
+                    "alice@irc.example.org",
+                ).resolve(creds);
+                const before = await resolveConnectionScope(
+                    "irc",
+                    "alice@irc.example.org",
+                    {
+                        credentialSessionId: "s1",
+                        socketSessionId: "s1",
+                    },
+                );
+                instance.updateIdentifier(
+                    "new-id",
+                    "alice_away@irc.example.org",
+                );
+                const after = await resolveConnectionScope(
+                    "irc",
+                    "alice_away@irc.example.org",
+                    {
+                        credentialSessionId: "s1",
+                        socketSessionId: "s1",
+                    },
+                );
+                expect(after.scope).toEqual(before.scope);
+                expect(after.scope).not.toEqual("s1");
+            } finally {
+                resetConnectionScopes();
+                await instance.shutdown();
+            }
         });
 
         test("sends messages to client using socket session id", async () => {

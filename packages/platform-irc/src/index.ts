@@ -392,7 +392,16 @@ export class IRC implements PersistentPlatformInterface {
                     credentials.object.nick = job.target.name;
                     credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
                     credentials.actor.name = job.target.name;
-                    await this.updateActor(credentials);
+                    try {
+                        await this.updateActor(credentials);
+                    } catch (updateErr) {
+                        this.handledActors.delete(job.target.id);
+                        const message =
+                            updateErr instanceof Error
+                                ? updateErr.message
+                                : String(updateErr);
+                        return done(message);
+                    }
                     done();
                 });
                 // send nick change command
