@@ -65,11 +65,25 @@ describe("isBlockedAddress", () => {
         expect(isBlockedAddress("64:ff9b:1:6464:64:c800::")).toBe(true);
     });
 
-    it("blocks local-use NAT64 with more-specific /96 and /64 sub-prefixes", () => {
-        // /96 sub-prefix 64:ff9b:1:808:8:800::/96 — IPv4 in the last 32 bits.
+    it("blocks the whole local-use NAT64 prefix at every RFC 6052 length", () => {
+        // /56 prefix 64:ff9b:1:100::/56 → 169.254.169.254. A /48 misread is
+        // the public address 1.169.254.169.
+        expect(isBlockedAddress("64:ff9b:1:1a9:fe:a9fe::")).toBe(true);
+        // /56 → 10.0.0.1 and 127.0.0.1, with public /48 misreads.
+        expect(isBlockedAddress("64:ff9b:1:10a:0:1::")).toBe(true);
+        expect(isBlockedAddress("64:ff9b:1:17f:0:1::")).toBe(true);
+        // /64 prefix 64:ff9b:1:808::/64. IPv4 starts after the u octet
+        // (bits 72–103), not at bit 64.
+        expect(isBlockedAddress("64:ff9b:1:808:a9:fea9:fe00::")).toBe(true);
+        expect(isBlockedAddress("64:ff9b:1:808:7f:0:100::")).toBe(true);
+        expect(isBlockedAddress("64:ff9b:1:808:a:0:100::")).toBe(true);
+        // /96 prefix 64:ff9b:1:808:8:800::/96 → 169.254.169.254.
         expect(isBlockedAddress("64:ff9b:1:808:8:800:a9fe:a9fe")).toBe(true);
-        // /64 sub-prefix 64:ff9b:1:808::/64 — IPv4 in groups e–f.
-        expect(isBlockedAddress("64:ff9b:1:808:a9fe:a9fe")).toBe(true);
+        // /96 embedding of 0.0.0.0 (64:ff9b:1:fffe::/96). The /48 misread
+        // is public 255.254.0.0.
+        expect(isBlockedAddress("64:ff9b:1:fffe::")).toBe(true);
+        // A public IPv4 under this prefix is still local-use, not global.
+        expect(isBlockedAddress("64:ff9b:1:808:8:800::")).toBe(true);
     });
 
     it("blocks unparseable literals conservatively", () => {
@@ -83,7 +97,5 @@ describe("isBlockedAddress", () => {
         expect(isBlockedAddress("2606:4700:4700::1111")).toBe(false);
         expect(isBlockedAddress("::ffff:8.8.8.8")).toBe(false);
         expect(isBlockedAddress("64:ff9b::8.8.8.8")).toBe(false);
-        // 8.8.8.8 under the local-use NAT64 prefix stays reachable.
-        expect(isBlockedAddress("64:ff9b:1:808:8:800::")).toBe(false);
     });
 });
