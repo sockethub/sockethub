@@ -464,6 +464,33 @@ describe("Initialize IRC Platform", () => {
             ).toEqual("##a-room");
         });
 
+        it("fails a join when the server replies that the channel is unavailable", async () => {
+            let failure: unknown;
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: targetRoom,
+                },
+                (err: unknown) => {
+                    failure = err;
+                },
+            );
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(() => {
+                platform.irc2as.input(
+                    ":irc.example.com 473 testingham #a-room :Cannot join channel (+i)",
+                );
+            }).not.toThrow();
+            await new Promise((resolve) => setImmediate(resolve));
+
+            expect(failure).toEqual("Cannot join channel (+i)");
+            expect(platform.jobQueue.length).toEqual(0);
+            expect(platform.channels.has("#a-room")).toEqual(false);
+        });
+
         describe("after join", () => {
             beforeEach((done) => {
                 platform.join(

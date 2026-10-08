@@ -248,7 +248,10 @@ export class IRC implements PersistentPlatformInterface {
             // join channel
             this.jobQueue.push({
                 ack: "pong",
-                handler: () => {
+                handler: (err?: Error | string) => {
+                    if (err) {
+                        return done(err);
+                    }
                     this.hasJoined(channel);
                     done();
                 },
