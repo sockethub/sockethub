@@ -105,6 +105,24 @@ function extractEmbeddedIpv4(groups: Array<number>): string | null {
     return `${g >> 8}.${g & 0xff}.${h >> 8}.${h & 0xff}`;
 }
 
+/**
+ * True when `groups` fall under the RFC 8215 local-use NAT64 prefix
+ * `64:ff9b:1::/48`.
+ *
+ * The whole prefix is blocked. Operators may translate it at any longer
+ * RFC 6052 length (/48, /56, /64, or /96), and those layouts overlap: the
+ * same bits are a public IPv4 under one length and a private IPv4 under
+ * another. Decoding one length therefore leaves a bypass, and decoding
+ * every length blocks public addresses such as 1.0.0.1. This prefix is not
+ * globally routed — public IPv4 uses the well-known prefix `64:ff9b::/96`,
+ * which is decoded above — so refusing the entire local-use range closes
+ * every embedding without a configured prefix length.
+ */
+function isLocalUseNat64(groups: Array<number>): boolean {
+    const [a, b, c] = groups;
+    return a === 0x64 && b === 0xff9b && c === 0x0001;
+}
+
 function isBlockedIpv6(ip: string): boolean {
     // Strip zone index (e.g. fe80::1%eth0).
     const addr = ip.split("%")[0];
@@ -116,11 +134,16 @@ function isBlockedIpv6(ip: string): boolean {
         // Not a parseable IPv6 literal; block conservatively.
         return true;
     }
-    // Embedded IPv4 (mapped/compat/NAT64) -> apply IPv4 rules. This also
-    // covers :: (0.0.0.0) and ::1 (0.0.0.1), both within blocked 0.0.0.0/8.
+    // Embedded IPv4 (mapped, compatible, or the NAT64 well-known prefix) ->
+    // apply IPv4 rules. This also covers :: (0.0.0.0) and ::1 (0.0.0.1),
+    // both within blocked 0.0.0.0/8.
     const embedded = extractEmbeddedIpv4(groups);
     if (embedded) {
         return isBlockedIpv4(embedded);
+    }
+    // Local-use NAT64 (RFC 8215). See isLocalUseNat64.
+    if (isLocalUseNat64(groups)) {
+        return true;
     }
     // fc00::/7 unique-local.
     if ((groups[0] & 0xfe00) === 0xfc00) return true;
