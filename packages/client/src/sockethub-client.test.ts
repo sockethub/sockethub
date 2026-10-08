@@ -972,6 +972,84 @@ describe("SockethubClient", () => {
             }, 0);
         });
 
+        function requestRename(to: string) {
+            const callback = sandbox.spy();
+            // The fake socket is a plain EventEmitter, so an outgoing emit
+            // would also fire the client's own incoming listeners. Capture
+            // the outgoing call instead, the way a real socket would.
+            let sent: any[] = [];
+            const realEmit = socket.emit;
+            socket.emit = (...args: any[]) => {
+                sent = args;
+            };
+            try {
+                sc.socket.emit(
+                    "message",
+                    {
+                        "@context": sc.contextFor("test-xmpp"),
+                        type: "update",
+                        actor: { ...alice },
+                        object: { type: "address" },
+                        target: {
+                            type: "person",
+                            id: `${to}@irc.example.org`,
+                            name: to,
+                        },
+                    },
+                    callback,
+                );
+            } finally {
+                socket.emit = realEmit;
+            }
+            expect(sent[0]).to.equal("message");
+            // The ack the server would send for this job.
+            const ack = sent[2];
+            expect(ack).to.be.a("function");
+            return { ack, callback };
+        }
+
+        it("moves replay state when its own nick change is acknowledged", () => {
+            // The platform consumes the server's NICK confirmation as the
+            // job's completion, so no incoming update arrives for a
+            // client-requested rename.
+            const { ack, callback } = requestRename("alice_away");
+            ack({ type: "update" });
+
+            for (const name of ["credentials", "connect", "join"]) {
+                const entry = sc.events[name].values().next().value;
+                expect(entry.actor.id, name).to.equal(
+                    "alice_away@irc.example.org",
+                );
+            }
+            expect(callback.calledOnceWith({ type: "update" })).to.equal(true);
+        });
+
+        it("keeps replay state when its own nick change is rejected", () => {
+            const { ack, callback } = requestRename("alice_away");
+            ack({ error: "Nickname is already in use." });
+
+            for (const name of ["credentials", "connect", "join"]) {
+                const entry = sc.events[name].values().next().value;
+                expect(entry.actor.id, name).to.equal("alice@irc.example.org");
+            }
+            expect(callback.calledOnce).to.equal(true);
+        });
+
+        it("does not follow a rename of a nick it already released", () => {
+            // Someone else took alice after this client became alice_away.
+            // Their rename must not move this client's state.
+            const { ack } = requestRename("alice_away");
+            ack({ type: "update" });
+            rename("test-xmpp", "alice", "attacker");
+
+            for (const name of ["credentials", "connect", "join"]) {
+                const entry = sc.events[name].values().next().value;
+                expect(entry.actor.id, name).to.equal(
+                    "alice_away@irc.example.org",
+                );
+            }
+        });
+
         it("does not mutate the object the application passed in", () => {
             rename("test-xmpp", "alice", "alice_away");
 

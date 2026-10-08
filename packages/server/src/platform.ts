@@ -299,6 +299,11 @@ async function startPlatformProcess() {
     // `assertAcceptedCredentials`.
     const acceptedCredentialHashes = new Set<string>();
 
+    /**
+     * Makes `hash` the platform's current credential hash while keeping the
+     * one it replaces accepted. No-op for stateless platforms, which never
+     * validate credentials across requests.
+     */
     function adoptCredentialsHash(hash: string): void {
         if (!isPersistentPlatform(platform)) {
             return;

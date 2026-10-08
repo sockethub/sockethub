@@ -218,9 +218,10 @@ memory and replaying it when the connection is re-established.
 - Platform connections
 - Channel/room joins
 
-When the server reports that one of your actors was renamed (an incoming `update` with
-`object.type: "address"`, such as an IRC nick change), the stored entries move to the new actor so a
-reconnect replays the identity the connection currently holds.
+When one of your actors is renamed (an `update` with `object.type: "address"`, such as an IRC nick
+change, whether you requested it and the server acknowledged it or the server reported it), the
+stored entries move to the new actor so a reconnect replays the identity the connection currently
+holds.
 
 #### Storage Location
 
