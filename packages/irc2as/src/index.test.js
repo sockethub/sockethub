@@ -159,4 +159,74 @@ describe("IrcToActivityStreams", () => {
         });
         irc2as.input(":alice!user@example.test PRIVMSG #room :+1 to that");
     });
+
+    // RFC 1459 allows the final parameter to omit its colon when it has no
+    // spaces. Ergo serializes one-word messages and nick changes that way.
+    it("keeps a one-word PRIVMSG that omits the trailing colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "hi",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test PRIVMSG #room hi");
+    });
+
+    it("keeps a trailing parameter that itself contains space-colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "see :this",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test PRIVMSG #room :see :this");
+    });
+
+    it("reads a nick change that omits the trailing colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "alice@localhost",
+                name: "alice",
+            });
+            expect(stream.target).toEqual({
+                type: "person",
+                id: "bob@localhost",
+                name: "bob",
+            });
+            expect(stream.object).toEqual({ type: "address" });
+            done();
+        });
+        irc2as.input(":alice!user@example.test NICK bob");
+    });
+
+    it("parses a single-nick RPL_NAMREPLY that omits the trailing colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "presence",
+                role: "member",
+            });
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "onlynick@localhost",
+                name: "onlynick",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.net 353 alice @ #room onlynick",
+        );
+    });
 });

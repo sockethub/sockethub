@@ -56,6 +56,17 @@ function getNickFromServer(server) {
     return server.split(/^:/)[1].split("!")[0];
 }
 
+/**
+ * A trailing IRC parameter may omit its leading colon when it contains no
+ * spaces (RFC 1459). Ergo and other servers do that for a one-word PRIVMSG,
+ * a NICK change, or a RPL_NAMREPLY listing a single nick. `content` is only
+ * set when the colon form was used, so fall back to the positional parameter
+ * that holds the same value.
+ */
+function trailingParam(content, positional) {
+    return content !== undefined ? content : positional;
+}
+
 export class IrcToActivityStreams {
     constructor(cfg) {
         const config = cfg || {};
@@ -79,7 +90,13 @@ export class IrcToActivityStreams {
             return false;
         }
         const incoming = payload.trim();
-        const [metadata, content] = incoming.split(" :");
+        // Keep the entire trailing parameter. Splitting and keeping only the
+        // second piece drops everything after an embedded " :" (a message
+        // such as "see :this" would arrive as "see").
+        const colonAt = incoming.indexOf(" :");
+        const metadata = colonAt === -1 ? incoming : incoming.slice(0, colonAt);
+        const content =
+            colonAt === -1 ? undefined : incoming.slice(colonAt + 2);
         const [server, code, pos1, pos2, pos3, ...msg] = metadata.split(" ");
         const channel =
             typeof pos1 === "string" && pos1.startsWith("#")
@@ -188,11 +205,12 @@ export class IrcToActivityStreams {
                         },
                         object: {
                             type: "topic",
-                            content: content,
+                            content: trailingParam(content, pos2),
                         },
                     };
                 } else {
-                    this.__buffer[MOTD].object.content += ` ${content}`;
+                    this.__buffer[MOTD].object.content +=
+                        ` ${trailingParam(content, pos2)}`;
                 }
                 break;
             case MOTD_END: // end of MOTD
@@ -204,8 +222,18 @@ export class IrcToActivityStreams {
                 break;
 
             /** */
-            case NAMES: // user list
-                for (const entry of content.split(" ")) {
+            case NAMES: {
+                // user list. A single nick has no spaces, so servers may omit
+                // the trailing colon; `content` is then undefined and calling
+                // `.split` on it throws, which kills the platform process.
+                const names = trailingParam(content, msg.join(" "));
+                if (typeof names !== "string" || names.length === 0) {
+                    break;
+                }
+                for (const entry of names.split(" ")) {
+                    if (!entry) {
+                        continue;
+                    }
                     role = "member";
                     let username = entry;
                     if (ROLE[entry[0]]) {
@@ -215,16 +243,20 @@ export class IrcToActivityStreams {
                     ase.presence(username, role, channel);
                 }
                 break;
+            }
 
             /** */
             case NICK: // nick change
                 // log(`- 2 nick: ${nick} from content: ${content}`);
-                ase.nickChange(getNickFromServer(server), content);
+                ase.nickChange(
+                    getNickFromServer(server),
+                    trailingParam(content, pos1),
+                );
                 break;
 
             /** */
             case NOTICE: // notice
-                ase.notice(pos1, content);
+                ase.notice(pos1, trailingParam(content, pos2));
                 break;
 
             /** */
@@ -239,7 +271,11 @@ export class IrcToActivityStreams {
 
             /** */
             case PRIVMSG: // msg
-                ase.privMsg(getNickFromServer(server), pos1, content);
+                ase.privMsg(
+                    getNickFromServer(server),
+                    pos1,
+                    trailingParam(content, pos2),
+                );
                 break;
 
             /** */
@@ -249,7 +285,11 @@ export class IrcToActivityStreams {
 
             /** */
             case TOPIC_CHANGE: // topic changed now
-                ase.topicChange(channel, getNickFromServer(server), content);
+                ase.topicChange(
+                    channel,
+                    getNickFromServer(server),
+                    trailingParam(content, pos2),
+                );
                 break;
 
             /** */
@@ -265,7 +305,7 @@ export class IrcToActivityStreams {
                     },
                     object: {
                         type: "topic",
-                        content: content,
+                        content: trailingParam(content, pos3),
                     },
                 };
                 break;
