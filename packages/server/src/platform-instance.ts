@@ -32,7 +32,7 @@ import { getSocket } from "./listener.js";
 import {
     derivePlatformCredentialsSecret,
     migrateRenamedActorCredentials,
-    storeActorCredentials,
+    renameActorCredentialsInStore,
 } from "./platform.js";
 import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
 import { __dirname } from "./util.js";
@@ -626,6 +626,7 @@ export default class PlatformInstance {
      */
     private async migratePeerActorCredentials(
         credentials: CredentialsObject,
+        previousActorId: string,
         originatingSessionId?: string,
     ): Promise<void> {
         if (!this.parentSecret1) {
@@ -654,11 +655,24 @@ export default class PlatformInstance {
             );
             writers.push({
                 sessionId,
-                saveRenamedCredentials: (renamed: CredentialsObject) =>
-                    storeActorCredentials(store, this.name, renamed),
+                renameActorCredentials: (
+                    fromActorId: string,
+                    renamed: CredentialsObject,
+                ) =>
+                    renameActorCredentialsInStore(
+                        store,
+                        this.name,
+                        fromActorId,
+                        renamed,
+                    ),
             });
         }
-        await migrateRenamedActorCredentials(this.name, credentials, writers);
+        await migrateRenamedActorCredentials(
+            this.name,
+            previousActorId,
+            credentials,
+            writers,
+        );
     }
 
     /**
@@ -790,9 +804,19 @@ export default class PlatformInstance {
                     typeof fifth === "string" && fifth.length > 0
                         ? fifth
                         : undefined;
+                const previousActor = this.actor;
                 if (credentials) {
+                    if (
+                        typeof previousActor !== "string" ||
+                        previousActor.length === 0
+                    ) {
+                        throw new Error(
+                            `cannot migrate peer credentials for ${this.name} without a previous actor`,
+                        );
+                    }
                     await this.migratePeerActorCredentials(
                         credentials,
+                        previousActor,
                         originatingSessionId,
                     );
                 }

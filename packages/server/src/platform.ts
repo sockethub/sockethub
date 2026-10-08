@@ -86,9 +86,76 @@ export async function storeActorCredentials(
     await store.save(buildCredentialsKey(platformName, actorId), credentials);
 }
 
+export interface CredentialStoreReader {
+    get(key: string, credentialsHash?: string): Promise<CredentialsObject>;
+    save(key: string, creds: CredentialsObject): Promise<unknown>;
+    objectHash?(object: unknown): string;
+}
+
+function credentialsNotFound(err: unknown): boolean {
+    return (
+        err instanceof Error &&
+        err.message.startsWith("credentials not found for ")
+    );
+}
+
+/**
+ * Moves one session's stored credentials from the pre-rename actor to the new
+ * actor. Skips peers that never stored the account being renamed. Refuses to
+ * overwrite a different account already stored under the new actor id.
+ */
+export async function renameActorCredentialsInStore(
+    store: CredentialStoreReader,
+    platformName: string,
+    previousActorId: string,
+    renamed: CredentialsObject,
+): Promise<"migrated" | "skipped"> {
+    const newActorId = renamed.actor?.id;
+    if (typeof newActorId !== "string" || newActorId.length === 0) {
+        throw new Error(
+            `cannot rename ${platformName} credentials without a new actor id`,
+        );
+    }
+    const oldKey = buildCredentialsKey(platformName, previousActorId);
+    const newKey = buildCredentialsKey(platformName, newActorId);
+    if (oldKey === newKey) {
+        return "skipped";
+    }
+
+    try {
+        await store.get(oldKey);
+    } catch (err) {
+        if (credentialsNotFound(err)) {
+            return "skipped";
+        }
+        throw err;
+    }
+
+    const objectHash = store.objectHash ?? crypto.objectHash;
+    try {
+        const existingAtNew = await store.get(newKey);
+        if (objectHash(existingAtNew.object) !== objectHash(renamed.object)) {
+            throw new Error(
+                `cannot rename ${previousActorId} to ${newActorId}: credentials already stored for ${newActorId}`,
+            );
+        }
+        return "skipped";
+    } catch (err) {
+        if (!credentialsNotFound(err)) {
+            throw err;
+        }
+    }
+
+    await store.save(newKey, renamed);
+    return "migrated";
+}
+
 export interface SessionCredentialWriter {
     sessionId: string;
-    saveRenamedCredentials(credentials: CredentialsObject): Promise<unknown>;
+    renameActorCredentials(
+        previousActorId: string,
+        renamed: CredentialsObject,
+    ): Promise<"migrated" | "skipped">;
 }
 
 /**
@@ -97,13 +164,14 @@ export interface SessionCredentialWriter {
  */
 export async function migrateRenamedActorCredentials(
     platformName: string,
+    previousActorId: string,
     credentials: CredentialsObject,
     writers: Iterable<SessionCredentialWriter>,
 ): Promise<void> {
     const failures: string[] = [];
     for (const writer of writers) {
         try {
-            await writer.saveRenamedCredentials(credentials);
+            await writer.renameActorCredentials(previousActorId, credentials);
         } catch (err) {
             failures.push(`${writer.sessionId}: ${errorMessage(err)}`);
         }

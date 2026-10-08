@@ -662,8 +662,14 @@ describe("PlatformInstance", () => {
 
             test("updateActor failure is reported to the platform child", async () => {
                 (
+                    pi as unknown as { actor?: string }
+                ).actor = "alice@irc.example.org";
+                (
                     pi as unknown as {
-                        migratePeerActorCredentials: () => Promise<void>;
+                        migratePeerActorCredentials: (
+                            credentials: CredentialsObject,
+                            previousActorId: string,
+                        ) => Promise<void>;
                     }
                 ).migratePeerActorCredentials = () =>
                     Promise.reject(new Error("migration failed"));

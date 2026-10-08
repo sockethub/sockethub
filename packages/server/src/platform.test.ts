@@ -12,6 +12,7 @@ import {
     derivePlatformCredentialsSecret,
     mergePackageConfig,
     migrateRenamedActorCredentials,
+    renameActorCredentialsInStore,
     storeActorCredentials,
 } from "./platform.js";
 
@@ -83,15 +84,120 @@ describe("platform.ts credential handling", () => {
                 },
             };
             const saved: string[] = [];
-            await migrateRenamedActorCredentials("irc", renamed, [
-                {
-                    sessionId: "s2",
-                    saveRenamedCredentials: async () => {
-                        saved.push("s2");
+            await migrateRenamedActorCredentials(
+                "irc",
+                "alice@irc.example.org",
+                renamed,
+                [
+                    {
+                        sessionId: "s2",
+                        renameActorCredentials: async () => {
+                            saved.push("s2");
+                            return "migrated";
+                        },
                     },
-                },
-            ]);
+                ],
+            );
             expect(saved).toEqual(["s2"]);
+        });
+
+        it("skips peer migration when the previous actor was never stored", async () => {
+            const renamed: CredentialsObject = {
+                type: "credentials",
+                "@context": [],
+                actor: {
+                    id: "alice_away@irc.example.org",
+                    type: "person",
+                    name: "alice_away",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "alice_away",
+                    password: "hunter2",
+                },
+            };
+            const store = {
+                get: async (key: string) => {
+                    if (key === "irc:alice@irc.example.org") {
+                        throw new Error(
+                            "credentials not found for irc:alice@irc.example.org",
+                        );
+                    }
+                    throw new Error(`unexpected get ${key}`);
+                },
+                save: async () => 1,
+            };
+            const result = await renameActorCredentialsInStore(
+                store,
+                "irc",
+                "alice@irc.example.org",
+                renamed,
+            );
+            expect(result).toEqual("skipped");
+        });
+
+        it("refuses to overwrite a different account at the new actor id", async () => {
+            const renamed: CredentialsObject = {
+                type: "credentials",
+                "@context": [],
+                actor: {
+                    id: "bob@irc.example.org",
+                    type: "person",
+                    name: "bob",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "bob",
+                    password: "alice-secret",
+                },
+            };
+            const store = {
+                get: async (key: string) => {
+                    if (key === "irc:alice@irc.example.org") {
+                        return {
+                            type: "credentials",
+                            "@context": [],
+                            actor: {
+                                id: "alice@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials",
+                                nick: "alice",
+                                password: "alice-secret",
+                            },
+                        };
+                    }
+                    if (key === "irc:bob@irc.example.org") {
+                        return {
+                            type: "credentials",
+                            "@context": [],
+                            actor: {
+                                id: "bob@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials",
+                                nick: "bob",
+                                password: "bob-secret",
+                            },
+                        };
+                    }
+                    throw new Error(`credentials not found for ${key}`);
+                },
+                save: async () => 1,
+                objectHash: crypto.objectHash,
+            };
+            await expect(
+                renameActorCredentialsInStore(
+                    store,
+                    "irc",
+                    "alice@irc.example.org",
+                    renamed,
+                ),
+            ).rejects.toThrow(
+                "cannot rename alice@irc.example.org to bob@irc.example.org",
+            );
         });
     });
     let sandbox: sinon.SinonSandbox;
