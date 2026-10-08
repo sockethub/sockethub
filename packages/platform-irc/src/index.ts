@@ -383,16 +383,25 @@ export class IRC implements PersistentPlatformInterface {
                 this.log.debug(
                     `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
-                this.handledActors.add(job.target.id);
+                // Do not mark the requested nick as ours until the server
+                // accepts it. Doing so earlier consumes that nick's live
+                // traffic as this job's completion, so a taken nick can be
+                // reported as a successful change and those messages never
+                // reach the client.
                 this.jobQueue.push(async (err: Error) => {
                     if (err) {
-                        this.handledActors.delete(job.target.id);
                         return done(err);
                     }
                     credentials.object.nick = job.target.name;
                     credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
                     credentials.actor.name = job.target.name;
                     await this.updateActor(credentials);
+                    // The previous nick now belongs to whoever takes it next.
+                    // Leaving it here drops their traffic: an event whose
+                    // actor is in this set completes a job instead of being
+                    // delivered.
+                    this.handledActors.delete(job.actor.id);
+                    this.handledActors.add(credentials.actor.id);
                     done();
                 });
                 // send nick change command
@@ -731,19 +740,22 @@ export class IRC implements PersistentPlatformInterface {
         });
 
         this.irc2as.events.on("incoming", (asObject: ActivityStream) => {
-            if (
+            const fromThisConnection =
                 typeof asObject.actor === "object" &&
                 typeof asObject.actor.name === "string" &&
-                this.handledActors.has(asObject.actor.id)
-            ) {
+                this.handledActors.has(asObject.actor.id);
+            // Our own nick's echo completes the command that produced it.
+            // With nothing queued, the event is not an echo — a forced
+            // rename, or any other traffic — and must be delivered. Dropping
+            // it here is how a server-initiated nick change disappears.
+            if (fromThisConnection && this.jobQueue.length > 0) {
                 this.completeJob();
-            } else {
-                this.log.debug(
-                    `calling sendToClient for ${asObject.actor.id}`,
-                    [...this.handledActors.keys()],
-                );
-                this.sendToClient(asObject);
+                return;
             }
+            this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+                ...this.handledActors.keys(),
+            ]);
+            this.sendToClient(asObject);
         });
 
         this.irc2as.events.on("unprocessed", (s: string) => {

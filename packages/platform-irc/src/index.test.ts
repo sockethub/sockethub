@@ -81,6 +81,14 @@ const validCredentials = {
 describe("Initialize IRC Platform", () => {
     let platform;
     beforeEach(() => {
+        // Nick-change handlers write the new identity onto the credentials
+        // actor. That object is shared with `actor` / `validCredentials`, so
+        // put the originals back before each test.
+        actor.id = "testingham@irc.example.com";
+        actor.name = "testingham";
+        validCredentials.object.nick = "testingham";
+        validCredentials.object.server = "irc.example.com";
+        validCredentials.actor = actor;
         platform = new IRC({
             log: {
                 error: () => {},
@@ -644,6 +652,147 @@ describe("Initialize IRC Platform", () => {
                     done,
                 );
                 platform.completeJob();
+            });
+
+            it("delivers traffic for a nick this connection does not yet own", async () => {
+                const delivered: Array<ActivityStream> = [];
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                const creds = structuredClone(validCredentials);
+                let finished = false;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    () => {
+                        finished = true;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(platform.handledActors.has(newActor.id)).toEqual(false);
+                expect(platform.jobQueue.length).toEqual(1);
+
+                const fromRequestedNick = {
+                    "@context": IRC_CONTEXT,
+                    type: "send",
+                    actor: {
+                        type: "person",
+                        id: newActor.id,
+                        name: newActor.name,
+                    },
+                    object: { type: "message", content: "still my nick" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", fromRequestedNick);
+
+                expect(finished).toEqual(false);
+                expect(platform.jobQueue.length).toEqual(1);
+                expect(delivered).toEqual([fromRequestedNick]);
+
+                platform.completeJob();
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(finished).toEqual(true);
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+                expect(platform.handledActors.has(newActor.id)).toEqual(true);
+
+                const fromPreviousNick = {
+                    "@context": IRC_CONTEXT,
+                    type: "send",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    object: { type: "message", content: "I took the old nick" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", fromPreviousNick);
+                expect(delivered).toEqual([
+                    fromRequestedNick,
+                    fromPreviousNick,
+                ]);
+            });
+
+            it("keeps the current nick when the server rejects the change", async () => {
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                platform.completeJob("Nickname is already in use");
+
+                expect(failure).toEqual("Nickname is already in use");
+                expect(platform.handledActors.has(actor.id)).toEqual(true);
+                expect(platform.handledActors.has(newActor.id)).toEqual(false);
+            });
+
+            it("delivers a server-initiated nick change while idle", () => {
+                const delivered: Array<ActivityStream> = [];
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                const forced = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "Guest12345@irc.example.com",
+                        name: "Guest12345",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+
+                platform.irc2as.events.emit("incoming", forced);
+
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(delivered).toEqual([forced]);
+            });
+
+            it("still completes an in-flight command from our own nick echo", async () => {
+                const creds = structuredClone(validCredentials);
+                let finished = false;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    () => {
+                        finished = true;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                platform.irc2as.events.emit("incoming", {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: newActor,
+                    object: { type: "address" },
+                });
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(finished).toEqual(true);
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(platform.handledActors.has(newActor.id)).toEqual(true);
             });
 
             describe("query() attendance", () => {
