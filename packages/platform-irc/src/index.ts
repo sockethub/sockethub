@@ -163,6 +163,9 @@ export class IRC implements PersistentPlatformInterface {
     private initialized = false;
     private client?: IrcSocketInstance;
     private jobQueue: Array<QueuedJob> = []; // handlers waiting for a matching ack
+    // A numeric error completes the in-flight command before its PING is
+    // answered. That PONG must not acknowledge the command that runs next.
+    private pongAcksToSkip = 0;
     private channels = new Set();
     private handledActors = new Set();
     private credentials?: PlatformIrcCredentialsObject;
@@ -522,6 +525,7 @@ export class IRC implements PersistentPlatformInterface {
     cleanup(done: PlatformCallback) {
         this.log.debug("cleanup() called");
         this.initialized = false;
+        this.pongAcksToSkip = 0;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
             if (typeof this.client.end === "function") {
@@ -858,12 +862,22 @@ export class IRC implements PersistentPlatformInterface {
             const message = ircFailureMessage(asObject);
             this.log.debug(`message error response ${message}`);
             if (this.jobQueue.length > 0) {
+                // join, send, topic, and nick each write a PING after queueing.
+                // The numeric reply arrives first, so this PONG is still in
+                // flight. On a remote server it lands after the worker has
+                // already started the next queued command, and it would
+                // complete that command with success.
+                this.pongAcksToSkip += 1;
                 this.completeJob(message);
             }
         });
 
         this.irc2as.events.on("pong", (timestamp: string) => {
             this.log.debug(`received PONG at ${timestamp}`);
+            if (this.pongAcksToSkip > 0) {
+                this.pongAcksToSkip -= 1;
+                return;
+            }
             if (this.jobQueue[0]?.ack === "pong") {
                 this.completeJob();
             }

@@ -491,6 +491,86 @@ describe("Initialize IRC Platform", () => {
             expect(platform.channels.has("#a-room")).toEqual(false);
         });
 
+        it("does not let the PONG from a failed join complete the next join", () => {
+            let first: unknown = "pending";
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: targetRoom,
+                },
+                (err: unknown) => {
+                    first = err;
+                },
+            );
+            platform.irc2as.input(
+                ":irc.example.com 473 testingham #a-room :Cannot join channel (+i)",
+            );
+            expect(first).toEqual("Cannot join channel (+i)");
+
+            const otherRoom = {
+                type: "room",
+                id: "#other-room@irc.example.com",
+                name: "#other-room",
+            };
+            let second: unknown = "pending";
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: otherRoom,
+                },
+                (err: unknown) => {
+                    second = err ?? null;
+                },
+            );
+
+            // This PONG answers the PING sent with the failed join. The next
+            // join is already queued, which is what happens when the client
+            // pipelines a second command and Redis starts it before the
+            // remote PONG arrives.
+            platform.irc2as.input(
+                ":irc.example.com PONG irc.example.com :testingham",
+            );
+            expect(second).toEqual("pending");
+            expect(platform.channels.has("#other-room")).toEqual(false);
+            expect(platform.jobQueue.length).toEqual(1);
+
+            platform.irc2as.input(
+                ":irc.example.com PONG irc.example.com :testingham",
+            );
+            expect(second).toEqual(null);
+            expect(platform.channels.has("#other-room")).toEqual(true);
+            expect(platform.jobQueue.length).toEqual(0);
+        });
+
+        it("does not skip a join acknowledgement when a numeric error had no command in flight", () => {
+            platform.irc2as.input(
+                ":irc.example.com 473 testingham #secret :Cannot join channel (+i)",
+            );
+
+            let result: unknown = "pending";
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: targetRoom,
+                },
+                (err: unknown) => {
+                    result = err ?? null;
+                },
+            );
+            platform.irc2as.input(
+                ":irc.example.com PONG irc.example.com :testingham",
+            );
+
+            expect(result).toEqual(null);
+            expect(platform.channels.has("#a-room")).toEqual(true);
+        });
+
         describe("after join", () => {
             beforeEach((done) => {
                 platform.join(
