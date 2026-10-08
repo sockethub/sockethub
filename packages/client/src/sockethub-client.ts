@@ -1,4 +1,8 @@
-import type { ActivityStream } from "@sockethub/schemas";
+import type {
+    ActivityStream,
+    ServiceDescriptor,
+    ServiceEndpoints,
+} from "@sockethub/schemas";
 import {
     addPlatformContext,
     addPlatformSchema,
@@ -6,9 +10,12 @@ import {
     resolvePlatformId,
     validateActivityStream,
     validateCredentials,
+    validateServiceDescriptor,
 } from "@sockethub/schemas";
 import EventEmitter from "eventemitter3";
-import type { Socket } from "socket.io-client";
+import type { ManagerOptions, Socket, SocketOptions } from "socket.io-client";
+
+export type { ServiceDescriptor, ServiceEndpoints };
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
@@ -53,6 +60,165 @@ export interface SockethubClientOptions {
     initTimeoutMs?: number;
     maxQueuedOutbound?: number;
     maxQueuedAgeMs?: number;
+}
+
+/** The `io()` factory exported by `socket.io-client`. */
+export type SocketFactory = (
+    uri: string,
+    opts?: Partial<ManagerOptions & SocketOptions>,
+) => Socket;
+
+export interface DiscoverOptions {
+    /** Replacement for the global `fetch`, mainly for tests. */
+    fetch?: typeof fetch;
+    /** Abort discovery after this many milliseconds. Default 10000. */
+    discoveryTimeoutMs?: number;
+}
+
+export interface ConnectOptions
+    extends SockethubClientOptions,
+        DiscoverOptions {
+    /**
+     * The `io()` factory to create the socket with. Defaults to the `io`
+     * global set by `/socket.io.js`, then to the `socket.io-client` package
+     * when it can be imported.
+     */
+    io?: SocketFactory;
+    /**
+     * Extra Socket.IO options (auth, transports, ...). `path` is always taken
+     * from the discovered descriptor.
+     */
+    socketOptions?: Partial<ManagerOptions & SocketOptions>;
+}
+
+/** Thrown when a server's descriptor cannot be fetched or is not usable. */
+export class DiscoveryError extends Error {
+    constructor(message: string, options?: { cause?: unknown }) {
+        super(message, options);
+        this.name = "DiscoveryError";
+    }
+}
+
+/**
+ * Fetch and validate a Sockethub server's service descriptor from its base
+ * URL. Every failure rejects with a `DiscoveryError` that says what went
+ * wrong (unreachable, non-JSON, invalid descriptor).
+ */
+export async function discoverSockethub(
+    baseUrl: string,
+    options: DiscoverOptions = {},
+): Promise<ServiceDescriptor> {
+    let url: URL;
+    try {
+        url = new URL(baseUrl);
+    } catch (cause) {
+        throw new DiscoveryError(
+            `Sockethub discovery needs an absolute base URL, got ${JSON.stringify(baseUrl)}`,
+            { cause },
+        );
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new DiscoveryError(
+            `Sockethub discovery needs an http(s) base URL, got ${JSON.stringify(baseUrl)}`,
+        );
+    }
+    const doFetch = options.fetch ?? globalThis.fetch;
+    if (typeof doFetch !== "function") {
+        throw new DiscoveryError(
+            "Sockethub discovery needs fetch(); pass one in the options",
+        );
+    }
+    const controller = new AbortController();
+    const timeoutMs = options.discoveryTimeoutMs ?? 10000;
+    // The timer covers the whole exchange: fetch() resolves once headers
+    // arrive, and a stalled body would otherwise hang discovery forever.
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timedOut = () => controller.signal.aborted;
+
+    let descriptor: unknown;
+    try {
+        let response: Response;
+        try {
+            response = await doFetch(url.href, {
+                headers: { accept: "application/json" },
+                signal: controller.signal,
+            });
+        } catch (cause) {
+            const reason = timedOut()
+                ? `timed out after ${timeoutMs}ms`
+                : cause instanceof Error
+                  ? cause.message
+                  : String(cause);
+            throw new DiscoveryError(
+                `Sockethub discovery failed: could not reach ${url.href} (${reason})`,
+                { cause },
+            );
+        }
+        if (!response.ok) {
+            throw new DiscoveryError(
+                `Sockethub discovery failed: ${url.href} answered ${response.status}`,
+            );
+        }
+        try {
+            descriptor = await response.json();
+        } catch (cause) {
+            throw new DiscoveryError(
+                timedOut()
+                    ? `Sockethub discovery failed: ${url.href} timed out after ${timeoutMs}ms while sending the descriptor`
+                    : `Sockethub discovery failed: ${url.href} did not return JSON; is it a Sockethub server?`,
+                { cause },
+            );
+        }
+    } finally {
+        clearTimeout(timer);
+    }
+    if (!validateServiceDescriptor(descriptor)) {
+        throw new DiscoveryError(
+            `Sockethub discovery failed: ${url.href} did not return a valid service descriptor`,
+        );
+    }
+    return descriptor;
+}
+
+/**
+ * Resolve an advertised endpoint path against the server origin, refusing any
+ * result that lands on another origin. The schema already rejects paths that
+ * URL resolution would read as protocol-relative; this is the belt to that
+ * brace for callers that build URLs from descriptor values.
+ */
+export function resolveEndpoint(serverOrigin: string, path: string): string {
+    const url = new URL(path, serverOrigin);
+    if (url.origin !== new URL(serverOrigin).origin) {
+        throw new DiscoveryError(
+            `Sockethub discovery failed: endpoint path ${JSON.stringify(path)} resolves to ${url.origin}, not ${serverOrigin}`,
+        );
+    }
+    return url.href;
+}
+
+async function resolveSocketFactory(
+    explicit?: SocketFactory,
+): Promise<SocketFactory> {
+    if (explicit) {
+        return explicit;
+    }
+    const globalIo = (globalThis as { io?: unknown }).io;
+    if (typeof globalIo === "function") {
+        return globalIo as SocketFactory;
+    }
+    try {
+        const mod = (await import("socket.io-client")) as {
+            io?: SocketFactory;
+        };
+        if (typeof mod.io === "function") {
+            return mod.io;
+        }
+    } catch {
+        // Fall through to the descriptive error below.
+    }
+    throw new Error(
+        "SockethubClient.connect() needs socket.io-client: install it, load /socket.io.js, or pass `io` in the options",
+    );
 }
 
 interface CustomEmitter extends EventEmitter {
@@ -213,9 +379,11 @@ export interface ClientInitError {
  *
  * @example
  * ```typescript
- * // Create client
- * const socket = io('http://localhost:10550');
- * const client = new SockethubClient(socket);
+ * // Discover the Socket.IO endpoint from the server's base URL and connect
+ * const client = await SockethubClient.connect('http://localhost:10550');
+ *
+ * // Or wrap a socket you created yourself
+ * const client = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
  *
  * // Wait for schema registry before sending messages
  * await client.ready();
@@ -247,6 +415,41 @@ export default class SockethubClient {
     private _socket: Socket;
     public socket!: CustomEmitter;
     public debug = true;
+    /**
+     * The service descriptor fetched by `SockethubClient.connect()`: API
+     * versions, enabled platforms, and the advertised endpoints (including
+     * `endpoints.httpActions` when that transport is on). Undefined for
+     * clients built from a ready-made socket.
+     */
+    public readonly descriptor?: ServiceDescriptor;
+    /**
+     * The origin the descriptor was discovered from and the socket connects
+     * to. `endpointUrl()` resolves the descriptor's endpoint paths against it.
+     * Undefined for clients built from a ready-made socket.
+     */
+    public readonly serverOrigin?: string;
+
+    /**
+     * Absolute URL of an advertised endpoint, resolved against
+     * `serverOrigin`, or undefined when the server does not advertise it (for
+     * example `httpActions` while HTTP actions are disabled) or when this
+     * client was not created by `connect()`.
+     *
+     * @example
+     * ```typescript
+     * const url = sc.endpointUrl('httpActions');
+     * if (url) {
+     *   await fetch(url, { method: 'POST', body });
+     * }
+     * ```
+     */
+    public endpointUrl(name: keyof ServiceEndpoints): string | undefined {
+        const path = this.descriptor?.endpoints?.[name];
+        if (!this.serverOrigin || !path) {
+            return undefined;
+        }
+        return resolveEndpoint(this.serverOrigin, path);
+    }
     private readonly options: Required<SockethubClientOptions>;
     private platformRegistry = new Map<string, PlatformRegistryEntry>();
     private asContextUrl?: string;
@@ -265,11 +468,71 @@ export default class SockethubClient {
     private registryFingerprint?: string;
     private latestReadyInfo?: ClientReadyInfo;
 
-    constructor(socket: Socket, options: SockethubClientOptions = {}) {
+    /**
+     * Discover a server's endpoints from its base URL and connect to it.
+     *
+     * Fetches the base URL with `Accept: application/json`, validates the
+     * service descriptor, and opens a Socket.IO connection to the base URL's
+     * origin with the advertised path. The descriptor is exposed as
+     * `client.descriptor` and the origin as `client.serverOrigin`. Rejects
+     * with a `DiscoveryError` when the server is unreachable, does not answer
+     * with JSON, or does not advertise a Socket.IO endpoint.
+     *
+     * @example
+     * ```typescript
+     * const sc = await SockethubClient.connect('https://sh.example.org', {
+     *   initTimeoutMs: 5000,
+     * });
+     * await sc.ready();
+     * console.log(sc.endpointUrl('httpActions')); // absolute URL, or undefined
+     * ```
+     */
+    public static async connect(
+        baseUrl: string,
+        options: ConnectOptions = {},
+    ): Promise<SockethubClient> {
+        const {
+            io,
+            socketOptions,
+            fetch,
+            discoveryTimeoutMs,
+            ...clientOptions
+        } = options;
+        const descriptor = await discoverSockethub(baseUrl, {
+            fetch,
+            discoveryTimeoutMs,
+        });
+        const socketPath = descriptor.endpoints?.socketIO;
+        if (!socketPath) {
+            throw new DiscoveryError(
+                `Sockethub discovery failed: ${baseUrl} does not advertise a Socket.IO endpoint (older server?); pass a socket to the constructor instead`,
+            );
+        }
+        // The socket goes to the origin that answered discovery; the
+        // descriptor only says which path Socket.IO is mounted on there.
+        const serverOrigin = new URL(baseUrl).origin;
+        const createSocket = await resolveSocketFactory(io);
+        const socket = createSocket(serverOrigin, {
+            ...socketOptions,
+            path: socketPath,
+        });
+        return new SockethubClient(socket, clientOptions, {
+            descriptor,
+            serverOrigin,
+        });
+    }
+
+    constructor(
+        socket: Socket,
+        options: SockethubClientOptions = {},
+        discovered?: { descriptor: ServiceDescriptor; serverOrigin: string },
+    ) {
         if (!socket) {
             throw new Error("SockethubClient requires a socket.io instance");
         }
         this._socket = socket;
+        this.descriptor = discovered?.descriptor;
+        this.serverOrigin = discovered?.serverOrigin;
         this.options = {
             initTimeoutMs: options.initTimeoutMs ?? 5000,
             maxQueuedOutbound: options.maxQueuedOutbound ?? 1000,
