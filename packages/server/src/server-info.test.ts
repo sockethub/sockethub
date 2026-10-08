@@ -10,7 +10,6 @@ import {
     escapeHtml,
     EXAMPLES_PATH,
     formatUptime,
-    publicSocketEndpoint,
     registerServerInfoRoute,
     renderServerInfoPage,
 } from "./server-info.js";
@@ -71,27 +70,6 @@ function getConfigWith(overrides: Record<string, unknown> = {}) {
 }
 
 describe("server-info", () => {
-    describe("publicSocketEndpoint", () => {
-        it("includes a non-default port and keeps the path separate", () => {
-            expect(publicSocketEndpoint(getConfigWith())).toEqual({
-                origin: "http://localhost:10550",
-                path: "/sockethub",
-            });
-        });
-
-        it("omits the protocol default port", () => {
-            expect(
-                publicSocketEndpoint(
-                    getConfigWith({
-                        "public:protocol": "https",
-                        "public:host": "sockethub.example.com",
-                        "public:port": 443,
-                    }),
-                ).origin,
-            ).toBe("https://sockethub.example.com");
-        });
-    });
-
     describe("buildServerInfo", () => {
         it("omits empty operator fields and the version by default", () => {
             const info = buildServerInfo(platforms, {
@@ -108,9 +86,7 @@ describe("server-info", () => {
                 { id: "dummy", apiVersion: 3 },
                 { id: "irc", apiVersion: 4 },
             ]);
-            expect(info.endpoints).toEqual({
-                socket: { origin: "http://localhost:10550", path: "/sockethub" },
-            });
+            expect(info.endpoints).toEqual({ socketIO: "/sockethub" });
         });
 
         it("includes operator fields, version and uptime when configured", () => {
@@ -184,9 +160,7 @@ describe("server-info", () => {
                     examples: true,
                 }),
             });
-            expect(on.endpoints.httpActions).toBe(
-                "http://localhost:10550/custom-http",
-            );
+            expect(on.endpoints.httpActions).toBe("/custom-http");
             expect(on.endpoints.examples).toBe(EXAMPLES_PATH);
         });
     });
@@ -250,11 +224,17 @@ describe("server-info", () => {
             expect(html).not.toContain("Uptime</th>");
             expect(html).not.toContain(SOCKETHUB_VERSION);
             expect(html).not.toContain("open the examples");
-            expect(html).not.toContain("HTTP actions</th>");
+            expect(html).not.toContain("HTTP actions path</th>");
             expect(html).toContain(`API version</th><td>${SOCKETHUB_API_VERSION}</td>`);
+            // Technical details only; how to use the client lives in the docs.
+            expect(html).not.toContain("SockethubClient.connect");
+            // Paths only: the page never prints an origin from the config.
+            expect(html).not.toContain("localhost");
             expect(html).toContain(
-                '<code>io("http://localhost:10550", { path: "/sockethub" })</code>',
+                "Socket.IO path</th><td><code>/sockethub</code>",
             );
+            // The hand-built socket call is no longer the advertised way in.
+            expect(html).not.toContain("io(");
             expect(html).toContain("dummy <small>v3</small>");
             expect(html).toContain("irc <small>v4</small>");
             expect(html).toContain("<caption>Connect</caption>");
@@ -276,7 +256,7 @@ describe("server-info", () => {
             );
             expect(html).toContain(`href="${EXAMPLES_PATH}"`);
             expect(html).toContain(
-                "<code>http://localhost:10550/sockethub-http</code>",
+                "HTTP actions path</th><td><code>/sockethub-http</code>",
             );
             expect(html).toContain(`Version</th><td>${SOCKETHUB_VERSION}</td>`);
             expect(html).toContain("Uptime</th><td>2 hours</td>");
@@ -347,12 +327,94 @@ describe("server-info", () => {
             expect(body).toEqual({
                 name: "sockethub",
                 apiVersion: SOCKETHUB_API_VERSION,
+                endpoints: { socketIO: "/sockethub" },
                 platforms: [
                     { id: "dummy", apiVersion: 3 },
                     { id: "irc", apiVersion: 4 },
                 ],
             });
             expect(JSON.stringify(body)).not.toContain(SOCKETHUB_VERSION);
+        });
+
+        it("advertises the HTTP actions endpoint in the descriptor when enabled", async () => {
+            const app = express();
+            registerServerInfoRoute(
+                app,
+                { platforms },
+                {
+                    getConfig: getConfigWith({
+                        "public:protocol": "https",
+                        "public:host": "sh.example.org",
+                        "public:port": 443,
+                        "sockethub:path": "/ws",
+                        "httpActions:enabled": true,
+                        "httpActions:path": "/actions",
+                    }),
+                },
+            );
+            const other = await new Promise<Server>((resolve) => {
+                const s = app.listen(0, "127.0.0.1", () => resolve(s));
+            });
+            try {
+                const { port } = other.address() as AddressInfo;
+                const res = await fetch(`http://127.0.0.1:${port}/`, {
+                    headers: { accept: "application/json" },
+                });
+                const body = await res.json();
+                expect(validateServiceDescriptor(body)).toBeTrue();
+                expect(body.endpoints).toEqual({
+                    socketIO: "/ws",
+                    httpActions: "/actions",
+                });
+            } finally {
+                await new Promise<void>((resolve, reject) =>
+                    other.close((err) => (err ? reject(err) : resolve())),
+                );
+            }
+        });
+
+        it("applies the CORS policy to the descriptor", async () => {
+            const app = express();
+            registerServerInfoRoute(
+                app,
+                { platforms },
+                {
+                    getConfig: getConfigWith({
+                        "sockethub:cors:origin": "https://app.example",
+                    }),
+                },
+            );
+            const other = await new Promise<Server>((resolve) => {
+                const s = app.listen(0, "127.0.0.1", () => resolve(s));
+            });
+            try {
+                const { port } = other.address() as AddressInfo;
+                const allowed = await fetch(`http://127.0.0.1:${port}/`, {
+                    headers: {
+                        accept: "application/json",
+                        origin: "https://app.example",
+                    },
+                });
+                expect(allowed.status).toBe(200);
+                expect(allowed.headers.get("access-control-allow-origin")).toBe(
+                    "https://app.example",
+                );
+                expect(allowed.headers.get("vary")).toContain("Origin");
+
+                const denied = await fetch(`http://127.0.0.1:${port}/`, {
+                    headers: {
+                        accept: "application/json",
+                        origin: "https://evil.example",
+                    },
+                });
+                expect(
+                    denied.headers.get("access-control-allow-origin"),
+                ).toBeNull();
+            } finally {
+                await new Promise<void>((resolve, reject) =>
+                    other.close((err) => (err ? reject(err) : resolve())),
+                );
+            }
         });
 
         it("leaves other paths unhandled", async () => {
