@@ -19,6 +19,7 @@ describe("Utils", () => {
             ).toEqual({
                 password: "bar",
                 service: "dinosaur.com.au",
+                domain: "dinosaur.com.au",
                 username: "barney",
                 resource: "Home",
             });
@@ -38,6 +39,7 @@ describe("Utils", () => {
             ).toEqual({
                 password: "bar",
                 service: "foo",
+                domain: "dinosaur.com.au",
                 username: "barney",
                 resource: "Home",
             });
@@ -113,6 +115,7 @@ describe("Utils", () => {
             ).toEqual({
                 password: "bar",
                 service: "dinosaur.com.au:123",
+                domain: "dinosaur.com.au",
                 username: "barney",
                 resource: "Home",
             });
