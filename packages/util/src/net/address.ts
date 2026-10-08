@@ -154,7 +154,7 @@ function isBlockedLocalNat64(groups: Array<number>): boolean {
 
     // /64 sub-prefix: IPv4 in e–f when e's high byte is part of the address
     // rather than the /48 u-octet (e.g. 64:ff9b:1:808:a9fe:a9fe).
-    if ((e >> 8) !== 0) {
+    if (e >> 8 !== 0) {
         if (isBlockedIpv4(extractIpv4At64(groups))) return true;
     }
 
