@@ -103,12 +103,17 @@ function credentialsNotFound(err: unknown): boolean {
  * Moves one session's stored credentials from the pre-rename actor to the new
  * actor. Skips peers that never stored the account being renamed. Refuses to
  * overwrite a different account already stored under the new actor id.
+ *
+ * `missingPrevious: "throw"` is for the session that issued the rename: that
+ * key was just loaded, so a missing record means the renamed credentials
+ * would never be stored. Peers leave it unset and skip.
  */
 export async function renameActorCredentialsInStore(
     store: CredentialStoreReader,
     platformName: string,
     previousActorId: string,
     renamed: CredentialsObject,
+    options?: { missingPrevious?: "skip" | "throw" },
 ): Promise<"migrated" | "skipped"> {
     const newActorId = renamed.actor?.id;
     if (typeof newActorId !== "string" || newActorId.length === 0) {
@@ -126,6 +131,11 @@ export async function renameActorCredentialsInStore(
         await store.get(oldKey);
     } catch (err) {
         if (credentialsNotFound(err)) {
+            if (options?.missingPrevious === "throw") {
+                throw new Error(
+                    `cannot rename ${previousActorId} to ${newActorId}: ${previousActorId} is not stored`,
+                );
+            }
             return "skipped";
         }
         throw err;
@@ -148,6 +158,40 @@ export async function renameActorCredentialsInStore(
 
     await store.save(newKey, renamed);
     return "migrated";
+}
+
+/**
+ * Persists the submitting session's credentials after an actor rename.
+ *
+ * A session store holds every account that session has used, keyed by actor
+ * id. `storeActorCredentials` would replace whatever already sits at the new
+ * id, so renaming `alice` to `bob` destroys `bob`'s password and the next
+ * command on that account detaches it. Same collision rules as peer
+ * migration: leave an identical object in place, refuse a different one.
+ */
+export async function storeRenamedActorCredentials(
+    store: CredentialStoreReader,
+    platformName: string,
+    previousActorId: string,
+    renamed: CredentialsObject,
+): Promise<void> {
+    if (typeof previousActorId !== "string" || previousActorId.length === 0) {
+        throw new Error(
+            `cannot store updated credentials for ${platformName} without the previous actor id`,
+        );
+    }
+    const newActorId = renamed.actor?.id;
+    if (previousActorId === newActorId) {
+        await storeActorCredentials(store, platformName, renamed);
+        return;
+    }
+    await renameActorCredentialsInStore(
+        store,
+        platformName,
+        previousActorId,
+        renamed,
+        { missingPrevious: "throw" },
+    );
 }
 
 export interface SessionCredentialWriter {
@@ -262,6 +306,16 @@ async function startPlatformProcess() {
     // actor-change IPC so the parent can migrate credentials for every other
     // session sharing this connection.
     let actorUpdateSessionId: string | undefined;
+    // Actor id the in-flight job loaded credentials for, before the platform
+    // mutates that object to the new nick. Needed so the rename can refuse to
+    // overwrite a different account already stored at the target id.
+    let actorUpdatePreviousActorId: string | undefined;
+
+    function clearActorUpdateContext(): void {
+        credentialsStoreForActorUpdate = undefined;
+        actorUpdateSessionId = undefined;
+        actorUpdatePreviousActorId = undefined;
+    }
     // Immutable queue name allocated when this worker was forked. Distinct
     // from `identifier`, which moves on actor rename and can be reused by a
     // later connection with the original actor.
@@ -609,13 +663,13 @@ async function startPlatformProcess() {
                         .then((credentials) => {
                             credentialsStoreForActorUpdate = credentialStore;
                             actorUpdateSessionId = job.sessionId;
+                            actorUpdatePreviousActorId = job.msg.actor.id;
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (
                                 err: Error | null,
                                 result: null | ActivityStream,
                             ): void => {
-                                credentialsStoreForActorUpdate = undefined;
-                                actorUpdateSessionId = undefined;
+                                clearActorUpdateContext();
                                 if (!err && isPersistentPlatform(platform)) {
                                     // Update credentialsHash after successful platform call.
                                     // Only persistent platforms track credential state across requests.
@@ -633,8 +687,7 @@ async function startPlatformProcess() {
                                 job.msg.type,
                             );
                             if (!handler) {
-                                credentialsStoreForActorUpdate = undefined;
-                                actorUpdateSessionId = undefined;
+                                clearActorUpdateContext();
                                 doneCallback(
                                     new Error(
                                         `platform method ${job.msg.type} not available`,
@@ -653,8 +706,7 @@ async function startPlatformProcess() {
                                     wrappedCallback,
                                 );
                             } catch (err) {
-                                credentialsStoreForActorUpdate = undefined;
-                                actorUpdateSessionId = undefined;
+                                clearActorUpdateContext();
                                 doneCallback(toError(err), null);
                             }
                         })
@@ -778,9 +830,29 @@ async function startPlatformProcess() {
         // telling the parent the actor moved. A failure leaves Redis, the
         // hash, and the instance key where they were, so the session can
         // still present the pre-rename actor.
+        //
+        // Use the guarded rename, not `storeActorCredentials`. The latter
+        // writes the new actor key unconditionally, and this session may
+        // already have a different account there (alice changing nick to bob
+        // replaces bob's password; bob's next command then detaches).
         const store = credentialsStoreForActorUpdate;
+        const previousActorId = actorUpdatePreviousActorId;
         if (store) {
-            await storeActorCredentials(store, platformName, credentials);
+            if (!previousActorId) {
+                throw new Error(
+                    `cannot store updated credentials for ${platformName} without the previous actor id`,
+                );
+            }
+            await storeRenamedActorCredentials(
+                store,
+                platformName,
+                previousActorId,
+                credentials,
+            );
+            const newActorId = credentials.actor?.id;
+            if (typeof newActorId === "string" && newActorId.length > 0) {
+                actorUpdatePreviousActorId = newActorId;
+            }
         }
 
         // The actor travels with the new identifier: the parent keys anonymous
