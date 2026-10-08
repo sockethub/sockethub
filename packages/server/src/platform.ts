@@ -214,6 +214,18 @@ async function startPlatformProcess() {
         1: SecretInterface;
     }
 
+    type MessageFromParent =
+        | SecretFromParent
+        | ["updateActorAck"]
+        | ["updateActorFailed", string];
+
+    let pendingUpdateActorAck:
+        | {
+              resolve: () => void;
+              reject: (err: Error) => void;
+          }
+        | undefined;
+
     /**
      * Initialize platform module
      */
@@ -394,7 +406,7 @@ async function startPlatformProcess() {
      * Incoming messages from the worker to this platform. Data is an array, the first property is the
      * method to call, the rest are params.
      */
-    process.on("message", async (data: SecretFromParent) => {
+    process.on("message", async (data: MessageFromParent) => {
         if (data[0] === "secrets") {
             const {
                 parentSecret2: parentSecret3,
@@ -404,6 +416,16 @@ async function startPlatformProcess() {
             parentSecret2 = parentSecret3;
             await startQueueListener();
             startHeartbeat();
+        } else if (data[0] === "updateActorAck") {
+            pendingUpdateActorAck?.resolve();
+            pendingUpdateActorAck = undefined;
+        } else if (data[0] === "updateActorFailed") {
+            const message =
+                typeof data[1] === "string" && data[1].length > 0
+                    ? data[1]
+                    : "actor update rejected by parent";
+            pendingUpdateActorAck?.reject(new Error(message));
+            pendingUpdateActorAck = undefined;
         } else {
             throw new Error("received unknown command from parent thread");
         }
@@ -726,8 +748,9 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Resolves once the parent has been handed the new identifier, and rejects
-     * if the IPC channel is gone or the write fails.
+     * Resolves once the parent has migrated peer credentials and re-keyed the
+     * instance, and rejects if the IPC channel is gone or the parent rejects
+     * the rename.
      */
     function sendUpdateActor(
         credentials: CredentialsObject,
@@ -749,6 +772,18 @@ async function startPlatformProcess() {
                 );
                 return;
             }
+            if (pendingUpdateActorAck) {
+                reject(
+                    new Error(
+                        "actor update already in flight; cannot report another change",
+                    ),
+                );
+                return;
+            }
+            pendingUpdateActorAck = {
+                resolve,
+                reject,
+            };
             process.send(
                 [
                     "updateActor",
@@ -759,10 +794,9 @@ async function startPlatformProcess() {
                 ],
                 (err: Error | null) => {
                     if (err) {
+                        pendingUpdateActorAck = undefined;
                         reject(err);
-                        return;
                     }
-                    resolve();
                 },
             );
         });

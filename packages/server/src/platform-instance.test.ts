@@ -606,6 +606,7 @@ describe("PlatformInstance", () => {
                 pi.broadcastFatalError = sandbox.fake();
                 pi.sendToClient = sandbox.fake();
                 pi.updateIdentifier = sandbox.fake();
+                pi.process.send = sandbox.spy();
             });
 
             test("unexpected close events are reported, regardless of process.connected", async () => {
@@ -655,6 +656,42 @@ describe("PlatformInstance", () => {
                     pi.updateIdentifier,
                     "renamed identifier",
                     "alice_away@irc.example.org",
+                );
+                sandbox.assert.calledWith(pi.process.send, ["updateActorAck"]);
+            });
+
+            test("updateActor failure is reported to the platform child", async () => {
+                (
+                    pi as unknown as {
+                        migratePeerActorCredentials: () => Promise<void>;
+                    }
+                ).migratePeerActorCredentials = () =>
+                    Promise.reject(new Error("migration failed"));
+                await expect(
+                    pi.handleProcessMessage([
+                        "updateActor",
+                        "alice_away@irc.example.org",
+                        "renamed identifier",
+                        {
+                            type: "credentials",
+                            "@context": [],
+                            actor: {
+                                id: "alice_away@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials",
+                                nick: "alice_away",
+                                password: "hunter2",
+                            },
+                        },
+                        "s1",
+                    ]),
+                ).rejects.toThrow("migration failed");
+                sandbox.assert.notCalled(pi.updateIdentifier);
+                sandbox.assert.calledWith(
+                    pi.process.send,
+                    ["updateActorFailed", "migration failed"],
                 );
             });
 

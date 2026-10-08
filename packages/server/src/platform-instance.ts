@@ -47,6 +47,11 @@ export interface PlatformInstanceParams {
     parentSecret1?: string;
     actor?: string;
     /**
+     * Reuse an existing worker's Redis queue when replacing a dead instance
+     * for the same routing identifier (#1166). Omitted for brand-new workers.
+     */
+    queueId?: string;
+    /**
      * Server-derived value mixed into `identifier`. Forwarded to the child so
      * it derives the same identifier when it re-keys on an actor change.
      */
@@ -78,6 +83,11 @@ type MessageFromPlatform =
     | ["error", string]
     | ["heartbeat", ActivityStream]
     | [string, ActivityStream, string?];
+
+export type MessageToPlatformChild =
+    | ["secrets", { parentSecret1: string; parentSecret2: string }]
+    | ["updateActorAck"]
+    | ["updateActorFailed", string];
 
 export interface MessageFromParent extends Array<string | unknown> {
     0: string;
@@ -138,7 +148,7 @@ export default class PlatformInstance {
 
     constructor(params: PlatformInstanceParams) {
         this.id = params.identifier;
-        this.queueId = crypto.randId(16);
+        this.queueId = params.queueId ?? crypto.randId(16);
         this.name = params.platform;
         this.parentId = params.parentId;
         this.parentSecret1 = params.parentSecret1;
@@ -702,6 +712,24 @@ export default class PlatformInstance {
      * per platform emit, plus MaxListenersExceeded warnings past ten
      * sessions on shared (e.g. global) platforms.
      */
+    private sendUpdateActorAck() {
+        this.sendToChild(["updateActorAck"]);
+    }
+
+    private sendUpdateActorFailed(message: string) {
+        this.sendToChild(["updateActorFailed", message]);
+    }
+
+    private sendToChild(message: MessageToPlatformChild) {
+        if (!this.process?.send) {
+            this.log.error(
+                `unable to send ${message[0]} to platform child: no IPC channel`,
+            );
+            return;
+        }
+        this.process.send(message);
+    }
+
     private attachProcessListeners() {
         if (!this.process?.on) {
             return;
@@ -751,26 +779,32 @@ export default class PlatformInstance {
             // Internal control message: platform process is reporting a new actor id.
             // We need to update the key to the store in order to find it in the future.
             if (typeof third !== "string" || third.length === 0) {
-                this.log.error(
-                    `ignoring actor change with an invalid identifier platform=${this.name}`,
-                );
+                const message = `actor change rejected: invalid identifier platform=${this.name}`;
+                this.log.error(message);
+                this.sendUpdateActorFailed(message);
                 return;
             }
-            const credentials = fourth;
-            const originatingSessionId =
-                typeof fifth === "string" && fifth.length > 0
-                    ? fifth
-                    : undefined;
-            if (credentials) {
-                await this.migratePeerActorCredentials(
-                    credentials,
-                    originatingSessionId,
+            try {
+                const credentials = fourth;
+                const originatingSessionId =
+                    typeof fifth === "string" && fifth.length > 0
+                        ? fifth
+                        : undefined;
+                if (credentials) {
+                    await this.migratePeerActorCredentials(
+                        credentials,
+                        originatingSessionId,
+                    );
+                }
+                this.updateIdentifier(
+                    third,
+                    typeof second === "string" ? second : undefined,
                 );
+                this.sendUpdateActorAck();
+            } catch (err) {
+                this.sendUpdateActorFailed(errorMessage(err));
+                throw err;
             }
-            this.updateIdentifier(
-                third,
-                typeof second === "string" ? second : undefined,
-            );
         } else if (first === "sessionUnauthorized") {
             if (
                 typeof third !== "string" ||

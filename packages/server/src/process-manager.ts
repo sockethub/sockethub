@@ -78,6 +78,7 @@ class ProcessManager {
         platform: string,
         actor?: string,
         scope?: string,
+        queueId?: string,
     ): PlatformInstance {
         const secrets: MessageFromParent = [
             "secrets",
@@ -93,6 +94,7 @@ class ProcessManager {
             parentSecret1: this.parentSecret1,
             actor: actor,
             scope: scope,
+            queueId: queueId,
         };
         const platformInstance = new PlatformInstance(platformInstanceConfig);
         platformInstance.initQueue(this.parentSecret1 + this.parentSecret2);
@@ -158,14 +160,16 @@ class ProcessManager {
         if (!reusable) {
             this.assertInstanceCapacity(platform, identifier);
         }
+        let inheritedQueueId: string | undefined;
         if (existing && !reusable) {
             // The replacement created below shares `identifier` and the Redis
-            // queue name derived from it. Mark the dead instance as replaced
-            // *before* teardown so a teardown started here leaves the shared
-            // queue's jobs intact (#1166), and *await* the teardown so one
-            // already in flight — a crash-close teardown pauses and
-            // obliterates the queue — finishes before the replacement's
-            // queue exists to be damaged by it.
+            // queue name the dead instance was using. Mark the dead instance as
+            // replaced *before* teardown so a teardown started here leaves the
+            // shared queue's jobs intact (#1166), and *await* the teardown so
+            // one already in flight — a crash-close teardown pauses and
+            // obliterates the queue — finishes before the replacement's queue
+            // exists to be damaged by it.
+            inheritedQueueId = existing.queueId;
             existing.markReplaced();
             await existing.shutdown();
         }
@@ -176,6 +180,7 @@ class ProcessManager {
                   platform,
                   actor,
                   connectionScope?.scope,
+                  inheritedQueueId,
               );
         if (sessionId) {
             platformInstance.registerSession(sessionId, sessionIp);
