@@ -32,6 +32,7 @@ export const utils = {
             service: credentials.object.server
                 ? credentials.object.server
                 : server,
+            domain: server,
             username: username,
             password: credentials.object.password,
         };
