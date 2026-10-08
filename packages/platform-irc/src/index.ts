@@ -100,6 +100,23 @@ function ircLineBreakError(values: Array<unknown>): string | undefined {
     }
 }
 
+/**
+ * irc2as puts numeric-reply text on `error`, not `object.content`. Reading
+ * `object.content` throws, and the platform process treats that as fatal.
+ * A non-empty string is required so a nick-change handler takes its failure
+ * path instead of adopting a nick the server rejected.
+ */
+function ircFailureMessage(asObject: ActivityStream): string {
+    if (typeof asObject.error === "string" && asObject.error.length > 0) {
+        return asObject.error;
+    }
+    const content = asObject.object?.content;
+    if (typeof content === "string" && content.length > 0) {
+        return content;
+    }
+    return "IRC error";
+}
+
 interface IrcSocketOptionsCapabilities {
     requires: string[];
 }
@@ -827,9 +844,10 @@ export class IRC implements PersistentPlatformInterface {
         // however for irc2as this event delivers an AS object of type `error`.
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
-            this.log.debug(`message error response ${asObject.object.content}`);
+            const message = ircFailureMessage(asObject);
+            this.log.debug(`message error response ${message}`);
             if (this.jobQueue.length > 0) {
-                this.completeJob(asObject.object.content);
+                this.completeJob(message);
             }
         });
 

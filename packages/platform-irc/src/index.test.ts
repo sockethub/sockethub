@@ -745,6 +745,54 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.handledActors.has(newActor.id)).toEqual(false);
             });
 
+            it("fails a nick change when the server replies that the nick is in use", async () => {
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // irc2as emits this on `error` with the text on `error`, not
+                // `object.content`. Reading the wrong field used to throw out
+                // of the socket listener (fatal to the platform process) and,
+                // because a nick change only completes on nickAck, the PONG
+                // for the trailing PING never unblocked the command.
+                expect(() => {
+                    platform.irc2as.input(
+                        ":irc.example.com 433 testingham testler :Nickname is already in use.",
+                    );
+                }).not.toThrow();
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual("Nickname is already in use.");
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(platform.handledActors.has(actor.id)).toEqual(true);
+                expect(platform.handledActors.has(newActor.id)).toEqual(false);
+                expect(creds.object.nick).toEqual("testingham");
+                expect(creds.actor.id).toEqual(actor.id);
+            });
+
+            it("does not throw when a numeric error arrives with no command in flight", () => {
+                platform.ircConnect(validCredentials, () => {});
+                expect(() => {
+                    platform.irc2as.input(
+                        ":irc.example.com 473 testingham #a-room :Cannot join channel (+i)",
+                    );
+                }).not.toThrow();
+                expect(platform.jobQueue.length).toEqual(0);
+            });
+
             it("delivers a server-initiated nick change while idle", async () => {
                 const delivered: Array<ActivityStream> = [];
                 let actorUpdated = false;
