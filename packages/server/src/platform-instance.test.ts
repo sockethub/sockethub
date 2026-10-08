@@ -4,6 +4,7 @@ import {
     addPlatformContext,
     addPlatformSchema,
     buildCanonicalContext,
+    type CredentialsObject,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
 
@@ -19,6 +20,11 @@ addPlatformContext("respplat", RESPONSES_CTX);
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
+import {
+    beginCredentialScope,
+    resetConnectionScopes,
+    resolveConnectionScope,
+} from "./connection-scope.js";
 import config from "./config.js";
 import PlatformInstance, { platformInstances } from "./platform-instance.js";
 
@@ -208,6 +214,48 @@ describe("PlatformInstance", () => {
             expect(pi.queue).toBeDefined();
         });
 
+        test("binds the queue to an immutable id separate from the routing identifier", () => {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            let queueInstanceId: string | undefined;
+            class QueueCapturingInstance extends TestPlatformInstance {
+                createQueue() {
+                    this.JobQueue = sandbox.stub().callsFake(function (
+                        _parentId: string,
+                        instanceId: string,
+                    ) {
+                        queueInstanceId = instanceId;
+                        return {
+                            shutdown: sandbox.stub(),
+                            disconnect: sandbox.stub(),
+                            on: sandbox.stub(),
+                        };
+                    }) as typeof TestPlatformInstance.prototype.JobQueue;
+                }
+            }
+            const instance = new QueueCapturingInstance({
+                identifier: "routing identifier",
+                platform: "irc",
+                parentId: "parent",
+            });
+            expect(instance.queueId).not.toEqual("routing identifier");
+            instance.initQueue("a secret");
+            expect(queueInstanceId).toEqual(instance.queueId);
+            void instance.shutdown();
+        });
+
+        test("forwards the immutable queue id to the platform child", async () => {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            const instance = new TestPlatformInstance({
+                identifier: "routing identifier",
+                platform: "irc",
+                parentId: "parent",
+            });
+            expect(forkFake.lastCall.args[2].SOCKETHUB_QUEUE_INSTANCE_ID).toEqual(
+                instance.queueId,
+            );
+            await instance.shutdown();
+        });
+
         test("cleans up its references when shutdown", async () => {
             pi.initQueue("a secret");
             expect(pi.queue).toBeDefined();
@@ -270,6 +318,79 @@ describe("PlatformInstance", () => {
             expect(pi.id).toEqual("foo bar");
             expect(platformInstances.has("platform identifier")).toBeFalse();
             expect(platformInstances.has("foo bar")).toBeTrue();
+        });
+
+        test("actor rename keeps the job queue the process was forked with", () => {
+            pi.initQueue("a secret");
+            const queue = pi.queue;
+            const queueId = pi.queueId;
+            pi.updateIdentifier("renamed identifier", "alice_away@irc.example.org");
+            expect(pi.id).toEqual("renamed identifier");
+            expect(pi.queue).toBe(queue);
+            expect(pi.queueId).toEqual(queueId);
+        });
+
+        test("ignores an actor change with no identifier", () => {
+            pi.updateIdentifier("");
+            expect(pi.id).toEqual("platform identifier");
+            expect(platformInstances.has("platform identifier")).toBeTrue();
+        });
+
+        test("nick change keeps the credential scope on the new actor", async () => {
+            resetConnectionScopes();
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            const instance = new TestPlatformInstance({
+                identifier: "old-id",
+                platform: "irc",
+                parentId: "parent",
+                actor: "alice@irc.example.org",
+            });
+            const creds = {
+                "@context": [],
+                type: "credentials",
+                actor: {
+                    id: "alice@irc.example.org",
+                    type: "person",
+                },
+                object: {
+                    type: "credentials",
+                    nick: "alice",
+                    password: "hunter2",
+                },
+            } as CredentialsObject;
+            try {
+                instance.registerSession("s1");
+                beginCredentialScope(
+                    "s1",
+                    "irc",
+                    "alice@irc.example.org",
+                ).resolve(creds);
+                const before = await resolveConnectionScope(
+                    "irc",
+                    "alice@irc.example.org",
+                    {
+                        credentialSessionId: "s1",
+                        socketSessionId: "s1",
+                    },
+                );
+                instance.updateIdentifier(
+                    "new-id",
+                    "alice_away@irc.example.org",
+                );
+                const after = await resolveConnectionScope(
+                    "irc",
+                    "alice_away@irc.example.org",
+                    {
+                        credentialSessionId: "s1",
+                        socketSessionId: "s1",
+                    },
+                );
+                expect(after.scope).toEqual(before.scope);
+                expect(after.scope).not.toEqual("s1");
+            } finally {
+                resetConnectionScopes();
+                await instance.shutdown();
+            }
         });
 
         test("sends messages to client using socket session id", async () => {
@@ -485,6 +606,7 @@ describe("PlatformInstance", () => {
                 pi.broadcastFatalError = sandbox.fake();
                 pi.sendToClient = sandbox.fake();
                 pi.updateIdentifier = sandbox.fake();
+                pi.process.send = sandbox.spy();
             });
 
             test("unexpected close events are reported, regardless of process.connected", async () => {
@@ -527,10 +649,56 @@ describe("PlatformInstance", () => {
             test("message events from platform thread are routed based on command: updateActor", async () => {
                 await pi.handleProcessMessage([
                     "updateActor",
-                    undefined,
-                    { foo: "bar" },
+                    "alice_away@irc.example.org",
+                    "renamed identifier",
                 ]);
-                sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
+                sandbox.assert.calledWith(
+                    pi.updateIdentifier,
+                    "renamed identifier",
+                    "alice_away@irc.example.org",
+                );
+                sandbox.assert.calledWith(pi.process.send, ["updateActorAck"]);
+            });
+
+            test("updateActor failure is reported to the platform child", async () => {
+                (
+                    pi as unknown as { actor?: string }
+                ).actor = "alice@irc.example.org";
+                (
+                    pi as unknown as {
+                        migratePeerActorCredentials: (
+                            credentials: CredentialsObject,
+                            previousActorId: string,
+                        ) => Promise<void>;
+                    }
+                ).migratePeerActorCredentials = () =>
+                    Promise.reject(new Error("migration failed"));
+                await expect(
+                    pi.handleProcessMessage([
+                        "updateActor",
+                        "alice_away@irc.example.org",
+                        "renamed identifier",
+                        {
+                            type: "credentials",
+                            "@context": [],
+                            actor: {
+                                id: "alice_away@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials",
+                                nick: "alice_away",
+                                password: "hunter2",
+                            },
+                        },
+                        "s1",
+                    ]),
+                ).rejects.toThrow("migration failed");
+                sandbox.assert.notCalled(pi.updateIdentifier);
+                sandbox.assert.calledWith(
+                    pi.process.send,
+                    ["updateActorFailed", "migration failed"],
+                );
             });
 
             it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {

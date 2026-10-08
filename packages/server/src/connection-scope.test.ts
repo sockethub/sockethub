@@ -7,6 +7,7 @@ import {
     forgetAnonymousScopes,
     rememberAnonymousScope,
     reassignAnonymousScopes,
+    reassignPendingScopes,
     type ResumptionRef,
     resetConnectionScopes,
     resolveConnectionScope,
@@ -132,6 +133,53 @@ describe("connection scope", () => {
             handle.resolve(credentials({ nick: "alice", token: "abc123" }));
             const { scope } = await pending;
             expect(scope).not.toEqual("s1");
+        });
+
+        it("follows a nick change onto the new actor without changing the fingerprint", async () => {
+            const handle = beginCredentialScope("s1", PLATFORM, ACTOR);
+            handle.resolve(credentials({ nick: "alice", password: "hunter2" }));
+            const before = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+
+            const renamed = "alice_away@irc.example.org";
+            reassignPendingScopes(["s1"], PLATFORM, ACTOR, renamed);
+
+            const after = await resolveConnectionScope(PLATFORM, renamed, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(after.scope).toEqual(before.scope);
+
+            // The pre-rename actor must not still select that connection.
+            const stale = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(stale.scope).not.toEqual(before.scope);
+        });
+
+        it("does not replace a scope already opened for the new actor", async () => {
+            beginCredentialScope("s1", PLATFORM, ACTOR).resolve(
+                credentials({ nick: "alice", password: "hunter2" }),
+            );
+            const renamed = "alice_away@irc.example.org";
+            beginCredentialScope("s1", PLATFORM, renamed).resolve(
+                credentials({ nick: "alice_away", password: "other" }),
+            );
+            const existing = await resolveConnectionScope(PLATFORM, renamed, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+
+            reassignPendingScopes(["s1"], PLATFORM, ACTOR, renamed);
+
+            const after = await resolveConnectionScope(PLATFORM, renamed, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(after.scope).toEqual(existing.scope);
         });
 
         it("propagates a credentials failure instead of falling back", async () => {

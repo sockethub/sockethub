@@ -659,6 +659,26 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            it("update() nick change reports an actor-update failure", (done) => {
+                platform.updateActor = () =>
+                    Promise.reject(new Error("redis down"));
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    validCredentials,
+                    (err: unknown) => {
+                        expect(err).toEqual("redis down");
+                        done();
+                    },
+                );
+                platform.completeJob();
+            });
+
             it("delivers traffic for a nick this connection does not yet own", async () => {
                 const delivered: Array<ActivityStream> = [];
                 platform.sendToClient = (msg: ActivityStream) => {

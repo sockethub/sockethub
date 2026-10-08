@@ -409,7 +409,15 @@ export class IRC implements PersistentPlatformInterface {
                         credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
                         credentials.actor.name = job.target.name;
                         this.credentials = credentials;
-                        await this.updateActor(credentials);
+                        try {
+                            await this.updateActor(credentials);
+                        } catch (updateErr) {
+                            const message =
+                                updateErr instanceof Error
+                                    ? updateErr.message
+                                    : String(updateErr);
+                            return done(message);
+                        }
                         // The previous nick now belongs to whoever takes it next.
                         // Leaving it here drops their traffic: an event whose
                         // actor is in this set completes a job instead of being
