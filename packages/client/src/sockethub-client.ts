@@ -1347,8 +1347,17 @@ export default class SockethubClient {
      * on the nick this connection currently holds, so a rename of some other
      * user (including one who later took a nick this client released) never
      * matches a stored entry.
+     *
+     * A rejected nick change is not a rename. The server echoes the failed
+     * job — the original update plus `error` — to every other session sharing
+     * the connection. Following that echo would point those sessions at a
+     * nick the server refused, so their next command misses the live worker
+     * and opens a second connection.
      */
     private followActorRename(incoming: ActivityStream): void {
+        if (SockethubClient.isErrorResult(incoming)) {
+            return;
+        }
         if (this.isActorRename(incoming)) {
             this.moveReplayState(incoming);
         }

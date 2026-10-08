@@ -1101,6 +1101,33 @@ describe("SockethubClient", () => {
             expect(credentials.object.nick).to.equal("alice");
         });
 
+        it("does not follow a rejected nick change echoed to this session", () => {
+            // Another session on the same connection tried to rename and the
+            // server refused. The failure is broadcast as the original update
+            // plus `error`. This session still holds the old nick.
+            socket.emit("message", {
+                "@context": sc.contextFor("test-xmpp"),
+                type: "update",
+                actor: {
+                    type: "person",
+                    id: "alice@irc.example.org",
+                    name: "alice",
+                },
+                target: {
+                    type: "person",
+                    id: "alice_away@irc.example.org",
+                    name: "alice_away",
+                },
+                object: { type: "address" },
+                error: "Nickname is already in use.",
+            });
+
+            for (const name of ["credentials", "connect", "join"]) {
+                const entry = sc.events[name].values().next().value;
+                expect(entry.actor.id, name).to.equal("alice@irc.example.org");
+            }
+        });
+
         it("ignores a rename of another user", () => {
             rename("test-xmpp", "bob", "bob_away");
 
