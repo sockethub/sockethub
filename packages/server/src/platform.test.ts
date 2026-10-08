@@ -14,7 +14,6 @@ import {
     migrateRenamedActorCredentials,
     renameActorCredentialsInStore,
     storeActorCredentials,
-    storeRenamedActorCredentials,
 } from "./platform.js";
 
 /**
@@ -258,7 +257,7 @@ describe("platform.ts credential handling", () => {
                 objectHash: crypto.objectHash,
             };
             await expect(
-                storeRenamedActorCredentials(
+                renameActorCredentialsInStore(
                     store,
                     "irc",
                     "alice@irc.example.org",
@@ -310,18 +309,19 @@ describe("platform.ts credential handling", () => {
                     return 1;
                 },
             };
-            await storeRenamedActorCredentials(
+            const result = await renameActorCredentialsInStore(
                 store,
                 "irc",
                 "alice@irc.example.org",
                 renamed,
             );
+            expect(result).toEqual("migrated");
             expect(saved).toEqual([
                 { key: "irc:alice_away@irc.example.org", creds: renamed },
             ]);
         });
 
-        it("does not report a rename when the previous actor is missing", async () => {
+        it("does not write when a rename is only being checked", async () => {
             const renamed: CredentialsObject = {
                 type: "credentials",
                 "@context": [],
@@ -336,21 +336,42 @@ describe("platform.ts credential handling", () => {
                     password: "hunter2",
                 },
             };
+            const saved: Array<string> = [];
             const store = {
                 get: async (key: string) => {
+                    if (key === "irc:alice@irc.example.org") {
+                        return {
+                            type: "credentials" as const,
+                            "@context": [],
+                            actor: {
+                                id: "alice@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials" as const,
+                                nick: "alice",
+                                password: "hunter2",
+                            },
+                        };
+                    }
                     throw new Error(`credentials not found for ${key}`);
                 },
-                save: async () => 1,
+                save: async (key: string) => {
+                    saved.push(key);
+                    return 1;
+                },
             };
-            await expect(
-                storeRenamedActorCredentials(
-                    store,
-                    "irc",
-                    "alice@irc.example.org",
-                    renamed,
-                ),
-            ).rejects.toThrow("alice@irc.example.org is not stored");
+            const result = await renameActorCredentialsInStore(
+                store,
+                "irc",
+                "alice@irc.example.org",
+                renamed,
+                { dryRun: true },
+            );
+            expect(result).toEqual("migrated");
+            expect(saved).toEqual([]);
         });
+
     });
     let sandbox: sinon.SinonSandbox;
     let mockPlatform: Partial<PlatformInterface>;

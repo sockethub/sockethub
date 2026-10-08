@@ -60,6 +60,14 @@ export type PlatformSendToClient = (
 
 export type PlatformUpdateActor = (credentials: object) => Promise<void>;
 
+/**
+ * Read-only check that a proposed actor rename will not overwrite a different
+ * account. IRC calls this before sending NICK: the refusal has to happen
+ * before the server applies the nick, or a collision still changes the nick
+ * the connection is using while the client is told the rename failed.
+ */
+export type PlatformPrepareActorUpdate = (credentials: object) => Promise<void>;
+
 export interface Logger {
     error(message: string, meta?: object): void;
     warn(message: string, meta?: object): void;
@@ -71,6 +79,7 @@ export interface PlatformSession {
     log: Logger;
     sendToClient: PlatformSendToClient;
     updateActor: PlatformUpdateActor;
+    prepareActorUpdate?: PlatformPrepareActorUpdate;
 }
 
 export interface CredentialsObject {

@@ -786,6 +786,45 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            it("does not send NICK when the rename would overwrite another account", async () => {
+                const rawCalls: Array<unknown> = [];
+                platform.client.raw = (...args: Array<unknown>) => {
+                    rawCalls.push(args);
+                };
+                platform.prepareActorUpdate = () =>
+                    Promise.reject(
+                        new Error(
+                            "cannot rename testingham@irc.example.com to testler@irc.example.com: credentials already stored for testler@irc.example.com",
+                        ),
+                    );
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual(
+                    "cannot rename testingham@irc.example.com to testler@irc.example.com: credentials already stored for testler@irc.example.com",
+                );
+                expect(rawCalls).toEqual([]);
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(creds.object.nick).toEqual("testingham");
+                expect(creds.actor.id).toEqual(
+                    "testingham@irc.example.com",
+                );
+            });
+
             it("delivers traffic for a nick this connection does not yet own", async () => {
                 const delivered: Array<ActivityStream> = [];
                 platform.sendToClient = (msg: ActivityStream) => {

@@ -26,6 +26,7 @@ import type {
     PersistentPlatformConfig,
     PersistentPlatformInterface,
     PlatformCallback,
+    PlatformPrepareActorUpdate,
     PlatformSchemaStruct,
     PlatformSendToClient,
     PlatformSession,
@@ -156,6 +157,7 @@ export class IRC implements PersistentPlatformInterface {
         connectTimeoutMs: 30000,
     };
     private readonly updateActor: PlatformUpdateActor;
+    private readonly prepareActorUpdate?: PlatformPrepareActorUpdate;
     private readonly sendToClient: PlatformSendToClient;
     private irc2as!: IrcToActivityStreams;
     private forceDisconnect = false;
@@ -174,6 +176,7 @@ export class IRC implements PersistentPlatformInterface {
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.updateActor = session.updateActor;
+        this.prepareActorUpdate = session.prepareActorUpdate;
     }
 
     /**
@@ -409,7 +412,7 @@ export class IRC implements PersistentPlatformInterface {
             job.object?.content,
         ]);
         if (lineBreakError) return done(lineBreakError);
-        this.getClient(job.actor.id, false, (err, client) => {
+        this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
             }
@@ -417,6 +420,28 @@ export class IRC implements PersistentPlatformInterface {
                 this.log.debug(
                     `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
+                // Refuse a collision before NICK reaches the server. The
+                // credential check used to run only after the server accepted
+                // the nick, so a refusal left this connection on the new nick
+                // while the client was told the rename failed.
+                if (this.prepareActorUpdate) {
+                    const proposed = structuredClone(credentials);
+                    proposed.object.nick = job.target.name;
+                    proposed.actor = {
+                        ...proposed.actor,
+                        id: `${job.target.name}@${credentials.object.server}`,
+                        name: job.target.name,
+                    };
+                    try {
+                        await this.prepareActorUpdate(proposed);
+                    } catch (updateErr) {
+                        const message =
+                            updateErr instanceof Error
+                                ? updateErr.message
+                                : String(updateErr);
+                        return done(message);
+                    }
+                }
                 // Do not mark the requested nick as ours until the server
                 // accepts it. Doing so earlier consumes that nick's live
                 // traffic as this job's completion, so a taken nick can be

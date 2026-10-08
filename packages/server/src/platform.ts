@@ -103,17 +103,14 @@ function credentialsNotFound(err: unknown): boolean {
  * Moves one session's stored credentials from the pre-rename actor to the new
  * actor. Skips peers that never stored the account being renamed. Refuses to
  * overwrite a different account already stored under the new actor id.
- *
- * `missingPrevious: "throw"` is for the session that issued the rename: that
- * key was just loaded, so a missing record means the renamed credentials
- * would never be stored. Peers leave it unset and skip.
+ * `dryRun` runs the same checks without writing.
  */
 export async function renameActorCredentialsInStore(
     store: CredentialStoreReader,
     platformName: string,
     previousActorId: string,
     renamed: CredentialsObject,
-    options?: { missingPrevious?: "skip" | "throw" },
+    options?: { dryRun?: boolean },
 ): Promise<"migrated" | "skipped"> {
     const newActorId = renamed.actor?.id;
     if (typeof newActorId !== "string" || newActorId.length === 0) {
@@ -131,11 +128,6 @@ export async function renameActorCredentialsInStore(
         await store.get(oldKey);
     } catch (err) {
         if (credentialsNotFound(err)) {
-            if (options?.missingPrevious === "throw") {
-                throw new Error(
-                    `cannot rename ${previousActorId} to ${newActorId}: ${previousActorId} is not stored`,
-                );
-            }
             return "skipped";
         }
         throw err;
@@ -156,42 +148,11 @@ export async function renameActorCredentialsInStore(
         }
     }
 
+    if (options?.dryRun) {
+        return "migrated";
+    }
     await store.save(newKey, renamed);
     return "migrated";
-}
-
-/**
- * Persists the submitting session's credentials after an actor rename.
- *
- * A session store holds every account that session has used, keyed by actor
- * id. `storeActorCredentials` would replace whatever already sits at the new
- * id, so renaming `alice` to `bob` destroys `bob`'s password and the next
- * command on that account detaches it. Same collision rules as peer
- * migration: leave an identical object in place, refuse a different one.
- */
-export async function storeRenamedActorCredentials(
-    store: CredentialStoreReader,
-    platformName: string,
-    previousActorId: string,
-    renamed: CredentialsObject,
-): Promise<void> {
-    if (typeof previousActorId !== "string" || previousActorId.length === 0) {
-        throw new Error(
-            `cannot store updated credentials for ${platformName} without the previous actor id`,
-        );
-    }
-    const newActorId = renamed.actor?.id;
-    if (previousActorId === newActorId) {
-        await storeActorCredentials(store, platformName, renamed);
-        return;
-    }
-    await renameActorCredentialsInStore(
-        store,
-        platformName,
-        previousActorId,
-        renamed,
-        { missingPrevious: "throw" },
-    );
 }
 
 export interface SessionCredentialWriter {
@@ -355,6 +316,7 @@ async function startPlatformProcess() {
         log: logger, // Reuse the logger created above
         sendToClient: getSendFunction("message"),
         updateActor: updateActor,
+        prepareActorUpdate: prepareActorUpdate,
     };
 
     const platform: PlatformInterface = await (async () => {
@@ -814,6 +776,27 @@ async function startPlatformProcess() {
     }
 
     /**
+     * Reject a proposed rename that would overwrite a different account in this
+     * session's store. Does not write. The IRC platform calls this before
+     * sending NICK, so a collision never changes the nick on the server.
+     */
+    async function prepareActorUpdate(
+        credentials: CredentialsObject,
+    ): Promise<void> {
+        const store = credentialsStoreForActorUpdate;
+        const previousActorId = actorUpdatePreviousActorId;
+        if (store && previousActorId) {
+            await renameActorCredentialsInStore(
+                store,
+                platformName,
+                previousActorId,
+                credentials,
+                { dryRun: true },
+            );
+        }
+    }
+
+    /**
      * When a user changes its actor name, the channel identifier changes, we need to ensure that
      * both the queue thread (listening on the channel for jobs) and the logging object are updated.
      * @param credentials
@@ -837,22 +820,13 @@ async function startPlatformProcess() {
         // replaces bob's password; bob's next command then detaches).
         const store = credentialsStoreForActorUpdate;
         const previousActorId = actorUpdatePreviousActorId;
-        if (store) {
-            if (!previousActorId) {
-                throw new Error(
-                    `cannot store updated credentials for ${platformName} without the previous actor id`,
-                );
-            }
-            await storeRenamedActorCredentials(
+        if (store && previousActorId) {
+            await renameActorCredentialsInStore(
                 store,
                 platformName,
                 previousActorId,
                 credentials,
             );
-            const newActorId = credentials.actor?.id;
-            if (typeof newActorId === "string" && newActorId.length > 0) {
-                actorUpdatePreviousActorId = newActorId;
-            }
         }
 
         // The actor travels with the new identifier: the parent keys anonymous
