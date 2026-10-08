@@ -105,11 +105,16 @@ describe("Initialize IRC Platform", () => {
             credentials: CredentialsObject,
             cb: GetClientCallback,
         ) => {
-            cb(null, {
+            const client = {
                 end: () => {},
                 on: () => {},
                 raw: () => {},
-            });
+            };
+            platform.client = client;
+            platform.credentials = credentials;
+            platform.handledActors.add(credentials.actor.id);
+            platform.registerListeners(credentials.object.server);
+            cb(null, client);
         };
         if (!getPlatformSchema("irc/credentials")) {
             addPlatformSchema(platform.schema.credentials, `irc/credentials`);
@@ -426,7 +431,7 @@ describe("Initialize IRC Platform", () => {
                     type: "connect",
                     actor: actor,
                 },
-                { object: { server: "a server address" } },
+                structuredClone(validCredentials),
                 done,
             );
         });
@@ -740,10 +745,14 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.handledActors.has(newActor.id)).toEqual(false);
             });
 
-            it("delivers a server-initiated nick change while idle", () => {
+            it("delivers a server-initiated nick change while idle", async () => {
                 const delivered: Array<ActivityStream> = [];
+                let actorUpdated = false;
                 platform.sendToClient = (msg: ActivityStream) => {
                     delivered.push(msg);
+                };
+                platform.updateActor = async () => {
+                    actorUpdated = true;
                 };
                 const forced = {
                     "@context": IRC_CONTEXT,
@@ -758,9 +767,65 @@ describe("Initialize IRC Platform", () => {
                 } as ActivityStream;
 
                 platform.irc2as.events.emit("incoming", forced);
+                await new Promise((resolve) => setImmediate(resolve));
 
                 expect(platform.jobQueue.length).toEqual(0);
                 expect(delivered).toEqual([forced]);
+                expect(actorUpdated).toEqual(true);
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+                expect(platform.handledActors.has(forced.target.id)).toEqual(
+                    true,
+                );
+                expect(platform.credentials.object.nick).toEqual("Guest12345");
+                expect(platform.credentials.actor.id).toEqual(
+                    "Guest12345@irc.example.com",
+                );
+            });
+
+            it("does not complete an unrelated in-flight send on forced rename", async () => {
+                const delivered: Array<ActivityStream> = [];
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                let sendFinished = false;
+                platform.send(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "send",
+                        actor: actor,
+                        object: { content: "still sending" },
+                        target: targetRoom,
+                    } as ActivityStream,
+                    () => {
+                        sendFinished = true;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(platform.jobQueue.length).toEqual(1);
+
+                const forced = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "Guest12345@irc.example.com",
+                        name: "Guest12345",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", forced);
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(sendFinished).toEqual(false);
+                expect(platform.jobQueue.length).toEqual(1);
+                expect(delivered).toEqual([forced]);
+                expect(platform.handledActors.has(forced.target.id)).toEqual(
+                    true,
+                );
+
+                platform.completeJob();
+                expect(sendFinished).toEqual(true);
             });
 
             it("still completes an in-flight command from our own nick echo", async () => {
