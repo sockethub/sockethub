@@ -168,6 +168,11 @@ describe("IrcToActivityStreams", () => {
                 type: "message",
                 content: "hi",
             });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
             done();
         });
         irc2as.input(":alice!user@example.test PRIVMSG #room hi");
