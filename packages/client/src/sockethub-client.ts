@@ -1369,19 +1369,36 @@ export default class SockethubClient {
         if (!this.isActorRename(outgoing)) {
             return callback;
         }
-        return (result: unknown) => {
+        return (...args: unknown[]) => {
+            // Socket.IO delivers the ack as `(result)`, or as `(err, result)`
+            // when the socket was created with `ackTimeout`. A timeout or a
+            // dropped socket arrives as an Error in the first slot; the
+            // server reports a rejected rename as `{ error }` in whichever
+            // slot carries the result.
+            const [first, second] = args;
             const failed =
-                result &&
-                typeof result === "object" &&
-                "error" in result &&
-                Boolean((result as { error?: unknown }).error);
+                first instanceof Error ||
+                SockethubClient.isErrorResult(first) ||
+                SockethubClient.isErrorResult(second);
             if (!failed) {
                 this.moveReplayState(outgoing);
             }
             if (typeof callback === "function") {
-                callback(result);
+                callback(...args);
             }
         };
+    }
+
+    /**
+     * True for the `{ error }` object the server acks a failed job with.
+     */
+    private static isErrorResult(value: unknown): boolean {
+        return (
+            typeof value === "object" &&
+            value !== null &&
+            "error" in value &&
+            Boolean((value as { error?: unknown }).error)
+        );
     }
 
     /**

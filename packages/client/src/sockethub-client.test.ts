@@ -897,8 +897,10 @@ describe("SockethubClient", () => {
             });
         });
 
+        /**
+         * Delivers the incoming update the server sends for a NICK line.
+         */
         function rename(platform: string, from: string, to: string) {
-            // What irc2as emits for a NICK line, as delivered by the server.
             socket.emit("message", {
                 "@context": sc.contextFor(platform),
                 type: "update",
@@ -972,6 +974,10 @@ describe("SockethubClient", () => {
             }, 0);
         });
 
+        /**
+         * Sends a client-requested nick change and returns the ack the
+         * server would invoke for it, plus the application's callback.
+         */
         function requestRename(to: string) {
             const callback = sandbox.spy();
             // The fake socket is a plain EventEmitter, so an outgoing emit
@@ -1033,6 +1039,44 @@ describe("SockethubClient", () => {
                 expect(entry.actor.id, name).to.equal("alice@irc.example.org");
             }
             expect(callback.calledOnce).to.equal(true);
+        });
+
+        // With `ackTimeout` set, Socket.IO delivers acks as `(err, result)`.
+        it("moves replay state on an error-first success ack", () => {
+            const { ack, callback } = requestRename("alice_away");
+            ack(null, { type: "update" });
+
+            expect(
+                sc.events.credentials.values().next().value.actor.id,
+            ).to.equal("alice_away@irc.example.org");
+            expect(callback.calledOnceWith(null, { type: "update" })).to.equal(
+                true,
+            );
+        });
+
+        it("keeps replay state on an error-first rejection", () => {
+            const { ack, callback } = requestRename("alice_away");
+            ack(null, { error: "Nickname is already in use." });
+
+            expect(
+                sc.events.credentials.values().next().value.actor.id,
+            ).to.equal("alice@irc.example.org");
+            expect(
+                callback.calledOnceWith(null, {
+                    error: "Nickname is already in use.",
+                }),
+            ).to.equal(true);
+        });
+
+        it("keeps replay state when the ack times out", () => {
+            const { ack, callback } = requestRename("alice_away");
+            const timeout = new Error("operation has timed out");
+            ack(timeout);
+
+            expect(
+                sc.events.credentials.values().next().value.actor.id,
+            ).to.equal("alice@irc.example.org");
+            expect(callback.calledOnceWith(timeout)).to.equal(true);
         });
 
         it("does not follow a rename of a nick it already released", () => {

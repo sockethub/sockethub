@@ -203,6 +203,7 @@ describe("platform.ts credential handling", () => {
     });
 
     describe("assertAcceptedCredentials", () => {
+        /** A session's stored IRC credential object for `nick`. */
         const stored = (nick: string): CredentialsObject => ({
             type: "credentials",
             "@context": [],
