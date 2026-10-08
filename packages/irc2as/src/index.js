@@ -170,9 +170,20 @@ export class IrcToActivityStreams {
                 break;
 
             /** */
-            case JOIN: // room join
-                ase.joinRoom(channel, getNickFromServer(server));
+            case JOIN: {
+                // UnrealIRCd sends `JOIN :#channel` to clients that have not
+                // negotiated extended-join, so the channel is only the trailing
+                // parameter. The positional scan never sees it, and the join
+                // is emitted with no room. A trailing realname (extended-join)
+                // must not replace a channel that is already positional.
+                const joined =
+                    channel ||
+                    (typeof content === "string" && /^#[^\s,]+$/.test(content)
+                        ? content
+                        : undefined);
+                ase.joinRoom(joined, getNickFromServer(server));
                 break;
+            }
 
             // custom event indicating a channel mode has been updated, used to re-query user or channel
             case MODE: {

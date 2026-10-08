@@ -229,4 +229,37 @@ describe("IrcToActivityStreams", () => {
             ":irc.example.net 353 alice @ #room onlynick",
         );
     });
+
+    // UnrealIRCd sends this form unless the client negotiated extended-join.
+    it("reads a JOIN whose channel is the trailing parameter", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.type).toEqual("join");
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "alice@localhost",
+                name: "alice",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test JOIN :#room");
+    });
+
+    it("keeps a positional JOIN channel when the realname is trailing", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test JOIN #room account :#not-the-channel",
+        );
+    });
 });
