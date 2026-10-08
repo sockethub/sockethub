@@ -81,6 +81,13 @@ export type GetClientCallback = (
 
 type JobQueueHandler = (err?: Error | string) => void | Promise<void>;
 
+type JobAck = "pong" | "nickAck";
+
+interface QueuedJob {
+    handler: JobQueueHandler;
+    ack: JobAck;
+}
+
 const IRC_LINE_BREAK = /[\r\n]/;
 
 function ircLineBreakError(values: Array<unknown>): string | undefined {
@@ -138,9 +145,10 @@ export class IRC implements PersistentPlatformInterface {
     private clientConnecting = false;
     private initialized = false;
     private client?: IrcSocketInstance;
-    private jobQueue: Array<JobQueueHandler> = []; // list of handlers to confirm when message delivery confirmed
+    private jobQueue: Array<QueuedJob> = []; // handlers waiting for a matching ack
     private channels = new Set();
     private handledActors = new Set();
+    private credentials?: PlatformIrcCredentialsObject;
 
     constructor(session: PlatformSession) {
         this.log = session.log;
@@ -221,9 +229,12 @@ export class IRC implements PersistentPlatformInterface {
                 return done();
             }
             // join channel
-            this.jobQueue.push(() => {
-                this.hasJoined(channel);
-                done();
+            this.jobQueue.push({
+                ack: "pong",
+                handler: () => {
+                    this.hasJoined(channel);
+                    done();
+                },
             });
             this.log.debug(`sending join ${channel}`);
             client.raw(["JOIN", channel]);
@@ -348,7 +359,7 @@ export class IRC implements PersistentPlatformInterface {
                     "cannot send message to a channel of which you've not first joined.",
                 );
             }
-            this.jobQueue.push(done);
+            this.jobQueue.push({ ack: "pong", handler: done });
             client.raw(`PING ${job.actor.name}`);
         });
     }
@@ -383,17 +394,30 @@ export class IRC implements PersistentPlatformInterface {
                 this.log.debug(
                     `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
-                this.handledActors.add(job.target.id);
-                this.jobQueue.push(async (err: Error) => {
-                    if (err) {
-                        this.handledActors.delete(job.target.id);
-                        return done(err);
-                    }
-                    credentials.object.nick = job.target.name;
-                    credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
-                    credentials.actor.name = job.target.name;
-                    await this.updateActor(credentials);
-                    done();
+                // Do not mark the requested nick as ours until the server
+                // accepts it. Doing so earlier consumes that nick's live
+                // traffic as this job's completion, so a taken nick can be
+                // reported as a successful change and those messages never
+                // reach the client.
+                this.jobQueue.push({
+                    ack: "nickAck",
+                    handler: async (err: Error) => {
+                        if (err) {
+                            return done(err);
+                        }
+                        credentials.object.nick = job.target.name;
+                        credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
+                        credentials.actor.name = job.target.name;
+                        this.credentials = credentials;
+                        await this.updateActor(credentials);
+                        // The previous nick now belongs to whoever takes it next.
+                        // Leaving it here drops their traffic: an event whose
+                        // actor is in this set completes a job instead of being
+                        // delivered.
+                        this.handledActors.delete(job.actor.id);
+                        this.handledActors.add(credentials.actor.id);
+                        done();
+                    },
                 });
                 // send nick change command
                 client.raw(["NICK", job.target.name]);
@@ -406,7 +430,7 @@ export class IRC implements PersistentPlatformInterface {
                     );
                 }
                 this.log.debug(`changing topic in channel ${channel}`);
-                this.jobQueue.push(done);
+                this.jobQueue.push({ ack: "pong", handler: done });
                 client.raw(["topic", channel, job.object.content]);
             } else {
                 return done(`unknown update action: ${job.object.type}`);
@@ -584,6 +608,7 @@ export class IRC implements PersistentPlatformInterface {
             }
             this.handledActors.add(key);
             this.client = client;
+            this.credentials = credentials;
             this.registerListeners(credentials.object.server);
             this.initialized = true;
             return cb(null, client);
@@ -707,18 +732,59 @@ export class IRC implements PersistentPlatformInterface {
 
     private completeJob(err?: string) {
         this.log.debug(`completing job, queue count: ${this.jobQueue.length}`);
-        const done = this.jobQueue.shift();
-        if (typeof done === "function") {
-            done(err);
+        const job = this.jobQueue.shift();
+        if (job && typeof job.handler === "function") {
+            job.handler(err);
         } else if (this.jobQueue.length === 0) {
             this.log.debug(
                 "WARNING: job completion event received with an empty job queue.",
             );
         } else {
             this.log.debug(
-                `WARNING: job completion found non-function in queue (${typeof done}), ${this.jobQueue.length} items remain.`,
+                `WARNING: job completion found non-function in queue (${typeof job?.handler}), ${this.jobQueue.length} items remain.`,
             );
         }
+    }
+
+    private isNickAck(asObject: ActivityStream): boolean {
+        return (
+            asObject.type === "update" && asObject.object?.type === "address"
+        );
+    }
+
+    private async adoptForcedNickChange(asObject: ActivityStream) {
+        if (
+            !this.credentials ||
+            typeof asObject.target?.name !== "string" ||
+            typeof asObject.actor?.id !== "string"
+        ) {
+            this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+                ...this.handledActors.keys(),
+            ]);
+            this.sendToClient(asObject);
+            return;
+        }
+
+        const oldActorId = asObject.actor.id;
+        const newNick = asObject.target.name;
+        const server = this.credentials.object.server;
+
+        this.credentials.object.nick = newNick;
+        this.credentials.actor.id = `${newNick}@${server}`;
+        this.credentials.actor.name = newNick;
+
+        try {
+            await this.updateActor(this.credentials);
+            this.handledActors.delete(oldActorId);
+            this.handledActors.add(this.credentials.actor.id);
+        } catch (err) {
+            this.log.error("failed to adopt forced nick change", err);
+        }
+
+        this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+            ...this.handledActors.keys(),
+        ]);
+        this.sendToClient(asObject);
     }
 
     private registerListeners(server: string) {
@@ -731,19 +797,26 @@ export class IRC implements PersistentPlatformInterface {
         });
 
         this.irc2as.events.on("incoming", (asObject: ActivityStream) => {
-            if (
+            const fromThisConnection =
                 typeof asObject.actor === "object" &&
                 typeof asObject.actor.name === "string" &&
-                this.handledActors.has(asObject.actor.id)
-            ) {
-                this.completeJob();
-            } else {
-                this.log.debug(
-                    `calling sendToClient for ${asObject.actor.id}`,
-                    [...this.handledActors.keys()],
-                );
-                this.sendToClient(asObject);
+                this.handledActors.has(asObject.actor.id);
+            // Only a matching nick-change acknowledgement completes a
+            // nickAck job. Other self-originated traffic (for example a
+            // server-forced rename while a send waits on PONG) must still be
+            // delivered.
+            if (fromThisConnection && this.isNickAck(asObject)) {
+                if (this.jobQueue[0]?.ack === "nickAck") {
+                    this.completeJob();
+                    return;
+                }
+                void this.adoptForcedNickChange(asObject);
+                return;
             }
+            this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+                ...this.handledActors.keys(),
+            ]);
+            this.sendToClient(asObject);
         });
 
         this.irc2as.events.on("unprocessed", (s: string) => {
@@ -755,12 +828,16 @@ export class IRC implements PersistentPlatformInterface {
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
             this.log.debug(`message error response ${asObject.object.content}`);
-            this.completeJob(asObject.object.content);
+            if (this.jobQueue.length > 0) {
+                this.completeJob(asObject.object.content);
+            }
         });
 
         this.irc2as.events.on("pong", (timestamp: string) => {
             this.log.debug(`received PONG at ${timestamp}`);
-            this.completeJob();
+            if (this.jobQueue[0]?.ack === "pong") {
+                this.completeJob();
+            }
         });
 
         this.irc2as.events.on("ping", (timestamp: string) => {
