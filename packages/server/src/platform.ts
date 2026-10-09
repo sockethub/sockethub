@@ -13,6 +13,7 @@
 import type { JobHandler } from "@sockethub/data-layer";
 import {
     buildCredentialsKey,
+    CredentialsMismatchError,
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
@@ -90,6 +91,36 @@ export interface CredentialStoreReader {
     get(key: string, credentialsHash?: string): Promise<CredentialsObject>;
     save(key: string, creds: CredentialsObject): Promise<unknown>;
     objectHash?(object: unknown): string;
+}
+
+/**
+ * Checks a session's stored credential object against the hashes this
+ * connection has been authorized with.
+ *
+ * `currentHash` is unset until the first credentialed call succeeds, so
+ * that call is accepted as-is. After that the object must hash to the
+ * current value or to one in `acceptedHashes`: the hash the connection was
+ * first authorized with, plus the one each actor rename produced. A rename
+ * rewrites the nick inside the object this worker holds, but a client that
+ * reconnects replays the object it originally sent, keyed under the new
+ * actor. That object already proved it holds the secret for this
+ * connection; refusing it would detach the session from a connection it
+ * owns. A different secret still fails.
+ */
+export function assertAcceptedCredentials(
+    credentials: CredentialsObject,
+    currentHash: string | undefined,
+    acceptedHashes: ReadonlySet<string>,
+    key: string,
+): void {
+    if (!currentHash) {
+        return;
+    }
+    const hash = crypto.objectHash(credentials.object);
+    if (hash === currentHash || acceptedHashes.has(hash)) {
+        return;
+    }
+    throw new CredentialsMismatchError(`invalid credentials for ${key}`);
 }
 
 function credentialsNotFound(err: unknown): boolean {
@@ -276,6 +307,27 @@ async function startPlatformProcess() {
         credentialsStoreForActorUpdate = undefined;
         actorUpdateSessionId = undefined;
         actorUpdatePreviousActorId = undefined;
+    }
+    // Every hash `platform.credentialsHash` has held. Each entered either by
+    // passing validation or by an actor rename, so all of them identify the
+    // credentials this connection was authorized with; see
+    // `assertAcceptedCredentials`.
+    const acceptedCredentialHashes = new Set<string>();
+
+    /**
+     * Makes `hash` the platform's current credential hash while keeping the
+     * one it replaces accepted. No-op for stateless platforms, which never
+     * validate credentials across requests.
+     */
+    function adoptCredentialsHash(hash: string): void {
+        if (!isPersistentPlatform(platform)) {
+            return;
+        }
+        if (platform.credentialsHash) {
+            acceptedCredentialHashes.add(platform.credentialsHash);
+        }
+        acceptedCredentialHashes.add(hash);
+        platform.credentialsHash = hash;
     }
     // Immutable queue name allocated when this worker was forked. Distinct
     // from `identifier`, which moves on actor rename and can be reused by a
@@ -612,17 +664,28 @@ async function startPlatformProcess() {
                     // For persistent platforms: undefined (or empty string) initially, then we set to hash after first
                     // successful call.
                     // For stateless platforms: always undefined (no validation, credentials used once per request)
-                    // CredentialsStore skips validation when credentialsHash is falsy (undefined or empty string)
+                    // assertAcceptedCredentials skips validation when credentialsHash is falsy (undefined or empty string)
                     const credentialsHash = isPersistentPlatform(platform)
                         ? platform.credentialsHash
                         : undefined;
+                    const credentialsKey = buildCredentialsKey(
+                        platformName,
+                        job.msg.actor.id,
+                    );
 
                     credentialStore
-                        .get(
-                            buildCredentialsKey(platformName, job.msg.actor.id),
-                            credentialsHash,
-                        )
+                        .get(credentialsKey)
                         .then((credentials) => {
+                            // Validated here rather than by passing the hash
+                            // to the store: a renamed connection accepts more
+                            // than one hash, and the store compares against
+                            // exactly one.
+                            assertAcceptedCredentials(
+                                credentials,
+                                credentialsHash,
+                                acceptedCredentialHashes,
+                                credentialsKey,
+                            );
                             credentialsStoreForActorUpdate = credentialStore;
                             actorUpdateSessionId = job.sessionId;
                             actorUpdatePreviousActorId = job.msg.actor.id;
@@ -637,8 +700,9 @@ async function startPlatformProcess() {
                                     // Only persistent platforms track credential state across requests.
                                     // A nick change already stored the renamed object and set this
                                     // hash; hashing again observes that same object.
-                                    platform.credentialsHash =
-                                        crypto.objectHash(credentials.object);
+                                    adoptCredentialsHash(
+                                        crypto.objectHash(credentials.object),
+                                    );
                                 }
                                 doneCallback(err, result);
                             };
@@ -856,9 +920,9 @@ async function startPlatformProcess() {
         setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
         logger = createLogger("main");
 
-        if (isPersistentPlatform(platform)) {
-            platform.credentialsHash = crypto.objectHash(credentials.object);
-        }
+        // The pre-rename hash stays accepted: a session that reconnects
+        // replays the credential object it originally sent.
+        adoptCredentialsHash(crypto.objectHash(credentials.object));
     }
 
     /**

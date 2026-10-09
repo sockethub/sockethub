@@ -864,6 +864,12 @@ export class IRC implements PersistentPlatformInterface {
             // delivered.
             if (fromThisConnection && this.isNickAck(asObject)) {
                 if (this.jobQueue[0]?.ack === "nickAck") {
+                    // NICK is followed by a PING, but this echo completes the
+                    // job before that PONG arrives. The next command can
+                    // already be waiting on a PONG of its own; leaving this
+                    // one outstanding would acknowledge that command with
+                    // success. Same leftover-PONG race as a numeric error.
+                    this.pongAcksToSkip += 1;
                     this.completeJob();
                     return;
                 }

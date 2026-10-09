@@ -9,6 +9,7 @@ import type {
 } from "@sockethub/schemas";
 import type { JobDataDecrypted } from "@sockethub/data-layer";
 import {
+    assertAcceptedCredentials,
     derivePlatformCredentialsSecret,
     mergePackageConfig,
     migrateRenamedActorCredentials,
@@ -372,6 +373,66 @@ describe("platform.ts credential handling", () => {
             expect(saved).toEqual([]);
         });
 
+    });
+
+    describe("assertAcceptedCredentials", () => {
+        /** A session's stored IRC credential object for `nick`. */
+        const stored = (nick: string): CredentialsObject => ({
+            type: "credentials",
+            "@context": [],
+            actor: { id: `${nick}@irc.example.org`, type: "person" },
+            object: { type: "credentials", nick, password: "hunter2" },
+        });
+        const originalHash = crypto.objectHash(stored("alice").object);
+        const renamedHash = crypto.objectHash(stored("alice_away").object);
+
+        it("accepts any object before the first successful call", () => {
+            expect(() =>
+                assertAcceptedCredentials(
+                    stored("alice"),
+                    undefined,
+                    new Set(),
+                    "irc:alice@irc.example.org",
+                ),
+            ).not.toThrow();
+        });
+
+        it("accepts the object matching the current hash", () => {
+            expect(() =>
+                assertAcceptedCredentials(
+                    stored("alice_away"),
+                    renamedHash,
+                    new Set([originalHash]),
+                    "irc:alice_away@irc.example.org",
+                ),
+            ).not.toThrow();
+        });
+
+        it("accepts the pre-rename object a reconnecting client replays", () => {
+            // The worker rewrote the nick in its copy; the client still holds
+            // the object it originally sent, now keyed under the new actor.
+            expect(() =>
+                assertAcceptedCredentials(
+                    stored("alice"),
+                    renamedHash,
+                    new Set([originalHash, renamedHash]),
+                    "irc:alice_away@irc.example.org",
+                ),
+            ).not.toThrow();
+        });
+
+        it("rejects a different secret for the same actor", () => {
+            const other = stored("alice_away");
+            other.object.password = "not-hunter2";
+            expect(() =>
+                assertAcceptedCredentials(
+                    other,
+                    renamedHash,
+                    new Set([originalHash, renamedHash]),
+                    "irc:alice_away@irc.example.org",
+                ),
+            ).toThrow("invalid credentials for irc:alice_away@irc.example.org");
+        });
     });
     let sandbox: sinon.SinonSandbox;
     let mockPlatform: Partial<PlatformInterface>;
