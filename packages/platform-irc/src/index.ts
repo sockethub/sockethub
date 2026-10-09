@@ -489,6 +489,9 @@ export class IRC implements PersistentPlatformInterface {
                         if (err) {
                             return done(err);
                         }
+                        const previousNick = credentials.object.nick;
+                        const previousActorId = credentials.actor.id;
+                        const previousActorName = credentials.actor.name;
                         credentials.object.nick = job.target.name;
                         credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
                         credentials.actor.name = job.target.name;
@@ -496,6 +499,22 @@ export class IRC implements PersistentPlatformInterface {
                         try {
                             await this.updateActor(credentials);
                         } catch (updateErr) {
+                            // The server already applied the nick, but the
+                            // parent did not re-key the worker, so the client
+                            // still routes by the old actor. updateActor may
+                            // have written the renamed key to this session's
+                            // store first; that copy is the same account and
+                            // is harmless. Keep the credentials on the stored
+                            // identity so replay and routing still match, and
+                            // track the nick the socket actually holds so its
+                            // echoes are recognised and whoever takes the old
+                            // nick is not.
+                            const appliedActorId = credentials.actor.id;
+                            credentials.object.nick = previousNick;
+                            credentials.actor.id = previousActorId;
+                            credentials.actor.name = previousActorName;
+                            this.handledActors.delete(job.actor.id);
+                            this.handledActors.add(appliedActorId);
                             const message =
                                 updateErr instanceof Error
                                     ? updateErr.message
@@ -669,7 +688,11 @@ export class IRC implements PersistentPlatformInterface {
             `getClient called, connecting: ${this.clientConnecting}`,
         );
         if (this.client) {
-            this.handledActors.add(key);
+            // A live socket already knows its nicks; connect and nick changes
+            // maintain handledActors. After a rename the server applied but
+            // the store rejected, the client still addresses commands as the
+            // released nick. Adding it again would make whoever takes that
+            // nick next look like this session.
             return cb(null, this.client);
         }
 
@@ -680,7 +703,6 @@ export class IRC implements PersistentPlatformInterface {
                     this.log.debug(
                         `resolving delayed getClient call for ${key}`,
                     );
-                    this.handledActors.add(key);
                     return cb(null, this.client);
                 }
                 return cb("failed to get irc client, please try again.");
@@ -866,17 +888,35 @@ export class IRC implements PersistentPlatformInterface {
         const oldActorId = asObject.actor.id;
         const newNick = asObject.target.name;
         const server = this.credentials.object.server;
+        const previousNick = this.credentials.object.nick;
+        const previousActorId = this.credentials.actor.id;
+        const previousActorName = this.credentials.actor.name;
 
         this.credentials.object.nick = newNick;
         this.credentials.actor.id = `${newNick}@${server}`;
         this.credentials.actor.name = newNick;
+        // The socket holds the new nick whatever happens below.
+        this.handledActors.delete(oldActorId);
+        this.handledActors.add(this.credentials.actor.id);
 
         try {
             await this.updateActor(this.credentials);
-            this.handledActors.delete(oldActorId);
-            this.handledActors.add(this.credentials.actor.id);
         } catch (err) {
+            // The parent did not re-key the worker, so keep the stored
+            // identity (a renamed copy in this session's store is harmless).
+            // Deliver the rename with the error: a plain rename tells the
+            // client to move its replay state, and its next reconnect would
+            // then save this connection's secret over the account already
+            // stored at the new nick.
             this.log.error("failed to adopt forced nick change", err);
+            this.credentials.object.nick = previousNick;
+            this.credentials.actor.id = previousActorId;
+            this.credentials.actor.name = previousActorName;
+            this.sendToClient({
+                ...asObject,
+                error: err instanceof Error ? err.message : String(err),
+            });
+            return;
         }
 
         this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [

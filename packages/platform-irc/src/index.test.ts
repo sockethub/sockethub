@@ -792,6 +792,51 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            it("keeps the stored identity when actor update fails after the server accepts", async () => {
+                const rawCalls: Array<unknown> = [];
+                platform.client.raw = (...args: Array<unknown>) => {
+                    rawCalls.push(args);
+                };
+                platform.updateActor = () =>
+                    Promise.reject(new Error("redis down"));
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                platform.completeJob();
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual("redis down");
+                // No second NICK: the store was not touched, so the client
+                // keeps routing by the old actor, and the socket keeps the
+                // nick the server gave it.
+                expect(rawCalls).toEqual([
+                    [["NICK", "testler"]],
+                    ["PING testingham"],
+                ]);
+                expect(creds.object.nick).toEqual("testingham");
+                expect(creds.actor.id).toEqual("testingham@irc.example.com");
+                expect(creds.actor.name).toEqual("testingham");
+                expect(
+                    platform.handledActors.has("testingham@irc.example.com"),
+                ).toEqual(false);
+                expect(
+                    platform.handledActors.has("testler@irc.example.com"),
+                ).toEqual(true);
+            });
+
             it("does not send NICK when the rename would overwrite another account", async () => {
                 const rawCalls: Array<unknown> = [];
                 platform.client.raw = (...args: Array<unknown>) => {
@@ -1257,6 +1302,135 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.credentials.object.nick).toEqual("Guest12345");
                 expect(platform.credentials.actor.id).toEqual(
                     "Guest12345@irc.example.com",
+                );
+            });
+
+            it("reports a forced nick that cannot be stored instead of adopting it", async () => {
+                const delivered: Array<ActivityStream> = [];
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                const storedNick = platform.credentials.object.nick;
+                const storedActorId = platform.credentials.actor.id;
+                const collision =
+                    "cannot rename testingham@irc.example.com to Guest12345@irc.example.com: credentials already stored for Guest12345@irc.example.com";
+                platform.updateActor = async () => {
+                    throw new Error(collision);
+                };
+                const forced = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "Guest12345@irc.example.com",
+                        name: "Guest12345",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+
+                platform.irc2as.events.emit("incoming", forced);
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // Delivered with the error so the client does not move its
+                // replay state onto an account it would then overwrite.
+                expect(delivered).toEqual([{ ...forced, error: collision }]);
+                expect(platform.credentials.object.nick).toEqual(storedNick);
+                expect(platform.credentials.actor.id).toEqual(storedActorId);
+                // The socket holds the forced nick regardless.
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+                expect(platform.handledActors.has(forced.target.id)).toEqual(
+                    true,
+                );
+
+                // Whoever takes the released nick must not be adopted.
+                const stranger = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "other@irc.example.com",
+                        name: "other",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", stranger);
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(delivered[1]).toEqual(stranger);
+                expect(platform.credentials.actor.id).toEqual(storedActorId);
+            });
+
+            it("does not reclaim a released nick when the next command uses it", async () => {
+                const delivered: Array<ActivityStream> = [];
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                const storedNick = platform.credentials.object.nick;
+                const storedActorId = platform.credentials.actor.id;
+                let updates = 0;
+                platform.updateActor = async () => {
+                    updates += 1;
+                    if (updates === 1) {
+                        throw new Error("redis down");
+                    }
+                };
+                const forced = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "Guest12345@irc.example.com",
+                        name: "Guest12345",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+
+                platform.irc2as.events.emit("incoming", forced);
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+
+                // The client was told the rename failed, so it keeps sending
+                // as the nick the server already released.
+                let left: unknown = "pending";
+                platform.leave(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "leave",
+                        actor: actor,
+                        target: targetRoom,
+                    },
+                    (err: unknown) => {
+                        left = err;
+                    },
+                );
+                expect(left).toBeUndefined();
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+
+                const stranger = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "other@irc.example.com",
+                        name: "other",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", stranger);
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(updates).toEqual(1);
+                expect(delivered[1]).toEqual(stranger);
+                expect(platform.credentials.object.nick).toEqual(storedNick);
+                expect(platform.credentials.actor.id).toEqual(storedActorId);
+                expect(
+                    platform.handledActors.has("other@irc.example.com"),
+                ).toEqual(false);
+                expect(platform.handledActors.has(forced.target.id)).toEqual(
+                    true,
                 );
             });
 
