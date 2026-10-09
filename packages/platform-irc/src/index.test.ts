@@ -13,13 +13,19 @@ import {
 import type { GetClientCallback } from "./index";
 
 let capturedIrcSocketOptions:
-    | { connectOptions?: { rejectUnauthorized: boolean } }
+    | {
+          connectOptions?: { rejectUnauthorized: boolean };
+          nicknames?: string[];
+          username?: string;
+      }
     | undefined;
 
 mock.module("irc-socket-sasl", () => ({
     default: class FakeIrcSocket {
         constructor(options: {
             connectOptions?: { rejectUnauthorized: boolean };
+            nicknames?: string[];
+            username?: string;
         }) {
             capturedIrcSocketOptions = options;
         }
@@ -786,6 +792,45 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            it("does not send NICK when the rename would overwrite another account", async () => {
+                const rawCalls: Array<unknown> = [];
+                platform.client.raw = (...args: Array<unknown>) => {
+                    rawCalls.push(args);
+                };
+                platform.prepareActorUpdate = () =>
+                    Promise.reject(
+                        new Error(
+                            "cannot rename testingham@irc.example.com to testler@irc.example.com: credentials already stored for testler@irc.example.com",
+                        ),
+                    );
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual(
+                    "cannot rename testingham@irc.example.com to testler@irc.example.com: credentials already stored for testler@irc.example.com",
+                );
+                expect(rawCalls).toEqual([]);
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(creds.object.nick).toEqual("testingham");
+                expect(creds.actor.id).toEqual(
+                    "testingham@irc.example.com",
+                );
+            });
+
             it("delivers traffic for a nick this connection does not yet own", async () => {
                 const delivered: Array<ActivityStream> = [];
                 platform.sendToClient = (msg: ActivityStream) => {
@@ -1077,6 +1122,43 @@ describe("Initialize IRC Platform", () => {
                 expect(creds.actor.id).toEqual(actor.id);
             });
 
+            it("fails a nick change when the server says it is too fast", async () => {
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // solanum, ircu, and Unreal reject a nick change past the
+                // flood limit with 438. That numeric used to be unprocessed,
+                // and a nick change only completes on nickAck or an error, so
+                // the PONG for the trailing PING never unblocked the command.
+                // Every later join or send then waited behind it.
+                platform.irc2as.input(
+                    ":irc.example.com 438 testingham testler :Nick change too fast. Please wait 29 seconds.",
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual(
+                    "Nick change too fast. Please wait 29 seconds.",
+                );
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(platform.handledActors.has(actor.id)).toEqual(true);
+                expect(platform.handledActors.has(newActor.id)).toEqual(false);
+                expect(creds.object.nick).toEqual("testingham");
+            });
+
             it("does not skip the next join's PONG when a rejected nick change already saw its PONG", async () => {
                 const creds = structuredClone(validCredentials);
                 let failure: unknown = "pending";
@@ -1129,43 +1211,6 @@ describe("Initialize IRC Platform", () => {
                 expect(joinResult).toEqual(null);
                 expect(platform.channels.has("#other-room")).toEqual(true);
                 expect(platform.jobQueue.length).toEqual(0);
-            });
-
-            it("fails a nick change when the server says it is too fast", async () => {
-                const creds = structuredClone(validCredentials);
-                let failure: unknown;
-                platform.update(
-                    {
-                        "@context": IRC_CONTEXT,
-                        type: "update",
-                        actor: actor,
-                        object: { type: "address" },
-                        target: newActor,
-                    },
-                    creds,
-                    (err: unknown) => {
-                        failure = err;
-                    },
-                );
-                await new Promise((resolve) => setImmediate(resolve));
-
-                // solanum, ircu, and Unreal reject a nick change past the
-                // flood limit with 438. That numeric used to be unprocessed,
-                // and a nick change only completes on nickAck or an error, so
-                // the PONG for the trailing PING never unblocked the command.
-                // Every later join or send then waited behind it.
-                platform.irc2as.input(
-                    ":irc.example.com 438 testingham testler :Nick change too fast. Please wait 29 seconds.",
-                );
-                await new Promise((resolve) => setImmediate(resolve));
-
-                expect(failure).toEqual(
-                    "Nick change too fast. Please wait 29 seconds.",
-                );
-                expect(platform.jobQueue.length).toEqual(0);
-                expect(platform.handledActors.has(actor.id)).toEqual(true);
-                expect(platform.handledActors.has(newActor.id)).toEqual(false);
-                expect(creds.object.nick).toEqual("testingham");
             });
 
             it("does not throw when a numeric error arrives with no command in flight", () => {
@@ -1485,10 +1530,72 @@ describe("ircConnect TLS certificate validation", () => {
         expect(capturedIrcSocketOptions?.connectOptions).toBeUndefined();
     });
 
+    it("registers the actor nick when a rename left the credential nick behind", async () => {
+        // A reconnect after a nick change replays the original credential
+        // object (so the fingerprint still finds the worker) under the new
+        // actor. A fresh worker must register that actor. Registering the
+        // stale object.nick leaves handledActors on a nick this socket does
+        // not own.
+        const credentials = {
+            ...validCredentials,
+            actor: {
+                type: "person",
+                id: "alice_away@irc.example.com",
+                name: "alice_away",
+            },
+            object: {
+                ...validCredentials.object,
+                nick: "alice",
+                password: "hunter2",
+                secure: false,
+            },
+        };
+
+        await new Promise((resolve, reject) => {
+            platform.connect(
+                { type: "connect", actor: credentials.actor },
+                credentials,
+                (err) => {
+                    if (err) {
+                        reject(new Error(String(err)));
+                        return;
+                    }
+                    resolve(undefined);
+                },
+            );
+        });
+
+        expect(capturedIrcSocketOptions?.nicknames).toEqual(["alice_away"]);
+        expect(capturedIrcSocketOptions?.username).toEqual("alice");
+        expect(platform.handledActors.has("alice_away@irc.example.com")).toEqual(
+            true,
+        );
+        expect(platform.handledActors.has("alice@irc.example.com")).toEqual(
+            false,
+        );
+    });
+
+    it("registers object.nick when the actor id is not on this server", async () => {
+        await connect({
+            ...validCredentials,
+            actor: {
+                ...validCredentials.actor,
+                id: "testingham@other.example",
+            },
+            object: {
+                ...validCredentials.object,
+                secure: false,
+            },
+        });
+
+        expect(capturedIrcSocketOptions?.nicknames).toEqual(["testingham"]);
+    });
+
     it.each([
         ["nick", { object: { nick: "nick\rOPER root" } }],
         ["username", { object: { username: "user\rOPER root" } }],
         ["realname", { actor: { name: "name\rOPER root" } }],
+        ["actor nick", { actor: { id: "nick\rOPER@irc.example.com" } }],
     ])("rejects CR injection in connect-time %s", async (_field, override) => {
         const credentials = {
             ...validCredentials,
