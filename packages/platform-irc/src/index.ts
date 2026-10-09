@@ -494,12 +494,16 @@ export class IRC implements PersistentPlatformInterface {
                         try {
                             await this.updateActor(credentials);
                         } catch (updateErr) {
-                            // The server already applied the nick but nothing
-                            // was stored or re-keyed. Keep the credentials on
-                            // the stored identity so the client's replay and
-                            // routing still match, and track the nick the
-                            // socket actually holds so its echoes are still
-                            // recognised and whoever takes the old nick is not.
+                            // The server already applied the nick, but the
+                            // parent did not re-key the worker, so the client
+                            // still routes by the old actor. updateActor may
+                            // have written the renamed key to this session's
+                            // store first; that copy is the same account and
+                            // is harmless. Keep the credentials on the stored
+                            // identity so replay and routing still match, and
+                            // track the nick the socket actually holds so its
+                            // echoes are recognised and whoever takes the old
+                            // nick is not.
                             const appliedActorId = credentials.actor.id;
                             credentials.object.nick = previousNick;
                             credentials.actor.id = previousActorId;
@@ -670,27 +674,6 @@ export class IRC implements PersistentPlatformInterface {
         }
     }
 
-    /**
-     * Record `key` as a nick this socket holds.
-     *
-     * A live connection already knows its nick. Later commands are addressed
-     * as the actor the client still has stored. After a rename the server
-     * applied but we could not store, that actor is the nick this socket
-     * released. Adding it again makes the next person who takes it, and then
-     * changes nick, look like this session: their rename is stored as ours
-     * and the client follows an identity this connection does not hold.
-     */
-    private rememberSocketActor(key: string): void {
-        if (
-            this.client &&
-            this.handledActors.size > 0 &&
-            !this.handledActors.has(key)
-        ) {
-            return;
-        }
-        this.handledActors.add(key);
-    }
-
     private getClient(
         key: string,
         credentials: PlatformIrcCredentialsObject | false,
@@ -700,7 +683,11 @@ export class IRC implements PersistentPlatformInterface {
             `getClient called, connecting: ${this.clientConnecting}`,
         );
         if (this.client) {
-            this.rememberSocketActor(key);
+            // A live socket already knows its nicks; connect and nick changes
+            // maintain handledActors. After a rename the server applied but
+            // the store rejected, the client still addresses commands as the
+            // released nick. Adding it again would make whoever takes that
+            // nick next look like this session.
             return cb(null, this.client);
         }
 
@@ -711,7 +698,6 @@ export class IRC implements PersistentPlatformInterface {
                     this.log.debug(
                         `resolving delayed getClient call for ${key}`,
                     );
-                    this.rememberSocketActor(key);
                     return cb(null, this.client);
                 }
                 return cb("failed to get irc client, please try again.");
@@ -730,7 +716,7 @@ export class IRC implements PersistentPlatformInterface {
                 this.initialized = false;
                 return cb(err);
             }
-            this.rememberSocketActor(key);
+            this.handledActors.add(key);
             this.client = client;
             this.credentials = credentials;
             this.registerListeners(credentials.object.server);
@@ -911,7 +897,8 @@ export class IRC implements PersistentPlatformInterface {
         try {
             await this.updateActor(this.credentials);
         } catch (err) {
-            // Nothing was stored or re-keyed, so keep the stored identity.
+            // The parent did not re-key the worker, so keep the stored
+            // identity (a renamed copy in this session's store is harmless).
             // Deliver the rename with the error: a plain rename tells the
             // client to move its replay state, and its next reconnect would
             // then save this connection's secret over the account already
