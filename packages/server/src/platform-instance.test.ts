@@ -701,6 +701,106 @@ describe("PlatformInstance", () => {
                 );
             });
 
+            test("updateActor with dryRun checks peer credentials and does not re-key", async () => {
+                (
+                    pi as unknown as { actor?: string }
+                ).actor = "alice@irc.example.org";
+                const credentials: CredentialsObject = {
+                    type: "credentials",
+                    "@context": [],
+                    actor: {
+                        id: "bob@irc.example.org",
+                        type: "person",
+                        name: "bob",
+                    },
+                    object: {
+                        type: "credentials",
+                        nick: "bob",
+                        password: "alice-secret",
+                    },
+                };
+                let sawDryRun = false;
+                (
+                    pi as unknown as {
+                        migratePeerActorCredentials: (
+                            renamed: CredentialsObject,
+                            previousActorId: string,
+                            originatingSessionId?: string,
+                            options?: { dryRun?: boolean },
+                        ) => Promise<void>;
+                    }
+                ).migratePeerActorCredentials = (
+                    renamed,
+                    previousActorId,
+                    originatingSessionId,
+                    options,
+                ) => {
+                    expect(renamed).toEqual(credentials);
+                    expect(previousActorId).toEqual("alice@irc.example.org");
+                    expect(originatingSessionId).toEqual("s1");
+                    sawDryRun = options?.dryRun === true;
+                    return Promise.resolve();
+                };
+
+                await pi.handleProcessMessage([
+                    "updateActor",
+                    "bob@irc.example.org",
+                    "renamed identifier",
+                    credentials,
+                    "s1",
+                    true,
+                ]);
+
+                expect(sawDryRun).toEqual(true);
+                sandbox.assert.calledWith(pi.process.send, ["updateActorAck"]);
+                sandbox.assert.notCalled(pi.updateIdentifier);
+            });
+
+            test("updateActor with dryRun reports a peer collision without re-keying", async () => {
+                (
+                    pi as unknown as { actor?: string }
+                ).actor = "alice@irc.example.org";
+                (
+                    pi as unknown as {
+                        migratePeerActorCredentials: () => Promise<void>;
+                    }
+                ).migratePeerActorCredentials = () =>
+                    Promise.reject(
+                        new Error(
+                            "cannot rename alice@irc.example.org to bob@irc.example.org: credentials already stored for bob@irc.example.org",
+                        ),
+                    );
+
+                await expect(
+                    pi.handleProcessMessage([
+                        "updateActor",
+                        "bob@irc.example.org",
+                        "renamed identifier",
+                        {
+                            type: "credentials",
+                            "@context": [],
+                            actor: {
+                                id: "bob@irc.example.org",
+                                type: "person",
+                            },
+                            object: {
+                                type: "credentials",
+                                nick: "bob",
+                                password: "alice-secret",
+                            },
+                        },
+                        "s1",
+                        true,
+                    ]),
+                ).rejects.toThrow("credentials already stored");
+
+                sandbox.assert.calledWith(pi.process.send, [
+                    "updateActorFailed",
+                    "cannot rename alice@irc.example.org to bob@irc.example.org: credentials already stored for bob@irc.example.org",
+                ]);
+                sandbox.assert.notCalled(pi.updateIdentifier);
+            });
+
             it("message events from platform thread are routed based on command: sessionUnauthorized", async () => {
                 pi.registerSession("good session", "203.0.113.1");
                 pi.registerSession("bad session", "203.0.113.2");
