@@ -7,6 +7,7 @@ const EVENT_PONG = "pong";
 const EVENT_PING = "ping";
 const EVENT_UNPROCESSED = "unprocessed";
 
+const ERR_NO_NICK_GIVEN = "431";
 const ERR_BAD_NICK = "432";
 const ERR_CHAN_PRIVS = "482";
 const ERR_NICK_IN_USE = "433";
@@ -166,6 +167,13 @@ export class IrcToActivityStreams {
                 // error event. Leaving these as unprocessed drops the
                 // rejection on the floor and the command waits forever.
                 ase.serviceError(pos2, trailingParam(content, pos3));
+                break;
+
+            /** */
+            case ERR_NO_NICK_GIVEN:
+                // `431 <client> :reason`: no nick parameter, so the client
+                // comes first and the reason follows it.
+                ase.serviceError(pos1, trailingParam(content, pos2));
                 break;
 
             /** */

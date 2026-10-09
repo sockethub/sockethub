@@ -192,7 +192,7 @@ describe("IrcToActivityStreams", () => {
     it("reports nick-change rejections that are not RFC 433", (done) => {
         const seen = [];
         irc2as.events.on("error", (stream) => {
-            seen.push(stream.error);
+            seen.push([stream.actor.id, stream.error]);
         });
         irc2as.events.on("unprocessed", () => {
             done(new Error("nick rejection was left unprocessed"));
@@ -201,11 +201,15 @@ describe("IrcToActivityStreams", () => {
             ":irc.example.net 438 alice bob :Nick change too fast. Please wait 29 seconds.",
         );
         irc2as.input(
-            ":irc.example.net 436 alice :Nickname collision KILL",
+            ":irc.example.net 436 alice bob :Nickname collision KILL",
         );
+        irc2as.input(":irc.example.net 431 alice :No nickname given");
+        irc2as.input(":irc.example.net 431 alice NoNick");
         expect(seen).toEqual([
-            "Nick change too fast. Please wait 29 seconds.",
-            "Nickname collision KILL",
+            ["bob@localhost", "Nick change too fast. Please wait 29 seconds."],
+            ["bob@localhost", "Nickname collision KILL"],
+            ["alice@localhost", "No nickname given"],
+            ["alice@localhost", "NoNick"],
         ]);
         done();
     });
