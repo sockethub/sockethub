@@ -45,6 +45,9 @@ type Contact = {
 
 type SearchField = "all" | "name" | "email" | "telephone" | "organization";
 
+/** The platform stops reading after this many cards, so a full page is a partial list. */
+const QUERY_LIMIT = 100;
+
 let actorId = $state("carddav:alice");
 let serviceUrl = $state("");
 let username = $state("");
@@ -221,7 +224,7 @@ async function fetchAddressBooks(): Promise<void> {
  * returns every contact; with text it runs a CardDAV addressbook-query
  * REPORT over the chosen fields.
  */
-async function queryContacts(): Promise<void> {
+async function queryContacts(prefix = ""): Promise<void> {
     if (!credentialsSet || !selectedAddressBook) return;
     const revision = credentialRevision;
     const requestRevision = ++contactRequestRevision;
@@ -242,7 +245,7 @@ async function queryContacts(): Promise<void> {
                 ...(text && searchField !== "all"
                     ? { fields: [searchField] }
                     : {}),
-                limit: 100,
+                limit: QUERY_LIMIT,
             },
         } as unknown as AnyActivityStream);
         if (
@@ -258,9 +261,22 @@ async function queryContacts(): Promise<void> {
                 typeof item.id === "string" &&
                 typeof (item as unknown as Contact).name === "string",
         ) as Contact[];
-        success = text
-            ? `Found ${contacts.length} contact${contacts.length === 1 ? "" : "s"} matching “${text}”.`
-            : `Listed ${contacts.length} contact${contacts.length === 1 ? "" : "s"}.`;
+        // An edit in progress must carry the refreshed ETag, or it would
+        // conflict again; drop it if the contact is gone.
+        if (editing) {
+            const refreshed = contacts.find((item) => item.id === editing?.id);
+            if (refreshed) editing = refreshed;
+            else clearForm();
+        }
+        const count = `${contacts.length} contact${contacts.length === 1 ? "" : "s"}`;
+        const capped =
+            contacts.length >= QUERY_LIMIT
+                ? ` Only the first ${QUERY_LIMIT} are shown; narrow the search to see the rest.`
+                : "";
+        success =
+            prefix +
+            (text ? `Found ${count} matching “${text}”.` : `Listed ${count}.`) +
+            capped;
     } catch (err) {
         if (
             revision === credentialRevision &&
@@ -312,7 +328,9 @@ function contactFromForm(base?: Contact) {
  */
 async function saveContact(): Promise<void> {
     if (!credentialsSet || !selectedAddressBook || !formName.trim()) return;
+    if (editing && !editing.etag) return;
     const revision = credentialRevision;
+    const requestRevision = contactRequestRevision;
     const addressBookId = selectedAddressBook.id;
     const current = editing;
     error = null;
@@ -346,12 +364,21 @@ async function saveContact(): Promise<void> {
                 object: { type: "person", ...contactFromForm() },
             } as unknown as AnyActivityStream);
         }
-        if (revision !== credentialRevision || !credentialsSet) return;
-        success = current ? "Contact updated." : "Contact created.";
+        if (
+            revision !== credentialRevision ||
+            requestRevision !== contactRequestRevision ||
+            !credentialsSet
+        )
+            return;
         clearForm();
-        await queryContacts();
+        await queryContacts(
+            current ? "Contact updated. " : "Contact created. ",
+        );
     } catch (err) {
-        if (revision === credentialRevision) {
+        if (
+            revision === credentialRevision &&
+            requestRevision === contactRequestRevision
+        ) {
             error = describeError(err);
         }
     } finally {
@@ -363,6 +390,7 @@ async function saveContact(): Promise<void> {
 async function deleteContact(contact: Contact): Promise<void> {
     if (!credentialsSet || !selectedAddressBook || !contact.etag) return;
     const revision = credentialRevision;
+    const requestRevision = contactRequestRevision;
     const addressBookId = selectedAddressBook.id;
     error = null;
     success = null;
@@ -375,12 +403,20 @@ async function deleteContact(contact: Contact): Promise<void> {
             target: target(addressBookId),
             object: { id: contact.id, type: "person", etag: contact.etag },
         } as unknown as AnyActivityStream);
-        if (revision !== credentialRevision || !credentialsSet) return;
+        if (
+            revision !== credentialRevision ||
+            requestRevision !== contactRequestRevision ||
+            !credentialsSet
+        )
+            return;
         if (editing?.id === contact.id) clearForm();
         contacts = contacts.filter((item) => item.id !== contact.id);
         success = `Deleted ${contact.name}.`;
     } catch (err) {
-        if (revision === credentialRevision) {
+        if (
+            revision === credentialRevision &&
+            requestRevision === contactRequestRevision
+        ) {
             error = describeError(err);
         }
     } finally {
@@ -573,7 +609,8 @@ function formatTyped(value: TypedValue): string {
                                 type="button"
                                 class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 onclick={() => startEdit(contact)}
-                                disabled={busy}
+                                disabled={busy || !contact.etag}
+                                title={contact.etag ? "" : "This contact has no ETag, so it cannot be updated safely"}
                             >
                                 Edit
                             </button>
