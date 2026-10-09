@@ -18,6 +18,21 @@ const target = {
         type: { enum: ["calendar"] },
     },
 };
+// A published iCalendar (.ics) file read without CalDAV credentials.
+const feedTarget = {
+    type: "object",
+    required: ["id", "type"],
+    additionalProperties: false,
+    properties: {
+        id: {
+            type: "string",
+            format: "uri",
+            pattern: "^(?:https?|webcal)://",
+            maxLength: 4096,
+        },
+        type: { enum: ["feed"] },
+    },
+};
 const person = {
     type: "object",
     required: ["email"],
@@ -204,10 +219,10 @@ export const PlatformCalDavSchema = {
         properties: {
             type: {
                 type: "string",
-                enum: ["fetch", "query", "create", "update", "delete"],
+                enum: ["fetch", "read", "query", "create", "update", "delete"],
             },
             actor,
-            target,
+            target: { oneOf: [target, feedTarget] },
             object: {
                 oneOf: [eventObject, taskObject, deleteObject, queryObject],
             },
@@ -223,16 +238,33 @@ export const PlatformCalDavSchema = {
                 },
             },
             {
-                properties: { type: { const: "query" }, object: queryObject },
+                properties: {
+                    type: { const: "read" },
+                    target: feedTarget,
+                    object: queryObject,
+                },
                 required: ["type", "actor", "target"],
             },
             {
-                properties: { type: { const: "create" }, object: calendarItem },
+                properties: {
+                    type: { const: "query" },
+                    target,
+                    object: queryObject,
+                },
+                required: ["type", "actor", "target"],
+            },
+            {
+                properties: {
+                    type: { const: "create" },
+                    target,
+                    object: calendarItem,
+                },
                 required: ["type", "actor", "target", "object"],
             },
             {
                 properties: {
                     type: { const: "update" },
+                    target,
                     object: {
                         oneOf: [
                             {
@@ -259,7 +291,11 @@ export const PlatformCalDavSchema = {
                 required: ["type", "actor", "target", "object"],
             },
             {
-                properties: { type: { const: "delete" }, object: deleteObject },
+                properties: {
+                    type: { const: "delete" },
+                    target,
+                    object: deleteObject,
+                },
                 required: ["type", "actor", "target", "object"],
             },
         ],

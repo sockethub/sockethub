@@ -1,7 +1,9 @@
 # `@sockethub/platform-caldav`
 
 Sockethub platform for discovering CalDAV calendars and reading, creating,
-updating, and deleting events (`VEVENT`) and tasks (`VTODO`).
+updating, and deleting events (`VEVENT`) and tasks (`VTODO`). It can also read
+published iCalendar (`.ics`) feeds, such as holiday calendars or read-only
+subscription links, without a CalDAV account.
 
 Requests accept only public HTTPS services by default. Administrators can opt
 in to HTTP with `packageConfig.allowInsecureHttp` and private-network targets
@@ -63,6 +65,8 @@ never forwarded to another origin.
 - `fetch`: discover calendars and their event/task support.
 - `query`: read items from one discovered calendar, optionally filtering by
   component type or UTC date range.
+- `read`: list the items in a published `.ics` feed without credentials,
+  with the same optional filters as `query`.
 - `create`: create an event or task with collision protection.
 - `update`: replace an item only when its ETag still matches.
 - `delete`: delete an item only when its ETag still matches.
@@ -112,6 +116,43 @@ The collection contains calendar objects such as:
 Each returned item contains its resource `id`, `uid`, `etag`, and
 `updateSupported`. Keep the ETag for later update or delete requests. Use date
 ranges for large calendars; responses larger than 10 MiB are rejected.
+
+### Read a published iCalendar feed
+
+Many calendars are shared as a read-only `.ics` link (often shown as a
+`webcal://` URL). The `read` action fetches such a feed and returns its
+events and tasks as a collection. It needs no credentials and no `fetch`
+step; `webcal:` links are fetched over HTTPS.
+
+```json
+{
+  "type": "read",
+  "actor": { "id": "caldav:alice", "type": "person" },
+  "target": {
+    "id": "https://example.org/holidays/2026.ics",
+    "type": "feed"
+  },
+  "object": {
+    "type": "event",
+    "startTime": "2026-08-01T00:00:00Z",
+    "endTime": "2026-09-01T00:00:00Z"
+  }
+}
+```
+
+The collection `summary` is the feed's `X-WR-CALNAME` when present. Items use
+the same shape as `query` results, with `updateSupported` always `false` and
+no `etag`; each item's `id` is the feed URL plus a fragment derived from its
+UID, so it is unique within the feed but cannot be used for `update` or
+`delete`. The optional `object` filters by component type and overlap with a
+UTC date range, following the CalDAV time-range rules. Recurring items are not
+expanded: a recurring event is returned once, with its `recurrence` rule,
+whenever the rule can still produce an occurrence inside the range, and
+rescheduled occurrences appear as additional items. Components the platform
+cannot represent (for example an event without a summary) are skipped and
+logged rather than failing the whole feed. Feeds larger than 10 MiB are
+rejected, and the same HTTPS and private-address policies apply as for CalDAV
+servers.
 
 ### Create an event
 
@@ -233,6 +274,7 @@ administrator must explicitly enable `allowPrivateAddresses` or
 | Calendar listing | Supported | Discovers accessible calendars in the user's calendar home and their advertised `VEVENT`/`VTODO` component support. |
 | Events and tasks | Supported | Reads and writes `VEVENT` and `VTODO`. `VJOURNAL` and other component types are not supported. |
 | Calendar queries | Supported | Supports component and UTC time-range filters. Without a range, a query returns a calendar snapshot. |
+| Published iCalendar feeds | Read-only | Reads `.ics` and `webcal://` subscription links without credentials, with component and time-range filters. Recurrences are not expanded. |
 | Conditional create, update, and delete | Supported | Uses ETags with `If-None-Match` and `If-Match` to prevent accidental overwrites. |
 | Recurrence | Partially supported | Common recurrence rules are parsed and generated. Resources with recurrence exceptions, exclusion dates, or multiple primary components are readable but rejected for update when rewriting could lose data. |
 | Scheduling data | Partially supported | Organizer and attendee properties are represented, but CalDAV scheduling inbox/outbox delivery, invitation responses, and server-side email are not implemented. |
@@ -251,4 +293,5 @@ Stable errors include `caldav:authentication-failed`,
 `caldav:unsupported-authentication`,
 `caldav:connection-failed`, `caldav:invalid-calendar`,
 `caldav:invalid-resource`, `caldav:unsupported-component`,
-`caldav:conflict`, and `caldav:not-found`.
+`caldav:conflict`, `caldav:not-found`, `caldav:invalid-feed`, and
+`caldav:feed-failed`.

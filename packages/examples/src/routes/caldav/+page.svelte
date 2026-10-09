@@ -11,6 +11,16 @@ type Calendar = {
     name: string;
     components: ("event" | "task")[];
 };
+type FeedItem = {
+    id: string;
+    type: "event" | "task";
+    name: string;
+    startTime?: string;
+    endTime?: string;
+    due?: string;
+    allDay?: boolean;
+    location?: string;
+};
 
 let actorId = $state("caldav:alice");
 let serviceUrl = $state("");
@@ -29,6 +39,12 @@ let error = $state<string | null>(null);
 let success = $state<string | null>(null);
 let credentialError = $state<string | null>(null);
 let credentialSuccess = $state<string | null>(null);
+let feedUrl = $state("");
+let upcomingOnly = $state(true);
+let feedName = $state("");
+let feedItems = $state<FeedItem[]>([]);
+let feedBusy = $state(false);
+let feedError = $state<string | null>(null);
 
 const selectedCalendar = $derived(
     calendars.find((calendar) => calendar.id === selectedCalendarId),
@@ -115,6 +131,41 @@ async function fetchCalendars(): Promise<void> {
     }
 }
 
+async function readFeed(): Promise<void> {
+    feedError = null;
+    feedBusy = true;
+    try {
+        const response = await send({
+            "@context": await contextFor("caldav"),
+            type: "read",
+            actor: actor(),
+            target: { id: feedUrl, type: "feed" },
+            ...(upcomingOnly
+                ? { object: { startTime: new Date().toISOString() } }
+                : {}),
+        } as unknown as AnyActivityStream);
+        feedName = typeof response.summary === "string" ? response.summary : "";
+        feedItems = (response.items ?? []).filter(
+            (item): item is AnyActivityStream & FeedItem =>
+                (item.type === "event" || item.type === "task") &&
+                typeof (item as unknown as FeedItem).name === "string",
+        ) as FeedItem[];
+    } catch (err) {
+        feedItems = [];
+        feedError = err instanceof Error ? err.message : String(err);
+    } finally {
+        feedBusy = false;
+    }
+}
+
+function itemWhen(item: FeedItem): string {
+    const when = item.startTime ?? item.due;
+    if (!when) return "";
+    return item.allDay || !when.includes("T")
+        ? when
+        : new Date(when).toLocaleString();
+}
+
 async function createItem(): Promise<void> {
     if (!selectedCalendar) return;
     error = null;
@@ -158,7 +209,7 @@ async function createItem(): Promise<void> {
 
 <BaseExample
     title="CalDAV Platform Example"
-    description="Discover the calendars in a CalDAV account, then add an event or to-do."
+    description="Discover the calendars in a CalDAV account and add an event or to-do, or list the events in a published .ics feed."
 >
     <section class="space-y-4">
         <h2 class="text-xl font-semibold text-gray-900">1. Set credentials</h2>
@@ -274,4 +325,48 @@ async function createItem(): Promise<void> {
     {#if success}
         <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800" role="status">{success}</div>
     {/if}
+
+    <section class="space-y-4 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900">Read a published iCalendar feed</h2>
+        <p class="text-sm text-gray-600">
+            Public .ics and webcal:// links need no credentials. Sockethub fetches the feed and lists its items.
+        </p>
+        <FormField
+            label="Feed URL"
+            id="caldav-feed-url"
+            type="url"
+            bind:value={feedUrl}
+            placeholder="https://example.org/holidays.ics"
+        />
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" bind:checked={upcomingOnly} /> Upcoming items only
+        </label>
+        <div class="flex justify-end">
+            <SockethubButton buttonAction={readFeed} disabled={feedBusy || !actorId || !feedUrl}>
+                {feedBusy ? "Reading…" : "Read Feed"}
+            </SockethubButton>
+        </div>
+        {#if feedError}
+            <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{feedError}</div>
+        {/if}
+        {#if feedItems.length > 0}
+            <h3 class="text-sm font-semibold text-gray-700">{feedName || "Feed"} ({feedItems.length})</h3>
+            <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
+                {#each feedItems as item (item.id)}
+                    <li class="flex flex-col gap-1 px-4 py-3 text-sm">
+                        <span class="font-medium text-gray-900">{item.name}</span>
+                        <span class="text-gray-600">
+                            {item.type === "task" ? "To-do" : "Event"}
+                            {#if itemWhen(item)}
+                                · {itemWhen(item)}
+                            {/if}
+                            {#if item.location}
+                                · {item.location}
+                            {/if}
+                        </span>
+                    </li>
+                {/each}
+            </ul>
+        {/if}
+    </section>
 </BaseExample>
