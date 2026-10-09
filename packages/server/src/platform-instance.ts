@@ -78,6 +78,7 @@ type MessageFromPlatform =
           string,
           CredentialsObject?,
           string?,
+          boolean?,
       ]
     | ["sessionUnauthorized", null | undefined, string]
     | ["error", string]
@@ -622,12 +623,14 @@ export default class PlatformInstance {
     /**
      * Persists renamed credentials for every attached session except the one
      * that already stored them in the platform child before reporting the
-     * actor change.
+     * actor change. `dryRun` performs the same collision checks without
+     * writing, so a nick change can be refused before the server applies it.
      */
     private async migratePeerActorCredentials(
         credentials: CredentialsObject,
         previousActorId: string,
         originatingSessionId?: string,
+        options?: { dryRun?: boolean },
     ): Promise<void> {
         if (!this.parentSecret1) {
             return;
@@ -664,6 +667,7 @@ export default class PlatformInstance {
                         this.name,
                         fromActorId,
                         renamed,
+                        options,
                     ),
             });
         }
@@ -788,6 +792,7 @@ export default class PlatformInstance {
         third,
         fourth,
         fifth,
+        sixth,
     ]: MessageFromPlatform) {
         if (first === "updateActor") {
             // Internal control message: platform process is reporting a new actor id.
@@ -798,6 +803,10 @@ export default class PlatformInstance {
                 this.sendUpdateActorFailed(message);
                 return;
             }
+            // With the dry-run flag the child is asking whether a rename
+            // would collide with another session's stored account, before
+            // NICK is sent. Nothing is written or re-keyed.
+            const dryRun = sixth === true;
             try {
                 const credentials = fourth;
                 const originatingSessionId =
@@ -818,7 +827,12 @@ export default class PlatformInstance {
                         credentials,
                         previousActor,
                         originatingSessionId,
+                        { dryRun },
                     );
+                }
+                if (dryRun) {
+                    this.sendUpdateActorAck();
+                    return;
                 }
                 this.updateIdentifier(
                     third,

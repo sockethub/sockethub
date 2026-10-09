@@ -840,9 +840,14 @@ async function startPlatformProcess() {
     }
 
     /**
-     * Reject a proposed rename that would overwrite a different account in this
-     * session's store. Does not write. The IRC platform calls this before
-     * sending NICK, so a collision never changes the nick on the server.
+     * Reject a proposed rename that would overwrite a different account in any
+     * session sharing this connection. Does not write. The IRC platform calls
+     * this before sending NICK, so a collision never changes the nick on the
+     * server.
+     *
+     * The submitting session is checked here. Other sessions keep their own
+     * credential stores in the parent, and a collision in one of those used
+     * to be discovered only after the server had already applied the nick.
      */
     async function prepareActorUpdate(
         credentials: CredentialsObject,
@@ -858,6 +863,18 @@ async function startPlatformProcess() {
                 { dryRun: true },
             );
         }
+        // Peer sessions keep their own stores in the parent; ask it to run
+        // the same check there without re-keying anything.
+        await sendUpdateActor(
+            credentials,
+            getPlatformId(
+                platformName,
+                credentials.actor.id,
+                process.env.SOCKETHUB_PLATFORM_SCOPE,
+            ),
+            actorUpdateSessionId,
+            { dryRun: true },
+        );
     }
 
     /**
@@ -934,6 +951,7 @@ async function startPlatformProcess() {
         credentials: CredentialsObject,
         newIdentifier: string,
         originatingSessionId?: string,
+        options?: { dryRun?: boolean },
     ): Promise<void> {
         const actorId = credentials.actor?.id;
         if (typeof actorId !== "string" || actorId.length === 0) {
@@ -969,6 +987,7 @@ async function startPlatformProcess() {
                     newIdentifier,
                     credentials,
                     originatingSessionId,
+                    options?.dryRun === true,
                 ],
                 (err: Error | null) => {
                     if (err) {
