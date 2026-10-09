@@ -1075,6 +1075,60 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.jobQueue.length).toEqual(0);
             });
 
+            it("still acknowledges a join when the nick change PONG arrives before the echo", async () => {
+                const creds = structuredClone(validCredentials);
+                let nickResult: unknown = "pending";
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        nickResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // A bouncer answers PING locally, before the upstream NICK
+                // echo. That PONG is not this job's completion.
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+                platform.irc2as.input(":testingham!u@h NICK testler");
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(nickResult).toEqual(null);
+
+                const otherRoom = {
+                    type: "room",
+                    id: "#other-room@irc.example.com",
+                    name: "#other-room",
+                };
+                let joinResult: unknown = "pending";
+                platform.join(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "join",
+                        actor: creds.actor,
+                        target: otherRoom,
+                    },
+                    (err: unknown) => {
+                        joinResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+
+                expect(joinResult).toEqual(null);
+                expect(platform.channels.has("#other-room")).toEqual(true);
+                expect(platform.jobQueue.length).toEqual(0);
+            });
+
             it("fails a nick change when the server replies that the nick is in use", async () => {
                 const creds = structuredClone(validCredentials);
                 let failure: unknown;
@@ -1148,6 +1202,60 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.handledActors.has(actor.id)).toEqual(true);
                 expect(platform.handledActors.has(newActor.id)).toEqual(false);
                 expect(creds.object.nick).toEqual("testingham");
+            });
+
+            it("does not skip the next join's PONG when a rejected nick change already saw its PONG", async () => {
+                const creds = structuredClone(validCredentials);
+                let failure: unknown = "pending";
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+                platform.irc2as.input(
+                    ":irc.example.com 433 testingham testler :Nickname is already in use.",
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(failure).toEqual("Nickname is already in use.");
+
+                const otherRoom = {
+                    type: "room",
+                    id: "#other-room@irc.example.com",
+                    name: "#other-room",
+                };
+                let joinResult: unknown = "pending";
+                platform.join(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "join",
+                        actor: actor,
+                        target: otherRoom,
+                    },
+                    (err: unknown) => {
+                        joinResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+
+                expect(joinResult).toEqual(null);
+                expect(platform.channels.has("#other-room")).toEqual(true);
+                expect(platform.jobQueue.length).toEqual(0);
             });
 
             it("does not throw when a numeric error arrives with no command in flight", () => {
