@@ -93,7 +93,7 @@ test.describe("examples smoke against sockethub --examples", () => {
         ).toBeEnabled();
     });
 
-    test("carddav page exposes the address-book query flow", async ({
+    test("carddav page exposes the address-book and contact flows", async ({
         page,
     }) => {
         await page.goto("/examples/carddav");
@@ -103,6 +103,13 @@ test.describe("examples smoke against sockethub --examples", () => {
         await expect(
             page.getByRole("button", { name: "Fetch Address Books" }),
         ).toBeDisabled();
+        await expect(
+            page.getByRole("button", { name: "List Contacts" }),
+        ).toBeDisabled();
+        await expect(
+            page.getByRole("button", { name: "Add Contact" }),
+        ).toBeDisabled();
+        await page.getByLabel("Search text (optional)").fill("Bob");
         await expect(
             page.getByRole("button", { name: "Search Contacts" }),
         ).toBeDisabled();
