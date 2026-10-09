@@ -153,14 +153,16 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
                 contact.name = unescapeText(line.value);
                 break;
             case "N": {
-                const parts = splitEscaped(line.value, ";").map(unescapeText);
-                [contact.familyName, contact.givenName] = parts;
-                if (parts[2])
-                    contact.additionalNames = splitEscaped(parts[2], ",");
-                if (parts[3])
-                    contact.honorificPrefixes = splitEscaped(parts[3], ",");
-                if (parts[4])
-                    contact.honorificSuffixes = splitEscaped(parts[4], ",");
+                // Components are split on unescaped ";" and list items on
+                // unescaped "," before unescaping, so "\," stays inside a value.
+                const parts = splitEscaped(line.value, ";");
+                const list = (part: string | undefined) =>
+                    part ? splitEscaped(part, ",").map(unescapeText) : [];
+                contact.familyName = unescapeText(parts[0] ?? "");
+                contact.givenName = unescapeText(parts[1] ?? "");
+                if (parts[2]) contact.additionalNames = list(parts[2]);
+                if (parts[3]) contact.honorificPrefixes = list(parts[3]);
+                if (parts[4]) contact.honorificSuffixes = list(parts[4]);
                 break;
             }
             case "NICKNAME":
@@ -295,13 +297,17 @@ export function buildVCard(
         if (/[\r\n]/.test(value)) throw new Error(`invalid vCard ${field}`);
         return value;
     };
+    // List components join escaped items with a bare ",", the list separator;
+    // escaping after joining would turn the list into one comma-bearing value.
+    const list = (values: string[] | undefined) =>
+        (values ?? []).map(escapeText).join(",");
     const n = [
-        input.familyName,
-        input.givenName,
-        input.additionalNames?.join(","),
-        input.honorificPrefixes?.join(","),
-        input.honorificSuffixes?.join(","),
-    ].map((value) => escapeText(value ?? ""));
+        escapeText(input.familyName ?? ""),
+        escapeText(input.givenName ?? ""),
+        list(input.additionalNames),
+        list(input.honorificPrefixes),
+        list(input.honorificSuffixes),
+    ];
     const lines = [
         "BEGIN:VCARD",
         "VERSION:4.0",
