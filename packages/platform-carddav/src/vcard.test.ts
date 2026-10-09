@@ -71,14 +71,16 @@ describe("vCard", () => {
             name: "Dr. Alice Mary Ann Example, Jr.",
             familyName: "Example, Sr.",
             givenName: "Alice",
-            additionalNames: ["Mary", "Ann"],
+            additionalNames: ["Mary, Ann", "Lee"],
             honorificPrefixes: ["Dr."],
             honorificSuffixes: ["Jr.", "PhD"],
         });
-        expect(built.body).toContain("N:Example\\, Sr.;Alice;Mary,Ann;Dr.;Jr.,PhD\r\n");
+        expect(built.body).toContain(
+            "N:Example\\, Sr.;Alice;Mary\\, Ann,Lee;Dr.;Jr.,PhD\r\n",
+        );
         const parsed = parseVCard(built.body, "https://dav.example/alice.vcf");
         expect(parsed.familyName).toBe("Example, Sr.");
-        expect(parsed.additionalNames).toEqual(["Mary", "Ann"]);
+        expect(parsed.additionalNames).toEqual(["Mary, Ann", "Lee"]);
         expect(parsed.honorificPrefixes).toEqual(["Dr."]);
         expect(parsed.honorificSuffixes).toEqual(["Jr.", "PhD"]);
     });
