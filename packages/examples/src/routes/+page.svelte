@@ -77,7 +77,7 @@ import Intro from "../components/Intro.svelte";
                     </a>
                     <a href="{base}/carddav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
                         <div class="font-semibold text-purple-800">👤 CardDAV Contacts</div>
-                        <div class="text-purple-600">Discover address books and find contacts</div>
+                        <div class="text-purple-600">Discover address books, then search, add, edit, and delete contacts</div>
                     </a>
                 </div>
                 <div class="grid md:grid-cols-2 gap-3">
