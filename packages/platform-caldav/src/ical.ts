@@ -374,6 +374,69 @@ function parseDate(value: string): string {
     return value;
 }
 
+/**
+ * Text between the first `BEGIN:marker` line and the `END:marker` line that
+ * closes it. One forward search: when that BEGIN never closes, no later copy
+ * can close either, so the search stops. A lazy `[\s\S]*?` rescan of the same
+ * input is quadratic and stalls the shared CalDAV process on a multi-megabyte
+ * object full of unclosed markers.
+ */
+function boundedSection(text: string, marker: string): string | undefined {
+    const begin = `BEGIN:${marker}`;
+    const endMark = `\nEND:${marker}`;
+    let from = 0;
+    while (from < text.length) {
+        const start = text.indexOf(begin, from);
+        if (start < 0) return undefined;
+        let cursor = start + begin.length;
+        if (text[cursor] === "\r") cursor += 1;
+        if (text[cursor] !== "\n") {
+            from = start + begin.length;
+            continue;
+        }
+        const contentStart = cursor + 1;
+        const close = text.indexOf(endMark, contentStart);
+        if (close < 0) return undefined;
+        const contentEnd = text[close - 1] === "\r" ? close - 1 : close;
+        return text.slice(contentStart, contentEnd);
+    }
+    return undefined;
+}
+
+/** VALARM bodies, and the surrounding section with those alarms removed. */
+function separateAlarms(section: string): { alarms: string[]; body: string } {
+    const begin = "BEGIN:VALARM";
+    const endMark = "\nEND:VALARM";
+    const alarms: string[] = [];
+    const parts: string[] = [];
+    let from = 0;
+    while (from < section.length) {
+        const start = section.indexOf(begin, from);
+        if (start < 0) {
+            parts.push(section.slice(from));
+            break;
+        }
+        let cursor = start + begin.length;
+        if (section[cursor] === "\r") cursor += 1;
+        if (section[cursor] !== "\n") {
+            parts.push(section.slice(from, start + begin.length));
+            from = start + begin.length;
+            continue;
+        }
+        const contentStart = cursor + 1;
+        const close = section.indexOf(endMark, contentStart);
+        if (close < 0) {
+            parts.push(section.slice(from));
+            break;
+        }
+        const contentEnd = section[close - 1] === "\r" ? close - 1 : close;
+        alarms.push(section.slice(contentStart, contentEnd));
+        parts.push(section.slice(from, start));
+        from = close + endMark.length;
+    }
+    return { alarms, body: parts.join("") };
+}
+
 /** Parse the interoperable item fields returned by CalDAV multiget/query responses. */
 export function parseICalendar(
     body: string,
@@ -383,19 +446,10 @@ export function parseICalendar(
     const unfolded = body.replace(/\r?\n[ \t]/g, "");
     const component = /^BEGIN:VTODO\r?$/m.test(unfolded) ? "task" : "event";
     const componentName = component === "task" ? "VTODO" : "VEVENT";
-    const section = unfolded.match(
-        new RegExp(
-            `BEGIN:${componentName}\\r?\\n([\\s\\S]*?)\\r?\\nEND:${componentName}`,
-        ),
-    )?.[1];
+    const section = boundedSection(unfolded, componentName);
     if (!section) throw new Error("invalid calendar data");
-    const alarmBlocks = [
-        ...section.matchAll(/BEGIN:VALARM\r?\n([\s\S]*?)\r?\nEND:VALARM/g),
-    ].map((match) => match[1]);
-    const componentSection = section.replace(
-        /BEGIN:VALARM\r?\n[\s\S]*?\r?\nEND:VALARM/g,
-        "",
-    );
+    const { alarms: alarmBlocks, body: componentSection } =
+        separateAlarms(section);
     const values = new Map<
         string,
         { params: Record<string, string>; value: string }[]

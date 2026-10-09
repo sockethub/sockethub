@@ -138,6 +138,58 @@ describe("iCalendar generation", () => {
         ).toThrow("invalid attendee.email");
     });
 
+    it("reads every alarm in an event", () => {
+        const body = [
+            "BEGIN:VCALENDAR",
+            "BEGIN:VEVENT",
+            "UID:one",
+            "SUMMARY:One",
+            "DTSTART:20260803T130000Z",
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            "TRIGGER:-PT5M",
+            "END:VALARM",
+            "BEGIN:VALARM",
+            "ACTION:EMAIL",
+            "TRIGGER:-PT10M",
+            "DESCRIPTION:Soon",
+            "ATTENDEE:mailto:a@example.test",
+            "END:VALARM",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            "",
+        ].join("\r\n");
+        expect(
+            parseICalendar(body, "https://calendar.example/one.ics").reminders,
+        ).toEqual([
+            { trigger: "-PT5M", action: "display" },
+            {
+                trigger: "-PT10M",
+                action: "email",
+                description: "Soon",
+                recipients: ["a@example.test"],
+            },
+        ]);
+    });
+
+    it("parses an event full of unclosed alarm markers without stalling", () => {
+        const body = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nDTSTART:20260803T130000Z\r\n${"BEGIN:VALARM\r\n".repeat(20000)}END:VEVENT\r\nEND:VCALENDAR\r\n`;
+        const started = performance.now();
+        expect(
+            parseICalendar(body, "https://calendar.example/one.ics"),
+        ).toMatchObject({ uid: "one", name: "One" });
+        expect(performance.now() - started).toBeLessThan(1000);
+    });
+
+    it("rejects an event full of unclosed task markers without stalling", () => {
+        const body = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nDTSTART:20260803T130000Z\r\n${"BEGIN:VTODO\r\n".repeat(20000)}END:VEVENT\r\nEND:VCALENDAR\r\n`;
+        const started = performance.now();
+        expect(() =>
+            parseICalendar(body, "https://calendar.example/one.ics"),
+        ).toThrow("invalid calendar data");
+        expect(performance.now() - started).toBeLessThan(1000);
+    });
+
     it("skips malformed optional properties instead of fabricating values", () => {
         const body = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nDTSTART:20260803T130000Z\r\nDUE:20260804T130000Z\r\nSTATUS:CONFIRMED\r\nSEQUENCE:nope\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         expect(
