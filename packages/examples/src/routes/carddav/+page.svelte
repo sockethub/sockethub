@@ -2,6 +2,7 @@
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
+import { reconcileOpenEdit } from "$lib/carddav-edit";
 import { contextFor, ensureClientReady, sc, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 
@@ -224,7 +225,9 @@ async function fetchAddressBooks(): Promise<void> {
  * returns every contact; with text it runs a CardDAV addressbook-query
  * REPORT over the chosen fields.
  */
-async function queryContacts(prefix = ""): Promise<void> {
+async function queryContacts(prefix: unknown = ""): Promise<void> {
+    // The list button passes its click event through as the first argument.
+    const lead = typeof prefix === "string" ? prefix : "";
     if (!credentialsSet || !selectedAddressBook) return;
     const revision = credentialRevision;
     const requestRevision = ++contactRequestRevision;
@@ -261,12 +264,18 @@ async function queryContacts(prefix = ""): Promise<void> {
                 typeof item.id === "string" &&
                 typeof (item as unknown as Contact).name === "string",
         ) as Contact[];
-        // An edit in progress must carry the refreshed ETag, or it would
-        // conflict again; drop it if the contact is gone.
+        // Keep an open edit on the refreshed card. A new etag means the card
+        // changed: the form has to show that version before a save, or the
+        // stale form would be written with the new etag and replace it.
         if (editing) {
-            const refreshed = contacts.find((item) => item.id === editing?.id);
-            if (refreshed) editing = refreshed;
-            else clearForm();
+            const decision = reconcileOpenEdit(editing, contacts);
+            if (decision.action === "clear") clearForm();
+            else if (decision.action === "reload") {
+                startEdit(decision.contact);
+                error = decision.contact.etag
+                    ? "This contact changed on the server. The form was reloaded with that version. Review it before saving."
+                    : "This contact no longer has an ETag, so it cannot be updated safely.";
+            } else editing = decision.contact;
         }
         const count = `${contacts.length} contact${contacts.length === 1 ? "" : "s"}`;
         const capped =
@@ -274,7 +283,7 @@ async function queryContacts(prefix = ""): Promise<void> {
                 ? ` Only the first ${QUERY_LIMIT} are shown; narrow the search to see the rest.`
                 : "";
         success =
-            prefix +
+            lead +
             (text ? `Found ${count} matching “${text}”.` : `Listed ${count}.`) +
             capped;
     } catch (err) {
@@ -586,7 +595,7 @@ function formatTyped(value: TypedValue): string {
                             {#if contact.telephones?.length}
                                 <p class="text-sm text-gray-600">📞 {contact.telephones.map(formatTyped).join(", ")}</p>
                             {/if}
-                            {#each contact.addresses ?? [] as address}
+                            {#each contact.addresses ?? [] as address, index (`${index}|${address.street ?? ""}|${address.locality ?? ""}|${address.postalCode ?? ""}`)}
                                 {#if formatAddress(address)}
                                     <p class="text-sm text-gray-600">📍 {formatAddress(address)}</p>
                                 {/if}
