@@ -73,17 +73,120 @@ function unescapeText(value: string): string {
     );
 }
 
-/** Instant of an item date value; date-only and floating values are read as UTC. */
-function instant(value: string | undefined): number | undefined {
+const LOCAL_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/;
+
+/**
+ * Instant of an item date value. Date-only and floating values are read as
+ * UTC. A floating local time is converted from `timeZone` when the item has
+ * one; an unknown zone falls back to UTC so one bad TZID cannot fail the feed.
+ */
+function instant(
+    value: string | undefined,
+    timeZone?: string,
+): number | undefined {
     if (!value) return undefined;
+    if (timeZone && LOCAL_DATE_TIME.test(value)) {
+        const zoned = zonedLocalToUtc(value, timeZone);
+        if (zoned !== undefined) return zoned;
+    }
     const parsed = new Date(
         /^\d{4}-\d{2}-\d{2}$/.test(value)
             ? `${value}T00:00:00Z`
-            : /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value)
+            : LOCAL_DATE_TIME.test(value)
               ? `${value}Z`
               : value,
     ).getTime();
     return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+function zoneOffsetMs(utcMs: number, timeZone: string): number | undefined {
+    try {
+        const parts = Object.fromEntries(
+            new Intl.DateTimeFormat("en-US", {
+                timeZone,
+                hourCycle: "h23",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+            })
+                .formatToParts(new Date(utcMs))
+                .filter((part) => part.type !== "literal")
+                .map((part) => [part.type, part.value]),
+        );
+        const year = Number(parts.year);
+        const month = Number(parts.month);
+        const day = Number(parts.day);
+        const hour = Number(parts.hour);
+        const minute = Number(parts.minute);
+        const second = Number(parts.second);
+        if (
+            [year, month, day, hour, minute, second].some((part) =>
+                Number.isNaN(part),
+            )
+        )
+            return undefined;
+        // Hour 24 is midnight at the end of that date; Date.UTC rolls it over.
+        return Date.UTC(year, month - 1, day, hour, minute, second) - utcMs;
+    } catch {
+        return undefined;
+    }
+}
+
+/** UTC instant of a local wall time in an IANA time zone. */
+function zonedLocalToUtc(value: string, timeZone: string): number | undefined {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
+        value,
+    );
+    if (!match) return undefined;
+    const guess = Date.UTC(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] ?? 0),
+    );
+    const offset = zoneOffsetMs(guess, timeZone);
+    if (offset === undefined) return undefined;
+    const corrected = zoneOffsetMs(guess - offset, timeZone);
+    return guess - (corrected ?? offset);
+}
+
+/**
+ * Latest instant at which a bounded rule can still start an occurrence, or
+ * undefined for an unbounded rule. UNTIL is taken as given. For COUNT the
+ * bound is the start advanced by (count - 1) intervals of the frequency:
+ * BYDAY and BYMONTHDAY only add occurrences inside those periods, so the
+ * real last occurrence never starts later than this.
+ */
+function lastOccurrenceBound(
+    recurrence: NonNullable<CalendarItem["recurrence"]>,
+    start: number,
+): number | undefined {
+    const until = instant(recurrence.until);
+    if (until !== undefined) return until;
+    if (recurrence.count === undefined) return undefined;
+    const periods =
+        Math.max(recurrence.count - 1, 0) * (recurrence.interval ?? 1);
+    const date = new Date(start);
+    switch (recurrence.frequency) {
+        case "daily":
+            return start + periods * DAY_MS;
+        case "weekly":
+            return start + periods * 7 * DAY_MS;
+        case "monthly":
+            date.setUTCMonth(date.getUTCMonth() + periods);
+            break;
+        case "yearly":
+            date.setUTCFullYear(date.getUTCFullYear() + periods);
+            break;
+    }
+    // Calendar arithmetic on the UTC clock can land up to a day early for a
+    // zoned start; keep the bound conservative rather than drop a live rule.
+    return date.getTime() + DAY_MS;
 }
 
 /**
@@ -91,17 +194,20 @@ function instant(value: string | undefined): number | undefined {
  * time-range rules: an item matches when it starts before the range ends and
  * ends after the range starts (a zero-length item matches when it starts at
  * or after the range start). Recurring items are never expanded: they match
- * while the rule can still produce an occurrence inside the range. Items
- * without any time match only when no range is given. An all-day event with
- * no end lasts one day (RFC 5545 section 3.6.1).
+ * while the rule can still produce an occurrence inside the range: a bounded
+ * rule (UNTIL or COUNT) stops matching once its last possible occurrence,
+ * including the master duration, has ended. Items without any time match
+ * only when no range is given. An all-day event with no end lasts one day
+ * (RFC 5545 section 3.6.1).
  */
 export function matchesRange(item: CalendarItem, query: QueryInput): boolean {
     const rangeStart = instant(query.startTime);
     const rangeEnd = instant(query.endTime);
     if (rangeStart === undefined && rangeEnd === undefined) return true;
-    const first = instant(item.startTime);
+    const zone = item.timeZone;
+    const first = instant(item.startTime, zone);
     const last =
-        instant(item.endTime ?? item.due) ??
+        instant(item.endTime ?? item.due, zone) ??
         (item.type === "event" && item.allDay && first !== undefined
             ? first + DAY_MS
             : undefined);
@@ -111,8 +217,11 @@ export function matchesRange(item: CalendarItem, query: QueryInput): boolean {
     if (rangeEnd !== undefined && start >= rangeEnd) return false;
     if (rangeStart === undefined) return true;
     if (item.recurrence) {
-        const until = instant(item.recurrence.until);
-        return until === undefined || until >= rangeStart;
+        const lastStart = lastOccurrenceBound(item.recurrence, start);
+        if (lastStart === undefined) return true;
+        return end > start
+            ? lastStart + (end - start) > rangeStart
+            : lastStart >= rangeStart;
     }
     return end > start ? end > rangeStart : end >= rangeStart;
 }
@@ -129,7 +238,10 @@ export function parseICalendarFeed(
     query: QueryInput = {},
 ): ICalendarFeed {
     const unfolded = unfold(body);
-    if (!/^BEGIN:VCALENDAR\r?$/m.test(unfolded))
+    if (
+        !/^BEGIN:VCALENDAR\r?$/m.test(unfolded) ||
+        !/^END:VCALENDAR\r?$/m.test(unfolded)
+    )
         throw new Error("not an iCalendar document");
     const calendarName = propertyValue(unfolded, "X-WR-CALNAME");
     const items: CalendarItem[] = [];
