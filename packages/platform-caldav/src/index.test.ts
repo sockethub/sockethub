@@ -83,6 +83,76 @@ describe("CalDAV read", () => {
         expect((await read(platform, "http://example.test/cal.ics"))[0]).toBeNull();
     });
 
+    it("follows an HTTPS redirect and refuses a downgrade to HTTP", async () => {
+        const requests: string[] = [];
+        globalThis.fetch = (async (url: URL | RequestInfo, init?: RequestInit) => {
+            requests.push(String(url));
+            expect(init?.redirect).toBe("manual");
+            if (String(url) === "https://example.test/start.ics") {
+                return new Response(null, {
+                    status: 302,
+                    headers: { location: "http://example.test/cal.ics" },
+                });
+            }
+            return new Response(ics, { status: 200 });
+        }) as typeof fetch;
+        const platform = new CalDav(session);
+        expect((await read(platform, "https://example.test/start.ics"))[0]).toBe("caldav:https-required");
+        expect(requests).toEqual(["https://example.test/start.ics"]);
+
+        requests.length = 0;
+        globalThis.fetch = (async (url: URL | RequestInfo) => {
+            requests.push(String(url));
+            if (String(url) === "https://example.test/start.ics") {
+                return new Response(null, {
+                    status: 302,
+                    headers: { location: "https://cdn.example.test/cal.ics" },
+                });
+            }
+            return new Response(ics, { status: 200, headers: { "content-type": "text/calendar" } });
+        }) as typeof fetch;
+        const [error, result] = await read(platform, "https://example.test/start.ics");
+        expect(error).toBeNull();
+        expect(requests).toEqual([
+            "https://example.test/start.ics",
+            "https://cdn.example.test/cal.ics",
+        ]);
+        expect(result).toMatchObject({
+            items: [{ id: "https://cdn.example.test/cal.ics#a" }],
+        });
+
+        platform.config.allowInsecureHttp = true;
+        requests.length = 0;
+        globalThis.fetch = (async (url: URL | RequestInfo) => {
+            requests.push(String(url));
+            if (requests.length === 1) {
+                return new Response(null, {
+                    status: 302,
+                    headers: { location: "http://example.test/cal.ics" },
+                });
+            }
+            return new Response(ics, { status: 200, headers: { "content-type": "text/calendar" } });
+        }) as typeof fetch;
+        expect((await read(platform, "https://example.test/start.ics"))[0]).toBeNull();
+        expect(requests).toEqual([
+            "https://example.test/start.ics",
+            "http://example.test/cal.ics",
+        ]);
+    });
+
+    it("stops following redirect loops", async () => {
+        let requests = 0;
+        globalThis.fetch = (async () => {
+            requests += 1;
+            return new Response(null, {
+                status: 302,
+                headers: { location: "https://example.test/again.ics" },
+            });
+        }) as typeof fetch;
+        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:feed-failed");
+        expect(requests).toBe(6);
+    });
+
     it("reports failed requests and non-calendar bodies", async () => {
         globalThis.fetch = (async () => new Response("missing", { status: 404 })) as typeof fetch;
         expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:feed-failed");

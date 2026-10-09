@@ -91,6 +91,40 @@ describe("iCalendar feed parsing", () => {
         expect(() => parseICalendarFeed("<html></html>", source)).toThrow("not an iCalendar document");
         expect(parseICalendarFeed("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", source)).toEqual({ items: [], skipped: 0 });
     });
+
+    it("places a zoned event in its absolute window", () => {
+        const body = [
+            "BEGIN:VCALENDAR",
+            "BEGIN:VEVENT",
+            "UID:meet@example",
+            "SUMMARY:Morning",
+            "DTSTART;TZID=America/Los_Angeles:20260615T100000",
+            "DTEND;TZID=America/Los_Angeles:20260615T110000",
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ].join("\r\n");
+        expect(
+            parseICalendarFeed(body, source, {
+                startTime: "2026-06-15T17:00:00Z",
+                endTime: "2026-06-15T18:00:00Z",
+            }).items.map((item) => item.uid),
+        ).toEqual(["meet@example"]);
+        expect(
+            parseICalendarFeed(body, source, {
+                startTime: "2026-06-15T10:00:00Z",
+                endTime: "2026-06-15T11:00:00Z",
+            }).items,
+        ).toEqual([]);
+    });
+
+    it("reads a later task after a run of unclosed event markers", () => {
+        const body = `BEGIN:VCALENDAR\n${"BEGIN:VEVENT\n".repeat(20000)}BEGIN:VTODO\nUID:t@example\nSUMMARY:Tax\nDUE:20260301T120000Z\nEND:VTODO\nEND:VCALENDAR\n`;
+        const started = performance.now();
+        const result = parseICalendarFeed(body, source);
+        expect(performance.now() - started).toBeLessThan(1000);
+        expect(result.items.map((item) => item.uid)).toEqual(["t@example"]);
+        expect(result.skipped).toBe(0);
+    });
 });
 
 describe("time-range matching", () => {
@@ -119,5 +153,85 @@ describe("time-range matching", () => {
         const weekly = { ...timed, recurrence: { frequency: "weekly" as const } };
         expect(matchesRange(weekly, { startTime: "2030-01-01T00:00:00Z" })).toBeTrue();
         expect(matchesRange(weekly, { endTime: "2026-01-05T09:00:00Z" })).toBeFalse();
+    });
+
+    it("keeps the last bounded occurrence while it is still in progress", () => {
+        const daily = {
+            ...timed,
+            recurrence: { frequency: "daily" as const, until: "2026-01-05T09:00:00Z" },
+        };
+        expect(matchesRange(daily, { startTime: "2026-01-05T09:30:00Z" })).toBeTrue();
+        expect(matchesRange(daily, { startTime: "2026-01-05T10:00:00Z" })).toBeFalse();
+        const allDay: CalendarItem = {
+            ...base,
+            startTime: "2026-03-30",
+            endTime: "2026-03-31",
+            allDay: true,
+            recurrence: { frequency: "daily", until: "2026-03-30" },
+        };
+        expect(matchesRange(allDay, { startTime: "2026-03-30T15:00:00Z" })).toBeTrue();
+        expect(matchesRange(allDay, { startTime: "2026-03-31T00:00:00Z" })).toBeFalse();
+    });
+
+    it("compares zoned local times as absolute instants", () => {
+        const morning: CalendarItem = {
+            ...base,
+            startTime: "2026-06-15T10:00:00",
+            endTime: "2026-06-15T11:00:00",
+            timeZone: "America/Los_Angeles",
+        };
+        expect(
+            matchesRange(morning, {
+                startTime: "2026-06-15T17:00:00Z",
+                endTime: "2026-06-15T18:00:00Z",
+            }),
+        ).toBeTrue();
+        expect(
+            matchesRange(morning, {
+                startTime: "2026-06-15T10:00:00Z",
+                endTime: "2026-06-15T11:00:00Z",
+            }),
+        ).toBeFalse();
+        const winter: CalendarItem = {
+            ...morning,
+            startTime: "2026-01-15T10:00:00",
+            endTime: "2026-01-15T11:00:00",
+        };
+        expect(
+            matchesRange(winter, {
+                startTime: "2026-01-15T18:00:00Z",
+                endTime: "2026-01-15T19:00:00Z",
+            }),
+        ).toBeTrue();
+        const midnight: CalendarItem = {
+            ...base,
+            startTime: "2026-06-15T00:00:00",
+            endTime: "2026-06-15T01:00:00",
+            timeZone: "Asia/Tokyo",
+        };
+        expect(
+            matchesRange(midnight, {
+                startTime: "2026-06-14T15:00:00Z",
+                endTime: "2026-06-14T16:00:00Z",
+            }),
+        ).toBeTrue();
+        const unknownZone: CalendarItem = {
+            ...base,
+            startTime: "2026-01-05T09:00:00",
+            endTime: "2026-01-05T10:00:00",
+            timeZone: "Not/AZone",
+        };
+        expect(matchesRange(unknownZone, { startTime: "2026-01-05T09:30:00Z" })).toBeTrue();
+        expect(() =>
+            matchesRange(
+                {
+                    ...base,
+                    startTime: "2026-03-08T02:30:00",
+                    endTime: "2026-03-08T03:30:00",
+                    timeZone: "America/Los_Angeles",
+                },
+                { startTime: "2026-03-08T00:00:00Z" },
+            ),
+        ).not.toThrow();
     });
 });

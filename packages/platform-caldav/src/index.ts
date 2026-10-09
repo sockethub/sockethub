@@ -8,7 +8,7 @@ import type {
     StatelessPlatformConfig,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
-import { createGuardedDispatcher, safeFetch } from "@sockethub/util/net";
+import { createGuardedDispatcher } from "@sockethub/util/net";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 import { buildICalendar } from "./ical.js";
 import { parseICalendarFeed } from "./ics.js";
@@ -22,6 +22,7 @@ import type {
 
 const CONTEXT = buildCanonicalContext(PlatformCalDavSchema.contextUrl);
 const MAX_FEED_BYTES = 10 * 1024 * 1024;
+const MAX_FEED_REDIRECTS = 5;
 
 function safePathname(pathname: string): boolean {
     if (pathname.includes("\\") || /%(?:2f|5c)/i.test(pathname)) return false;
@@ -137,18 +138,7 @@ export default class CalDav implements PlatformInterface {
     read(job: ActivityStream, done: PlatformCallback): void {
         const query = (job.object ?? {}) as QueryInput;
         this.feedUrl(job.target?.id ?? "")
-            .then(async (url) => {
-                try {
-                    const response = await safeFetch(url.href, {
-                        dispatcher: this.dispatcher(),
-                        timeoutMs: this.config.connectTimeoutMs,
-                        headers: { accept: "text/calendar, */*;q=0.1" },
-                    });
-                    return { url, body: await response.text() };
-                } catch (error) {
-                    throw new CalDavFailure("caldav:feed-failed", error);
-                }
-            })
+            .then((url) => this.fetchFeed(url))
             .then(({ url, body }) => {
                 let feed: ReturnType<typeof parseICalendarFeed>;
                 try {
@@ -311,6 +301,63 @@ export default class CalDav implements PlatformInterface {
                 maxResponseBytes: MAX_FEED_BYTES,
             });
         return this.feedDispatcher;
+    }
+
+    /** Fetch a feed and apply the HTTP policy to every redirect hop. */
+    private async fetchFeed(start: URL): Promise<{ url: URL; body: string }> {
+        let current = start;
+        const timeoutMs = this.config.connectTimeoutMs;
+        const signal =
+            timeoutMs !== undefined && timeoutMs > 0
+                ? AbortSignal.timeout(timeoutMs)
+                : undefined;
+        for (let hop = 0; hop <= MAX_FEED_REDIRECTS; hop += 1) {
+            let response: Response;
+            try {
+                response = await fetch(current.href, {
+                    dispatcher: this.dispatcher(),
+                    redirect: "manual",
+                    ...(signal ? { signal } : {}),
+                    headers: { accept: "text/calendar, */*;q=0.1" },
+                } as RequestInit);
+            } catch (error) {
+                throw new CalDavFailure("caldav:feed-failed", error);
+            }
+            if (response.status >= 300 && response.status < 400) {
+                const location = response.headers.get("location");
+                await response.body?.cancel().catch(() => {});
+                if (!location || hop === MAX_FEED_REDIRECTS)
+                    throw new CalDavFailure("caldav:feed-failed");
+                current = this.followFeedUrl(location, current);
+                continue;
+            }
+            if (!response.ok) {
+                await response.body?.cancel().catch(() => {});
+                throw new CalDavFailure("caldav:feed-failed");
+            }
+            try {
+                return { url: current, body: await response.text() };
+            } catch (error) {
+                throw new CalDavFailure("caldav:feed-failed", error);
+            }
+        }
+        throw new CalDavFailure("caldav:feed-failed");
+    }
+
+    private followFeedUrl(location: string, current: URL): URL {
+        let url: URL;
+        try {
+            url = new URL(location, current);
+        } catch {
+            throw new CalDavFailure("caldav:feed-failed");
+        }
+        if (url.protocol === "http:" && !this.config.allowInsecureHttp)
+            throw new CalDavFailure("caldav:https-required");
+        if (url.protocol !== "https:" && url.protocol !== "http:")
+            throw new CalDavFailure("caldav:feed-failed");
+        url.username = "";
+        url.password = "";
+        return url;
     }
 
     private async feedUrl(id: string): Promise<URL> {
