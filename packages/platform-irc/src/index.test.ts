@@ -1253,6 +1253,79 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.credentials.actor.id).toEqual(storedActorId);
             });
 
+            it("does not reclaim a released nick when the next command uses it", async () => {
+                const delivered: Array<ActivityStream> = [];
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                const storedNick = platform.credentials.object.nick;
+                const storedActorId = platform.credentials.actor.id;
+                let updates = 0;
+                platform.updateActor = async () => {
+                    updates += 1;
+                    if (updates === 1) {
+                        throw new Error("redis down");
+                    }
+                };
+                const forced = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "Guest12345@irc.example.com",
+                        name: "Guest12345",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+
+                platform.irc2as.events.emit("incoming", forced);
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+
+                // The client was told the rename failed, so it keeps sending
+                // as the nick the server already released.
+                let left: unknown = "pending";
+                platform.leave(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "leave",
+                        actor: actor,
+                        target: targetRoom,
+                    },
+                    (err: unknown) => {
+                        left = err;
+                    },
+                );
+                expect(left).toBeUndefined();
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+
+                const stranger = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "other@irc.example.com",
+                        name: "other",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", stranger);
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(updates).toEqual(1);
+                expect(delivered[1]).toEqual(stranger);
+                expect(platform.credentials.object.nick).toEqual(storedNick);
+                expect(platform.credentials.actor.id).toEqual(storedActorId);
+                expect(
+                    platform.handledActors.has("other@irc.example.com"),
+                ).toEqual(false);
+                expect(platform.handledActors.has(forced.target.id)).toEqual(
+                    true,
+                );
+            });
+
             it("does not complete an unrelated in-flight send on forced rename", async () => {
                 const delivered: Array<ActivityStream> = [];
                 platform.sendToClient = (msg: ActivityStream) => {
