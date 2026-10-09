@@ -670,6 +670,27 @@ export class IRC implements PersistentPlatformInterface {
         }
     }
 
+    /**
+     * Record `key` as a nick this socket holds.
+     *
+     * A live connection already knows its nick. Later commands are addressed
+     * as the actor the client still has stored. After a rename the server
+     * applied but we could not store, that actor is the nick this socket
+     * released. Adding it again makes the next person who takes it, and then
+     * changes nick, look like this session: their rename is stored as ours
+     * and the client follows an identity this connection does not hold.
+     */
+    private rememberSocketActor(key: string): void {
+        if (
+            this.client &&
+            this.handledActors.size > 0 &&
+            !this.handledActors.has(key)
+        ) {
+            return;
+        }
+        this.handledActors.add(key);
+    }
+
     private getClient(
         key: string,
         credentials: PlatformIrcCredentialsObject | false,
@@ -679,7 +700,7 @@ export class IRC implements PersistentPlatformInterface {
             `getClient called, connecting: ${this.clientConnecting}`,
         );
         if (this.client) {
-            this.handledActors.add(key);
+            this.rememberSocketActor(key);
             return cb(null, this.client);
         }
 
@@ -690,7 +711,7 @@ export class IRC implements PersistentPlatformInterface {
                     this.log.debug(
                         `resolving delayed getClient call for ${key}`,
                     );
-                    this.handledActors.add(key);
+                    this.rememberSocketActor(key);
                     return cb(null, this.client);
                 }
                 return cb("failed to get irc client, please try again.");
@@ -709,7 +730,7 @@ export class IRC implements PersistentPlatformInterface {
                 this.initialized = false;
                 return cb(err);
             }
-            this.handledActors.add(key);
+            this.rememberSocketActor(key);
             this.client = client;
             this.credentials = credentials;
             this.registerListeners(credentials.object.server);
