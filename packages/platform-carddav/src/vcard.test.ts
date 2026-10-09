@@ -64,6 +64,35 @@ describe("vCard", () => {
         ).toBe(name);
     });
 
+    it("writes N list components as comma-separated items and reads them back", () => {
+        const built = buildVCard({
+            type: "person",
+            uid: "alice-1",
+            name: "Dr. Alice Mary Ann Example, Jr.",
+            familyName: "Example, Sr.",
+            givenName: "Alice",
+            additionalNames: ["Mary, Ann", "Lee"],
+            honorificPrefixes: ["Dr."],
+            honorificSuffixes: ["Jr.", "PhD"],
+        });
+        expect(built.body).toContain(
+            "N:Example\\, Sr.;Alice;Mary\\, Ann,Lee;Dr.;Jr.,PhD\r\n",
+        );
+        const parsed = parseVCard(built.body, "https://dav.example/alice.vcf");
+        expect(parsed.familyName).toBe("Example, Sr.");
+        expect(parsed.additionalNames).toEqual(["Mary, Ann", "Lee"]);
+        expect(parsed.honorificPrefixes).toEqual(["Dr."]);
+        expect(parsed.honorificSuffixes).toEqual(["Jr.", "PhD"]);
+    });
+
+    it("keeps an escaped comma inside a single N list item", () => {
+        const parsed = parseVCard(
+            "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nN:;Alice;Mary\\, Ann;;\r\nEND:VCARD\r\n",
+            "https://dav.example/alice.vcf",
+        );
+        expect(parsed.additionalNames).toEqual(["Mary, Ann"]);
+    });
+
     it("rejects malformed cards", () => {
         expect(() =>
             parseVCard("NOPE", "https://dav.example/a.vcf"),
