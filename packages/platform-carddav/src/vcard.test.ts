@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildVCard, parseVCard } from "./vcard.js";
+import { buildVCard, parseVCard, prepareVCardUpdate } from "./vcard.js";
 
 describe("vCard", () => {
     it("parses public contact fields, URL photos, and preserves unknown properties", () => {
@@ -136,6 +136,96 @@ describe("vCard", () => {
                 { raw: "X-BAD:one\r\nX-INJECT:two" },
             ]),
         ).toThrow("invalid preserved vCard property");
+    });
+
+    const richCard = [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        "UID:alice-1",
+        "FN:Alice",
+        "N:;Alice;;;",
+        "NICKNAME:Bob,Bobby",
+        "ORG;TYPE=work:Acme;Engineering",
+        "PHOTO;VALUE=URI:https://example.test/alice.jpg",
+        "PHOTO;ENCODING=b;TYPE=JPEG:aGVsbG8=",
+        "X-SERVER:keep",
+        "END:VCARD",
+        "",
+    ].join("\r\n");
+
+    function rewrite(
+        patch: Record<string, unknown>,
+        mutate?: (input: Record<string, unknown>) => void,
+    ): string {
+        const stored = parseVCard(richCard, "https://dav.example/alice.vcf");
+        const input = JSON.parse(JSON.stringify(stored)) as Record<
+            string,
+            unknown
+        >;
+        Object.assign(input, patch);
+        mutate?.(input);
+        const prepared = prepareVCardUpdate(
+            input as Parameters<typeof prepareVCardUpdate>[0],
+            stored,
+        );
+        return buildVCard(
+            prepared.input,
+            prepared.preserved,
+            prepared.retainedLines,
+        ).body;
+    }
+
+    it("keeps organization units, nicknames, and inline photos on an echoed update", () => {
+        const body = rewrite({ name: "Alice Updated" });
+        expect(body).toContain("FN:Alice Updated\r\n");
+        expect(body).toContain("NICKNAME:Bob,Bobby\r\n");
+        expect(body).not.toContain("NICKNAME:Bob\\,Bobby");
+        expect(body).toContain("ORG;TYPE=work:Acme;Engineering\r\n");
+        expect(body).toContain(
+            "PHOTO;VALUE=URI:https://example.test/alice.jpg\r\n",
+        );
+        expect(body).toContain("PHOTO;ENCODING=b;TYPE=JPEG:aGVsbG8=\r\n");
+        expect(body).toContain("X-SERVER:keep\r\n");
+    });
+
+    it("keeps the rest of ORG when only the organization name changes", () => {
+        const body = rewrite({ organization: "Other" });
+        expect(body).toContain("ORG;TYPE=work:Other;Engineering\r\n");
+        expect(body).not.toContain("ORG;TYPE=work:Acme");
+        expect(body).toContain("NICKNAME:Bob,Bobby\r\n");
+    });
+
+    it("escapes a new organization name without starting a new content line", () => {
+        const body = rewrite({ organization: "Acme\r\nNOTE:injected" });
+        expect(body).toContain(
+            "ORG;TYPE=work:Acme\\nNOTE:injected;Engineering\r\n",
+        );
+        expect(body).not.toContain("\nNOTE:injected");
+    });
+
+    it("removes organization and nickname when the update omits them", () => {
+        const body = rewrite({}, (input) => {
+            delete input.organization;
+            delete input.nickname;
+        });
+        expect(body).not.toContain("ORG");
+        expect(body).not.toContain("NICKNAME");
+        expect(body).not.toContain("Engineering");
+        expect(body).toContain("PHOTO;ENCODING=b;TYPE=JPEG:aGVsbG8=");
+        expect(body).toContain("https://example.test/alice.jpg");
+    });
+
+    it("drops inline photos when the client changes photo URLs", () => {
+        const body = rewrite({
+            photoUrls: ["https://example.test/new.jpg"],
+        });
+        expect(body).toContain(
+            "PHOTO;VALUE=uri:https://example.test/new.jpg\r\n",
+        );
+        expect(body).not.toContain("alice.jpg");
+        expect(body).not.toContain("aGVsbG8=");
+        expect(body).toContain("X-SERVER:keep\r\n");
+        expect(body).toContain("ORG;TYPE=work:Acme;Engineering\r\n");
     });
 
     it("normalizes carriage returns in text values without adding content lines", () => {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { CardDavClient } from "./dav.js";
+import { parseVCard } from "./vcard.js";
 
 const originalFetch = globalThis.fetch;
 afterEach(() => {
@@ -94,5 +95,63 @@ describe("CardDAV client", () => {
             }),
         ).rejects.toEqual(expect.objectContaining({ code: "carddav:conflict" }));
         expect(ifMatch).toBe('"v1"');
+    });
+
+    it("keeps fields an echoed update does not edit", async () => {
+        const source = [
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            "UID:alice-1",
+            "FN:Alice",
+            "N:;Alice;;;",
+            "NICKNAME:Bob,Bobby",
+            "ORG;TYPE=work:Acme;Engineering",
+            "PHOTO;VALUE=URI:https://example.test/alice.jpg",
+            "PHOTO;ENCODING=b;TYPE=JPEG:aGVsbG8=",
+            "X-SERVER:keep",
+            "END:VCARD",
+            "",
+        ].join("\r\n");
+        let written = "";
+        globalThis.fetch = (async (
+            _url: URL | RequestInfo,
+            init?: RequestInit,
+        ) => {
+            if (init?.method === "GET") return new Response(source);
+            written = init?.body?.toString() ?? "";
+            return new Response(null, {
+                status: 204,
+                headers: { etag: '"v2"' },
+            });
+        }) as typeof fetch;
+        const echoed = JSON.parse(
+            JSON.stringify(
+                parseVCard(
+                    source,
+                    "https://dav.example/books/alice/alice.vcf",
+                    '"v1"',
+                ),
+            ),
+        ) as {
+            name: string;
+            id: string;
+            uid: string;
+            etag: string;
+            type: "person";
+        };
+        echoed.name = "Alice Updated";
+        const client = new CardDavClient("https://dav.example/", {
+            token: "access-token",
+        });
+        await client.update(echoed);
+        expect(written).toContain("FN:Alice Updated\r\n");
+        expect(written).toContain("NICKNAME:Bob,Bobby\r\n");
+        expect(written).not.toContain("NICKNAME:Bob\\,Bobby");
+        expect(written).toContain("ORG;TYPE=work:Acme;Engineering\r\n");
+        expect(written).toContain(
+            "PHOTO;VALUE=URI:https://example.test/alice.jpg\r\n",
+        );
+        expect(written).toContain("PHOTO;ENCODING=b;TYPE=JPEG:aGVsbG8=\r\n");
+        expect(written).toContain("X-SERVER:keep\r\n");
     });
 });
