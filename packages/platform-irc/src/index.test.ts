@@ -872,6 +872,119 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.handledActors.has(newActor.id)).toEqual(false);
             });
 
+            it("does not let the PONG from a successful nick change complete the next join", async () => {
+                const creds = structuredClone(validCredentials);
+                let nickResult: unknown = "pending";
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        nickResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                platform.irc2as.input(":testingham!u@h NICK testler");
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(nickResult).toEqual(null);
+                expect(platform.jobQueue.length).toEqual(0);
+
+                const otherRoom = {
+                    type: "room",
+                    id: "#other-room@irc.example.com",
+                    name: "#other-room",
+                };
+                let joinResult: unknown = "pending";
+                platform.join(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "join",
+                        actor: creds.actor,
+                        target: otherRoom,
+                    },
+                    (err: unknown) => {
+                        joinResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // This PONG answers the PING sent with the nick change. The
+                // next join is already queued, which is what happens when
+                // Redis starts it before the remote PONG arrives.
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+                expect(joinResult).toEqual("pending");
+                expect(platform.channels.has("#other-room")).toEqual(false);
+                expect(platform.jobQueue.length).toEqual(1);
+
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+                expect(joinResult).toEqual(null);
+                expect(platform.channels.has("#other-room")).toEqual(true);
+                expect(platform.jobQueue.length).toEqual(0);
+            });
+
+            it("still acknowledges a join when the nick change PONG arrived first", async () => {
+                const creds = structuredClone(validCredentials);
+                let nickResult: unknown = "pending";
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        nickResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                platform.irc2as.input(":testingham!u@h NICK testler");
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(nickResult).toEqual(null);
+
+                const otherRoom = {
+                    type: "room",
+                    id: "#other-room@irc.example.com",
+                    name: "#other-room",
+                };
+                let joinResult: unknown = "pending";
+                platform.join(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "join",
+                        actor: creds.actor,
+                        target: otherRoom,
+                    },
+                    (err: unknown) => {
+                        joinResult = err ?? null;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                platform.irc2as.input(
+                    ":irc.example.com PONG irc.example.com :testingham",
+                );
+
+                expect(joinResult).toEqual(null);
+                expect(platform.channels.has("#other-room")).toEqual(true);
+                expect(platform.jobQueue.length).toEqual(0);
+            });
+
             it("fails a nick change when the server replies that the nick is in use", async () => {
                 const creds = structuredClone(validCredentials);
                 let failure: unknown;
