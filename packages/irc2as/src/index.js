@@ -7,10 +7,15 @@ const EVENT_PONG = "pong";
 const EVENT_PING = "ping";
 const EVENT_UNPROCESSED = "unprocessed";
 
+const ERR_NO_NICK_GIVEN = "431";
 const ERR_BAD_NICK = "432";
 const ERR_CHAN_PRIVS = "482";
 const ERR_NICK_IN_USE = "433";
+const ERR_NICK_COLLISION = "436";
 const ERR_TEMP_UNAVAIL = "437";
+// Not in RFC 1459. solanum (Libera), ircu, and Unreal send it when a nick
+// change exceeds the server's nick-flood limit.
+const ERR_NICK_TOO_FAST = "438";
 const ERR_NO_CHANNEL = "403";
 const ERR_NOT_INVITED = "471";
 const ERR_BADMODE = "472";
@@ -154,9 +159,15 @@ export class IrcToActivityStreams {
                 break;
 
             /** */
+            case ERR_NO_NICK_GIVEN:
             case ERR_NICK_IN_USE: // nick conflict
             case ERR_BAD_NICK:
-                ase.serviceError(pos2, content);
+            case ERR_NICK_COLLISION:
+            case ERR_NICK_TOO_FAST:
+                // A nick change completes only on the NICK echo or on an
+                // error event. Leaving these as unprocessed drops the
+                // rejection on the floor and the command waits forever.
+                ase.serviceError(pos2, trailingParam(content, pos3));
                 break;
 
             /** */
