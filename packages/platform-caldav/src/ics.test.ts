@@ -91,6 +91,26 @@ describe("iCalendar feed parsing", () => {
         expect(() => parseICalendarFeed("<html></html>", source)).toThrow("not an iCalendar document");
         expect(parseICalendarFeed("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", source)).toEqual({ items: [], skipped: 0 });
     });
+
+    it("still reads a later component when earlier begin lines are unclosed", () => {
+        const unclosed = "BEGIN:VEVENT\r\n".repeat(30_000);
+        const body = [
+            "BEGIN:VCALENDAR",
+            unclosed.trimEnd(),
+            "BEGIN:VTODO",
+            "UID:task@example",
+            "SUMMARY:File taxes",
+            "DUE:20260301T120000Z",
+            "END:VTODO",
+            "END:VCALENDAR",
+            "",
+        ].join("\r\n");
+        const started = Date.now();
+        const result = parseICalendarFeed(body, source);
+        expect(Date.now() - started).toBeLessThan(1000);
+        expect(result.skipped).toBe(0);
+        expect(result.items.map((item) => item.uid)).toEqual(["task@example"]);
+    });
 });
 
 describe("time-range matching", () => {
