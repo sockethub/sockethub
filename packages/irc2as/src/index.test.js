@@ -189,6 +189,31 @@ describe("IrcToActivityStreams", () => {
         irc2as.input(":alice!user@example.test PRIVMSG #room :see :this");
     });
 
+    it("reports nick-change rejections that are not RFC 433", (done) => {
+        const seen = [];
+        irc2as.events.on("error", (stream) => {
+            seen.push([stream.actor.id, stream.error]);
+        });
+        irc2as.events.on("unprocessed", () => {
+            done(new Error("nick rejection was left unprocessed"));
+        });
+        irc2as.input(
+            ":irc.example.net 438 alice bob :Nick change too fast. Please wait 29 seconds.",
+        );
+        irc2as.input(
+            ":irc.example.net 436 alice bob :Nickname collision KILL",
+        );
+        irc2as.input(":irc.example.net 431 alice :No nickname given");
+        irc2as.input(":irc.example.net 431 alice NoNick");
+        expect(seen).toEqual([
+            ["bob@localhost", "Nick change too fast. Please wait 29 seconds."],
+            ["bob@localhost", "Nickname collision KILL"],
+            ["alice@localhost", "No nickname given"],
+            ["alice@localhost", "NoNick"],
+        ]);
+        done();
+    });
+
     it("reads a nick change that omits the trailing colon", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.actor).toEqual({

@@ -1068,6 +1068,43 @@ describe("Initialize IRC Platform", () => {
                 expect(creds.actor.id).toEqual(actor.id);
             });
 
+            it("fails a nick change when the server says it is too fast", async () => {
+                const creds = structuredClone(validCredentials);
+                let failure: unknown;
+                platform.update(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "update",
+                        actor: actor,
+                        object: { type: "address" },
+                        target: newActor,
+                    },
+                    creds,
+                    (err: unknown) => {
+                        failure = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                // solanum, ircu, and Unreal reject a nick change past the
+                // flood limit with 438. That numeric used to be unprocessed,
+                // and a nick change only completes on nickAck or an error, so
+                // the PONG for the trailing PING never unblocked the command.
+                // Every later join or send then waited behind it.
+                platform.irc2as.input(
+                    ":irc.example.com 438 testingham testler :Nick change too fast. Please wait 29 seconds.",
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+
+                expect(failure).toEqual(
+                    "Nick change too fast. Please wait 29 seconds.",
+                );
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(platform.handledActors.has(actor.id)).toEqual(true);
+                expect(platform.handledActors.has(newActor.id)).toEqual(false);
+                expect(creds.object.nick).toEqual("testingham");
+            });
+
             it("does not throw when a numeric error arrives with no command in flight", () => {
                 platform.ircConnect(validCredentials, () => {});
                 expect(() => {
