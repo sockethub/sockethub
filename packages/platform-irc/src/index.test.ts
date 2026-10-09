@@ -1109,6 +1109,87 @@ describe("Initialize IRC Platform", () => {
                 );
             });
 
+            it("drops the socket when a forced nick cannot be stored", async () => {
+                const delivered: Array<ActivityStream> = [];
+                let ended = false;
+                platform.client.end = () => {
+                    ended = true;
+                };
+                platform.sendToClient = (msg: ActivityStream) => {
+                    delivered.push(msg);
+                };
+                const storedNick = platform.credentials.object.nick;
+                const storedActorId = platform.credentials.actor.id;
+                platform.updateActor = async () => {
+                    throw new Error(
+                        "cannot rename testingham@irc.example.com to Guest12345@irc.example.com: credentials already stored for Guest12345@irc.example.com",
+                    );
+                };
+                const forced = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "Guest12345@irc.example.com",
+                        name: "Guest12345",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+
+                let sendResult: unknown = "pending";
+                platform.send(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "send",
+                        actor: actor,
+                        object: { content: "still sending" },
+                        target: targetRoom,
+                    } as ActivityStream,
+                    (err: unknown) => {
+                        sendResult = err;
+                    },
+                );
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(platform.jobQueue.length).toEqual(1);
+
+                platform.irc2as.events.emit("incoming", forced);
+                await new Promise((resolve) => setImmediate(resolve));
+
+                const collision =
+                    "cannot rename testingham@irc.example.com to Guest12345@irc.example.com: credentials already stored for Guest12345@irc.example.com";
+                expect(delivered).toEqual([{ ...forced, error: collision }]);
+                expect(sendResult).toEqual(collision);
+                expect(platform.jobQueue.length).toEqual(0);
+                expect(ended).toEqual(true);
+                expect(platform.client).toBeUndefined();
+                expect(platform.isInitialized()).toEqual(false);
+                expect(platform.handledActors.has(actor.id)).toEqual(false);
+                expect(platform.handledActors.has(forced.target.id)).toEqual(
+                    false,
+                );
+                expect(platform.channels.has("#a-room")).toEqual(false);
+                expect(platform.credentials.object.nick).toEqual(storedNick);
+                expect(platform.credentials.actor.id).toEqual(storedActorId);
+
+                // Whoever takes the released nick must not be adopted.
+                const stranger = {
+                    "@context": IRC_CONTEXT,
+                    type: "update",
+                    actor: { type: "person", id: actor.id, name: actor.name },
+                    target: {
+                        type: "person",
+                        id: "other@irc.example.com",
+                        name: "other",
+                    },
+                    object: { type: "address" },
+                } as ActivityStream;
+                platform.irc2as.events.emit("incoming", stranger);
+                await new Promise((resolve) => setImmediate(resolve));
+                expect(delivered[1]).toEqual(stranger);
+                expect(platform.credentials.actor.id).toEqual(storedActorId);
+            });
+
             it("does not complete an unrelated in-flight send on forced rename", async () => {
                 const delivered: Array<ActivityStream> = [];
                 platform.sendToClient = (msg: ActivityStream) => {

@@ -163,6 +163,8 @@ export class IRC implements PersistentPlatformInterface {
     private forceDisconnect = false;
     private clientConnecting = false;
     private initialized = false;
+    // Guards releaseConnection against the socket 'close' it triggers.
+    private releasing = false;
     private client?: IrcSocketInstance;
     private jobQueue: Array<QueuedJob> = []; // handlers waiting for a matching ack
     // A numeric error completes the in-flight command before its PING is
@@ -453,19 +455,28 @@ export class IRC implements PersistentPlatformInterface {
                         if (err) {
                             return done(err);
                         }
-                        credentials.object.nick = job.target.name;
-                        credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
-                        credentials.actor.name = job.target.name;
-                        this.credentials = credentials;
+                        const updated = structuredClone(credentials);
+                        updated.object.nick = job.target.name;
+                        updated.actor.id = `${job.target.name}@${credentials.object.server}`;
+                        updated.actor.name = job.target.name;
                         try {
-                            await this.updateActor(credentials);
+                            await this.updateActor(updated);
                         } catch (updateErr) {
                             const message =
                                 updateErr instanceof Error
                                     ? updateErr.message
                                     : String(updateErr);
+                            // The server already accepted the nick. Keeping
+                            // the socket would leave us on a nick that was
+                            // not stored, with the old nick still marked as
+                            // ours.
+                            this.releaseConnection(message);
                             return done(message);
                         }
+                        credentials.object.nick = updated.object.nick;
+                        credentials.actor.id = updated.actor.id;
+                        credentials.actor.name = updated.actor.name;
+                        this.credentials = updated;
                         // The previous nick now belongs to whoever takes it next.
                         // Leaving it here drops their traffic: an event whose
                         // actor is in this set completes a job instead of being
@@ -741,13 +752,27 @@ export class IRC implements PersistentPlatformInterface {
             is_secure ? tlsTransport : net,
         );
 
+        // The close/error/timeout listeners stay attached for the life of
+        // the socket. The connect callback may run only once; a later close
+        // (including one we initiate after a nick we could not store) must
+        // not complete that original connect job a second time.
+        let settled = false;
         const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;
             this.clientConnecting = false;
+            if (settled) {
+                this.releaseConnection(err);
+                return;
+            }
+            settled = true;
             if (client && typeof client.end === "function") {
                 client.end();
             }
-            if (this.client && typeof this.client.end === "function") {
+            if (
+                this.client &&
+                this.client !== client &&
+                typeof this.client.end === "function"
+            ) {
                 this.client.end();
             }
             cb(err);
@@ -769,15 +794,21 @@ export class IRC implements PersistentPlatformInterface {
         });
 
         client.connect().then((res: IrcSocketConnectResponse) => {
+            if (settled) {
+                return;
+            }
             if (res.isFail()) {
+                settled = true;
                 return cb(`unable to connect to server: ${res.fail()}`);
             }
             const capabilities = res.ok();
             this.clientConnecting = false;
             if (this.forceDisconnect) {
+                settled = true;
                 client.end();
                 return cb("force disconnect active, aborting connect.");
             }
+            settled = true;
 
             this.log.debug(
                 `connected to ${module_options.server} capabilities: `,
@@ -825,23 +856,68 @@ export class IRC implements PersistentPlatformInterface {
         const oldActorId = asObject.actor.id;
         const newNick = asObject.target.name;
         const server = this.credentials.object.server;
-
-        this.credentials.object.nick = newNick;
-        this.credentials.actor.id = `${newNick}@${server}`;
-        this.credentials.actor.name = newNick;
+        const updated = structuredClone(this.credentials);
+        updated.object.nick = newNick;
+        updated.actor.id = `${newNick}@${server}`;
+        updated.actor.name = newNick;
 
         try {
-            await this.updateActor(this.credentials);
-            this.handledActors.delete(oldActorId);
-            this.handledActors.add(this.credentials.actor.id);
+            await this.updateActor(updated);
         } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
             this.log.error("failed to adopt forced nick change", err);
+            // The server already moved this connection. Reporting the rename
+            // as a success makes the client retarget its replay state at the
+            // new actor and, on the next reconnect, overwrite the account
+            // stored there. The previous nick is free; leaving it in
+            // handledActors adopts whoever takes it next, including their
+            // nick changes. Drop the socket instead.
+            this.sendToClient({ ...asObject, error: message });
+            this.releaseConnection(message);
+            return;
         }
+
+        this.credentials = updated;
+        this.handledActors.delete(oldActorId);
+        this.handledActors.add(updated.actor.id);
 
         this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
             ...this.handledActors.keys(),
         ]);
         this.sendToClient(asObject);
+    }
+
+    /**
+     * Forget the live IRC socket after a nick the server applied could not
+     * be stored. In-flight commands are failed so they do not wait on a
+     * PONG from a socket we are closing.
+     */
+    private releaseConnection(reason: string) {
+        if (this.releasing) {
+            return;
+        }
+        this.releasing = true;
+        this.initialized = false;
+        this.clientConnecting = false;
+        this.pongAcksToSkip = 0;
+        this.handledActors.clear();
+        this.channels.clear();
+        const client = this.client;
+        this.client = undefined;
+        while (this.jobQueue.length > 0) {
+            this.completeJob(reason);
+        }
+        if (client && typeof client.end === "function") {
+            try {
+                client.end();
+            } catch (closeErr) {
+                this.log.error(
+                    "failed to close IRC socket after nick change",
+                    closeErr,
+                );
+            }
+        }
+        this.releasing = false;
     }
 
     private registerListeners(server: string) {
