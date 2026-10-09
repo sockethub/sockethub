@@ -86,6 +86,11 @@ type JobAck = "pong" | "nickAck";
 interface QueuedJob {
     handler: JobQueueHandler;
     ack: JobAck;
+    /**
+     * The PING sent after a nick change was already answered. Completion
+     * must not also skip a later PONG, or the next command never finishes.
+     */
+    pongSeen?: boolean;
 }
 
 const IRC_LINE_BREAK = /[\r\n]/;
@@ -844,7 +849,13 @@ export class IRC implements PersistentPlatformInterface {
                     // already be waiting on a PONG of its own; leaving this
                     // one outstanding would acknowledge that command with
                     // success. Same leftover-PONG race as a numeric error.
-                    this.pongAcksToSkip += 1;
+                    // A bouncer that answers PING locally can deliver that
+                    // PONG before the upstream echo. It was ignored because
+                    // this job is not waiting on a PONG, so skipping another
+                    // one would drop the next command's acknowledgement.
+                    if (!this.jobQueue[0].pongSeen) {
+                        this.pongAcksToSkip += 1;
+                    }
                     this.completeJob();
                     return;
                 }
@@ -872,8 +883,11 @@ export class IRC implements PersistentPlatformInterface {
                 // The numeric reply arrives first, so this PONG is still in
                 // flight. On a remote server it lands after the worker has
                 // already started the next queued command, and it would
-                // complete that command with success.
-                this.pongAcksToSkip += 1;
+                // complete that command with success. A nick change that
+                // already observed its PONG must not skip a second one.
+                if (!this.jobQueue[0].pongSeen) {
+                    this.pongAcksToSkip += 1;
+                }
                 this.completeJob(message);
             }
         });
@@ -882,6 +896,13 @@ export class IRC implements PersistentPlatformInterface {
             this.log.debug(`received PONG at ${timestamp}`);
             if (this.pongAcksToSkip > 0) {
                 this.pongAcksToSkip -= 1;
+                return;
+            }
+            // A nick change completes on the echo, not this PONG. Remember
+            // that the trailing PING was already answered so the echo does
+            // not skip the next command's PONG.
+            if (this.jobQueue[0]?.ack === "nickAck") {
+                this.jobQueue[0].pongSeen = true;
                 return;
             }
             if (this.jobQueue[0]?.ack === "pong") {
