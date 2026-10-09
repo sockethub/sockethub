@@ -13,6 +13,49 @@ const COMPONENT_NAMES: Record<string, CalendarComponent> = {
     VTODO: "task",
 };
 
+/**
+ * One event or task, delimited the same way as a lazy BEGIN/END match:
+ * the first closing line of that component ends it, and a BEGIN with no
+ * closer anywhere later is skipped so a following component can still match.
+ */
+function calendarComponents(
+    unfolded: string,
+): Array<{ name: string; block: string; section: string }> {
+    const lines = unfolded.split(/\r?\n/);
+    const found: Array<{ name: string; block: string; section: string }> = [];
+    // Once a component name has no END later in the feed, further BEGIN lines
+    // of that name cannot match either. Remembering that keeps this scan
+    // linear: a global lazy regex retries from every BEGIN and is quadratic
+    // on a feed of unclosed lines, which blocks the platform process.
+    const exhausted = new Set<string>();
+    for (let index = 0; index < lines.length; index += 1) {
+        if (exhausted.size === 2) break;
+        const name = /^BEGIN:(VEVENT|VTODO)$/.exec(
+            lines[index].replace(/\r$/, ""),
+        )?.[1];
+        if (!name || exhausted.has(name)) continue;
+        const closing = `END:${name}`;
+        let end = index + 1;
+        while (
+            end < lines.length &&
+            lines[end].replace(/\r$/, "") !== closing
+        ) {
+            end += 1;
+        }
+        if (end >= lines.length) {
+            exhausted.add(name);
+            continue;
+        }
+        found.push({
+            name,
+            section: lines.slice(index + 1, end).join("\r\n"),
+            block: lines.slice(index, end + 1).join("\r\n"),
+        });
+        index = end;
+    }
+    return found;
+}
+
 function unfold(body: string): string {
     return body.replace(/\r?\n[ \t]/g, "");
 }
@@ -91,21 +134,18 @@ export function parseICalendarFeed(
     const calendarName = propertyValue(unfolded, "X-WR-CALNAME");
     const items: CalendarItem[] = [];
     let skipped = 0;
-    for (const match of unfolded.matchAll(
-        /^BEGIN:(VEVENT|VTODO)\r?\n([\s\S]*?)^END:\1\r?$/gm,
-    )) {
-        const component = COMPONENT_NAMES[match[1]];
+    for (const match of calendarComponents(unfolded)) {
+        const component = COMPONENT_NAMES[match.name];
         if (query.type && query.type !== component) continue;
-        const section = match[2];
-        const uid = propertyValue(section, "UID") ?? "";
-        const recurrenceId = propertyValue(section, "RECURRENCE-ID");
+        const uid = propertyValue(match.section, "UID") ?? "";
+        const recurrenceId = propertyValue(match.section, "RECURRENCE-ID");
         const fragment =
             encodeURIComponent(unescapeText(uid)) +
             (recurrenceId ? `/${encodeURIComponent(recurrenceId)}` : "");
         let item: CalendarItem;
         try {
             item = parseICalendar(
-                `BEGIN:VCALENDAR\r\n${match[0]}\r\nEND:VCALENDAR\r\n`,
+                `BEGIN:VCALENDAR\r\n${match.block}\r\nEND:VCALENDAR\r\n`,
                 `${sourceUrl}#${fragment}`,
             );
         } catch {
