@@ -377,6 +377,12 @@ export interface ClientInitError {
  * - Connect commands (platform connections)
  * - Join commands (room/channel joins)
  *
+ * When one of this client's actors is renamed (an `update` with
+ * `object.type: "address"`, e.g. an IRC nick change, whether this client
+ * requested it and the server acknowledged it, or the server reported it),
+ * the stored entries move to the new actor so a reconnect replays the current
+ * identity rather than the old one.
+ *
  * @example
  * ```typescript
  * // Discover the Socket.IO endpoint from the server's base URL and connect
@@ -1252,12 +1258,17 @@ export default class SockethubClient {
                     }
                 }
             }
+            let callback = entry.callback;
             if (entry.event === "credentials") {
                 this.eventCredentials(outgoing as ActivityStream);
             } else if (entry.event === "message") {
                 this.eventMessage(outgoing as ActivityStream);
+                callback = this.rememberRequestedRename(
+                    outgoing as ActivityStream,
+                    callback,
+                );
             }
-            this._socket.emit(entry.event, outgoing, entry.callback);
+            this._socket.emit(entry.event, outgoing, callback);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.emitClientError(entry.event, entry.callback, message);
@@ -1299,8 +1310,144 @@ export default class SockethubClient {
         // use as middleware to receive incoming Sockethub messages and unpack them
         // Normalize and lint before passing them along to the app.
         this._socket.on("message", (obj) => {
-            this.socket._emit("message", normalizeActivityStream(obj));
+            const incoming = normalizeActivityStream(obj);
+            this.followActorRename(incoming);
+            this.socket._emit("message", incoming);
         });
+    }
+
+    /**
+     * True for the activity that reports or requests a nick change: an
+     * `update` whose object is an `address`, with `actor` the old identity
+     * and `target` the new one.
+     */
+    private isActorRename(activity: ActivityStream): boolean {
+        return (
+            activity?.type === "update" &&
+            activity.object?.type === "address" &&
+            this.hasActorId(activity) &&
+            typeof activity.target === "object" &&
+            typeof activity.target?.id === "string" &&
+            activity.target.id !== activity.actor.id
+        );
+    }
+
+    /**
+     * Keeps the replay maps on the actor the server now knows after a rename
+     * the server reported.
+     *
+     * A server-forced nick change arrives as an incoming `update` with
+     * `object.type: "address"`. The stored credentials, connect, and join
+     * entries are keyed by the actor at send time, so left alone a reconnect
+     * would replay the old nick and open a second connection under an
+     * identity this one no longer holds.
+     *
+     * Only entries for the renamed actor on that platform move. The maps hold
+     * only this client's own actors, and `rememberRequestedRename` keeps them
+     * on the nick this connection currently holds, so a rename of some other
+     * user (including one who later took a nick this client released) never
+     * matches a stored entry.
+     *
+     * A rejected nick change is not a rename. The server echoes the failed
+     * job — the original update plus `error` — to every other session sharing
+     * the connection. Following that echo would point those sessions at a
+     * nick the server refused, so their next command misses the live worker
+     * and opens a second connection.
+     */
+    private followActorRename(incoming: ActivityStream): void {
+        if (SockethubClient.isErrorResult(incoming)) {
+            return;
+        }
+        if (this.isActorRename(incoming)) {
+            this.moveReplayState(incoming);
+        }
+    }
+
+    /**
+     * Moves the replay maps when a nick change this client requested is
+     * acknowledged. The platform consumes the server's confirmation as the
+     * job's completion rather than delivering it as a message, so without
+     * this the maps would stay on the released nick: a reconnect would
+     * replay it, and whoever took it in the meantime could steer where
+     * `followActorRename` moves this client's state.
+     */
+    private rememberRequestedRename(
+        outgoing: ActivityStream,
+        callback: unknown,
+    ): unknown {
+        if (!this.isActorRename(outgoing)) {
+            return callback;
+        }
+        return (...args: unknown[]) => {
+            // Socket.IO delivers the ack as `(result)`, or as `(err, result)`
+            // when the socket was created with `ackTimeout`. A timeout or a
+            // dropped socket arrives as an Error in the first slot; the
+            // server reports a rejected rename as `{ error }` in whichever
+            // slot carries the result.
+            const [first, second] = args;
+            const failed =
+                first instanceof Error ||
+                SockethubClient.isErrorResult(first) ||
+                SockethubClient.isErrorResult(second);
+            if (!failed) {
+                this.moveReplayState(outgoing);
+            }
+            if (typeof callback === "function") {
+                callback(...args);
+            }
+        };
+    }
+
+    /**
+     * True for the `{ error }` object the server acks a failed job with.
+     */
+    private static isErrorResult(value: unknown): boolean {
+        return (
+            typeof value === "object" &&
+            value !== null &&
+            "error" in value &&
+            Boolean((value as { error?: unknown }).error)
+        );
+    }
+
+    /**
+     * Re-keys every stored entry for the rename's `actor` on its platform to
+     * its `target`. The credential object itself is left as the application
+     * sent it: the server keys the live connection on a fingerprint of that
+     * object, and the worker accepts the hash it was authorized with, so
+     * replaying the original object under the new actor is what lands back
+     * on the renamed connection.
+     */
+    private moveReplayState(rename: ActivityStream): void {
+        const previousId = rename.actor.id;
+        const target = rename.target as ActivityStream["actor"];
+        const nextId = target.id;
+        const nextName =
+            typeof target.name === "string" ? target.name : undefined;
+        const platform = resolvePlatformId(rename) ?? "";
+
+        for (const map of Object.values(this.events)) {
+            for (const [key, entry] of [...map]) {
+                if (
+                    !this.hasActorId(entry) ||
+                    entry.actor.id !== previousId ||
+                    (resolvePlatformId(entry) ?? "") !== platform
+                ) {
+                    continue;
+                }
+                const renamed: ActivityStream = {
+                    ...entry,
+                    actor: {
+                        ...entry.actor,
+                        id: nextId,
+                        ...(nextName ? { name: nextName } : {}),
+                    },
+                };
+                map.delete(key);
+                map.set(SockethubClient.getKey(renamed), renamed);
+                this.log(`replay state moved from ${previousId} to ${nextId}`);
+            }
+        }
     }
 
     /**

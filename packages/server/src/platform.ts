@@ -13,6 +13,7 @@
 import type { JobHandler } from "@sockethub/data-layer";
 import {
     buildCredentialsKey,
+    CredentialsMismatchError,
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
@@ -92,6 +93,36 @@ export interface CredentialStoreReader {
     objectHash?(object: unknown): string;
 }
 
+/**
+ * Checks a session's stored credential object against the hashes this
+ * connection has been authorized with.
+ *
+ * `currentHash` is unset until the first credentialed call succeeds, so
+ * that call is accepted as-is. After that the object must hash to the
+ * current value or to one in `acceptedHashes`: the hash the connection was
+ * first authorized with, plus the one each actor rename produced. A rename
+ * rewrites the nick inside the object this worker holds, but a client that
+ * reconnects replays the object it originally sent, keyed under the new
+ * actor. That object already proved it holds the secret for this
+ * connection; refusing it would detach the session from a connection it
+ * owns. A different secret still fails.
+ */
+export function assertAcceptedCredentials(
+    credentials: CredentialsObject,
+    currentHash: string | undefined,
+    acceptedHashes: ReadonlySet<string>,
+    key: string,
+): void {
+    if (!currentHash) {
+        return;
+    }
+    const hash = crypto.objectHash(credentials.object);
+    if (hash === currentHash || acceptedHashes.has(hash)) {
+        return;
+    }
+    throw new CredentialsMismatchError(`invalid credentials for ${key}`);
+}
+
 function credentialsNotFound(err: unknown): boolean {
     return (
         err instanceof Error &&
@@ -103,12 +134,14 @@ function credentialsNotFound(err: unknown): boolean {
  * Moves one session's stored credentials from the pre-rename actor to the new
  * actor. Skips peers that never stored the account being renamed. Refuses to
  * overwrite a different account already stored under the new actor id.
+ * `dryRun` runs the same checks without writing.
  */
 export async function renameActorCredentialsInStore(
     store: CredentialStoreReader,
     platformName: string,
     previousActorId: string,
     renamed: CredentialsObject,
+    options?: { dryRun?: boolean },
 ): Promise<"migrated" | "skipped"> {
     const newActorId = renamed.actor?.id;
     if (typeof newActorId !== "string" || newActorId.length === 0) {
@@ -146,6 +179,9 @@ export async function renameActorCredentialsInStore(
         }
     }
 
+    if (options?.dryRun) {
+        return "migrated";
+    }
     await store.save(newKey, renamed);
     return "migrated";
 }
@@ -262,6 +298,37 @@ async function startPlatformProcess() {
     // actor-change IPC so the parent can migrate credentials for every other
     // session sharing this connection.
     let actorUpdateSessionId: string | undefined;
+    // Actor id the in-flight job loaded credentials for, before the platform
+    // mutates that object to the new nick. Needed so the rename can refuse to
+    // overwrite a different account already stored at the target id.
+    let actorUpdatePreviousActorId: string | undefined;
+
+    function clearActorUpdateContext(): void {
+        credentialsStoreForActorUpdate = undefined;
+        actorUpdateSessionId = undefined;
+        actorUpdatePreviousActorId = undefined;
+    }
+    // Every hash `platform.credentialsHash` has held. Each entered either by
+    // passing validation or by an actor rename, so all of them identify the
+    // credentials this connection was authorized with; see
+    // `assertAcceptedCredentials`.
+    const acceptedCredentialHashes = new Set<string>();
+
+    /**
+     * Makes `hash` the platform's current credential hash while keeping the
+     * one it replaces accepted. No-op for stateless platforms, which never
+     * validate credentials across requests.
+     */
+    function adoptCredentialsHash(hash: string): void {
+        if (!isPersistentPlatform(platform)) {
+            return;
+        }
+        if (platform.credentialsHash) {
+            acceptedCredentialHashes.add(platform.credentialsHash);
+        }
+        acceptedCredentialHashes.add(hash);
+        platform.credentialsHash = hash;
+    }
     // Immutable queue name allocated when this worker was forked. Distinct
     // from `identifier`, which moves on actor rename and can be reused by a
     // later connection with the original actor.
@@ -301,6 +368,7 @@ async function startPlatformProcess() {
         log: logger, // Reuse the logger created above
         sendToClient: getSendFunction("message"),
         updateActor: updateActor,
+        prepareActorUpdate: prepareActorUpdate,
     };
 
     const platform: PlatformInterface = await (async () => {
@@ -596,33 +664,45 @@ async function startPlatformProcess() {
                     // For persistent platforms: undefined (or empty string) initially, then we set to hash after first
                     // successful call.
                     // For stateless platforms: always undefined (no validation, credentials used once per request)
-                    // CredentialsStore skips validation when credentialsHash is falsy (undefined or empty string)
+                    // assertAcceptedCredentials skips validation when credentialsHash is falsy (undefined or empty string)
                     const credentialsHash = isPersistentPlatform(platform)
                         ? platform.credentialsHash
                         : undefined;
+                    const credentialsKey = buildCredentialsKey(
+                        platformName,
+                        job.msg.actor.id,
+                    );
 
                     credentialStore
-                        .get(
-                            buildCredentialsKey(platformName, job.msg.actor.id),
-                            credentialsHash,
-                        )
+                        .get(credentialsKey)
                         .then((credentials) => {
+                            // Validated here rather than by passing the hash
+                            // to the store: a renamed connection accepts more
+                            // than one hash, and the store compares against
+                            // exactly one.
+                            assertAcceptedCredentials(
+                                credentials,
+                                credentialsHash,
+                                acceptedCredentialHashes,
+                                credentialsKey,
+                            );
                             credentialsStoreForActorUpdate = credentialStore;
                             actorUpdateSessionId = job.sessionId;
+                            actorUpdatePreviousActorId = job.msg.actor.id;
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (
                                 err: Error | null,
                                 result: null | ActivityStream,
                             ): void => {
-                                credentialsStoreForActorUpdate = undefined;
-                                actorUpdateSessionId = undefined;
+                                clearActorUpdateContext();
                                 if (!err && isPersistentPlatform(platform)) {
                                     // Update credentialsHash after successful platform call.
                                     // Only persistent platforms track credential state across requests.
                                     // A nick change already stored the renamed object and set this
                                     // hash; hashing again observes that same object.
-                                    platform.credentialsHash =
-                                        crypto.objectHash(credentials.object);
+                                    adoptCredentialsHash(
+                                        crypto.objectHash(credentials.object),
+                                    );
                                 }
                                 doneCallback(err, result);
                             };
@@ -633,8 +713,7 @@ async function startPlatformProcess() {
                                 job.msg.type,
                             );
                             if (!handler) {
-                                credentialsStoreForActorUpdate = undefined;
-                                actorUpdateSessionId = undefined;
+                                clearActorUpdateContext();
                                 doneCallback(
                                     new Error(
                                         `platform method ${job.msg.type} not available`,
@@ -653,8 +732,7 @@ async function startPlatformProcess() {
                                     wrappedCallback,
                                 );
                             } catch (err) {
-                                credentialsStoreForActorUpdate = undefined;
-                                actorUpdateSessionId = undefined;
+                                clearActorUpdateContext();
                                 doneCallback(toError(err), null);
                             }
                         })
@@ -762,6 +840,27 @@ async function startPlatformProcess() {
     }
 
     /**
+     * Reject a proposed rename that would overwrite a different account in this
+     * session's store. Does not write. The IRC platform calls this before
+     * sending NICK, so a collision never changes the nick on the server.
+     */
+    async function prepareActorUpdate(
+        credentials: CredentialsObject,
+    ): Promise<void> {
+        const store = credentialsStoreForActorUpdate;
+        const previousActorId = actorUpdatePreviousActorId;
+        if (store && previousActorId) {
+            await renameActorCredentialsInStore(
+                store,
+                platformName,
+                previousActorId,
+                credentials,
+                { dryRun: true },
+            );
+        }
+    }
+
+    /**
      * When a user changes its actor name, the channel identifier changes, we need to ensure that
      * both the queue thread (listening on the channel for jobs) and the logging object are updated.
      * @param credentials
@@ -778,9 +877,20 @@ async function startPlatformProcess() {
         // telling the parent the actor moved. A failure leaves Redis, the
         // hash, and the instance key where they were, so the session can
         // still present the pre-rename actor.
+        //
+        // Use the guarded rename, not `storeActorCredentials`. The latter
+        // writes the new actor key unconditionally, and this session may
+        // already have a different account there (alice changing nick to bob
+        // replaces bob's password; bob's next command then detaches).
         const store = credentialsStoreForActorUpdate;
-        if (store) {
-            await storeActorCredentials(store, platformName, credentials);
+        const previousActorId = actorUpdatePreviousActorId;
+        if (store && previousActorId) {
+            await renameActorCredentialsInStore(
+                store,
+                platformName,
+                previousActorId,
+                credentials,
+            );
         }
 
         // The actor travels with the new identifier: the parent keys anonymous
@@ -810,9 +920,9 @@ async function startPlatformProcess() {
         setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
         logger = createLogger("main");
 
-        if (isPersistentPlatform(platform)) {
-            platform.credentialsHash = crypto.objectHash(credentials.object);
-        }
+        // The pre-rename hash stays accepted: a session that reconnects
+        // replays the credential object it originally sent.
+        adoptCredentialsHash(crypto.objectHash(credentials.object));
     }
 
     /**
