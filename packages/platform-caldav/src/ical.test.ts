@@ -101,6 +101,21 @@ describe("iCalendar generation", () => {
         });
     });
 
+    it("keeps an event an event when it is padded with unclosed task markers", () => {
+        const body = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nDTSTART:20260803T130000Z\r\n${"BEGIN:VTODO\r\n".repeat(20_000)}END:VEVENT\r\nEND:VCALENDAR\r\n`;
+        const started = performance.now();
+        const item = parseICalendar(body, "https://calendar.example/one.ics");
+        expect(performance.now() - started).toBeLessThan(1000);
+        expect(item.type).toBe("event");
+        expect(item.name).toBe("One");
+        expect(() =>
+            parseICalendar(
+                `BEGIN:VCALENDAR\r\n${"BEGIN:VEVENT\r\n".repeat(20_000)}END:VCALENDAR\r\n`,
+                "https://calendar.example/one.ics",
+            ),
+        ).toThrow("invalid calendar data");
+    });
+
     it("parses a component with many unclosed alarm markers in linear time", () => {
         const body = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nSUMMARY:One\r\nDTSTART:20260803T130000Z\r\n${"BEGIN:VALARM\r\n".repeat(20_000)}BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT5M\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
         const started = performance.now();

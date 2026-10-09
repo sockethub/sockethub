@@ -408,14 +408,33 @@ export function parseICalendar(
     etag?: string,
 ): CalendarItem {
     const unfolded = body.replace(/\r?\n[ \t]/g, "");
-    const component = /^BEGIN:VTODO\r?$/m.test(unfolded) ? "task" : "event";
-    const componentName = component === "task" ? "VTODO" : "VEVENT";
-    const section = unfolded.match(
-        new RegExp(
-            `BEGIN:${componentName}\\r?\\n([\\s\\S]*?)\\r?\\nEND:${componentName}`,
-        ),
-    )?.[1];
-    if (!section) throw new Error("invalid calendar data");
+    // The first event or task component, delimited by its own END line, found
+    // with one forward pass. A lazy BEGIN/END regex retries from every
+    // unclosed BEGIN and is quadratic on hostile input; choosing the type by
+    // searching the whole body also let an unclosed BEGIN:VTODO inside an
+    // event reclassify it.
+    const lines = unfolded.split(/\r?\n/);
+    let begin = -1;
+    let closing = -1;
+    let componentName: "VEVENT" | "VTODO" = "VEVENT";
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        if (begin === -1) {
+            if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") {
+                begin = index;
+                componentName = line.slice(
+                    "BEGIN:".length,
+                ) as typeof componentName;
+            }
+        } else if (line === `END:${componentName}`) {
+            closing = index;
+            break;
+        }
+    }
+    if (begin === -1 || closing === -1)
+        throw new Error("invalid calendar data");
+    const component = componentName === "VTODO" ? "task" : "event";
+    const section = lines.slice(begin + 1, closing).join("\n");
     const { alarmBlocks, componentLines } = splitAlarms(section);
     const values = new Map<
         string,
