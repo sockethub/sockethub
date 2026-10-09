@@ -9,6 +9,7 @@ import type {
 } from "@sockethub/schemas";
 import type { JobDataDecrypted } from "@sockethub/data-layer";
 import {
+    credentialsHashAfterJob,
     derivePlatformCredentialsSecret,
     mergePackageConfig,
     migrateRenamedActorCredentials,
@@ -24,6 +25,30 @@ import {
  * getJobHandler logic.
  */
 describe("platform.ts credential handling", () => {
+    describe("credentialsHashAfterJob", () => {
+        const loaded = {
+            type: "credentials" as const,
+            nick: "alice",
+            password: "secret",
+        };
+        const renamed = {
+            type: "credentials" as const,
+            nick: "alice1",
+            password: "secret",
+        };
+
+        it("keeps the hash a rename committed while the job was in flight", () => {
+            const committed = crypto.objectHash(renamed);
+            expect(credentialsHashAfterJob(loaded, committed)).toBe(committed);
+        });
+
+        it("hashes the object the job loaded when nothing renamed it", () => {
+            expect(credentialsHashAfterJob(loaded, undefined)).toBe(
+                crypto.objectHash(loaded),
+            );
+        });
+    });
+
     describe("credentials secret derivation", () => {
         it("derives the same secret format used for credential storage", () => {
             const secret = derivePlatformCredentialsSecret(

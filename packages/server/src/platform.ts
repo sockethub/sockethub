@@ -86,6 +86,25 @@ export async function storeActorCredentials(
     await store.save(buildCredentialsKey(platformName, actorId), credentials);
 }
 
+/**
+ * Hash a persistent platform should keep after a credentialed job succeeds.
+ *
+ * `committedByActorUpdate` is the hash `updateActor` stored when a rename
+ * happened during the job: the nick-change command itself, or a
+ * server-forced nick change that arrived while the command waited on the
+ * network. That call already wrote the renamed object. The object the job
+ * loaded is a separate copy and still carries the pre-rename nick, so
+ * hashing it again rolls `credentialsHash` back. The next command loads the
+ * renamed object, fails the check, and the session is detached from the
+ * live connection.
+ */
+export function credentialsHashAfterJob(
+    loadedObject: object,
+    committedByActorUpdate: string | undefined,
+): string {
+    return committedByActorUpdate ?? crypto.objectHash(loadedObject);
+}
+
 export interface CredentialStoreReader {
     get(key: string, credentialsHash?: string): Promise<CredentialsObject>;
     save(key: string, creds: CredentialsObject): Promise<unknown>;
@@ -262,6 +281,9 @@ async function startPlatformProcess() {
     // actor-change IPC so the parent can migrate credentials for every other
     // session sharing this connection.
     let actorUpdateSessionId: string | undefined;
+    // Set when updateActor renames the actor while a job is in flight. The
+    // job callback must keep this hash; see credentialsHashAfterJob.
+    let credentialsHashFromActorUpdate: string | undefined;
     // Immutable queue name allocated when this worker was forked. Distinct
     // from `identifier`, which moves on actor rename and can be reused by a
     // later connection with the original actor.
@@ -609,20 +631,28 @@ async function startPlatformProcess() {
                         .then((credentials) => {
                             credentialsStoreForActorUpdate = credentialStore;
                             actorUpdateSessionId = job.sessionId;
+                            credentialsHashFromActorUpdate = undefined;
                             // Create wrapper callback that updates credentialsHash after successful call
                             const wrappedCallback: PlatformCallback = (
                                 err: Error | null,
                                 result: null | ActivityStream,
                             ): void => {
+                                const committedHash =
+                                    credentialsHashFromActorUpdate;
+                                credentialsHashFromActorUpdate = undefined;
                                 credentialsStoreForActorUpdate = undefined;
                                 actorUpdateSessionId = undefined;
                                 if (!err && isPersistentPlatform(platform)) {
-                                    // Update credentialsHash after successful platform call.
-                                    // Only persistent platforms track credential state across requests.
-                                    // A nick change already stored the renamed object and set this
-                                    // hash; hashing again observes that same object.
+                                    // Only persistent platforms track credential
+                                    // state across requests. A rename during
+                                    // this job already stored its object and
+                                    // hash; keep that instead of rehashing the
+                                    // pre-rename copy this job loaded.
                                     platform.credentialsHash =
-                                        crypto.objectHash(credentials.object);
+                                        credentialsHashAfterJob(
+                                            credentials.object,
+                                            committedHash,
+                                        );
                                 }
                                 doneCallback(err, result);
                             };
@@ -810,8 +840,10 @@ async function startPlatformProcess() {
         setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
         logger = createLogger("main");
 
+        const renamedHash = crypto.objectHash(credentials.object);
+        credentialsHashFromActorUpdate = renamedHash;
         if (isPersistentPlatform(platform)) {
-            platform.credentialsHash = crypto.objectHash(credentials.object);
+            platform.credentialsHash = renamedHash;
         }
     }
 
