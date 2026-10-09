@@ -1,5 +1,26 @@
 const EVENT_INCOMING = "incoming";
 const EVENT_ERROR = "error";
+const EVENT_CTCP = "ctcp";
+
+// CTCP frames a command and optional argument in \u0001 delimiters. Servers
+// with the legacy `identify-msg` capability (freenode-era) prefix the
+// payload with "+" or "-"; modern servers send the bare framing. The closing
+// delimiter is optional on input: servers truncate over-long lines, which
+// can drop it, and the CTCP spec says parsers should accept its absence.
+// biome-ignore lint/suspicious/noControlCharactersInRegex: CTCP framing uses control chars
+const CTCP_FRAME = /^[+-]?\u0001([^\u0001 ]+)(?: ([\s\S]*?))?\u0001?$/;
+
+/**
+ * Returns `{ command, args }` when `content` is a CTCP frame, else null.
+ * The command is upper-cased so callers can match it directly.
+ */
+function parseCtcp(content) {
+    const match = CTCP_FRAME.exec(content);
+    if (!match) {
+        return null;
+    }
+    return { command: match[1].toUpperCase(), args: match[2] ?? "" };
+}
 
 export class ASEmitter {
     constructor(events, server, contexts) {
@@ -78,7 +99,14 @@ export class ASEmitter {
         this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
     }
 
-    notice(nick, content) {
+    notice(nick, content, from) {
+        // A CTCP frame in a NOTICE is the reply to a request we sent. It
+        // is not a chat message, so never hand it to the client as one.
+        const ctcp = parseCtcp(content);
+        if (ctcp) {
+            this.ctcp("reply", from, nick, ctcp);
+            return;
+        }
         this.emitEvent(EVENT_INCOMING, {
             "@context": this.contexts,
             type: "send",
@@ -200,17 +228,19 @@ export class ASEmitter {
     privMsg(nick, target, content) {
         let type;
         let message;
-        // CTCP ACTION (/me) is framed as \u0001ACTION <text>\u0001. Servers
-        // with the legacy `identify-msg` capability (freenode-era) prefix
-        // the payload with "+" or "-"; modern servers send the bare framing.
-        // The closing delimiter is optional on input: servers truncate
-        // over-long lines, which can drop it, and the CTCP spec says parsers
-        // should accept its absence.
-        // biome-ignore lint/suspicious/noControlCharactersInRegex: IRC ACTION framing uses control chars
-        const action = /^[+-]?\u0001ACTION ([\s\S]*?)\u0001?$/.exec(content);
-        if (action) {
+        const ctcp = parseCtcp(content);
+        if (ctcp?.command === "ACTION") {
+            // CTCP ACTION (/me) is the one CTCP command that is a chat
+            // message.
             type = "me";
-            message = action[1];
+            message = ctcp.args;
+        } else if (ctcp) {
+            // Any other CTCP frame in a PRIVMSG (VERSION, PING, TIME...) is a
+            // request aimed at the client software, not at the user. Passing
+            // it on as a message leaks raw control characters to the client
+            // and opens a phantom conversation with the sender (#551).
+            this.ctcp("request", nick, target, ctcp);
+            return;
         } else {
             type = "message";
             message = content;
@@ -232,6 +262,20 @@ export class ASEmitter {
                 type: type,
                 content: message,
             },
+        });
+    }
+
+    /**
+     * Emits a non-ACTION CTCP frame on the `ctcp` event. `kind` is "request"
+     * for a PRIVMSG and "reply" for a NOTICE.
+     */
+    ctcp(kind, from, target, { command, args }) {
+        this.events.emit(EVENT_CTCP, {
+            kind: kind,
+            command: command,
+            args: args,
+            from: from,
+            target: target,
         });
     }
 

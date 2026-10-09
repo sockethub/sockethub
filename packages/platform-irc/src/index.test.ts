@@ -622,6 +622,70 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            describe("incoming CTCP", () => {
+                let rawCalls: Array<unknown>;
+                let delivered: Array<ActivityStream>;
+                beforeEach(() => {
+                    rawCalls = [];
+                    delivered = [];
+                    platform.client.raw = (...args: Array<unknown>) =>
+                        rawCalls.push(args);
+                    platform.sendToClient = (msg: ActivityStream) => {
+                        delivered.push(msg);
+                    };
+                });
+
+                it("answers a VERSION request itself and hides it from the client", () => {
+                    platform.irc2as.input(
+                        ":alice!u@h PRIVMSG testingham :\u0001VERSION\u0001",
+                    );
+                    expect(delivered).toEqual([]);
+                    expect(rawCalls).toEqual([
+                        [
+                            `NOTICE alice :\u0001VERSION Sockethub ${platform.schema.version}\u0001`,
+                        ],
+                    ]);
+                });
+
+                it("echoes a PING request's argument", () => {
+                    platform.irc2as.input(
+                        ":alice!u@h PRIVMSG testingham :\u0001PING 1234567890\u0001",
+                    );
+                    expect(delivered).toEqual([]);
+                    expect(rawCalls).toEqual([
+                        ["NOTICE alice :\u0001PING 1234567890\u0001"],
+                    ]);
+                });
+
+                it("drops an unsupported request without replying or delivering it", () => {
+                    platform.irc2as.input(
+                        ":alice!u@h PRIVMSG testingham :\u0001TIME\u0001",
+                    );
+                    expect(delivered).toEqual([]);
+                    expect(rawCalls).toEqual([]);
+                });
+
+                it("drops a CTCP reply without delivering it", () => {
+                    platform.irc2as.input(
+                        ":alice!u@h NOTICE testingham :\u0001VERSION WeeChat 4.1.0\u0001",
+                    );
+                    expect(delivered).toEqual([]);
+                    expect(rawCalls).toEqual([]);
+                });
+
+                it("still delivers a CTCP ACTION as a me object", () => {
+                    platform.irc2as.input(
+                        ":alice!u@h PRIVMSG #a-room :\u0001ACTION waves\u0001",
+                    );
+                    expect(rawCalls).toEqual([]);
+                    expect(delivered).toHaveLength(1);
+                    expect(delivered[0].object).toEqual({
+                        type: "me",
+                        content: "waves",
+                    });
+                });
+            });
+
             it("rejects IRC line injection before writing to the socket", async () => {
                 const rawCalls: Array<unknown> = [];
                 platform.client.raw = (...args) => rawCalls.push(args);

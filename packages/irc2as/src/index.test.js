@@ -149,6 +149,77 @@ describe("IrcToActivityStreams", () => {
         );
     });
 
+    // A non-ACTION CTCP request is aimed at the client software, not the
+    // user. Delivering it as a message leaks \u0001 framing to the client
+    // and opens a phantom conversation with the sender (#551).
+    it("emits a CTCP VERSION request on `ctcp` instead of `incoming`", (done) => {
+        irc2as.events.on("incoming", () => {
+            done(new Error("CTCP request was delivered as a message"));
+        });
+        irc2as.events.on("ctcp", (ctcp) => {
+            expect(ctcp).toEqual({
+                kind: "request",
+                command: "VERSION",
+                args: "",
+                from: "alice",
+                target: "hyper_slvrbckt",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test PRIVMSG hyper_slvrbckt :\u0001VERSION\u0001",
+        );
+    });
+
+    it("carries the CTCP argument and tolerates the identify-msg prefix", (done) => {
+        irc2as.events.on("ctcp", (ctcp) => {
+            expect(ctcp).toEqual({
+                kind: "request",
+                command: "PING",
+                args: "1234567890",
+                from: "alice",
+                target: "hyper_slvrbckt",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test PRIVMSG hyper_slvrbckt :+\u0001ping 1234567890\u0001",
+        );
+    });
+
+    it("emits a CTCP reply carried in a NOTICE on `ctcp` instead of `incoming`", (done) => {
+        irc2as.events.on("incoming", () => {
+            done(new Error("CTCP reply was delivered as a message"));
+        });
+        irc2as.events.on("ctcp", (ctcp) => {
+            expect(ctcp).toEqual({
+                kind: "reply",
+                command: "VERSION",
+                args: "WeeChat 4.1.0",
+                from: "alice",
+                target: "hyper_slvrbckt",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test NOTICE hyper_slvrbckt :\u0001VERSION WeeChat 4.1.0\u0001",
+        );
+    });
+
+    it("still delivers a plain NOTICE as a service message", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.actor).toEqual({ type: "service", id: "localhost" });
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "*** Looking up your hostname...",
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.test NOTICE * :*** Looking up your hostname...",
+        );
+    });
+
     it("leaves a plain message starting with + untouched", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object).toEqual({
