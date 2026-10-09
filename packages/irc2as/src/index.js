@@ -284,7 +284,11 @@ export class IrcToActivityStreams {
 
             /** */
             case NOTICE: // notice
-                ase.notice(pos1, trailingParam(content, pos2));
+                ase.notice(
+                    pos1,
+                    trailingParam(content, pos2),
+                    getNickFromServer(server),
+                );
                 break;
 
             /** */

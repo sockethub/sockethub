@@ -19,7 +19,7 @@
 import net from "node:net";
 import tls from "node:tls";
 
-import { IrcToActivityStreams } from "@sockethub/irc2as";
+import { type IncomingCtcp, IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
     ActivityStream,
     Logger,
@@ -975,6 +975,34 @@ export class IRC implements PersistentPlatformInterface {
                 ...this.handledActors.keys(),
             ]);
             this.sendToClient(asObject);
+        });
+
+        // Non-ACTION CTCP traffic is addressed to the client software, not
+        // the user, so none of it reaches the client (#551). Answer the two
+        // requests every IRC client answers; log the rest. Client-initiated
+        // CTCP is tracked in #1252.
+        this.irc2as.events.on("ctcp", (ctcp: IncomingCtcp) => {
+            if (ctcp.kind !== "request") {
+                this.log.debug(
+                    `ignoring ctcp ${ctcp.command} reply from ${ctcp.from}`,
+                );
+                return;
+            }
+            let reply: string | undefined;
+            if (ctcp.command === "VERSION") {
+                reply = `VERSION Sockethub ${this.schema.version}`;
+            } else if (ctcp.command === "PING") {
+                reply = `PING ${ctcp.args}`;
+            }
+            if (reply === undefined) {
+                this.log.debug(
+                    `ignoring ctcp ${ctcp.command} request from ${ctcp.from}`,
+                );
+                return;
+            }
+            // `from` and `args` came off a single IRC line, so they cannot
+            // carry a line break.
+            this.client?.raw(`NOTICE ${ctcp.from} :\u0001${reply}\u0001`);
         });
 
         this.irc2as.events.on("unprocessed", (s: string) => {
