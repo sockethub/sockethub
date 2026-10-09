@@ -352,7 +352,7 @@ async function createItem(): Promise<void> {
         {#if feedItems.length > 0}
             <h3 class="text-sm font-semibold text-gray-700">{feedName || "Feed"} ({feedItems.length})</h3>
             <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
-                {#each feedItems as item (item.id)}
+                {#each feedItems as item, index (`${index}:${item.id}`)}
                     <li class="flex flex-col gap-1 px-4 py-3 text-sm">
                         <span class="font-medium text-gray-900">{item.name}</span>
                         <span class="text-gray-600">

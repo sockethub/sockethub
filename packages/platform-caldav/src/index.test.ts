@@ -83,6 +83,30 @@ describe("CalDAV read", () => {
         expect((await read(platform, "http://example.test/cal.ics"))[0]).toBeNull();
     });
 
+    it("re-checks the scheme policy on every redirect hop", async () => {
+        const requests: string[] = [];
+        const redirectTo = (location: string) =>
+            (async (url: URL | RequestInfo, init?: RequestInit) => {
+                requests.push(String(url));
+                expect(init?.redirect).toBe("manual");
+                return requests.length === 1
+                    ? new Response(null, { status: 302, headers: { location } })
+                    : new Response(ics, { status: 200 });
+            }) as typeof fetch;
+        globalThis.fetch = redirectTo("http://example.test/moved.ics");
+        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:https-required");
+        expect(requests).toEqual(["https://example.test/cal.ics"]);
+        requests.length = 0;
+        globalThis.fetch = redirectTo("/moved.ics");
+        const [error, result] = await read(new CalDav(session), "https://example.test/cal.ics");
+        expect(error).toBeNull();
+        expect(requests).toEqual(["https://example.test/cal.ics", "https://example.test/moved.ics"]);
+        expect(result).toMatchObject({ items: [{ id: "https://example.test/moved.ics#a" }] });
+        globalThis.fetch = (async () =>
+            new Response(null, { status: 302, headers: { location: "https://example.test/loop.ics" } })) as typeof fetch;
+        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:too-many-redirects");
+    });
+
     it("reports failed requests and non-calendar bodies", async () => {
         globalThis.fetch = (async () => new Response("missing", { status: 404 })) as typeof fetch;
         expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:feed-failed");

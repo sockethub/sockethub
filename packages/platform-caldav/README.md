@@ -150,9 +150,10 @@ expanded: a recurring event is returned once, with its `recurrence` rule,
 whenever the rule can still produce an occurrence inside the range, and
 rescheduled occurrences appear as additional items. Components the platform
 cannot represent (for example an event without a summary) are skipped and
-logged rather than failing the whole feed. Feeds larger than 10 MiB are
-rejected, and the same HTTPS and private-address policies apply as for CalDAV
-servers.
+logged rather than failing the whole feed. An all-day event without an end
+lasts one day when matching a range. Feeds larger than 10 MiB are rejected,
+and the same HTTPS and private-address policies apply as for CalDAV servers,
+including on every redirect.
 
 ### Create an event
 

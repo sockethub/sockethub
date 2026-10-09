@@ -115,6 +115,14 @@ describe("time-range matching", () => {
         expect(matchesRange(base, { startTime: "2026-01-01T00:00:00Z" })).toBeFalse();
     });
 
+    it("gives all-day events without an end a one-day duration", () => {
+        const holiday = { ...base, startTime: "2026-01-01", allDay: true };
+        expect(matchesRange(holiday, { startTime: "2026-01-01T12:00:00Z" })).toBeTrue();
+        expect(matchesRange(holiday, { startTime: "2026-01-02T00:00:00Z" })).toBeFalse();
+        const bounded = { ...holiday, endTime: "2026-01-01" };
+        expect(matchesRange(bounded, { startTime: "2026-01-01T12:00:00Z" })).toBeFalse();
+    });
+
     it("keeps open-ended recurring items inside any later range", () => {
         const weekly = { ...timed, recurrence: { frequency: "weekly" as const } };
         expect(matchesRange(weekly, { startTime: "2030-01-01T00:00:00Z" })).toBeTrue();

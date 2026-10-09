@@ -7,6 +7,7 @@ export interface ICalendarFeed {
     skipped: number;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
 const COMPONENT_NAMES: Record<string, CalendarComponent> = {
     VEVENT: "event",
     VTODO: "task",
@@ -48,14 +49,19 @@ function instant(value: string | undefined): number | undefined {
  * ends after the range starts (a zero-length item matches when it starts at
  * or after the range start). Recurring items are never expanded: they match
  * while the rule can still produce an occurrence inside the range. Items
- * without any time match only when no range is given.
+ * without any time match only when no range is given. An all-day event with
+ * no end lasts one day (RFC 5545 section 3.6.1).
  */
 export function matchesRange(item: CalendarItem, query: QueryInput): boolean {
     const rangeStart = instant(query.startTime);
     const rangeEnd = instant(query.endTime);
     if (rangeStart === undefined && rangeEnd === undefined) return true;
     const first = instant(item.startTime);
-    const last = instant(item.endTime ?? item.due);
+    const last =
+        instant(item.endTime ?? item.due) ??
+        (item.type === "event" && item.allDay && first !== undefined
+            ? first + DAY_MS
+            : undefined);
     const start = first ?? last;
     const end = last ?? first;
     if (start === undefined || end === undefined) return false;
