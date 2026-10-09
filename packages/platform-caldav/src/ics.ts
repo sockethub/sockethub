@@ -155,12 +155,204 @@ function zonedLocalToUtc(value: string, timeZone: string): number | undefined {
     return guess - (corrected ?? offset);
 }
 
+const WEEKDAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"] as const;
+/**
+ * Shortest length of each month. February is 28, so a day that exists only
+ * in a leap February is treated as one that can skip a period.
+ */
+const MIN_MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+function positiveInterval(interval: number | undefined): number {
+    return interval !== undefined && Number.isInteger(interval) && interval >= 1
+        ? interval
+        : 1;
+}
+
+function ruleByDay(byDay: string[] | undefined): string[] {
+    return (byDay ?? []).map((day) => day.trim().toUpperCase());
+}
+
+function monthAlwaysFits(month: number, day: number): boolean {
+    const need = Math.abs(day);
+    return Number.isInteger(day) && need >= 1 && need <= MIN_MONTH_DAYS[month];
+}
+
+function dayFitsEveryMonth(day: number): boolean {
+    return MIN_MONTH_DAYS.every((_, month) => monthAlwaysFits(month, day));
+}
+
+/**
+ * Months from a valid month to the next month that can host one of the
+ * limit days, stepping by `interval`. The walk is at most a year of steps,
+ * which always returns to the month it started from.
+ */
+function maxMonthStep(
+    interval: number,
+    fits: (month: number) => boolean,
+): number {
+    let worst = interval;
+    for (let startMonth = 0; startMonth < 12; startMonth += 1) {
+        if (!fits(startMonth)) continue;
+        let gap = 0;
+        let month = startMonth;
+        for (let step = 0; step < 12; step += 1) {
+            gap += interval;
+            month += interval;
+            const normalized = ((month % 12) + 12) % 12;
+            if (fits(normalized)) {
+                worst = Math.max(worst, gap);
+                break;
+            }
+        }
+    }
+    return worst;
+}
+
+function addUtcMonths(utcMs: number, months: number): number {
+    const date = new Date(utcMs);
+    const monthIndex = date.getUTCMonth() + months;
+    const year = date.getUTCFullYear() + Math.floor(monthIndex / 12);
+    const month = ((monthIndex % 12) + 12) % 12;
+    return Date.UTC(
+        year,
+        month,
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds(),
+        date.getUTCMilliseconds(),
+    );
+}
+
+function addUtcYears(utcMs: number, years: number): number {
+    const date = new Date(utcMs);
+    return Date.UTC(
+        date.getUTCFullYear() + years,
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds(),
+        date.getUTCMilliseconds(),
+    );
+}
+
+function isLeapYear(year: number): boolean {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+/** Years from a leap day until `count` leap days, stepping by `interval`. */
+function leapDaySpanYears(
+    startYear: number,
+    count: number,
+    interval: number,
+): number {
+    let year = startYear;
+    let found = 1;
+    let steps = 0;
+    // Eight years is the longest gap between leap days (a skipped century).
+    while (found < count && steps < count * 8) {
+        year += interval;
+        steps += 1;
+        if (isLeapYear(year)) found += 1;
+    }
+    return year - startYear;
+}
+
+function byDaySkipsMonths(byDay: string[]): boolean {
+    return byDay.some((day) => /^[+-]?5/.test(day));
+}
+
+/**
+ * How much later in a later month the same ordinal weekday can fall.
+ * The 1st–4th weekday moves by at most 6 days; a last-weekday (negative
+ * ordinal) moves by at most 9, from the 22nd through the 31st.
+ */
+function ordinalShiftMs(byDay: string[]): number {
+    let days = 0;
+    for (const day of byDay) {
+        if (/^-\d/.test(day)) days = Math.max(days, 9);
+        else if (/^\+?\d/.test(day)) days = Math.max(days, 6);
+    }
+    return days * DAY_MS;
+}
+
+function coversStartWeekday(byDay: string[], start: number): boolean {
+    const weekday = WEEKDAYS[new Date(start).getUTCDay()];
+    return byDay.some((day) => day === weekday);
+}
+
+/**
+ * Days a daily BYDAY limit can put between occurrences. A step that is not
+ * a whole number of weeks hits a given weekday every `interval` weeks.
+ */
+function dailyByDaySpanMs(
+    start: number,
+    byDay: string[],
+    count: number,
+    interval: number,
+): number {
+    const stride = interval % 7 === 0 ? interval : interval * 7;
+    const steps = coversStartWeekday(byDay, start) ? count - 1 : count;
+    return Math.max(steps, 0) * stride * DAY_MS;
+}
+
+function monthlyCountBound(
+    start: number,
+    count: number,
+    interval: number,
+    byDay: string[],
+    byMonthDay: number[] | undefined,
+): number {
+    const gaps = count - 1;
+    const days =
+        byMonthDay && byMonthDay.length > 0
+            ? byMonthDay
+            : [new Date(start).getUTCDate()];
+    const skipsMonths = byDaySkipsMonths(byDay);
+    const always = days.some((day) => dayFitsEveryMonth(day));
+    let months: number;
+    if (skipsMonths) months = gaps * interval * 12;
+    else if (!always)
+        months =
+            gaps *
+            maxMonthStep(interval, (month) =>
+                days.some((day) => monthAlwaysFits(month, day)),
+            );
+    else months = gaps * interval;
+    // A 5th weekday, or a day missing from short months, is already covered
+    // by landing in a later month. Ordinal weekdays that occur every month
+    // only move within the month.
+    // Negative month days are counted from the end, so a February 28th can
+    // be followed by the 31st. That is at most three days later.
+    const monthDayShift =
+        always && days.some((day) => day < 0) ? 3 * DAY_MS : 0;
+    const shift =
+        skipsMonths || !always || gaps === 0
+            ? 0
+            : ordinalShiftMs(byDay) + monthDayShift;
+    return addUtcMonths(start, months) + shift + DAY_MS;
+}
+
+function yearlyCountBound(
+    start: number,
+    count: number,
+    interval: number,
+): number {
+    const date = new Date(start);
+    const years =
+        date.getUTCMonth() === 1 && date.getUTCDate() === 29
+            ? leapDaySpanYears(date.getUTCFullYear(), count, interval)
+            : (count - 1) * interval;
+    return addUtcYears(start, years) + DAY_MS;
+}
+
 /**
  * Latest instant at which a bounded rule can still start an occurrence, or
- * undefined for an unbounded rule. UNTIL is taken as given. For COUNT the
- * bound is the start advanced by (count - 1) intervals of the frequency:
- * BYDAY and BYMONTHDAY only add occurrences inside those periods, so the
- * real last occurrence never starts later than this.
+ * undefined for an unbounded rule. UNTIL is taken as given. COUNT is not
+ * expanded: the bound is the latest start the rule can reach, so a skipped
+ * month or a weekday limit cannot hide a later occurrence. It may fall
+ * after the true last start.
  */
 function lastOccurrenceBound(
     recurrence: NonNullable<CalendarItem["recurrence"]>,
@@ -168,25 +360,39 @@ function lastOccurrenceBound(
 ): number | undefined {
     const until = instant(recurrence.until);
     if (until !== undefined) return until;
-    if (recurrence.count === undefined) return undefined;
-    const periods =
-        Math.max(recurrence.count - 1, 0) * (recurrence.interval ?? 1);
-    const date = new Date(start);
+    const count = recurrence.count;
+    if (count === undefined) return undefined;
+    if (!Number.isInteger(count) || count < 1) return start;
+    const interval = positiveInterval(recurrence.interval);
+    const byDay = ruleByDay(recurrence.byDay);
     switch (recurrence.frequency) {
         case "daily":
-            return start + periods * DAY_MS;
+            if (byDay.length > 0)
+                return start + dailyByDaySpanMs(start, byDay, count, interval);
+            return start + (count - 1) * interval * DAY_MS;
         case "weekly":
-            return start + periods * 7 * DAY_MS;
+            return (
+                start +
+                (count - 1) * interval * 7 * DAY_MS +
+                (byDay.length > 0 && !coversStartWeekday(byDay, start)
+                    ? 6 * DAY_MS
+                    : 0)
+            );
         case "monthly":
-            date.setUTCMonth(date.getUTCMonth() + periods);
-            break;
+            return monthlyCountBound(
+                start,
+                count,
+                interval,
+                byDay,
+                recurrence.byMonthDay,
+            );
         case "yearly":
-            date.setUTCFullYear(date.getUTCFullYear() + periods);
-            break;
+            return yearlyCountBound(start, count, interval);
+        default:
+            // Frequencies this model does not expand (hourly, minutely) keep
+            // the previous one-day ceiling rather than matching forever.
+            return start + DAY_MS;
     }
-    // Calendar arithmetic on the UTC clock can land up to a day early for a
-    // zoned start; keep the bound conservative rather than drop a live rule.
-    return date.getTime() + DAY_MS;
 }
 
 /**

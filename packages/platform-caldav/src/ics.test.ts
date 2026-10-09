@@ -139,6 +139,39 @@ describe("iCalendar feed parsing", () => {
             }).items,
         ).toEqual([]);
     });
+
+    it("keeps later occurrences of a monthly rule that skips short months", () => {
+        const body = [
+            "BEGIN:VCALENDAR",
+            "BEGIN:VEVENT",
+            "UID:rent@example",
+            "SUMMARY:Rent",
+            "DTSTART:20260131T150000Z",
+            "DTEND:20260131T160000Z",
+            "RRULE:FREQ=MONTHLY;COUNT=4",
+            "END:VEVENT",
+            "BEGIN:VEVENT",
+            "UID:staff@example",
+            "SUMMARY:Staff",
+            "DTSTART:20240101T150000Z",
+            "DTEND:20240101T160000Z",
+            "RRULE:FREQ=MONTHLY;COUNT=3;BYDAY=1MO",
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ].join("\r\n");
+        expect(
+            parseICalendarFeed(body, source, {
+                startTime: "2026-05-31T15:30:00Z",
+                endTime: "2026-05-31T16:00:00Z",
+            }).items.map((item) => item.uid),
+        ).toEqual(["rent@example"]);
+        expect(
+            parseICalendarFeed(body, source, {
+                startTime: "2024-03-04T15:30:00Z",
+                endTime: "2024-03-04T16:00:00Z",
+            }).items.map((item) => item.uid),
+        ).toEqual(["staff@example"]);
+    });
 });
 
 describe("time-range matching", () => {
@@ -175,6 +208,60 @@ describe("time-range matching", () => {
         const weekly = { ...timed, recurrence: { frequency: "weekly" as const } };
         expect(matchesRange(weekly, { startTime: "2030-01-01T00:00:00Z" })).toBeTrue();
         expect(matchesRange(weekly, { endTime: "2026-01-05T09:00:00Z" })).toBeFalse();
+    });
+
+    it("keeps monthly and yearly occurrences that skip a short or non-leap period", () => {
+        const rent = {
+            ...timed,
+            startTime: "2026-01-31T15:00:00Z",
+            endTime: "2026-01-31T16:00:00Z",
+            recurrence: { frequency: "monthly" as const, count: 4 },
+        };
+        expect(matchesRange(rent, { startTime: "2026-05-31T15:30:00Z" })).toBeTrue();
+        expect(matchesRange(rent, { startTime: "2026-08-02T00:00:00Z" })).toBeFalse();
+        const firstMonday = {
+            ...timed,
+            startTime: "2024-01-01T15:00:00Z",
+            endTime: "2024-01-01T16:00:00Z",
+            recurrence: { frequency: "monthly" as const, count: 3, byDay: ["1MO"] },
+        };
+        expect(matchesRange(firstMonday, { startTime: "2024-03-04T15:30:00Z" })).toBeTrue();
+        expect(matchesRange(firstMonday, { startTime: "2024-04-01T00:00:00Z" })).toBeFalse();
+        const lastFriday = {
+            ...timed,
+            startTime: "2019-02-22T15:00:00Z",
+            endTime: "2019-02-22T16:00:00Z",
+            recurrence: { frequency: "monthly" as const, count: 3, byDay: ["-1FR"] },
+        };
+        expect(matchesRange(lastFriday, { startTime: "2019-04-26T15:30:00Z" })).toBeTrue();
+        const leapDay = {
+            ...timed,
+            startTime: "1896-02-29T12:00:00Z",
+            endTime: "1896-02-29T13:00:00Z",
+            recurrence: { frequency: "yearly" as const, count: 2 },
+        };
+        expect(matchesRange(leapDay, { startTime: "1904-02-29T12:30:00Z" })).toBeTrue();
+        expect(matchesRange(leapDay, { startTime: "1904-03-02T00:00:00Z" })).toBeFalse();
+        const monthEnd = {
+            ...timed,
+            startTime: "2026-02-28T15:00:00Z",
+            endTime: "2026-02-28T16:00:00Z",
+            recurrence: { frequency: "monthly" as const, count: 2, byMonthDay: [-1] },
+        };
+        expect(matchesRange(monthEnd, { startTime: "2026-03-31T15:30:00Z" })).toBeTrue();
+    });
+
+    it("keeps the last weekday of a COUNT-bounded daily rule", () => {
+        const weekdays = {
+            ...timed,
+            recurrence: {
+                frequency: "daily" as const,
+                count: 10,
+                byDay: ["MO", "TU", "WE", "TH", "FR"],
+            },
+        };
+        expect(matchesRange(weekdays, { startTime: "2026-01-16T09:30:00Z" })).toBeTrue();
+        expect(matchesRange(weekdays, { startTime: "2026-03-17T00:00:00Z" })).toBeFalse();
     });
 
     it("stops matching a COUNT-bounded rule after its last possible occurrence", () => {
