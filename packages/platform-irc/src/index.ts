@@ -26,6 +26,7 @@ import type {
     PersistentPlatformConfig,
     PersistentPlatformInterface,
     PlatformCallback,
+    PlatformPrepareActorUpdate,
     PlatformSchemaStruct,
     PlatformSendToClient,
     PlatformSession,
@@ -117,6 +118,37 @@ function ircFailureMessage(asObject: ActivityStream): string {
     return "IRC error";
 }
 
+/**
+ * Nick to register on a new IRC connection.
+ *
+ * `object.nick` is the account nick submitted with the credentials. A rename
+ * rewrites `actor.id` (`nick@server`) and leaves `object.nick` in place so
+ * the credential fingerprint still finds the live worker. Those two agree
+ * on a first connect. After a rename they do not, and a fresh worker (a
+ * restart, or a platform process that exited) must register the actor nick:
+ * registering `object.nick` leaves `handledActors` pointing at a nickname
+ * this socket does not own. The next nick-change echo never matches, so
+ * that command and every command queued behind it wait forever, and a nick
+ * change by whoever now holds the actor nick is adopted as this session's.
+ */
+function ircRegistrationNick(
+    credentials: PlatformIrcCredentialsObject,
+): string {
+    const server = credentials.object.server;
+    const actorId = credentials.actor?.id;
+    if (
+        typeof server === "string" &&
+        server.length > 0 &&
+        typeof actorId === "string"
+    ) {
+        const suffix = `@${server}`;
+        if (actorId.endsWith(suffix) && actorId.length > suffix.length) {
+            return actorId.slice(0, -suffix.length);
+        }
+    }
+    return credentials.object.nick;
+}
+
 interface IrcSocketOptionsCapabilities {
     requires: string[];
 }
@@ -156,6 +188,7 @@ export class IRC implements PersistentPlatformInterface {
         connectTimeoutMs: 30000,
     };
     private readonly updateActor: PlatformUpdateActor;
+    private readonly prepareActorUpdate?: PlatformPrepareActorUpdate;
     private readonly sendToClient: PlatformSendToClient;
     private irc2as!: IrcToActivityStreams;
     private forceDisconnect = false;
@@ -174,6 +207,7 @@ export class IRC implements PersistentPlatformInterface {
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.updateActor = session.updateActor;
+        this.prepareActorUpdate = session.prepareActorUpdate;
     }
 
     /**
@@ -409,7 +443,7 @@ export class IRC implements PersistentPlatformInterface {
             job.object?.content,
         ]);
         if (lineBreakError) return done(lineBreakError);
-        this.getClient(job.actor.id, false, (err, client) => {
+        this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
             }
@@ -417,6 +451,28 @@ export class IRC implements PersistentPlatformInterface {
                 this.log.debug(
                     `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
+                // Refuse a collision before NICK reaches the server. The
+                // credential check used to run only after the server accepted
+                // the nick, so a refusal left this connection on the new nick
+                // while the client was told the rename failed.
+                if (this.prepareActorUpdate) {
+                    const proposed = structuredClone(credentials);
+                    proposed.object.nick = job.target.name;
+                    proposed.actor = {
+                        ...proposed.actor,
+                        id: `${job.target.name}@${credentials.object.server}`,
+                        name: job.target.name,
+                    };
+                    try {
+                        await this.prepareActorUpdate(proposed);
+                    } catch (updateErr) {
+                        const message =
+                            updateErr instanceof Error
+                                ? updateErr.message
+                                : String(updateErr);
+                        return done(message);
+                    }
+                }
                 // Do not mark the requested nick as ours until the server
                 // accepts it. Doing so earlier consumes that nick's live
                 // traffic as this job's completion, so a taken nick can be
@@ -651,7 +707,9 @@ export class IRC implements PersistentPlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         cb: GetClientCallback,
     ) {
+        const nick = ircRegistrationNick(credentials);
         const lineBreakError = ircLineBreakError([
+            nick,
             credentials.object.nick,
             credentials.object.username,
             credentials.actor.name,
@@ -678,8 +736,11 @@ export class IRC implements PersistentPlatformInterface {
                 : !!sasl_secret;
 
         const module_options: IrcSocketOptions = {
+            // SASL account stays the credential nick. Only the registered
+            // nickname follows the actor, so a renamed session still
+            // authenticates as the account that owns the password.
             username: credentials.object.username || credentials.object.nick,
-            nicknames: [credentials.object.nick],
+            nicknames: [nick],
             server: credentials.object.server || "irc.libera.chat",
             realname: credentials.actor.name || credentials.object.nick,
             port: credentials.object.port
