@@ -20,6 +20,14 @@ declare module "@sockethub/irc2as" {
         context?: string;
     }
 
+    export interface IncomingCtcp {
+        kind: "request" | "reply";
+        command: string;
+        args: string;
+        from: string;
+        target: string;
+    }
+
     export class IrcToActivityStreams {
         constructor(options: IrcToActivityStreamsOptions);
         input(data: unknown): void;
