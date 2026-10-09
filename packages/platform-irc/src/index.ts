@@ -513,8 +513,7 @@ export class IRC implements PersistentPlatformInterface {
                             credentials.object.nick = previousNick;
                             credentials.actor.id = previousActorId;
                             credentials.actor.name = previousActorName;
-                            this.handledActors.delete(job.actor.id);
-                            this.handledActors.add(appliedActorId);
+                            this.setSocketNick(appliedActorId);
                             const message =
                                 updateErr instanceof Error
                                     ? updateErr.message
@@ -525,8 +524,7 @@ export class IRC implements PersistentPlatformInterface {
                         // Leaving it here drops their traffic: an event whose
                         // actor is in this set completes a job instead of being
                         // delivered.
-                        this.handledActors.delete(job.actor.id);
-                        this.handledActors.add(credentials.actor.id);
+                        this.setSocketNick(credentials.actor.id);
                         done();
                     },
                 });
@@ -677,6 +675,18 @@ export class IRC implements PersistentPlatformInterface {
         if (this.channels.has(channel)) {
             this.channels.delete(channel);
         }
+    }
+
+    /**
+     * A socket holds exactly one nick. Replace whatever handledActors held
+     * rather than deleting the actor a job was addressed as: after a rename
+     * the store rejected, the client still addresses jobs as the old actor,
+     * so deleting by job actor leaves the nick the socket released behind
+     * and whoever takes it next is treated as this connection.
+     */
+    private setSocketNick(actorId: string): void {
+        this.handledActors.clear();
+        this.handledActors.add(actorId);
     }
 
     private getClient(
@@ -885,7 +895,6 @@ export class IRC implements PersistentPlatformInterface {
             return;
         }
 
-        const oldActorId = asObject.actor.id;
         const newNick = asObject.target.name;
         const server = this.credentials.object.server;
         const previousNick = this.credentials.object.nick;
@@ -896,8 +905,7 @@ export class IRC implements PersistentPlatformInterface {
         this.credentials.actor.id = `${newNick}@${server}`;
         this.credentials.actor.name = newNick;
         // The socket holds the new nick whatever happens below.
-        this.handledActors.delete(oldActorId);
-        this.handledActors.add(this.credentials.actor.id);
+        this.setSocketNick(this.credentials.actor.id);
 
         try {
             await this.updateActor(this.credentials);

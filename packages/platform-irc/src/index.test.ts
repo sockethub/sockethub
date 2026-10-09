@@ -837,6 +837,55 @@ describe("Initialize IRC Platform", () => {
                 ).toEqual(true);
             });
 
+            it("forgets a released nick once a later rename succeeds", async () => {
+                // First rename: server applies it, store rejects it. The
+                // client keeps addressing jobs as the old actor.
+                platform.updateActor = () =>
+                    Promise.reject(new Error("redis down"));
+                const creds = structuredClone(validCredentials);
+                await new Promise<void>((resolve) => {
+                    platform.update(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "update",
+                            actor: actor,
+                            object: { type: "address" },
+                            target: newActor,
+                        },
+                        creds,
+                        () => resolve(),
+                    );
+                    setImmediate(() => platform.completeJob());
+                });
+                expect(platform.handledActors.has(newActor.id)).toEqual(true);
+
+                // Second rename, still addressed as the old actor, succeeds.
+                platform.updateActor = async () => {};
+                const third = {
+                    type: "person",
+                    id: "third@irc.example.com",
+                    name: "third",
+                };
+                await new Promise<void>((resolve) => {
+                    platform.update(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "update",
+                            actor: actor,
+                            object: { type: "address" },
+                            target: third,
+                        },
+                        creds,
+                        () => resolve(),
+                    );
+                    setImmediate(() => platform.completeJob());
+                });
+
+                // Only the nick the socket holds remains. Whoever takes the
+                // released one must not be treated as this connection.
+                expect([...platform.handledActors]).toEqual([third.id]);
+            });
+
             it("does not send NICK when the rename would overwrite another account", async () => {
                 const rawCalls: Array<unknown> = [];
                 platform.client.raw = (...args: Array<unknown>) => {
