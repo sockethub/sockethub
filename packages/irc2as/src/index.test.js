@@ -203,11 +203,9 @@ describe("IrcToActivityStreams", () => {
         irc2as.input(
             ":irc.example.net 436 alice :Nickname collision KILL",
         );
-        irc2as.input(":irc.example.net 431 :No nickname given");
         expect(seen).toEqual([
             "Nick change too fast. Please wait 29 seconds.",
             "Nickname collision KILL",
-            "No nickname given",
         ]);
         done();
     });

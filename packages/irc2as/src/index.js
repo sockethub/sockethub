@@ -7,7 +7,6 @@ const EVENT_PONG = "pong";
 const EVENT_PING = "ping";
 const EVENT_UNPROCESSED = "unprocessed";
 
-const ERR_NO_NICK_GIVEN = "431";
 const ERR_BAD_NICK = "432";
 const ERR_CHAN_PRIVS = "482";
 const ERR_NICK_IN_USE = "433";
@@ -159,7 +158,6 @@ export class IrcToActivityStreams {
                 break;
 
             /** */
-            case ERR_NO_NICK_GIVEN:
             case ERR_NICK_IN_USE: // nick conflict
             case ERR_BAD_NICK:
             case ERR_NICK_COLLISION:
