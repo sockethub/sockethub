@@ -348,8 +348,13 @@ export function reassignAnonymousScopes(
  * recomputed from the renamed credentials: the worker was forked with the
  * original fingerprint, and a new one would not find it.
  *
- * An entry the session has already opened for the new actor is left alone, so
- * a deliberate re-authentication is not replaced by the pre-rename scope.
+ * A scope already stored for the new actor is replaced. That entry is an
+ * earlier login as the target nick, and the credential object includes the
+ * nick, so its fingerprint differs from the connection being renamed.
+ * Leaving it in place sends the next command to a different worker. The
+ * connection that now holds the nick is never addressed again, and the new
+ * worker fails to connect because the nick is taken. Another session's
+ * scope for the same actor is not in `sessionIds` and is left alone.
  */
 export function reassignPendingScopes(
     sessionIds: Iterable<string>,
@@ -365,7 +370,7 @@ export function reassignPendingScopes(
     for (const sessionId of sessionIds) {
         const bySession = pendingScopes.get(sessionId);
         const pending = bySession?.get(from);
-        if (!bySession || !pending || bySession.has(to)) {
+        if (!bySession || !pending) {
             continue;
         }
         bySession.delete(from);
