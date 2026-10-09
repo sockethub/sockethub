@@ -374,6 +374,33 @@ function parseDate(value: string): string {
     return value;
 }
 
+/**
+ * Separate VALARM blocks from the component's own content lines in one
+ * forward pass. A lazy BEGIN/END regex retries from every unclosed BEGIN and
+ * is quadratic on hostile input, which would stall the shared CalDAV process.
+ * An alarm that never closes is not an alarm; its lines stay with the
+ * component, as the regex left them.
+ */
+function splitAlarms(section: string): {
+    alarmBlocks: string[];
+    componentLines: string[];
+} {
+    const alarmBlocks: string[] = [];
+    const componentLines: string[] = [];
+    let alarm: string[] | undefined;
+    for (const line of section.split(/\r?\n/)) {
+        if (alarm) {
+            if (line === "END:VALARM") {
+                alarmBlocks.push(alarm.join("\n"));
+                alarm = undefined;
+            } else alarm.push(line);
+        } else if (line === "BEGIN:VALARM") alarm = [];
+        else componentLines.push(line);
+    }
+    if (alarm) componentLines.push("BEGIN:VALARM", ...alarm);
+    return { alarmBlocks, componentLines };
+}
+
 /** Parse the interoperable item fields returned by CalDAV multiget/query responses. */
 export function parseICalendar(
     body: string,
@@ -389,18 +416,12 @@ export function parseICalendar(
         ),
     )?.[1];
     if (!section) throw new Error("invalid calendar data");
-    const alarmBlocks = [
-        ...section.matchAll(/BEGIN:VALARM\r?\n([\s\S]*?)\r?\nEND:VALARM/g),
-    ].map((match) => match[1]);
-    const componentSection = section.replace(
-        /BEGIN:VALARM\r?\n[\s\S]*?\r?\nEND:VALARM/g,
-        "",
-    );
+    const { alarmBlocks, componentLines } = splitAlarms(section);
     const values = new Map<
         string,
         { params: Record<string, string>; value: string }[]
     >();
-    for (const line of componentSection.split(/\r?\n/)) {
+    for (const line of componentLines) {
         const parsed = parseContentLine(line);
         if (!parsed) continue;
         const list = values.get(parsed.name) ?? [];
@@ -547,15 +568,20 @@ export function parseICalendar(
 /** Whether rewriting this resource can preserve all recurrence semantics. */
 export function isUpdateSupported(body: string): boolean {
     const unfolded = body.replace(/\r?\n[ \t]/g, "");
-    const components = [
-        ...unfolded.matchAll(
-            /^BEGIN:(VEVENT|VTODO)\r?\n([\s\S]*?)^END:\1\r?$/gm,
-        ),
-    ];
-    return (
-        components.length === 1 &&
-        !/^(?:RECURRENCE-ID|EXDATE|RDATE)(?:;|:)/m.test(
-            components[0]?.[2] ?? "",
-        )
-    );
+    // Count closed components with one forward scan rather than a lazy
+    // BEGIN/END regex, which is quadratic on unclosed BEGIN lines.
+    let components = 0;
+    let open: string | undefined;
+    let supported = true;
+    for (const line of unfolded.split(/\r?\n/)) {
+        if (open) {
+            if (line === `END:${open}`) {
+                components += 1;
+                open = undefined;
+            } else if (/^(?:RECURRENCE-ID|EXDATE|RDATE)(?:;|:)/.test(line))
+                supported = false;
+        } else if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO")
+            open = line.slice("BEGIN:".length);
+    }
+    return components === 1 && supported;
 }
