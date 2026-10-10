@@ -27,4 +27,8 @@ COPY --chown=node:node --from=build /app ./
 RUN echo "Running sockethub (prod) on node: LOG_LEVEL=${LOG_LEVEL}"
 RUN chown node:node /app
 USER node
+# node:*-slim ships no curl/wget, so probe with node's fetch. PORT is the same
+# variable convict binds to sockethub.port, so overriding it moves both.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||10550)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "/app/packages/sockethub/bin/sockethub", "--host", "0.0.0.0"]
