@@ -4,24 +4,46 @@ import type {
     ServiceEndpoints,
 } from "@sockethub/schemas";
 import {
-    addPlatformContext,
-    addPlatformSchema,
     normalizeActivityStream,
-    resolvePlatformId,
     validateActivityStream,
     validateCredentials,
-    validateServiceDescriptor,
 } from "@sockethub/schemas";
 import EventEmitter from "eventemitter3";
 import type { ManagerOptions, Socket, SocketOptions } from "socket.io-client";
+import {
+    type PlatformRegistryEntry,
+    type PlatformRegistryPayload,
+    parsePlatformRegistry,
+    registerPlatformSchemas,
+} from "./client-registry";
+import {
+    type DiscoverOptions,
+    DiscoveryError,
+    discoverSockethub,
+    resolveEndpoint,
+    resolveSocketFactory,
+    type SocketFactory,
+} from "./discovery";
+import {
+    hasActorId,
+    isActorRename,
+    isErrorResult,
+    ReplayStore,
+} from "./replay-store";
 
 export type { ServiceDescriptor, ServiceEndpoints };
-
-export interface EventMapping {
-    credentials: Map<string, ActivityStream>;
-    connect: Map<string, ActivityStream>;
-    join: Map<string, ActivityStream>;
-}
+export type {
+    PlatformRegistryEntry,
+    PlatformRegistryPayload,
+} from "./client-registry";
+export {
+    type DiscoverOptions,
+    DiscoveryError,
+    discoverSockethub,
+    resolveEndpoint,
+    type SocketFactory,
+} from "./discovery";
+export type { EventMapping } from "./replay-store";
 
 type ReplayEventMap = {
     credentials: ActivityStream;
@@ -62,19 +84,6 @@ export interface SockethubClientOptions {
     maxQueuedAgeMs?: number;
 }
 
-/** The `io()` factory exported by `socket.io-client`. */
-export type SocketFactory = (
-    uri: string,
-    opts?: Partial<ManagerOptions & SocketOptions>,
-) => Socket;
-
-export interface DiscoverOptions {
-    /** Replacement for the global `fetch`, mainly for tests. */
-    fetch?: typeof fetch;
-    /** Abort discovery after this many milliseconds. Default 10000. */
-    discoveryTimeoutMs?: number;
-}
-
 export interface ConnectOptions
     extends SockethubClientOptions,
         DiscoverOptions {
@@ -91,220 +100,12 @@ export interface ConnectOptions
     socketOptions?: Partial<ManagerOptions & SocketOptions>;
 }
 
-/** Thrown when a server's descriptor cannot be fetched or is not usable. */
-export class DiscoveryError extends Error {
-    constructor(message: string, options?: { cause?: unknown }) {
-        super(message, options);
-        this.name = "DiscoveryError";
-    }
-}
-
-/**
- * Fetch and validate a Sockethub server's service descriptor from its base
- * URL. Every failure rejects with a `DiscoveryError` that says what went
- * wrong (unreachable, non-JSON, invalid descriptor).
- */
-export async function discoverSockethub(
-    baseUrl: string,
-    options: DiscoverOptions = {},
-): Promise<ServiceDescriptor> {
-    let url: URL;
-    try {
-        url = new URL(baseUrl);
-    } catch (cause) {
-        throw new DiscoveryError(
-            `Sockethub discovery needs an absolute base URL, got ${JSON.stringify(baseUrl)}`,
-            { cause },
-        );
-    }
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-        throw new DiscoveryError(
-            `Sockethub discovery needs an http(s) base URL, got ${JSON.stringify(baseUrl)}`,
-        );
-    }
-    const doFetch = options.fetch ?? globalThis.fetch;
-    if (typeof doFetch !== "function") {
-        throw new DiscoveryError(
-            "Sockethub discovery needs fetch(); pass one in the options",
-        );
-    }
-    const controller = new AbortController();
-    const timeoutMs = options.discoveryTimeoutMs ?? 10000;
-    // The timer covers the whole exchange: fetch() resolves once headers
-    // arrive, and a stalled body would otherwise hang discovery forever.
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const timedOut = () => controller.signal.aborted;
-
-    let descriptor: unknown;
-    try {
-        let response: Response;
-        try {
-            response = await doFetch(url.href, {
-                headers: { accept: "application/json" },
-                signal: controller.signal,
-            });
-        } catch (cause) {
-            const reason = timedOut()
-                ? `timed out after ${timeoutMs}ms`
-                : cause instanceof Error
-                  ? cause.message
-                  : String(cause);
-            throw new DiscoveryError(
-                `Sockethub discovery failed: could not reach ${url.href} (${reason})`,
-                { cause },
-            );
-        }
-        if (!response.ok) {
-            throw new DiscoveryError(
-                `Sockethub discovery failed: ${url.href} answered ${response.status}`,
-            );
-        }
-        try {
-            descriptor = await response.json();
-        } catch (cause) {
-            throw new DiscoveryError(
-                timedOut()
-                    ? `Sockethub discovery failed: ${url.href} timed out after ${timeoutMs}ms while sending the descriptor`
-                    : `Sockethub discovery failed: ${url.href} did not return JSON; is it a Sockethub server?`,
-                { cause },
-            );
-        }
-    } finally {
-        clearTimeout(timer);
-    }
-    if (!validateServiceDescriptor(descriptor)) {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: ${url.href} did not return a valid service descriptor`,
-        );
-    }
-    return descriptor;
-}
-
-/**
- * Resolve an advertised endpoint path against the server origin, refusing any
- * result that lands on another origin. The schema already rejects paths that
- * URL resolution would read as protocol-relative; this is the belt to that
- * brace for callers that build URLs from descriptor values.
- */
-export function resolveEndpoint(serverOrigin: string, path: string): string {
-    const url = new URL(path, serverOrigin);
-    if (url.origin !== new URL(serverOrigin).origin) {
-        throw new DiscoveryError(
-            `Sockethub discovery failed: endpoint path ${JSON.stringify(path)} resolves to ${url.origin}, not ${serverOrigin}`,
-        );
-    }
-    return url.href;
-}
-
-async function resolveSocketFactory(
-    explicit?: SocketFactory,
-): Promise<SocketFactory> {
-    if (explicit) {
-        return explicit;
-    }
-    const globalIo = (globalThis as { io?: unknown }).io;
-    if (typeof globalIo === "function") {
-        return globalIo as SocketFactory;
-    }
-    try {
-        const mod = (await import("socket.io-client")) as {
-            io?: SocketFactory;
-        };
-        if (typeof mod.io === "function") {
-            return mod.io;
-        }
-    } catch {
-        // Fall through to the descriptive error below.
-    }
-    throw new Error(
-        "SockethubClient.connect() needs socket.io-client: install it, load /socket.io.js, or pass `io` in the options",
-    );
-}
-
 interface CustomEmitter extends EventEmitter {
     _emit(s: string, o: unknown, c?: unknown): void;
     connect(): void;
     disconnect(): void;
     connected: boolean;
     id: string;
-}
-
-// major[.minor[.patch]] with optional prerelease and build metadata.
-const LEGACY_VERSION_PATTERN =
-    /^v?(\d+)(?:\.\d+){0,2}(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-
-function isPlainObject(value: unknown): value is object {
-    return !!value && typeof value === "object" && !Array.isArray(value);
-}
-
-/** An API version is a SemVer major: a non-negative safe integer. */
-function isApiVersion(value: unknown): value is number {
-    return (
-        typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-    );
-}
-
-/**
- * Read an API version off a registry payload or platform entry. Servers that
- * predate API versions published an exact package `version` instead; its
- * SemVer major is the same number, so derive it rather than report nothing.
- */
-function resolveApiVersion(source: unknown): number | undefined {
-    if (!source || typeof source !== "object") {
-        return undefined;
-    }
-    const { apiVersion, version } = source as {
-        apiVersion?: unknown;
-        version?: unknown;
-    };
-    if (isApiVersion(apiVersion)) {
-        return apiVersion;
-    }
-    if (typeof version === "string") {
-        const match = LEGACY_VERSION_PATTERN.exec(version.trim());
-        const major = match ? Number(match[1]) : undefined;
-        if (isApiVersion(major)) {
-            return major;
-        }
-    }
-    return undefined;
-}
-
-interface PlatformRegistrySchemas {
-    credentials?: object;
-    messages?: object;
-}
-
-/**
- * Server-declared platform metadata used by the client for context generation
- * and runtime validation.
- */
-export interface PlatformRegistryEntry {
-    id: string;
-    // Platform API version (the platform package's SemVer major).
-    apiVersion: number;
-    contextUrl: string;
-    contextVersion: string;
-    schemaVersion: string;
-    types: Array<string>;
-    schemas: PlatformRegistrySchemas;
-}
-
-export interface PlatformRegistryPayload {
-    // Global Sockethub API version (the server package's SemVer major).
-    apiVersion?: number;
-    // Server-computed content fingerprint of the registry. The client echoes
-    // this on re-request so the server can reply "unchanged" instead of
-    // re-sending the full schema set (#1117).
-    fingerprint?: string;
-    // Set by the server when the echoed fingerprint matches: the registry is
-    // identical to what the client already holds, so no platforms are included.
-    unchanged?: boolean;
-    contexts?: {
-        as?: string;
-        sockethub?: string;
-    };
-    platforms?: Array<PlatformRegistryEntry>;
 }
 
 export interface ClientReadyInfo {
@@ -407,17 +208,7 @@ export interface ClientInitError {
  * ```
  */
 export default class SockethubClient {
-    /**
-     * In-memory storage for client state that should be replayed on reconnection.
-     *
-     * Security: Stored ONLY in JavaScript heap memory. Never persisted to disk,
-     * localStorage, or any permanent storage. Cleared on page reload.
-     */
-    private events: EventMapping = {
-        credentials: new Map(),
-        connect: new Map(),
-        join: new Map(),
-    };
+    private replayStore = new ReplayStore();
     private _socket: Socket;
     public socket!: CustomEmitter;
     public debug = true;
@@ -572,7 +363,7 @@ export default class SockethubClient {
      * ```
      */
     public clearCredentials(): void {
-        this.events.credentials.clear();
+        this.replayStore.events.credentials.clear();
     }
 
     /**
@@ -765,98 +556,23 @@ export default class SockethubClient {
     private applyPlatformRegistry(
         payload: unknown,
     ): PlatformRegistryPayload | undefined {
-        if (!payload || typeof payload !== "object") {
+        const parsed = parsePlatformRegistry(payload);
+        if (!parsed) {
             return undefined;
         }
-        const registry = payload as PlatformRegistryPayload;
-        const asContextUrl = registry.contexts?.as;
-        const sockethubContextUrl = registry.contexts?.sockethub;
-        if (
-            typeof asContextUrl !== "string" ||
-            typeof sockethubContextUrl !== "string" ||
-            !Array.isArray(registry.platforms)
-        ) {
-            return undefined;
-        }
-        // Every server reports an API version (legacy ones via `version`), so
-        // a payload without one is malformed rather than merely older.
-        const apiVersion = resolveApiVersion(registry);
-        if (apiVersion === undefined) {
-            return undefined;
-        }
-        this.apiVersion = apiVersion;
-        this.asContextUrl = asContextUrl;
-        this.sockethubContextUrl = sockethubContextUrl;
-
-        this.platformRegistry.clear();
-        for (const platform of registry.platforms) {
-            if (
-                !platform ||
-                typeof platform !== "object" ||
-                typeof platform.id !== "string" ||
-                typeof platform.contextUrl !== "string" ||
-                typeof platform.contextVersion !== "string" ||
-                typeof platform.schemaVersion !== "string"
-            ) {
-                continue;
-            }
-            const platformApiVersion = resolveApiVersion(platform);
-            if (platformApiVersion === undefined) {
-                continue;
-            }
-            const schemas = isPlainObject(platform.schemas)
-                ? platform.schemas
-                : {};
-            // Rebuilt field by field rather than spread, so nothing the
-            // server sends beyond the bootstrap contract (such as an exact
-            // package version) is retained or re-emitted.
-            this.platformRegistry.set(platform.id, {
-                id: platform.id,
-                apiVersion: platformApiVersion,
-                contextUrl: platform.contextUrl,
-                contextVersion: platform.contextVersion,
-                schemaVersion: platform.schemaVersion,
-                types: Array.isArray(platform.types)
-                    ? platform.types.filter(
-                          (type): type is string => typeof type === "string",
-                      )
-                    : [],
-                schemas: {
-                    credentials: isPlainObject(schemas.credentials)
-                        ? schemas.credentials
-                        : undefined,
-                    messages: isPlainObject(schemas.messages)
-                        ? schemas.messages
-                        : undefined,
-                },
-            });
-            addPlatformContext(platform.id, platform.contextUrl);
-            try {
-                if (isPlainObject(schemas.credentials)) {
-                    addPlatformSchema(
-                        schemas.credentials,
-                        `${platform.id}/credentials`,
-                    );
-                }
-                if (isPlainObject(schemas.messages)) {
-                    addPlatformSchema(
-                        schemas.messages,
-                        `${platform.id}/messages`,
-                    );
-                }
-            } catch (err) {
-                const message =
-                    err instanceof Error ? err.message : String(err);
-                console.warn(
-                    `[SockethubClient] Failed to register schemas for platform ${platform.id}: ${message}`,
-                );
-            }
+        this.apiVersion = parsed.apiVersion;
+        this.asContextUrl = parsed.asContextUrl;
+        this.sockethubContextUrl = parsed.sockethubContextUrl;
+        this.platformRegistry = parsed.platforms;
+        for (const platform of parsed.platforms.values()) {
+            registerPlatformSchemas(platform);
         }
         const normalizedPayload = this.buildPlatformRegistryPayload();
         // Dedup only on the server's fingerprint, which is computed over the
         // full payload (including schema bodies and types). Without one we leave
         // the fingerprint unset so handleSchemasPayload never short-circuits and
         // a schema change can't be silently missed (#1117 review).
+        const registry = payload as PlatformRegistryPayload;
         this.registryFingerprint =
             typeof registry.fingerprint === "string"
                 ? registry.fingerprint
@@ -864,51 +580,6 @@ export default class SockethubClient {
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;
-    }
-
-    private eventCredentials(content: ActivityStream) {
-        if (content.object && content.object.type === "credentials") {
-            this.events.credentials.set(
-                SockethubClient.getKey(content),
-                content,
-            );
-        }
-    }
-
-    private eventMessage(content: ActivityStream) {
-        if (!this._socket.connected) {
-            return;
-        }
-        // either stores or delete the specified content onto the storedJoins map,
-        // for reply once we're back online.
-        const key = SockethubClient.getKey(content as ActivityStream);
-        if (content.type === "join" || content.type === "connect") {
-            this.events[content.type].set(key, content as ActivityStream);
-        } else if (content.type === "leave") {
-            this.events.join.delete(key);
-        } else if (content.type === "disconnect") {
-            this.events.connect.delete(key);
-        }
-    }
-
-    /**
-     * Key for the replay maps. Scoped by platform: the same visible actor id
-     * can exist on more than one platform (an `alice@example.org` that is both
-     * an IRC nick and an XMPP JID), and keyed by actor alone one platform's
-     * stored credentials/connect/join would replace the other's on reconnect.
-     */
-    private static getKey(content: ActivityStream) {
-        const actor = content.actor?.id || content.actor;
-        if (!actor) {
-            throw new Error(
-                `actor property not present for message type: ${content?.type}`,
-            );
-        }
-        const target = content.target
-            ? content.target.id || content.target
-            : "";
-        const platform = resolvePlatformId(content) ?? "";
-        return `${platform}:${actor}-${target}`;
     }
 
     private buildPlatformRegistryPayload(): PlatformRegistryPayload {
@@ -1095,9 +766,10 @@ export default class SockethubClient {
 
         if (replayOnReady) {
             // Replay previously sent state before flushing newly queued outbound events.
-            this.replay("credentials", this.events.credentials);
-            this.replay("message", this.events.connect);
-            this.replay("message", this.events.join);
+            const { credentials, connect, join } = this.replayStore.events;
+            this.replay("credentials", credentials);
+            this.replay("message", connect);
+            this.replay("message", join);
         }
 
         this.flushOutboundQueue();
@@ -1260,9 +932,11 @@ export default class SockethubClient {
             }
             let callback = entry.callback;
             if (entry.event === "credentials") {
-                this.eventCredentials(outgoing as ActivityStream);
+                this.replayStore.recordCredentials(outgoing as ActivityStream);
             } else if (entry.event === "message") {
-                this.eventMessage(outgoing as ActivityStream);
+                if (this._socket.connected) {
+                    this.replayStore.recordMessage(outgoing as ActivityStream);
+                }
                 callback = this.rememberRequestedRename(
                     outgoing as ActivityStream,
                     callback,
@@ -1317,22 +991,6 @@ export default class SockethubClient {
     }
 
     /**
-     * True for the activity that reports or requests a nick change: an
-     * `update` whose object is an `address`, with `actor` the old identity
-     * and `target` the new one.
-     */
-    private isActorRename(activity: ActivityStream): boolean {
-        return (
-            activity?.type === "update" &&
-            activity.object?.type === "address" &&
-            this.hasActorId(activity) &&
-            typeof activity.target === "object" &&
-            typeof activity.target?.id === "string" &&
-            activity.target.id !== activity.actor.id
-        );
-    }
-
-    /**
      * Keeps the replay maps on the actor the server now knows after a rename
      * the server reported.
      *
@@ -1355,10 +1013,10 @@ export default class SockethubClient {
      * and opens a second connection.
      */
     private followActorRename(incoming: ActivityStream): void {
-        if (SockethubClient.isErrorResult(incoming)) {
+        if (isErrorResult(incoming)) {
             return;
         }
-        if (this.isActorRename(incoming)) {
+        if (isActorRename(incoming)) {
             this.moveReplayState(incoming);
         }
     }
@@ -1375,7 +1033,7 @@ export default class SockethubClient {
         outgoing: ActivityStream,
         callback: unknown,
     ): unknown {
-        if (!this.isActorRename(outgoing)) {
+        if (!isActorRename(outgoing)) {
             return callback;
         }
         return (...args: unknown[]) => {
@@ -1387,8 +1045,8 @@ export default class SockethubClient {
             const [first, second] = args;
             const failed =
                 first instanceof Error ||
-                SockethubClient.isErrorResult(first) ||
-                SockethubClient.isErrorResult(second);
+                isErrorResult(first) ||
+                isErrorResult(second);
             if (!failed) {
                 this.moveReplayState(outgoing);
             }
@@ -1398,69 +1056,10 @@ export default class SockethubClient {
         };
     }
 
-    /**
-     * True for the `{ error }` object the server acks a failed job with.
-     */
-    private static isErrorResult(value: unknown): boolean {
-        return (
-            typeof value === "object" &&
-            value !== null &&
-            "error" in value &&
-            Boolean((value as { error?: unknown }).error)
-        );
-    }
-
-    /**
-     * Re-keys every stored entry for the rename's `actor` on its platform to
-     * its `target`. The credential object itself is left as the application
-     * sent it: the server keys the live connection on a fingerprint of that
-     * object, and the worker accepts the hash it was authorized with, so
-     * replaying the original object under the new actor is what lands back
-     * on the renamed connection.
-     */
     private moveReplayState(rename: ActivityStream): void {
-        const previousId = rename.actor.id;
-        const target = rename.target as ActivityStream["actor"];
-        const nextId = target.id;
-        const nextName =
-            typeof target.name === "string" ? target.name : undefined;
-        const platform = resolvePlatformId(rename) ?? "";
-
-        for (const map of Object.values(this.events)) {
-            for (const [key, entry] of [...map]) {
-                if (
-                    !this.hasActorId(entry) ||
-                    entry.actor.id !== previousId ||
-                    (resolvePlatformId(entry) ?? "") !== platform
-                ) {
-                    continue;
-                }
-                const renamed: ActivityStream = {
-                    ...entry,
-                    actor: {
-                        ...entry.actor,
-                        id: nextId,
-                        ...(nextName ? { name: nextName } : {}),
-                    },
-                };
-                map.delete(key);
-                map.set(SockethubClient.getKey(renamed), renamed);
-                this.log(`replay state moved from ${previousId} to ${nextId}`);
-            }
+        for (const [previousId, nextId] of this.replayStore.moveActor(rename)) {
+            this.log(`replay state moved from ${previousId} to ${nextId}`);
         }
-    }
-
-    /**
-     * Type guard to check if an object is an ActivityStream with a valid actor.id.
-     */
-    private hasActorId(obj: ActivityStream): obj is ActivityStream {
-        return (
-            "actor" in obj &&
-            obj.actor !== null &&
-            typeof obj.actor === "object" &&
-            "id" in obj.actor &&
-            typeof obj.actor.id === "string"
-        );
     }
 
     /**
@@ -1486,7 +1085,7 @@ export default class SockethubClient {
         for (const obj of asMap.values()) {
             const expandedObj = normalizeActivityStream(obj as ActivityStream);
             let id = expandedObj?.id;
-            if (this.hasActorId(expandedObj)) {
+            if (hasActorId(expandedObj)) {
                 const actor = (expandedObj as ActivityStream).actor;
                 // actor can be a string (JID) or an object with an id field
                 id = typeof actor === "string" ? actor : actor.id;

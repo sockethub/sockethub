@@ -816,7 +816,7 @@ describe("SockethubClient", () => {
                 actor: { id: "user@example.com", type: "person" },
                 object: { type: "credentials", password: "secret" },
             };
-            sc.events.credentials.set(credentials.actor.id, credentials);
+            sc.replayStore.events.credentials.set(credentials.actor.id, credentials);
 
             socket.emit.resetHistory();
             socket.emit("connect");
@@ -855,7 +855,7 @@ describe("SockethubClient", () => {
                 object: { type: "credentials", password: "dummy-pass" },
             });
 
-            expect(sc.events.credentials.size).to.equal(2);
+            expect(sc.replayStore.events.credentials.size).to.equal(2);
         });
     });
 
@@ -922,7 +922,7 @@ describe("SockethubClient", () => {
             rename("test-xmpp", "alice", "alice_away");
 
             for (const name of ["credentials", "connect", "join"]) {
-                const map = sc.events[name];
+                const map = sc.replayStore.events[name];
                 expect(map.size, name).to.equal(1);
                 const [key, entry] = [...map.entries()][0];
                 expect(key, name).to.include("alice_away@irc.example.org");
@@ -931,14 +931,14 @@ describe("SockethubClient", () => {
                     name: "alice_away",
                 });
             }
-            expect(sc.events.join.values().next().value.target).to.deep.equal(
+            expect(sc.replayStore.events.join.values().next().value.target).to.deep.equal(
                 room,
             );
             // The credential object stays as sent: the server fingerprints
             // it to find the live connection, and the worker accepts the hash
             // it was authorized with.
             expect(
-                sc.events.credentials.values().next().value.object,
+                sc.replayStore.events.credentials.values().next().value.object,
             ).to.deep.equal({
                 type: "credentials",
                 nick: "alice",
@@ -1022,7 +1022,7 @@ describe("SockethubClient", () => {
             ack({ type: "update" });
 
             for (const name of ["credentials", "connect", "join"]) {
-                const entry = sc.events[name].values().next().value;
+                const entry = sc.replayStore.events[name].values().next().value;
                 expect(entry.actor.id, name).to.equal(
                     "alice_away@irc.example.org",
                 );
@@ -1035,7 +1035,7 @@ describe("SockethubClient", () => {
             ack({ error: "Nickname is already in use." });
 
             for (const name of ["credentials", "connect", "join"]) {
-                const entry = sc.events[name].values().next().value;
+                const entry = sc.replayStore.events[name].values().next().value;
                 expect(entry.actor.id, name).to.equal("alice@irc.example.org");
             }
             expect(callback.calledOnce).to.equal(true);
@@ -1047,7 +1047,7 @@ describe("SockethubClient", () => {
             ack(null, { type: "update" });
 
             expect(
-                sc.events.credentials.values().next().value.actor.id,
+                sc.replayStore.events.credentials.values().next().value.actor.id,
             ).to.equal("alice_away@irc.example.org");
             expect(callback.calledOnceWith(null, { type: "update" })).to.equal(
                 true,
@@ -1059,7 +1059,7 @@ describe("SockethubClient", () => {
             ack(null, { error: "Nickname is already in use." });
 
             expect(
-                sc.events.credentials.values().next().value.actor.id,
+                sc.replayStore.events.credentials.values().next().value.actor.id,
             ).to.equal("alice@irc.example.org");
             expect(
                 callback.calledOnceWith(null, {
@@ -1074,7 +1074,7 @@ describe("SockethubClient", () => {
             ack(timeout);
 
             expect(
-                sc.events.credentials.values().next().value.actor.id,
+                sc.replayStore.events.credentials.values().next().value.actor.id,
             ).to.equal("alice@irc.example.org");
             expect(callback.calledOnceWith(timeout)).to.equal(true);
         });
@@ -1087,7 +1087,7 @@ describe("SockethubClient", () => {
             rename("test-xmpp", "alice", "attacker");
 
             for (const name of ["credentials", "connect", "join"]) {
-                const entry = sc.events[name].values().next().value;
+                const entry = sc.replayStore.events[name].values().next().value;
                 expect(entry.actor.id, name).to.equal(
                     "alice_away@irc.example.org",
                 );
@@ -1123,7 +1123,7 @@ describe("SockethubClient", () => {
             });
 
             for (const name of ["credentials", "connect", "join"]) {
-                const entry = sc.events[name].values().next().value;
+                const entry = sc.replayStore.events[name].values().next().value;
                 expect(entry.actor.id, name).to.equal("alice@irc.example.org");
             }
         });
@@ -1132,10 +1132,10 @@ describe("SockethubClient", () => {
             rename("test-xmpp", "bob", "bob_away");
 
             for (const name of ["credentials", "connect", "join"]) {
-                const entry = sc.events[name].values().next().value;
+                const entry = sc.replayStore.events[name].values().next().value;
                 expect(entry.actor.id, name).to.equal("alice@irc.example.org");
             }
-            expect(sc.events.credentials.values().next().value.object.nick).to.equal(
+            expect(sc.replayStore.events.credentials.values().next().value.object.nick).to.equal(
                 "alice",
             );
         });
@@ -1144,7 +1144,7 @@ describe("SockethubClient", () => {
             rename("dummy", "alice", "alice_away");
 
             for (const name of ["credentials", "connect", "join"]) {
-                const entry = sc.events[name].values().next().value;
+                const entry = sc.replayStore.events[name].values().next().value;
                 expect(entry.actor.id, name).to.equal("alice@irc.example.org");
             }
         });
@@ -1166,13 +1166,13 @@ describe("SockethubClient", () => {
             });
 
             // Verify credentials are stored
-            expect(sc.events.credentials.size).to.equal(1);
+            expect(sc.replayStore.events.credentials.size).to.equal(1);
 
             // Clear credentials
             sc.clearCredentials();
 
             // Verify credentials are cleared
-            expect(sc.events.credentials.size).to.equal(0);
+            expect(sc.replayStore.events.credentials.size).to.equal(0);
         });
 
         it("prevents credential replay after clearing", (done) => {
