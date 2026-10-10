@@ -1625,6 +1625,70 @@ describe("Initialize IRC Platform", () => {
                 expect(platform.handledActors.has(newActor.id)).toEqual(true);
             });
 
+            describe("query() channels", () => {
+                let rawCalls;
+                beforeEach(() => {
+                    rawCalls = [];
+                    platform.client.raw = (...args) => {
+                        rawCalls.push(args);
+                    };
+                });
+
+                it("sends a bare LIST when no mask is given", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: { type: "service", id: "irc.example.com" },
+                            object: { type: "channels" },
+                        },
+                        (err) => {
+                            expect(err).toBeUndefined();
+                            expect(rawCalls).toEqual([[["LIST"]]]);
+                            done();
+                        },
+                    );
+                });
+
+                it("passes object.name through as the LIST mask", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: { type: "service", id: "irc.example.com" },
+                            object: { type: "channels", name: "#sock*" },
+                        },
+                        (err) => {
+                            expect(err).toBeUndefined();
+                            expect(rawCalls).toEqual([[["LIST", "#sock*"]]]);
+                            done();
+                        },
+                    );
+                });
+
+                it("rejects CR injection in the mask before writing", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor,
+                            target: { type: "service", id: "irc.example.com" },
+                            object: {
+                                type: "channels",
+                                name: "#a\rPRIVMSG victim :injected",
+                            },
+                        },
+                        (err) => {
+                            expect(err).toContain("must not contain CR or LF");
+                            expect(rawCalls).toEqual([]);
+                            done();
+                        },
+                    );
+                });
+            });
+
             describe("query() attendance", () => {
                 let rawCalls;
                 beforeEach(() => {

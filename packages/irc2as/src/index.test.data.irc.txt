@@ -84,3 +84,7 @@ PING :moon.freenode.net
 :tungsten.libera.chat 366 myuser #kosmos-random :End of /NAMES list.
 :tungsten.libera.chat 324 myuser #kosmos-random +Cnst
 :tungsten.libera.chat 329 myuser #kosmos-random 1642793393
+:tungsten.libera.chat 321 myuser Channel :Users  Name
+:tungsten.libera.chat 322 myuser #kosmos-random 3 :Kosmos random chat
+:tungsten.libera.chat 322 myuser #sockethub 1 :
+:tungsten.libera.chat 323 myuser :End of /LIST
