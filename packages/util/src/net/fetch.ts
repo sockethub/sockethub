@@ -1,4 +1,4 @@
-import type { Agent } from "undici";
+import { type Agent, fetch as undiciFetch } from "undici";
 import { createGuardedDispatcher } from "./dispatcher.js";
 import { assertHttpUrl, redactUrl } from "./url.js";
 
@@ -46,7 +46,7 @@ export async function safeFetch(
             maxResponseBytes: options.maxResponseBytes,
         });
 
-    const init: RequestInit & { dispatcher?: unknown } = { dispatcher };
+    const init: RequestInit & { dispatcher?: Agent } = { dispatcher };
     if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
         init.signal = AbortSignal.timeout(options.timeoutMs);
     }
@@ -54,7 +54,12 @@ export async function safeFetch(
         init.headers = options.headers;
     }
 
-    const res = await fetch(url, init as RequestInit);
+    // Use undici's own `fetch` rather than the runtime global. The dispatcher
+    // is an undici Agent from *our* undici dependency; handing it to a global
+    // `fetch` backed by a different undici major (e.g. Node 26 ships undici 8)
+    // yields responses with empty headers. Keeping request and dispatcher in
+    // the same undici build avoids that mismatch on every Node release.
+    const res = (await undiciFetch(url, init)) as unknown as Response;
     if (!res.ok) {
         // Drain the unused body so the keep-alive connection is returned to the
         // pool instead of leaking until GC.

@@ -1,18 +1,14 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
+import type { DavFetch } from "@sockethub/dav";
 import { CardDavClient } from "./dav.js";
 import { parseVCard } from "./vcard.js";
-
-const originalFetch = globalThis.fetch;
-afterEach(() => {
-    globalThis.fetch = originalFetch;
-});
 
 describe("CardDAV client", () => {
     it("re-fetches the current card and preserves authoritative unknown fields", async () => {
         const requests: Array<{ method: string; body?: string }> = [];
-        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
-            const method = init?.method ?? "GET";
-            requests.push({ method, body: init?.body?.toString() });
+        const fetch: DavFetch = async (_url, init) => {
+            const method = init.method ?? "GET";
+            requests.push({ method, body: init.body?.toString() });
             if (method === "GET")
                 return new Response(
                     "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nN:;Alice;;;\r\nPHOTO;ENCODING=b:aGVsbG8=\r\nX-SERVER:keep\r\nEND:VCARD\r\n",
@@ -22,10 +18,13 @@ describe("CardDAV client", () => {
                 status: 204,
                 headers: { etag: '"v2"' },
             });
-        }) as typeof fetch;
-        const client = new CardDavClient("https://dav.example/", {
-            token: "access-token",
-        });
+        };
+        const client = new CardDavClient(
+            "https://dav.example/",
+            { token: "access-token" },
+            15_000,
+            { fetch },
+        );
         const result = await client.update({
             id: "https://dav.example/books/alice/alice.vcf",
             etag: '"v1"',
@@ -48,17 +47,20 @@ describe("CardDAV client", () => {
 
     it("does not accept client preservation data when the stored card has none", async () => {
         let written = "";
-        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
-            if (init?.method === "GET")
+        const fetch: DavFetch = async (_url, init) => {
+            if (init.method === "GET")
                 return new Response(
                     "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nEND:VCARD\r\n",
                 );
-            written = init?.body?.toString() ?? "";
+            written = init.body?.toString() ?? "";
             return new Response(null, { status: 204 });
-        }) as typeof fetch;
-        const client = new CardDavClient("https://dav.example/", {
-            token: "access-token",
-        });
+        };
+        const client = new CardDavClient(
+            "https://dav.example/",
+            { token: "access-token" },
+            15_000,
+            { fetch },
+        );
         await client.update({
             id: "https://dav.example/books/alice/alice.vcf",
             etag: '"v1"',
@@ -74,17 +76,20 @@ describe("CardDAV client", () => {
 
     it("sends If-Match and reports an update conflict", async () => {
         let ifMatch: string | null = null;
-        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
-            if (init?.method === "GET")
+        const fetch: DavFetch = async (_url, init) => {
+            if (init.method === "GET")
                 return new Response(
                     "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nEND:VCARD\r\n",
                 );
-            ifMatch = new Headers(init?.headers).get("if-match");
+            ifMatch = new Headers(init.headers).get("if-match");
             return new Response(null, { status: 412 });
-        }) as typeof fetch;
-        const client = new CardDavClient("https://dav.example/", {
-            token: "access-token",
-        });
+        };
+        const client = new CardDavClient(
+            "https://dav.example/",
+            { token: "access-token" },
+            15_000,
+            { fetch },
+        );
         await expect(
             client.update({
                 id: "https://dav.example/books/alice/alice.vcf",
@@ -113,17 +118,14 @@ describe("CardDAV client", () => {
             "",
         ].join("\r\n");
         let written = "";
-        globalThis.fetch = (async (
-            _url: URL | RequestInfo,
-            init?: RequestInit,
-        ) => {
-            if (init?.method === "GET") return new Response(source);
-            written = init?.body?.toString() ?? "";
+        const fetch: DavFetch = async (_url, init) => {
+            if (init.method === "GET") return new Response(source);
+            written = init.body?.toString() ?? "";
             return new Response(null, {
                 status: 204,
                 headers: { etag: '"v2"' },
             });
-        }) as typeof fetch;
+        };
         const echoed = JSON.parse(
             JSON.stringify(
                 parseVCard(
@@ -140,9 +142,12 @@ describe("CardDAV client", () => {
             type: "person";
         };
         echoed.name = "Alice Updated";
-        const client = new CardDavClient("https://dav.example/", {
-            token: "access-token",
-        });
+        const client = new CardDavClient(
+            "https://dav.example/",
+            { token: "access-token" },
+            15_000,
+            { fetch },
+        );
         await client.update(echoed);
         expect(written).toContain("FN:Alice Updated\r\n");
         expect(written).toContain("NICKNAME:Bob,Bobby\r\n");

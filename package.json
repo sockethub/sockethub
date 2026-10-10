@@ -78,6 +78,7 @@
     "integration:rate-limiter": "bun test ./integration/rate-limiter.integration.ts",
     "integration:caldav": "bun test ./integration/caldav.integration.ts",
     "integration:carddav": "bun test ./integration/carddav.integration.ts",
+    "integration:dav-node": "node ./integration/dav-node.integration.mjs",
     "lint": "biome check && bun run lint:doc",
     "lint:doc": "markdownlint '**/*.md'",
     "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",

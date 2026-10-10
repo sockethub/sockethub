@@ -121,9 +121,12 @@ export function createGuardedConnector(
  *   `allowPrivateAddresses` is set).
  * - Responses larger than `maxResponseBytes` are aborted.
  *
- * Pass the returned dispatcher to `fetch(url, { dispatcher })`, or to any
- * library that forwards fetch options (e.g. open-graph-scraper's
- * `fetchOptions`).
+ * Pass the returned dispatcher to undici's own `fetch` (`import { fetch } from
+ * "undici"`) as `{ dispatcher }`, or to any library that forwards fetch
+ * options to undici (e.g. open-graph-scraper's `fetchOptions`). Do not hand
+ * it to the runtime's global `fetch`: Node bundles its own undici, and when
+ * that major differs from ours (Node 26 ships undici 8) the response comes
+ * back with empty headers. `safeFetch` already does the right thing.
  */
 export function createGuardedDispatcher(
     options: GuardedDispatcherOptions = {},

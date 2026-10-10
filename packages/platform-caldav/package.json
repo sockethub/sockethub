@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "undici": "^7.19.0"
+    "undici": "^7.30.0"
   },
   "peerDependencies": {
     "@sockethub/server": "^5.0.0-alpha.25"
