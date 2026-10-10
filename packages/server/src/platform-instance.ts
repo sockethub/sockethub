@@ -33,7 +33,12 @@ import {
     derivePlatformCredentialsSecret,
     migrateRenamedActorCredentials,
     renameActorCredentialsInStore,
-} from "./platform.js";
+} from "./platform-credentials.js";
+import { watchHeartbeat } from "./platform-heartbeat.js";
+import type {
+    MessageFromPlatform,
+    MessageToPlatformChild,
+} from "./platform-ipc.js";
 import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
 import { __dirname } from "./util.js";
 
@@ -70,30 +75,6 @@ type EnvFormat = {
     SOCKETHUB_QUEUE_INSTANCE_ID?: string;
     SOCKETHUB_SENTRY_CONFIG?: string;
 };
-
-type MessageFromPlatform =
-    | [
-          "updateActor",
-          string | null | undefined,
-          string,
-          CredentialsObject?,
-          string?,
-          boolean?,
-      ]
-    | ["sessionUnauthorized", null | undefined, string]
-    | ["error", string]
-    | ["heartbeat", ActivityStream]
-    | [string, ActivityStream, string?];
-
-export type MessageToPlatformChild =
-    | ["secrets", { parentSecret1: string; parentSecret2: string }]
-    | ["updateActorAck"]
-    | ["updateActorFailed", string];
-
-export interface MessageFromParent extends Array<string | unknown> {
-    0: string;
-    1: unknown;
-}
 
 // Handlers for jobs that never complete are pruned after this long. Matches
 // the queue's removeOnComplete/removeOnFail age (300s) plus slack.
@@ -134,9 +115,7 @@ export default class PlatformInstance {
     private readonly sessionSecrets: Map<string, string> = new Map();
     private processMessageListener?: (message: MessageFromPlatform) => void;
     private processCloseListener?: (e: unknown) => void;
-    private heartbeatLastSeen = Date.now();
-    private heartbeatMonitor?: NodeJS.Timeout;
-    private heartbeatListener?: (message: MessageFromPlatform) => void;
+    private stopHeartbeat?: () => void;
     private heartbeatFailureHandled = false;
     private replaced = false;
     private shutdownResult?: Promise<void>;
@@ -285,14 +264,8 @@ export default class PlatformInstance {
         // a later session can never inherit a scope whose worker is gone.
         forgetAnonymousScopes(this.id);
         try {
-            if (this.heartbeatMonitor) {
-                clearInterval(this.heartbeatMonitor);
-                this.heartbeatMonitor = undefined;
-            }
-            if (this.heartbeatListener) {
-                this.process.removeListener("message", this.heartbeatListener);
-                this.heartbeatListener = undefined;
-            }
+            this.stopHeartbeat?.();
+            this.stopHeartbeat = undefined;
             if (this.processMessageListener) {
                 this.process.removeListener(
                     "message",
@@ -897,40 +870,18 @@ export default class PlatformInstance {
         }
     }
 
-    private markHeartbeat() {
-        this.heartbeatLastSeen = Date.now();
-    }
-
     private startHeartbeatMonitor() {
-        if (
-            !Number.isFinite(HEARTBEAT_INTERVAL_MS) ||
-            HEARTBEAT_INTERVAL_MS <= 0 ||
-            !Number.isFinite(HEARTBEAT_TIMEOUT_MS) ||
-            HEARTBEAT_TIMEOUT_MS <= 0
-        ) {
-            return;
-        }
-        if (!this.process?.on) {
-            return;
-        }
-        // Track last heartbeat to detect hung platform processes.
-        this.heartbeatLastSeen = Date.now();
-        this.heartbeatListener = (message: MessageFromPlatform) => {
-            if (Array.isArray(message) && message[0] === "heartbeat") {
-                this.markHeartbeat();
-            }
-        };
-        this.process.on("message", this.heartbeatListener);
-        this.heartbeatMonitor = setInterval(() => {
-            // Avoid double-handling once shutdown starts or a timeout was already handled.
-            if (this.flaggedForTermination || this.heartbeatFailureHandled) {
-                return;
-            }
-            if (!this.process?.connected) {
-                return;
-            }
-            const elapsed = Date.now() - this.heartbeatLastSeen;
-            if (elapsed > HEARTBEAT_TIMEOUT_MS) {
+        this.stopHeartbeat = watchHeartbeat(this.process, {
+            intervalMs: HEARTBEAT_INTERVAL_MS,
+            timeoutMs: HEARTBEAT_TIMEOUT_MS,
+            onTimeout: (elapsed) => {
+                // Avoid double-handling once shutdown starts or a timeout was already handled.
+                if (
+                    this.flaggedForTermination ||
+                    this.heartbeatFailureHandled
+                ) {
+                    return;
+                }
                 this.heartbeatFailureHandled = true;
                 this.log.error(
                     `heartbeat timeout for ${this.id} after ${elapsed}ms`,
@@ -938,7 +889,7 @@ export default class PlatformInstance {
                 // The child is unresponsive; mark for termination and trigger shutdown.
                 this.flaggedForTermination = true;
                 void this.shutdown();
-            }
-        }, HEARTBEAT_INTERVAL_MS);
+            },
+        });
     }
 }

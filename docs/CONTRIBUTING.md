@@ -329,6 +329,8 @@ bun run docker:stop        # Stop all Docker services
   Main configuration file
 - `packages/server/src/sockethub.ts` - Main server class handling Socket.IO connections
 - `packages/server/src/platform-instance.ts` - Platform process management
+- `packages/server/src/platform-ipc.ts` - Message types exchanged between the server and
+  a platform child process
 - `packages/server/src/middleware/` - Request processing pipeline
 - `packages/data-layer/src/job-queue.ts` - Redis-based job queue (BullMQ)
 - `packages/data-layer/src/credentials-store.ts` - Encrypted credential storage
