@@ -324,6 +324,40 @@ describe("IrcToActivityStreams", () => {
         irc2as.input(":irc.example.net 366 alice #room :End of /NAMES list.");
     });
 
+    // RFC 2812 prefixes voiced users with "+". UnrealIRCd and InspIRCd also
+    // send "~", "&", "%", and "!". Leaving the prefix in place makes the nick
+    // not match joins, parts, or messages from that user.
+    it("strips channel status prefixes from attendance members", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "attendance",
+                members: [
+                    "alice",
+                    "op",
+                    "voice",
+                    "halfop",
+                    "founder",
+                    "admin",
+                    "oper",
+                ],
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.net 353 me = #room :alice @op +voice %halfop ~founder &admin !oper",
+        );
+        irc2as.input(":irc.example.net 366 me #room :End of /NAMES list.");
+    });
+
+    it("strips every leading status prefix from one nick", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object.members).toEqual(["alice"]);
+            done();
+        });
+        irc2as.input(":irc.example.net 353 me = #room :@+alice");
+        irc2as.input(":irc.example.net 366 me #room :End of /NAMES list.");
+    });
+
     // UnrealIRCd sends this form unless the client negotiated extended-join.
     it("reads a JOIN whose channel is the trailing parameter", (done) => {
         irc2as.events.on("incoming", (stream) => {
