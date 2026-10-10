@@ -20,6 +20,7 @@ import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
 import { clearSessionScopes, normalizeIp } from "./connection-scope.js";
+import { registerHealthRoute } from "./health.js";
 import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
@@ -171,6 +172,7 @@ class Sockethub {
         registerServerInfoRoute(listener.getApp(), {
             platforms: this.platformRegistry,
         });
+        registerHealthRoute(listener.getApp());
         registerHttpActionsRoutes(listener.getApp(), {
             processManager: this.processManager,
             parentId: this.parentId,
