@@ -9,6 +9,7 @@ import type {
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
 import { createGuardedDispatcher } from "@sockethub/util/net";
+import { type Agent, fetch as undiciFetch } from "undici";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 import { buildICalendar } from "./ical.js";
 import { parseICalendarFeed } from "./ics.js";
@@ -23,6 +24,15 @@ import type {
 const CONTEXT = buildCanonicalContext(PlatformCalDavSchema.contextUrl);
 const MAX_FEED_BYTES = 10 * 1024 * 1024;
 const MAX_FEED_REDIRECTS = 5;
+
+/**
+ * `fetch` that honours an undici `dispatcher`. Defaults to undici's own
+ * `fetch` so the request and the guarded dispatcher come from the same build.
+ */
+type FeedFetch = (
+    url: URL,
+    init: RequestInit & { dispatcher?: Agent },
+) => Promise<Response>;
 
 function safePathname(pathname: string): boolean {
     if (pathname.includes("\\") || /%(?:2f|5c)/i.test(pathname)) return false;
@@ -77,6 +87,7 @@ export function assertCalendarResource(
 
 export default class CalDav implements PlatformInterface {
     private readonly log: Logger;
+    private readonly fetchImpl: FeedFetch;
     private feedDispatcher?: ReturnType<typeof createGuardedDispatcher>;
     config: StatelessPlatformConfig = {
         persist: false,
@@ -87,8 +98,17 @@ export default class CalDav implements PlatformInterface {
         concurrency: 10,
     };
 
-    constructor(session: PlatformSession) {
+    constructor(session: PlatformSession, fetchImpl?: FeedFetch) {
         this.log = session.log;
+        // Undici's fetch, not the runtime global. The dispatcher is an Agent
+        // from our undici dependency; handing it to a global fetch from a
+        // different undici major (Node 26 ships undici 8) yields a response
+        // with no headers, so `Location` is missing and every redirected feed
+        // fails. The argument is a test seam.
+        this.fetchImpl =
+            fetchImpl ??
+            ((url, init) =>
+                undiciFetch(url, init) as unknown as Promise<Response>);
     }
 
     get schema(): PlatformSchemaStruct {
@@ -313,12 +333,12 @@ export default class CalDav implements PlatformInterface {
         for (let hop = 0; hop <= MAX_FEED_REDIRECTS; hop += 1) {
             let response: Response;
             try {
-                response = await fetch(current, {
+                response = await this.fetchImpl(current, {
                     redirect: "manual",
                     signal,
                     headers: { accept: "text/calendar, */*;q=0.1" },
                     dispatcher: this.dispatcher(),
-                } as RequestInit);
+                });
             } catch (error) {
                 throw new CalDavFailure("caldav:feed-failed", error);
             }
