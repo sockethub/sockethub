@@ -26,6 +26,9 @@ const ERR_BADMASK = "476";
 const ERR_NOCHANMODES = "477";
 const ERR_BANLISTFULL = "478";
 const JOIN = "JOIN";
+const LIST_START = "321";
+const LIST = "322";
+const LIST_END = "323";
 const MODE = "MODE";
 const MOTD = "372";
 const MOTD_END = "376";
@@ -201,6 +204,43 @@ export class IrcToActivityStreams {
                 ase.joinRoom(joined, getNickFromServer(server));
                 break;
             }
+
+            /** */
+            case LIST_START:
+                this.__buffer[LIST] = [];
+                break;
+            case LIST: {
+                // :server 322 nick #channel <members> :topic
+                if (!this.__buffer[LIST]) {
+                    this.__buffer[LIST] = [];
+                }
+                this.__buffer[LIST].push({
+                    type: "room",
+                    id: `${pos2}@${this.server}`,
+                    name: pos2,
+                    members: Number.parseInt(pos3, 10) || 0,
+                    summary: content ?? "",
+                });
+                break;
+            }
+            case LIST_END:
+                // One message for the whole list: a full LIST on a large
+                // network is thousands of channels.
+                ase.emitEvent(EVENT_INCOMING, {
+                    "@context": this.contexts,
+                    type: "query",
+                    actor: {
+                        type: "service",
+                        id: this.server,
+                        name: this.server,
+                    },
+                    object: {
+                        type: "channels",
+                        items: this.__buffer[LIST] ?? [],
+                    },
+                });
+                delete this.__buffer[LIST];
+                break;
 
             // custom event indicating a channel mode has been updated, used to re-query user or channel
             case MODE: {

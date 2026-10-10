@@ -561,6 +561,7 @@ export class IRC implements PersistentPlatformInterface {
         const lineBreakError = ircLineBreakError([
             job.target?.name,
             job.target?.id,
+            job.object?.name,
         ]);
         if (lineBreakError) return done(lineBreakError);
         this.getClient(job.actor.id, false, (err, client) => {
@@ -568,7 +569,15 @@ export class IRC implements PersistentPlatformInterface {
                 return done(err);
             }
 
-            if (job.object.type === "attendance") {
+            if (job.object.type === "channels") {
+                // Optional `object.name` is the LIST mask (e.g. "#sockethub*").
+                // irc2as collects RPL_LIST (322) rows and emits one `channels`
+                // message on RPL_LISTEND (323).
+                const mask = job.object.name;
+                this.log.debug(`query() - sending LIST ${mask ?? ""}`);
+                client.raw(mask ? ["LIST", mask] : ["LIST"]);
+                done();
+            } else if (job.object.type === "attendance") {
                 // `resolveIrcTarget` returns null for a bare (non
                 // server-qualified) room target, so we never emit a bare
                 // `NAMES` (no channel argument): IRC servers answer that with

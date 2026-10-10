@@ -32,6 +32,7 @@ export const PlatformIrcSchema = {
                     { $ref: "#/definitions/objectTypes/topic" },
                     { $ref: "#/definitions/objectTypes/address" },
                     { $ref: "#/definitions/objectTypes/attendance" },
+                    { $ref: "#/definitions/objectTypes/channels" },
                 ],
             },
             // Room targets must be server-qualified as `#channel@server`,
@@ -87,6 +88,16 @@ export const PlatformIrcSchema = {
                     additionalProperties: false,
                     properties: { type: { enum: ["attendance"] } },
                 },
+                // `name` is an optional LIST mask, passed through verbatim.
+                channels: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["channels"] },
+                        name: { type: "string" },
+                    },
+                },
             },
         },
     },
@@ -102,7 +113,15 @@ export const PlatformIrcSchema = {
             id: { type: "string" },
             published: { type: "string" },
             type: {
-                enum: ["update", "send", "join", "leave", "add", "remove"],
+                enum: [
+                    "update",
+                    "send",
+                    "join",
+                    "leave",
+                    "add",
+                    "remove",
+                    "query",
+                ],
             },
             actor: {
                 oneOf: [
@@ -126,6 +145,7 @@ export const PlatformIrcSchema = {
                     { $ref: "#/definitions/responses/topic" },
                     { $ref: "#/definitions/responses/address" },
                     { $ref: "#/definitions/responses/relationship" },
+                    { $ref: "#/definitions/responses/channels" },
                 ],
             },
         },
@@ -232,6 +252,33 @@ export const PlatformIrcSchema = {
                             },
                         },
                         object: { $ref: "#/definitions/responses/room" },
+                    },
+                },
+                // Reply to a `query` for `channels` (RPL_LIST rows).
+                channels: {
+                    type: "object",
+                    required: ["type", "items"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["channels"] },
+                        items: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                required: ["id", "type", "name"],
+                                additionalProperties: false,
+                                properties: {
+                                    id: {
+                                        type: "string",
+                                        pattern: "^#[^\\s]+@[^\\s@]+$",
+                                    },
+                                    type: { enum: ["room"] },
+                                    name: { type: "string" },
+                                    members: { type: "number" },
+                                    summary: { type: "string" },
+                                },
+                            },
+                        },
                     },
                 },
             },
