@@ -45,11 +45,11 @@ const WHO = "352";
 const WHO_OLD = "354";
 // WHO_END = "315";
 
-const ROLE = {
-    "@": "owner",
-    "%": "admin",
-    "*": "participant",
-};
+// Leading characters servers attach to nicks in RPL_NAMREPLY. RFC 2812 defines
+// "@" (op) and "+" (voice). UnrealIRCd and InspIRCd add "~", "&", "%", and
+// "!"; some networks use "*". A nick may carry more than one when
+// multi-prefix is on. None of these are part of the nickname.
+const NICK_PREFIXES = /^[~&@%+!*]+/;
 
 const MODES = {
     o: "owner",
@@ -265,7 +265,12 @@ export class IrcToActivityStreams {
                     if (!entry) {
                         continue;
                     }
-                    members.push(ROLE[entry[0]] ? entry.substr(1) : entry);
+                    // A token that is only prefixes is not a nick.
+                    const nick = entry.replace(NICK_PREFIXES, "");
+                    if (!nick) {
+                        continue;
+                    }
+                    members.push(nick);
                 }
                 this.__buffer[NAMES][channel] = members;
                 break;
