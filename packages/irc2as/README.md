@@ -29,6 +29,12 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
       console.log('error response to something we sent: ', asObject);
     });
 
+    irc2as.events.on('ctcp', function (ctcp) {
+      // non-ACTION CTCP traffic: { kind: 'request' | 'reply', command, args, from, target }
+      // ACTION (/me) is delivered on 'incoming' as a "me" object instead
+      console.log('ctcp request or reply: ', ctcp);
+    });
+
     irc2as.events.on('unprocessed', function (line) {
       console.log(`irc line we don't know what to do with (yet), PRs welcome`, line);
     });

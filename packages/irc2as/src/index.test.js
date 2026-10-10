@@ -149,6 +149,77 @@ describe("IrcToActivityStreams", () => {
         );
     });
 
+    // A non-ACTION CTCP request is aimed at the client software, not the
+    // user. Delivering it as a message leaks \u0001 framing to the client
+    // and opens a phantom conversation with the sender (#551).
+    it("emits a CTCP VERSION request on `ctcp` instead of `incoming`", (done) => {
+        irc2as.events.on("incoming", () => {
+            done(new Error("CTCP request was delivered as a message"));
+        });
+        irc2as.events.on("ctcp", (ctcp) => {
+            expect(ctcp).toEqual({
+                kind: "request",
+                command: "VERSION",
+                args: "",
+                from: "alice",
+                target: "hyper_slvrbckt",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test PRIVMSG hyper_slvrbckt :\u0001VERSION\u0001",
+        );
+    });
+
+    it("carries the CTCP argument and tolerates the identify-msg prefix", (done) => {
+        irc2as.events.on("ctcp", (ctcp) => {
+            expect(ctcp).toEqual({
+                kind: "request",
+                command: "PING",
+                args: "1234567890",
+                from: "alice",
+                target: "hyper_slvrbckt",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test PRIVMSG hyper_slvrbckt :+\u0001ping 1234567890\u0001",
+        );
+    });
+
+    it("emits a CTCP reply carried in a NOTICE on `ctcp` instead of `incoming`", (done) => {
+        irc2as.events.on("incoming", () => {
+            done(new Error("CTCP reply was delivered as a message"));
+        });
+        irc2as.events.on("ctcp", (ctcp) => {
+            expect(ctcp).toEqual({
+                kind: "reply",
+                command: "VERSION",
+                args: "WeeChat 4.1.0",
+                from: "alice",
+                target: "hyper_slvrbckt",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test NOTICE hyper_slvrbckt :\u0001VERSION WeeChat 4.1.0\u0001",
+        );
+    });
+
+    it("still delivers a plain NOTICE as a service message", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.actor).toEqual({ type: "service", id: "localhost" });
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "*** Looking up your hostname...",
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.test NOTICE * :*** Looking up your hostname...",
+        );
+    });
+
     it("leaves a plain message starting with + untouched", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object).toEqual({
@@ -158,5 +229,133 @@ describe("IrcToActivityStreams", () => {
             done();
         });
         irc2as.input(":alice!user@example.test PRIVMSG #room :+1 to that");
+    });
+
+    // RFC 1459 allows the final parameter to omit its colon when it has no
+    // spaces. Ergo serializes one-word messages and nick changes that way.
+    it("keeps a one-word PRIVMSG that omits the trailing colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "hi",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test PRIVMSG #room hi");
+    });
+
+    it("keeps a trailing parameter that itself contains space-colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "message",
+                content: "see :this",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test PRIVMSG #room :see :this");
+    });
+
+    it("reports nick-change rejections that are not RFC 433", (done) => {
+        const seen = [];
+        irc2as.events.on("error", (stream) => {
+            seen.push([stream.actor.id, stream.error]);
+        });
+        irc2as.events.on("unprocessed", () => {
+            done(new Error("nick rejection was left unprocessed"));
+        });
+        irc2as.input(
+            ":irc.example.net 438 alice bob :Nick change too fast. Please wait 29 seconds.",
+        );
+        irc2as.input(
+            ":irc.example.net 436 alice bob :Nickname collision KILL",
+        );
+        irc2as.input(":irc.example.net 431 alice :No nickname given");
+        irc2as.input(":irc.example.net 431 alice NoNick");
+        expect(seen).toEqual([
+            ["bob@localhost", "Nick change too fast. Please wait 29 seconds."],
+            ["bob@localhost", "Nickname collision KILL"],
+            ["alice@localhost", "No nickname given"],
+            ["alice@localhost", "NoNick"],
+        ]);
+        done();
+    });
+
+    it("reads a nick change that omits the trailing colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "alice@localhost",
+                name: "alice",
+            });
+            expect(stream.target).toEqual({
+                type: "person",
+                id: "bob@localhost",
+                name: "bob",
+            });
+            expect(stream.object).toEqual({ type: "address" });
+            done();
+        });
+        irc2as.input(":alice!user@example.test NICK bob");
+    });
+
+    it("parses a single-nick RPL_NAMREPLY that omits the trailing colon", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "presence",
+                role: "member",
+            });
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "onlynick@localhost",
+                name: "onlynick",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.net 353 alice @ #room onlynick",
+        );
+    });
+
+    // UnrealIRCd sends this form unless the client negotiated extended-join.
+    it("reads a JOIN whose channel is the trailing parameter", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.type).toEqual("join");
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "alice@localhost",
+                name: "alice",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(":alice!user@example.test JOIN :#room");
+    });
+
+    it("keeps a positional JOIN channel when the realname is trailing", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(
+            ":alice!user@example.test JOIN #room account :#not-the-channel",
+        );
     });
 });

@@ -69,6 +69,7 @@ const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
 const DIRECT_IMAGE_PROBE_TIMEOUT_MS = 5_000;
+const FACEBOOK_TRACKING_PARAMS = ["_fb_noscript", "fbclid", "mibextid"];
 
 const IMAGE_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
     avif: "image/avif",
@@ -100,6 +101,39 @@ function directImageCandidate(
     } catch {
         return;
     }
+}
+
+function normalizeFacebookUrl(rawUrl: string): string {
+    const url = new URL(rawUrl);
+    url.hash = "";
+    for (const param of FACEBOOK_TRACKING_PARAMS) {
+        url.searchParams.delete(param);
+    }
+    url.searchParams.sort();
+    return url.href;
+}
+
+/**
+ * Facebook answers some permalinks with HTTP 200 on `/login` (a redirect the
+ * scraper follows). That document has its own Open Graph title and a canonical
+ * link of `/login`, so treating it as a successful enrichment replaces the
+ * share preview with a login wall and rewrites the page URL.
+ */
+function isFacebookLoginUrl(rawUrl: string | undefined): boolean {
+    if (!rawUrl || !isFacebookUrl(rawUrl)) {
+        return false;
+    }
+    const path = new URL(rawUrl).pathname;
+    return (
+        path === "/login" || path.startsWith("/login/") || path === "/login.php"
+    );
+}
+
+function fetchResponseUrl(response: unknown): string | undefined {
+    if (!response || typeof response !== "object" || !("url" in response)) {
+        return undefined;
+    }
+    return typeof response.url === "string" ? response.url : undefined;
 }
 
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
@@ -609,10 +643,64 @@ export default class Metadata implements PlatformInterface {
                 : ogs(options);
         withDeadline(scrape, SCRAPE_TIMEOUT_MS)
             .then(async (data) => {
-                const { result } = data;
+                let { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
                 const reddit = isRedditUrl(job.actor.id);
                 const facebook = isFacebookUrl(job.actor.id);
+                // Facebook share links are landing pages whose OG payload is
+                // often limited to engagement counts and a thumbnail. Their
+                // og:url points at the canonical post, which usually includes
+                // the caption. Keep the landing-page fields as fallbacks since
+                // some canonical pages expose less data or reject the request.
+                if (
+                    facebook &&
+                    scrapeUrl === job.actor.id &&
+                    result.ogUrl &&
+                    isFacebookUrl(result.ogUrl) &&
+                    normalizeFacebookUrl(result.ogUrl) !==
+                        normalizeFacebookUrl(scrapeUrl)
+                ) {
+                    try {
+                        const canonical = await withDeadline(
+                            ogs({ ...options, url: result.ogUrl }),
+                            SCRAPE_TIMEOUT_MS,
+                        );
+                        const canonicalOgUrl =
+                            typeof canonical.result.ogUrl === "string"
+                                ? canonical.result.ogUrl
+                                : undefined;
+                        // A login interstitial is a successful document, not a
+                        // thrown scrape error. Keep the share-page fields.
+                        if (
+                            isFacebookLoginUrl(
+                                fetchResponseUrl(canonical.response),
+                            ) ||
+                            isFacebookLoginUrl(canonicalOgUrl)
+                        ) {
+                            this.log.debug(
+                                `facebook canonical scrape landed on a login page for ${result.ogUrl}; using share metadata`,
+                            );
+                        } else {
+                            result = {
+                                ...result,
+                                ...canonical.result,
+                                ogTitle:
+                                    canonical.result.ogTitle || result.ogTitle,
+                                ogDescription:
+                                    canonical.result.ogDescription ||
+                                    result.ogDescription,
+                                ogImage: canonical.result.ogImage?.length
+                                    ? canonical.result.ogImage
+                                    : result.ogImage,
+                                ogUrl: canonicalOgUrl || result.ogUrl,
+                            };
+                        }
+                    } catch (err) {
+                        this.log.debug(
+                            `facebook canonical scrape failed for ${result.ogUrl}: ${String(err)}; using share metadata`,
+                        );
+                    }
+                }
                 const embed = reddit ? await redditEmbed : undefined;
                 const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;

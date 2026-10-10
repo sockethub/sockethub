@@ -160,6 +160,15 @@ describe("ProcessManager", () => {
         expect(platformInstances.get(second.id)).toBe(second);
     });
 
+    test("replacement inherits the dead instance queue id", async () => {
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
+        const queueId = first.queueId;
+        setAlive(first, false);
+        const second = await manager.get("fakeplatform", "actor-a", "session-a");
+        expect(second).not.toBe(first);
+        expect(second.queueId).toEqual(queueId);
+    });
+
     test("does not shut down a live instance when reusing it", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, true);

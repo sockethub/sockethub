@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -124,32 +124,6 @@ class Listener {
             legacyHeaders: false,
             skip: (req) => isHttpActionsPath(req.path),
         });
-
-        // Write runtime config for the examples app
-        writeFileSync(
-            path.join(examplesPath, "examples-config.json"),
-            JSON.stringify({
-                sockethub: {
-                    host: config.get("sockethub:host"),
-                    port: config.get("sockethub:port"),
-                    path: config.get("sockethub:path"),
-                },
-                public: {
-                    protocol: config.get("public:protocol"),
-                    host: config.get("public:host"),
-                    port: config.get("public:port"),
-                    path: config.get("public:path"),
-                },
-                platforms: config.get("platforms"),
-                httpActions: {
-                    enabled: Boolean(config.get("httpActions:enabled")),
-                    path:
-                        typeof httpActionsPath === "string"
-                            ? httpActionsPath
-                            : "/sockethub-http",
-                },
-            }),
-        );
 
         // The examples app lives under its own prefix (its SvelteKit build
         // uses the same base path), leaving the root URL to the server info

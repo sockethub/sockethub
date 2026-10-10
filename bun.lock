@@ -49,6 +49,12 @@
         "sinon": "^17.0.2",
         "socket.io-client": "^4.8.3",
       },
+      "peerDependencies": {
+        "socket.io-client": "^4.8.3",
+      },
+      "optionalPeers": [
+        "socket.io-client",
+      ],
     },
     "packages/data-layer": {
       "name": "@sockethub/data-layer",

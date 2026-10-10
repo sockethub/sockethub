@@ -56,14 +56,12 @@ Create a simple HTML file:
     <button onclick="testEcho()">Test Echo</button>
     <div id="output"></div>
 
-    <script>
-        // Connect to Sockethub (SockethubClient and io are globals from script tags)
-        const sc = new SockethubClient(
-            io('http://localhost:10550', {
-                path: '/sockethub'
-            }),
-            { initTimeoutMs: 5000 }
-        );
+    <script type="module">
+        // Connect to Sockethub (SockethubClient and io are globals from script
+        // tags). connect() discovers the Socket.IO endpoint from the server.
+        const sc = await SockethubClient.connect('http://localhost:10550', {
+            initTimeoutMs: 5000
+        });
 
         // Listen for responses
         sc.socket.on('message', function(msg) {

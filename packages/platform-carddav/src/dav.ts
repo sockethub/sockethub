@@ -16,7 +16,7 @@ import type {
     ContactInput,
     ContactQuery,
 } from "./types.js";
-import { buildVCard, parseVCard } from "./vcard.js";
+import { buildVCard, parseVCard, prepareVCardUpdate } from "./vcard.js";
 
 const DAV_PROPS = `<?xml version="1.0" encoding="utf-8"?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:carddav">
@@ -242,7 +242,12 @@ export class CardDavClient extends DavClient {
         }
         if (stored.uid !== input.uid)
             throw new DavFailure("carddav:uid-mismatch");
-        const card = buildVCard(input, stored.preservedProperties ?? []);
+        const prepared = prepareVCardUpdate(input, stored);
+        const card = buildVCard(
+            prepared.input,
+            prepared.preserved,
+            prepared.retainedLines,
+        );
         const response = await this.request(resource, {
             method: "PUT",
             headers: {

@@ -1,4 +1,8 @@
-import type { ActivityStream } from "@sockethub/schemas";
+import type {
+    ActivityStream,
+    ServiceDescriptor,
+    ServiceEndpoints,
+} from "@sockethub/schemas";
 import {
     addPlatformContext,
     addPlatformSchema,
@@ -6,9 +10,12 @@ import {
     resolvePlatformId,
     validateActivityStream,
     validateCredentials,
+    validateServiceDescriptor,
 } from "@sockethub/schemas";
 import EventEmitter from "eventemitter3";
-import type { Socket } from "socket.io-client";
+import type { ManagerOptions, Socket, SocketOptions } from "socket.io-client";
+
+export type { ServiceDescriptor, ServiceEndpoints };
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
@@ -53,6 +60,165 @@ export interface SockethubClientOptions {
     initTimeoutMs?: number;
     maxQueuedOutbound?: number;
     maxQueuedAgeMs?: number;
+}
+
+/** The `io()` factory exported by `socket.io-client`. */
+export type SocketFactory = (
+    uri: string,
+    opts?: Partial<ManagerOptions & SocketOptions>,
+) => Socket;
+
+export interface DiscoverOptions {
+    /** Replacement for the global `fetch`, mainly for tests. */
+    fetch?: typeof fetch;
+    /** Abort discovery after this many milliseconds. Default 10000. */
+    discoveryTimeoutMs?: number;
+}
+
+export interface ConnectOptions
+    extends SockethubClientOptions,
+        DiscoverOptions {
+    /**
+     * The `io()` factory to create the socket with. Defaults to the `io`
+     * global set by `/socket.io.js`, then to the `socket.io-client` package
+     * when it can be imported.
+     */
+    io?: SocketFactory;
+    /**
+     * Extra Socket.IO options (auth, transports, ...). `path` is always taken
+     * from the discovered descriptor.
+     */
+    socketOptions?: Partial<ManagerOptions & SocketOptions>;
+}
+
+/** Thrown when a server's descriptor cannot be fetched or is not usable. */
+export class DiscoveryError extends Error {
+    constructor(message: string, options?: { cause?: unknown }) {
+        super(message, options);
+        this.name = "DiscoveryError";
+    }
+}
+
+/**
+ * Fetch and validate a Sockethub server's service descriptor from its base
+ * URL. Every failure rejects with a `DiscoveryError` that says what went
+ * wrong (unreachable, non-JSON, invalid descriptor).
+ */
+export async function discoverSockethub(
+    baseUrl: string,
+    options: DiscoverOptions = {},
+): Promise<ServiceDescriptor> {
+    let url: URL;
+    try {
+        url = new URL(baseUrl);
+    } catch (cause) {
+        throw new DiscoveryError(
+            `Sockethub discovery needs an absolute base URL, got ${JSON.stringify(baseUrl)}`,
+            { cause },
+        );
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new DiscoveryError(
+            `Sockethub discovery needs an http(s) base URL, got ${JSON.stringify(baseUrl)}`,
+        );
+    }
+    const doFetch = options.fetch ?? globalThis.fetch;
+    if (typeof doFetch !== "function") {
+        throw new DiscoveryError(
+            "Sockethub discovery needs fetch(); pass one in the options",
+        );
+    }
+    const controller = new AbortController();
+    const timeoutMs = options.discoveryTimeoutMs ?? 10000;
+    // The timer covers the whole exchange: fetch() resolves once headers
+    // arrive, and a stalled body would otherwise hang discovery forever.
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timedOut = () => controller.signal.aborted;
+
+    let descriptor: unknown;
+    try {
+        let response: Response;
+        try {
+            response = await doFetch(url.href, {
+                headers: { accept: "application/json" },
+                signal: controller.signal,
+            });
+        } catch (cause) {
+            const reason = timedOut()
+                ? `timed out after ${timeoutMs}ms`
+                : cause instanceof Error
+                  ? cause.message
+                  : String(cause);
+            throw new DiscoveryError(
+                `Sockethub discovery failed: could not reach ${url.href} (${reason})`,
+                { cause },
+            );
+        }
+        if (!response.ok) {
+            throw new DiscoveryError(
+                `Sockethub discovery failed: ${url.href} answered ${response.status}`,
+            );
+        }
+        try {
+            descriptor = await response.json();
+        } catch (cause) {
+            throw new DiscoveryError(
+                timedOut()
+                    ? `Sockethub discovery failed: ${url.href} timed out after ${timeoutMs}ms while sending the descriptor`
+                    : `Sockethub discovery failed: ${url.href} did not return JSON; is it a Sockethub server?`,
+                { cause },
+            );
+        }
+    } finally {
+        clearTimeout(timer);
+    }
+    if (!validateServiceDescriptor(descriptor)) {
+        throw new DiscoveryError(
+            `Sockethub discovery failed: ${url.href} did not return a valid service descriptor`,
+        );
+    }
+    return descriptor;
+}
+
+/**
+ * Resolve an advertised endpoint path against the server origin, refusing any
+ * result that lands on another origin. The schema already rejects paths that
+ * URL resolution would read as protocol-relative; this is the belt to that
+ * brace for callers that build URLs from descriptor values.
+ */
+export function resolveEndpoint(serverOrigin: string, path: string): string {
+    const url = new URL(path, serverOrigin);
+    if (url.origin !== new URL(serverOrigin).origin) {
+        throw new DiscoveryError(
+            `Sockethub discovery failed: endpoint path ${JSON.stringify(path)} resolves to ${url.origin}, not ${serverOrigin}`,
+        );
+    }
+    return url.href;
+}
+
+async function resolveSocketFactory(
+    explicit?: SocketFactory,
+): Promise<SocketFactory> {
+    if (explicit) {
+        return explicit;
+    }
+    const globalIo = (globalThis as { io?: unknown }).io;
+    if (typeof globalIo === "function") {
+        return globalIo as SocketFactory;
+    }
+    try {
+        const mod = (await import("socket.io-client")) as {
+            io?: SocketFactory;
+        };
+        if (typeof mod.io === "function") {
+            return mod.io;
+        }
+    } catch {
+        // Fall through to the descriptive error below.
+    }
+    throw new Error(
+        "SockethubClient.connect() needs socket.io-client: install it, load /socket.io.js, or pass `io` in the options",
+    );
 }
 
 interface CustomEmitter extends EventEmitter {
@@ -211,11 +377,19 @@ export interface ClientInitError {
  * - Connect commands (platform connections)
  * - Join commands (room/channel joins)
  *
+ * When one of this client's actors is renamed (an `update` with
+ * `object.type: "address"`, e.g. an IRC nick change, whether this client
+ * requested it and the server acknowledged it, or the server reported it),
+ * the stored entries move to the new actor so a reconnect replays the current
+ * identity rather than the old one.
+ *
  * @example
  * ```typescript
- * // Create client
- * const socket = io('http://localhost:10550');
- * const client = new SockethubClient(socket);
+ * // Discover the Socket.IO endpoint from the server's base URL and connect
+ * const client = await SockethubClient.connect('http://localhost:10550');
+ *
+ * // Or wrap a socket you created yourself
+ * const client = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
  *
  * // Wait for schema registry before sending messages
  * await client.ready();
@@ -247,6 +421,41 @@ export default class SockethubClient {
     private _socket: Socket;
     public socket!: CustomEmitter;
     public debug = true;
+    /**
+     * The service descriptor fetched by `SockethubClient.connect()`: API
+     * versions, enabled platforms, and the advertised endpoints (including
+     * `endpoints.httpActions` when that transport is on). Undefined for
+     * clients built from a ready-made socket.
+     */
+    public readonly descriptor?: ServiceDescriptor;
+    /**
+     * The origin the descriptor was discovered from and the socket connects
+     * to. `endpointUrl()` resolves the descriptor's endpoint paths against it.
+     * Undefined for clients built from a ready-made socket.
+     */
+    public readonly serverOrigin?: string;
+
+    /**
+     * Absolute URL of an advertised endpoint, resolved against
+     * `serverOrigin`, or undefined when the server does not advertise it (for
+     * example `httpActions` while HTTP actions are disabled) or when this
+     * client was not created by `connect()`.
+     *
+     * @example
+     * ```typescript
+     * const url = sc.endpointUrl('httpActions');
+     * if (url) {
+     *   await fetch(url, { method: 'POST', body });
+     * }
+     * ```
+     */
+    public endpointUrl(name: keyof ServiceEndpoints): string | undefined {
+        const path = this.descriptor?.endpoints?.[name];
+        if (!this.serverOrigin || !path) {
+            return undefined;
+        }
+        return resolveEndpoint(this.serverOrigin, path);
+    }
     private readonly options: Required<SockethubClientOptions>;
     private platformRegistry = new Map<string, PlatformRegistryEntry>();
     private asContextUrl?: string;
@@ -265,11 +474,71 @@ export default class SockethubClient {
     private registryFingerprint?: string;
     private latestReadyInfo?: ClientReadyInfo;
 
-    constructor(socket: Socket, options: SockethubClientOptions = {}) {
+    /**
+     * Discover a server's endpoints from its base URL and connect to it.
+     *
+     * Fetches the base URL with `Accept: application/json`, validates the
+     * service descriptor, and opens a Socket.IO connection to the base URL's
+     * origin with the advertised path. The descriptor is exposed as
+     * `client.descriptor` and the origin as `client.serverOrigin`. Rejects
+     * with a `DiscoveryError` when the server is unreachable, does not answer
+     * with JSON, or does not advertise a Socket.IO endpoint.
+     *
+     * @example
+     * ```typescript
+     * const sc = await SockethubClient.connect('https://sh.example.org', {
+     *   initTimeoutMs: 5000,
+     * });
+     * await sc.ready();
+     * console.log(sc.endpointUrl('httpActions')); // absolute URL, or undefined
+     * ```
+     */
+    public static async connect(
+        baseUrl: string,
+        options: ConnectOptions = {},
+    ): Promise<SockethubClient> {
+        const {
+            io,
+            socketOptions,
+            fetch,
+            discoveryTimeoutMs,
+            ...clientOptions
+        } = options;
+        const descriptor = await discoverSockethub(baseUrl, {
+            fetch,
+            discoveryTimeoutMs,
+        });
+        const socketPath = descriptor.endpoints?.socketIO;
+        if (!socketPath) {
+            throw new DiscoveryError(
+                `Sockethub discovery failed: ${baseUrl} does not advertise a Socket.IO endpoint (older server?); pass a socket to the constructor instead`,
+            );
+        }
+        // The socket goes to the origin that answered discovery; the
+        // descriptor only says which path Socket.IO is mounted on there.
+        const serverOrigin = new URL(baseUrl).origin;
+        const createSocket = await resolveSocketFactory(io);
+        const socket = createSocket(serverOrigin, {
+            ...socketOptions,
+            path: socketPath,
+        });
+        return new SockethubClient(socket, clientOptions, {
+            descriptor,
+            serverOrigin,
+        });
+    }
+
+    constructor(
+        socket: Socket,
+        options: SockethubClientOptions = {},
+        discovered?: { descriptor: ServiceDescriptor; serverOrigin: string },
+    ) {
         if (!socket) {
             throw new Error("SockethubClient requires a socket.io instance");
         }
         this._socket = socket;
+        this.descriptor = discovered?.descriptor;
+        this.serverOrigin = discovered?.serverOrigin;
         this.options = {
             initTimeoutMs: options.initTimeoutMs ?? 5000,
             maxQueuedOutbound: options.maxQueuedOutbound ?? 1000,
@@ -989,12 +1258,17 @@ export default class SockethubClient {
                     }
                 }
             }
+            let callback = entry.callback;
             if (entry.event === "credentials") {
                 this.eventCredentials(outgoing as ActivityStream);
             } else if (entry.event === "message") {
                 this.eventMessage(outgoing as ActivityStream);
+                callback = this.rememberRequestedRename(
+                    outgoing as ActivityStream,
+                    callback,
+                );
             }
-            this._socket.emit(entry.event, outgoing, entry.callback);
+            this._socket.emit(entry.event, outgoing, callback);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.emitClientError(entry.event, entry.callback, message);
@@ -1036,8 +1310,144 @@ export default class SockethubClient {
         // use as middleware to receive incoming Sockethub messages and unpack them
         // Normalize and lint before passing them along to the app.
         this._socket.on("message", (obj) => {
-            this.socket._emit("message", normalizeActivityStream(obj));
+            const incoming = normalizeActivityStream(obj);
+            this.followActorRename(incoming);
+            this.socket._emit("message", incoming);
         });
+    }
+
+    /**
+     * True for the activity that reports or requests a nick change: an
+     * `update` whose object is an `address`, with `actor` the old identity
+     * and `target` the new one.
+     */
+    private isActorRename(activity: ActivityStream): boolean {
+        return (
+            activity?.type === "update" &&
+            activity.object?.type === "address" &&
+            this.hasActorId(activity) &&
+            typeof activity.target === "object" &&
+            typeof activity.target?.id === "string" &&
+            activity.target.id !== activity.actor.id
+        );
+    }
+
+    /**
+     * Keeps the replay maps on the actor the server now knows after a rename
+     * the server reported.
+     *
+     * A server-forced nick change arrives as an incoming `update` with
+     * `object.type: "address"`. The stored credentials, connect, and join
+     * entries are keyed by the actor at send time, so left alone a reconnect
+     * would replay the old nick and open a second connection under an
+     * identity this one no longer holds.
+     *
+     * Only entries for the renamed actor on that platform move. The maps hold
+     * only this client's own actors, and `rememberRequestedRename` keeps them
+     * on the nick this connection currently holds, so a rename of some other
+     * user (including one who later took a nick this client released) never
+     * matches a stored entry.
+     *
+     * A rejected nick change is not a rename. The server echoes the failed
+     * job — the original update plus `error` — to every other session sharing
+     * the connection. Following that echo would point those sessions at a
+     * nick the server refused, so their next command misses the live worker
+     * and opens a second connection.
+     */
+    private followActorRename(incoming: ActivityStream): void {
+        if (SockethubClient.isErrorResult(incoming)) {
+            return;
+        }
+        if (this.isActorRename(incoming)) {
+            this.moveReplayState(incoming);
+        }
+    }
+
+    /**
+     * Moves the replay maps when a nick change this client requested is
+     * acknowledged. The platform consumes the server's confirmation as the
+     * job's completion rather than delivering it as a message, so without
+     * this the maps would stay on the released nick: a reconnect would
+     * replay it, and whoever took it in the meantime could steer where
+     * `followActorRename` moves this client's state.
+     */
+    private rememberRequestedRename(
+        outgoing: ActivityStream,
+        callback: unknown,
+    ): unknown {
+        if (!this.isActorRename(outgoing)) {
+            return callback;
+        }
+        return (...args: unknown[]) => {
+            // Socket.IO delivers the ack as `(result)`, or as `(err, result)`
+            // when the socket was created with `ackTimeout`. A timeout or a
+            // dropped socket arrives as an Error in the first slot; the
+            // server reports a rejected rename as `{ error }` in whichever
+            // slot carries the result.
+            const [first, second] = args;
+            const failed =
+                first instanceof Error ||
+                SockethubClient.isErrorResult(first) ||
+                SockethubClient.isErrorResult(second);
+            if (!failed) {
+                this.moveReplayState(outgoing);
+            }
+            if (typeof callback === "function") {
+                callback(...args);
+            }
+        };
+    }
+
+    /**
+     * True for the `{ error }` object the server acks a failed job with.
+     */
+    private static isErrorResult(value: unknown): boolean {
+        return (
+            typeof value === "object" &&
+            value !== null &&
+            "error" in value &&
+            Boolean((value as { error?: unknown }).error)
+        );
+    }
+
+    /**
+     * Re-keys every stored entry for the rename's `actor` on its platform to
+     * its `target`. The credential object itself is left as the application
+     * sent it: the server keys the live connection on a fingerprint of that
+     * object, and the worker accepts the hash it was authorized with, so
+     * replaying the original object under the new actor is what lands back
+     * on the renamed connection.
+     */
+    private moveReplayState(rename: ActivityStream): void {
+        const previousId = rename.actor.id;
+        const target = rename.target as ActivityStream["actor"];
+        const nextId = target.id;
+        const nextName =
+            typeof target.name === "string" ? target.name : undefined;
+        const platform = resolvePlatformId(rename) ?? "";
+
+        for (const map of Object.values(this.events)) {
+            for (const [key, entry] of [...map]) {
+                if (
+                    !this.hasActorId(entry) ||
+                    entry.actor.id !== previousId ||
+                    (resolvePlatformId(entry) ?? "") !== platform
+                ) {
+                    continue;
+                }
+                const renamed: ActivityStream = {
+                    ...entry,
+                    actor: {
+                        ...entry.actor,
+                        id: nextId,
+                        ...(nextName ? { name: nextName } : {}),
+                    },
+                };
+                map.delete(key);
+                map.set(SockethubClient.getKey(renamed), renamed);
+                this.log(`replay state moved from ${previousId} to ${nextId}`);
+            }
+        }
     }
 
     /**

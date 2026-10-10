@@ -7,6 +7,7 @@ import {
     forgetAnonymousScopes,
     rememberAnonymousScope,
     reassignAnonymousScopes,
+    reassignPendingScopes,
     type ResumptionRef,
     resetConnectionScopes,
     resolveConnectionScope,
@@ -132,6 +133,93 @@ describe("connection scope", () => {
             handle.resolve(credentials({ nick: "alice", token: "abc123" }));
             const { scope } = await pending;
             expect(scope).not.toEqual("s1");
+        });
+
+        it("follows a nick change onto the new actor without changing the fingerprint", async () => {
+            const handle = beginCredentialScope("s1", PLATFORM, ACTOR);
+            handle.resolve(credentials({ nick: "alice", password: "hunter2" }));
+            const before = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+
+            const renamed = "alice_away@irc.example.org";
+            reassignPendingScopes(["s1"], PLATFORM, ACTOR, renamed);
+
+            const after = await resolveConnectionScope(PLATFORM, renamed, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(after.scope).toEqual(before.scope);
+
+            // The pre-rename actor must not still select that connection.
+            const stale = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(stale.scope).not.toEqual(before.scope);
+        });
+
+        it("replaces a stale target scope with the connection that took the nick", async () => {
+            beginCredentialScope("s1", PLATFORM, ACTOR).resolve(
+                credentials({ nick: "alice", password: "hunter2" }),
+            );
+            const live = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+
+            // Same password, different nick: still a different fingerprint,
+            // which is what an earlier attempt to connect as bob leaves behind.
+            const renamed = "bob@irc.example.org";
+            beginCredentialScope("s1", PLATFORM, renamed).resolve(
+                credentials({ nick: "bob", password: "hunter2" }),
+            );
+            const staleTarget = await resolveConnectionScope(
+                PLATFORM,
+                renamed,
+                {
+                    credentialSessionId: "s1",
+                    socketSessionId: "s1",
+                },
+            );
+            expect(staleTarget.scope).not.toEqual(live.scope);
+
+            beginCredentialScope("s2", PLATFORM, renamed).resolve(
+                credentials({ nick: "bob", password: "other" }),
+            );
+            const otherSession = await resolveConnectionScope(
+                PLATFORM,
+                renamed,
+                {
+                    credentialSessionId: "s2",
+                    socketSessionId: "s2",
+                },
+            );
+
+            reassignPendingScopes(["s1"], PLATFORM, ACTOR, renamed);
+
+            const after = await resolveConnectionScope(PLATFORM, renamed, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(after.scope).toEqual(live.scope);
+
+            const oldActor = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1",
+                socketSessionId: "s1",
+            });
+            expect(oldActor.scope).not.toEqual(live.scope);
+
+            const otherAfter = await resolveConnectionScope(
+                PLATFORM,
+                renamed,
+                {
+                    credentialSessionId: "s2",
+                    socketSessionId: "s2",
+                },
+            );
+            expect(otherAfter.scope).toEqual(otherSession.scope);
         });
 
         it("propagates a credentials failure instead of falling back", async () => {

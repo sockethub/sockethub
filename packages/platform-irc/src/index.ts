@@ -19,13 +19,14 @@
 import net from "node:net";
 import tls from "node:tls";
 
-import { IrcToActivityStreams } from "@sockethub/irc2as";
+import { type IncomingCtcp, IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
     PersistentPlatformInterface,
     PlatformCallback,
+    PlatformPrepareActorUpdate,
     PlatformSchemaStruct,
     PlatformSendToClient,
     PlatformSession,
@@ -81,6 +82,18 @@ export type GetClientCallback = (
 
 type JobQueueHandler = (err?: Error | string) => void | Promise<void>;
 
+type JobAck = "pong" | "nickAck";
+
+interface QueuedJob {
+    handler: JobQueueHandler;
+    ack: JobAck;
+    /**
+     * The PING sent after a nick change was already answered. Completion
+     * must not also skip a later PONG, or the next command never finishes.
+     */
+    pongSeen?: boolean;
+}
+
 const IRC_LINE_BREAK = /[\r\n]/;
 
 function ircLineBreakError(values: Array<unknown>): string | undefined {
@@ -91,6 +104,54 @@ function ircLineBreakError(values: Array<unknown>): string | undefined {
     ) {
         return "IRC values must not contain CR or LF characters";
     }
+}
+
+/**
+ * irc2as puts numeric-reply text on `error`, not `object.content`. Reading
+ * `object.content` throws, and the platform process treats that as fatal.
+ * A non-empty string is required so a nick-change handler takes its failure
+ * path instead of adopting a nick the server rejected.
+ */
+function ircFailureMessage(asObject: ActivityStream): string {
+    if (typeof asObject.error === "string" && asObject.error.length > 0) {
+        return asObject.error;
+    }
+    const content = asObject.object?.content;
+    if (typeof content === "string" && content.length > 0) {
+        return content;
+    }
+    return "IRC error";
+}
+
+/**
+ * Nick to register on a new IRC connection.
+ *
+ * `object.nick` is the account nick submitted with the credentials. A rename
+ * rewrites `actor.id` (`nick@server`) and leaves `object.nick` in place so
+ * the credential fingerprint still finds the live worker. Those two agree
+ * on a first connect. After a rename they do not, and a fresh worker (a
+ * restart, or a platform process that exited) must register the actor nick:
+ * registering `object.nick` leaves `handledActors` pointing at a nickname
+ * this socket does not own. The next nick-change echo never matches, so
+ * that command and every command queued behind it wait forever, and a nick
+ * change by whoever now holds the actor nick is adopted as this session's.
+ */
+function ircRegistrationNick(
+    credentials: PlatformIrcCredentialsObject,
+): string {
+    const server = credentials.object.server;
+    const actorId = credentials.actor?.id;
+    if (
+        typeof server === "string" &&
+        server.length > 0 &&
+        typeof actorId === "string"
+    ) {
+        const suffix = `@${server}`;
+        if (actorId.endsWith(suffix) && actorId.length > suffix.length) {
+            return actorId.slice(0, -suffix.length);
+        }
+    }
+    return credentials.object.nick;
 }
 
 interface IrcSocketOptionsCapabilities {
@@ -132,20 +193,26 @@ export class IRC implements PersistentPlatformInterface {
         connectTimeoutMs: 30000,
     };
     private readonly updateActor: PlatformUpdateActor;
+    private readonly prepareActorUpdate?: PlatformPrepareActorUpdate;
     private readonly sendToClient: PlatformSendToClient;
     private irc2as!: IrcToActivityStreams;
     private forceDisconnect = false;
     private clientConnecting = false;
     private initialized = false;
     private client?: IrcSocketInstance;
-    private jobQueue: Array<JobQueueHandler> = []; // list of handlers to confirm when message delivery confirmed
+    private jobQueue: Array<QueuedJob> = []; // handlers waiting for a matching ack
+    // A numeric error completes the in-flight command before its PING is
+    // answered. That PONG must not acknowledge the command that runs next.
+    private pongAcksToSkip = 0;
     private channels = new Set();
     private handledActors = new Set();
+    private credentials?: PlatformIrcCredentialsObject;
 
     constructor(session: PlatformSession) {
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.updateActor = session.updateActor;
+        this.prepareActorUpdate = session.prepareActorUpdate;
     }
 
     /**
@@ -221,9 +288,15 @@ export class IRC implements PersistentPlatformInterface {
                 return done();
             }
             // join channel
-            this.jobQueue.push(() => {
-                this.hasJoined(channel);
-                done();
+            this.jobQueue.push({
+                ack: "pong",
+                handler: (err?: Error | string) => {
+                    if (err) {
+                        return done(err);
+                    }
+                    this.hasJoined(channel);
+                    done();
+                },
             });
             this.log.debug(`sending join ${channel}`);
             client.raw(["JOIN", channel]);
@@ -348,7 +421,7 @@ export class IRC implements PersistentPlatformInterface {
                     "cannot send message to a channel of which you've not first joined.",
                 );
             }
-            this.jobQueue.push(done);
+            this.jobQueue.push({ ack: "pong", handler: done });
             client.raw(`PING ${job.actor.name}`);
         });
     }
@@ -375,7 +448,7 @@ export class IRC implements PersistentPlatformInterface {
             job.object?.content,
         ]);
         if (lineBreakError) return done(lineBreakError);
-        this.getClient(job.actor.id, false, (err, client) => {
+        this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
             }
@@ -383,17 +456,77 @@ export class IRC implements PersistentPlatformInterface {
                 this.log.debug(
                     `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
-                this.handledActors.add(job.target.id);
-                this.jobQueue.push(async (err: Error) => {
-                    if (err) {
-                        this.handledActors.delete(job.target.id);
-                        return done(err);
+                // Refuse a collision before NICK reaches the server. The
+                // credential check used to run only after the server accepted
+                // the nick, so a refusal left this connection on the new nick
+                // while the client was told the rename failed.
+                if (this.prepareActorUpdate) {
+                    const proposed = structuredClone(credentials);
+                    proposed.object.nick = job.target.name;
+                    proposed.actor = {
+                        ...proposed.actor,
+                        id: `${job.target.name}@${credentials.object.server}`,
+                        name: job.target.name,
+                    };
+                    try {
+                        await this.prepareActorUpdate(proposed);
+                    } catch (updateErr) {
+                        const message =
+                            updateErr instanceof Error
+                                ? updateErr.message
+                                : String(updateErr);
+                        return done(message);
                     }
-                    credentials.object.nick = job.target.name;
-                    credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
-                    credentials.actor.name = job.target.name;
-                    await this.updateActor(credentials);
-                    done();
+                }
+                // Do not mark the requested nick as ours until the server
+                // accepts it. Doing so earlier consumes that nick's live
+                // traffic as this job's completion, so a taken nick can be
+                // reported as a successful change and those messages never
+                // reach the client.
+                this.jobQueue.push({
+                    ack: "nickAck",
+                    handler: async (err: Error) => {
+                        if (err) {
+                            return done(err);
+                        }
+                        const previousNick = credentials.object.nick;
+                        const previousActorId = credentials.actor.id;
+                        const previousActorName = credentials.actor.name;
+                        credentials.object.nick = job.target.name;
+                        credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
+                        credentials.actor.name = job.target.name;
+                        this.credentials = credentials;
+                        try {
+                            await this.updateActor(credentials);
+                        } catch (updateErr) {
+                            // The server already applied the nick, but the
+                            // parent did not re-key the worker, so the client
+                            // still routes by the old actor. updateActor may
+                            // have written the renamed key to this session's
+                            // store first; that copy is the same account and
+                            // is harmless. Keep the credentials on the stored
+                            // identity so replay and routing still match, and
+                            // track the nick the socket actually holds so its
+                            // echoes are recognised and whoever takes the old
+                            // nick is not.
+                            const appliedActorId = credentials.actor.id;
+                            credentials.object.nick = previousNick;
+                            credentials.actor.id = previousActorId;
+                            credentials.actor.name = previousActorName;
+                            this.setSocketNick(appliedActorId);
+                            const message =
+                                updateErr instanceof Error
+                                    ? updateErr.message
+                                    : String(updateErr);
+                            return done(message);
+                        }
+                        // The previous nick now belongs to whoever takes it next.
+                        // Leaving it here drops their traffic: an event whose
+                        // actor is in this set completes a job instead of being
+                        // delivered.
+                        this.setSocketNick(credentials.actor.id);
+                        done();
+                    },
                 });
                 // send nick change command
                 client.raw(["NICK", job.target.name]);
@@ -406,7 +539,7 @@ export class IRC implements PersistentPlatformInterface {
                     );
                 }
                 this.log.debug(`changing topic in channel ${channel}`);
-                this.jobQueue.push(done);
+                this.jobQueue.push({ ack: "pong", handler: done });
                 client.raw(["topic", channel, job.object.content]);
             } else {
                 return done(`unknown update action: ${job.object.type}`);
@@ -470,6 +603,7 @@ export class IRC implements PersistentPlatformInterface {
     cleanup(done: PlatformCallback) {
         this.log.debug("cleanup() called");
         this.initialized = false;
+        this.pongAcksToSkip = 0;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
             if (typeof this.client.end === "function") {
@@ -543,6 +677,18 @@ export class IRC implements PersistentPlatformInterface {
         }
     }
 
+    /**
+     * A socket holds exactly one nick. Replace whatever handledActors held
+     * rather than deleting the actor a job was addressed as: after a rename
+     * the store rejected, the client still addresses jobs as the old actor,
+     * so deleting by job actor leaves the nick the socket released behind
+     * and whoever takes it next is treated as this connection.
+     */
+    private setSocketNick(actorId: string): void {
+        this.handledActors.clear();
+        this.handledActors.add(actorId);
+    }
+
     private getClient(
         key: string,
         credentials: PlatformIrcCredentialsObject | false,
@@ -552,7 +698,11 @@ export class IRC implements PersistentPlatformInterface {
             `getClient called, connecting: ${this.clientConnecting}`,
         );
         if (this.client) {
-            this.handledActors.add(key);
+            // A live socket already knows its nicks; connect and nick changes
+            // maintain handledActors. After a rename the server applied but
+            // the store rejected, the client still addresses commands as the
+            // released nick. Adding it again would make whoever takes that
+            // nick next look like this session.
             return cb(null, this.client);
         }
 
@@ -563,7 +713,6 @@ export class IRC implements PersistentPlatformInterface {
                     this.log.debug(
                         `resolving delayed getClient call for ${key}`,
                     );
-                    this.handledActors.add(key);
                     return cb(null, this.client);
                 }
                 return cb("failed to get irc client, please try again.");
@@ -584,6 +733,7 @@ export class IRC implements PersistentPlatformInterface {
             }
             this.handledActors.add(key);
             this.client = client;
+            this.credentials = credentials;
             this.registerListeners(credentials.object.server);
             this.initialized = true;
             return cb(null, client);
@@ -594,7 +744,9 @@ export class IRC implements PersistentPlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         cb: GetClientCallback,
     ) {
+        const nick = ircRegistrationNick(credentials);
         const lineBreakError = ircLineBreakError([
+            nick,
             credentials.object.nick,
             credentials.object.username,
             credentials.actor.name,
@@ -621,8 +773,11 @@ export class IRC implements PersistentPlatformInterface {
                 : !!sasl_secret;
 
         const module_options: IrcSocketOptions = {
+            // SASL account stays the credential nick. Only the registered
+            // nickname follows the actor, so a renamed session still
+            // authenticates as the account that owns the password.
             username: credentials.object.username || credentials.object.nick,
-            nicknames: [credentials.object.nick],
+            nicknames: [nick],
             server: credentials.object.server || "irc.libera.chat",
             realname: credentials.actor.name || credentials.object.nick,
             port: credentials.object.port
@@ -707,18 +862,75 @@ export class IRC implements PersistentPlatformInterface {
 
     private completeJob(err?: string) {
         this.log.debug(`completing job, queue count: ${this.jobQueue.length}`);
-        const done = this.jobQueue.shift();
-        if (typeof done === "function") {
-            done(err);
+        const job = this.jobQueue.shift();
+        if (job && typeof job.handler === "function") {
+            job.handler(err);
         } else if (this.jobQueue.length === 0) {
             this.log.debug(
                 "WARNING: job completion event received with an empty job queue.",
             );
         } else {
             this.log.debug(
-                `WARNING: job completion found non-function in queue (${typeof done}), ${this.jobQueue.length} items remain.`,
+                `WARNING: job completion found non-function in queue (${typeof job?.handler}), ${this.jobQueue.length} items remain.`,
             );
         }
+    }
+
+    private isNickAck(asObject: ActivityStream): boolean {
+        return (
+            asObject.type === "update" && asObject.object?.type === "address"
+        );
+    }
+
+    private async adoptForcedNickChange(asObject: ActivityStream) {
+        if (
+            !this.credentials ||
+            typeof asObject.target?.name !== "string" ||
+            typeof asObject.actor?.id !== "string"
+        ) {
+            this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+                ...this.handledActors.keys(),
+            ]);
+            this.sendToClient(asObject);
+            return;
+        }
+
+        const newNick = asObject.target.name;
+        const server = this.credentials.object.server;
+        const previousNick = this.credentials.object.nick;
+        const previousActorId = this.credentials.actor.id;
+        const previousActorName = this.credentials.actor.name;
+
+        this.credentials.object.nick = newNick;
+        this.credentials.actor.id = `${newNick}@${server}`;
+        this.credentials.actor.name = newNick;
+        // The socket holds the new nick whatever happens below.
+        this.setSocketNick(this.credentials.actor.id);
+
+        try {
+            await this.updateActor(this.credentials);
+        } catch (err) {
+            // The parent did not re-key the worker, so keep the stored
+            // identity (a renamed copy in this session's store is harmless).
+            // Deliver the rename with the error: a plain rename tells the
+            // client to move its replay state, and its next reconnect would
+            // then save this connection's secret over the account already
+            // stored at the new nick.
+            this.log.error("failed to adopt forced nick change", err);
+            this.credentials.object.nick = previousNick;
+            this.credentials.actor.id = previousActorId;
+            this.credentials.actor.name = previousActorName;
+            this.sendToClient({
+                ...asObject,
+                error: err instanceof Error ? err.message : String(err),
+            });
+            return;
+        }
+
+        this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+            ...this.handledActors.keys(),
+        ]);
+        this.sendToClient(asObject);
     }
 
     private registerListeners(server: string) {
@@ -731,19 +943,66 @@ export class IRC implements PersistentPlatformInterface {
         });
 
         this.irc2as.events.on("incoming", (asObject: ActivityStream) => {
-            if (
+            const fromThisConnection =
                 typeof asObject.actor === "object" &&
                 typeof asObject.actor.name === "string" &&
-                this.handledActors.has(asObject.actor.id)
-            ) {
-                this.completeJob();
-            } else {
-                this.log.debug(
-                    `calling sendToClient for ${asObject.actor.id}`,
-                    [...this.handledActors.keys()],
-                );
-                this.sendToClient(asObject);
+                this.handledActors.has(asObject.actor.id);
+            // Only a matching nick-change acknowledgement completes a
+            // nickAck job. Other self-originated traffic (for example a
+            // server-forced rename while a send waits on PONG) must still be
+            // delivered.
+            if (fromThisConnection && this.isNickAck(asObject)) {
+                if (this.jobQueue[0]?.ack === "nickAck") {
+                    // NICK is followed by a PING, but this echo completes the
+                    // job before that PONG arrives. The next command can
+                    // already be waiting on a PONG of its own; leaving this
+                    // one outstanding would acknowledge that command with
+                    // success. Same leftover-PONG race as a numeric error.
+                    // A bouncer that answers PING locally can deliver that
+                    // PONG before the upstream echo. It was ignored because
+                    // this job is not waiting on a PONG, so skipping another
+                    // one would drop the next command's acknowledgement.
+                    if (!this.jobQueue[0].pongSeen) {
+                        this.pongAcksToSkip += 1;
+                    }
+                    this.completeJob();
+                    return;
+                }
+                void this.adoptForcedNickChange(asObject);
+                return;
             }
+            this.log.debug(`calling sendToClient for ${asObject.actor.id}`, [
+                ...this.handledActors.keys(),
+            ]);
+            this.sendToClient(asObject);
+        });
+
+        // Non-ACTION CTCP traffic is addressed to the client software, not
+        // the user, so none of it reaches the client (#551). Answer the two
+        // requests every IRC client answers; log the rest. Client-initiated
+        // CTCP is tracked in #1252.
+        this.irc2as.events.on("ctcp", (ctcp: IncomingCtcp) => {
+            if (ctcp.kind !== "request") {
+                this.log.debug(
+                    `ignoring ctcp ${ctcp.command} reply from ${ctcp.from}`,
+                );
+                return;
+            }
+            let reply: string | undefined;
+            if (ctcp.command === "VERSION") {
+                reply = `VERSION Sockethub ${this.schema.version}`;
+            } else if (ctcp.command === "PING") {
+                reply = `PING ${ctcp.args}`;
+            }
+            if (reply === undefined) {
+                this.log.debug(
+                    `ignoring ctcp ${ctcp.command} request from ${ctcp.from}`,
+                );
+                return;
+            }
+            // `from` and `args` came off a single IRC line, so they cannot
+            // carry a line break.
+            this.client?.raw(`NOTICE ${ctcp.from} :\u0001${reply}\u0001`);
         });
 
         this.irc2as.events.on("unprocessed", (s: string) => {
@@ -754,13 +1013,38 @@ export class IRC implements PersistentPlatformInterface {
         // however for irc2as this event delivers an AS object of type `error`.
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
-            this.log.debug(`message error response ${asObject.object.content}`);
-            this.completeJob(asObject.object.content);
+            const message = ircFailureMessage(asObject);
+            this.log.debug(`message error response ${message}`);
+            if (this.jobQueue.length > 0) {
+                // join, send, topic, and nick each write a PING after queueing.
+                // The numeric reply arrives first, so this PONG is still in
+                // flight. On a remote server it lands after the worker has
+                // already started the next queued command, and it would
+                // complete that command with success. A nick change that
+                // already observed its PONG must not skip a second one.
+                if (!this.jobQueue[0].pongSeen) {
+                    this.pongAcksToSkip += 1;
+                }
+                this.completeJob(message);
+            }
         });
 
         this.irc2as.events.on("pong", (timestamp: string) => {
             this.log.debug(`received PONG at ${timestamp}`);
-            this.completeJob();
+            if (this.pongAcksToSkip > 0) {
+                this.pongAcksToSkip -= 1;
+                return;
+            }
+            // A nick change completes on the echo, not this PONG. Remember
+            // that the trailing PING was already answered so the echo does
+            // not skip the next command's PONG.
+            if (this.jobQueue[0]?.ack === "nickAck") {
+                this.jobQueue[0].pongSeen = true;
+                return;
+            }
+            if (this.jobQueue[0]?.ack === "pong") {
+                this.completeJob();
+            }
         });
 
         this.irc2as.events.on("ping", (timestamp: string) => {

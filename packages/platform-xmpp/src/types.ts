@@ -23,6 +23,8 @@ export interface XmppCredentialsObject extends CredentialsObject {
 
 export interface XmppBuiltCredentials {
     service: string;
+    /** JID domain, used for the stream `to` and TLS SNI (XEP-0368 §3 rule 6). */
+    domain: string;
     username: string;
     password: string;
     resource?: string;

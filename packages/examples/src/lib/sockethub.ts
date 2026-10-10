@@ -7,10 +7,10 @@ import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";
 import {
-    defaultConfig,
-    loadExamplesConfig,
-    type ExamplesConfig,
-} from "./examples-config";
+    apiDiscovery,
+    describeDiscoveryFailure,
+    serverBaseUrl,
+} from "./api-discovery";
 
 export let sc: SockethubClient;
 export const connected = writable(false);
@@ -139,16 +139,32 @@ function handleIncomingMessage(msg: AnyActivityStream) {
     displayMessage(msg, false);
 }
 
-function sockethubConnect(config: ExamplesConfig = defaultConfig) {
-    sc = new SockethubClient(
-        io(
-            `${config.public.protocol}://${config.public.host}:${config.public.port}`,
-            {
-                path: config.sockethub.path,
-            },
-        ),
-        { initTimeoutMs: 10000 },
-    );
+/**
+ * Connect through discovery: the server this app was loaded from advertises
+ * its Socket.IO origin and path (and the HTTP actions URL, when enabled) in
+ * its service descriptor, so nothing here needs to know the configured paths.
+ */
+async function sockethubConnect(baseUrl: string) {
+    try {
+        sc = await SockethubClient.connect(baseUrl, {
+            io,
+            initTimeoutMs: 10000,
+        });
+    } catch (error) {
+        console.error("sockethub discovery failed", error);
+        apiDiscovery.set({
+            state: "unavailable",
+            reason: describeDiscoveryFailure(error),
+        });
+        return;
+    }
+    if (sc.descriptor && sc.serverOrigin) {
+        apiDiscovery.set({
+            state: "available",
+            descriptor: sc.descriptor,
+            serverOrigin: sc.serverOrigin,
+        });
+    }
     sc.socket.on("connect", stateChange("connect"));
     sc.socket.on("error", stateChange("error"));
     sc.socket.on("disconnect", stateChange("disconnect"));
@@ -167,9 +183,8 @@ function sockethubConnect(config: ExamplesConfig = defaultConfig) {
     });
 }
 
-if (typeof globalThis === "object" && "window" in globalThis) {
-    console.log("connecting to sockethub");
-    loadExamplesConfig()
-        .then(sockethubConnect)
-        .catch(() => sockethubConnect());
+const baseUrl = serverBaseUrl();
+if (baseUrl) {
+    console.log("connecting to sockethub via discovery at", baseUrl);
+    void sockethubConnect(baseUrl);
 }

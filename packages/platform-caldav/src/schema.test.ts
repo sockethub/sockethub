@@ -8,6 +8,13 @@ const validateCredentials = ajv.compile(PlatformCalDavSchema.credentials);
 const validateObject = ajv.compile(
     PlatformCalDavSchema.messages.properties.object,
 );
+const validateMessage = ajv.compile({
+    allOf: [
+        { type: "object", ...PlatformCalDavSchema.messages },
+        PlatformCalDavSchema.messageConstraints,
+    ],
+});
+const actor = { id: "caldav:alice", type: "person" };
 
 describe("CalDAV schema", () => {
     it("is a valid Sockethub platform schema", () => {
@@ -85,6 +92,45 @@ describe("CalDAV schema", () => {
         ).toBeFalse();
         expect(
             validateObject({ type: "event", name: "Meeting", startTime: "x", alarm: true }),
+        ).toBeFalse();
+    });
+
+    it("reads published iCalendar feeds without a calendar target", () => {
+        expect(
+            validateMessage({
+                type: "read",
+                actor,
+                target: { id: "webcal://example.test/holidays.ics", type: "feed" },
+                object: { type: "event", startTime: "2026-01-01T00:00:00Z" },
+            }),
+        ).toBeTrue();
+        expect(
+            validateMessage({
+                type: "read",
+                actor,
+                target: { id: "https://example.test/holidays.ics", type: "feed" },
+            }),
+        ).toBeTrue();
+        expect(
+            validateMessage({
+                type: "read",
+                actor,
+                target: { id: "https://example.test/holidays.ics", type: "calendar" },
+            }),
+        ).toBeFalse();
+        expect(
+            validateMessage({
+                type: "query",
+                actor,
+                target: { id: "https://example.test/holidays.ics", type: "feed" },
+            }),
+        ).toBeFalse();
+        expect(
+            validateMessage({
+                type: "read",
+                actor,
+                target: { id: "ftp://example.test/holidays.ics", type: "feed" },
+            }),
         ).toBeFalse();
     });
 });

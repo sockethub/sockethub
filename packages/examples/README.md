@@ -14,6 +14,9 @@ Interactive web examples showing how client applications talk to Sockethub using
 Fetch examples (feeds, metadata) derive the actor from the URL field, then you
 confirm the actor JSON before fetch. Chat examples (IRC, XMPP) walk through
 credentials, connect, join, and send.
+DAV examples (CalDAV, CardDAV) set session credentials, discover collections,
+then create or edit items; CardDAV shows the ETag conflict flow on update and
+delete.
 
 ## Platform examples
 
@@ -24,6 +27,8 @@ credentials, connect, join, and send.
 | **IRC** | Credentials → connect → join → send |
 | **XMPP** | Same flow for multi-user chat |
 | **Metadata** | Extract Open Graph / page metadata from a URL |
+| **CalDAV** | Credentials → discover calendars → create an event or to-do |
+| **CardDAV** | Credentials → discover address books → list, search, add, edit, delete contacts |
 
 ## Prerequisites
 
@@ -38,8 +43,9 @@ bun install
 bun run dev
 ```
 
-Point the app at a running Sockethub by editing `static/examples-config.json` or using the
-default `localhost:10550`.
+The app discovers the server's endpoints from the origin it was loaded from. When
+running standalone on the Vite dev server, point it at a running Sockethub with
+`VITE_SOCKETHUB_URL=http://localhost:10550 bun run dev`.
 
 ## Code layout
 

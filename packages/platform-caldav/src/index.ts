@@ -8,8 +8,10 @@ import type {
     StatelessPlatformConfig,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
+import { createGuardedDispatcher } from "@sockethub/util/net";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 import { buildICalendar } from "./ical.js";
+import { parseICalendarFeed } from "./ics.js";
 import { PlatformCalDavSchema } from "./schema.js";
 import type {
     CalDavCredentials,
@@ -19,6 +21,8 @@ import type {
 } from "./types.js";
 
 const CONTEXT = buildCanonicalContext(PlatformCalDavSchema.contextUrl);
+const MAX_FEED_BYTES = 10 * 1024 * 1024;
+const MAX_FEED_REDIRECTS = 5;
 
 function safePathname(pathname: string): boolean {
     if (pathname.includes("\\") || /%(?:2f|5c)/i.test(pathname)) return false;
@@ -73,6 +77,7 @@ export function assertCalendarResource(
 
 export default class CalDav implements PlatformInterface {
     private readonly log: Logger;
+    private feedDispatcher?: ReturnType<typeof createGuardedDispatcher>;
     config: StatelessPlatformConfig = {
         persist: false,
         requireCredentials: ["fetch", "query", "create", "update", "delete"],
@@ -95,6 +100,9 @@ export default class CalDav implements PlatformInterface {
     }
 
     cleanup(done: PlatformCallback): void {
+        if (typeof this.feedDispatcher?.close === "function")
+            this.feedDispatcher.close().catch(() => {});
+        this.feedDispatcher = undefined;
         done();
     }
 
@@ -120,6 +128,38 @@ export default class CalDav implements PlatformInterface {
             )
             .catch((error) => this.fail(job, error, done))
             .finally(() => client.close().catch(() => {}));
+    }
+
+    /**
+     * Read a published iCalendar (`.ics`) file such as a holiday calendar or a
+     * read-only subscription link. No CalDAV account is involved, so this
+     * action takes no credentials; `webcal:` links are fetched over HTTPS.
+     */
+    read(job: ActivityStream, done: PlatformCallback): void {
+        const query = (job.object ?? {}) as QueryInput;
+        this.feedUrl(job.target?.id ?? "")
+            .then((url) => this.fetchFeed(url))
+            .then(({ url, body }) => {
+                let feed: ReturnType<typeof parseICalendarFeed>;
+                try {
+                    feed = parseICalendarFeed(body, url.href, query);
+                } catch (error) {
+                    throw new CalDavFailure("caldav:invalid-response", error);
+                }
+                if (feed.skipped)
+                    this.log.warn(
+                        `CalDAV read skipped ${feed.skipped} unsupported component(s) for actor ${job.actor.id}`,
+                    );
+                done(null, {
+                    "@context": CONTEXT,
+                    id: job.id ?? null,
+                    type: "collection",
+                    summary: feed.name ?? "iCalendar feed",
+                    totalItems: feed.items.length,
+                    items: feed.items,
+                } as never);
+            })
+            .catch((error) => this.fail(job, error, done));
     }
 
     create(
@@ -247,6 +287,75 @@ export default class CalDav implements PlatformInterface {
                 allowInsecureHttp: this.config.allowInsecureHttp,
             },
         );
+    }
+
+    /**
+     * The SSRF-guarded dispatcher for feed reads, created once per instance
+     * (its policy comes from packageConfig, fixed before the first job) so
+     * connections are pooled across reads.
+     */
+    private dispatcher(): ReturnType<typeof createGuardedDispatcher> {
+        if (!this.feedDispatcher)
+            this.feedDispatcher = createGuardedDispatcher({
+                allowPrivateAddresses: this.config.allowPrivateAddresses,
+                maxResponseBytes: MAX_FEED_BYTES,
+            });
+        return this.feedDispatcher;
+    }
+
+    /**
+     * Fetch a feed, following redirects by hand so every hop is re-checked
+     * against the scheme policy; the guarded dispatcher only vets addresses.
+     */
+    private async fetchFeed(url: URL): Promise<{ url: URL; body: string }> {
+        const signal = AbortSignal.timeout(this.config.connectTimeoutMs);
+        let current = url;
+        for (let hop = 0; hop <= MAX_FEED_REDIRECTS; hop += 1) {
+            let response: Response;
+            try {
+                response = await fetch(current, {
+                    redirect: "manual",
+                    signal,
+                    headers: { accept: "text/calendar, */*;q=0.1" },
+                    dispatcher: this.dispatcher(),
+                } as RequestInit);
+            } catch (error) {
+                throw new CalDavFailure("caldav:feed-failed", error);
+            }
+            if (response.status >= 300 && response.status < 400) {
+                const location = response.headers.get("location");
+                await response.body?.cancel().catch(() => {});
+                if (!location) throw new CalDavFailure("caldav:feed-failed");
+                current = await this.feedUrl(new URL(location, current).href);
+                continue;
+            }
+            if (!response.ok) {
+                await response.body?.cancel().catch(() => {});
+                throw new CalDavFailure("caldav:feed-failed");
+            }
+            try {
+                return { url: current, body: await response.text() };
+            } catch (error) {
+                throw new CalDavFailure("caldav:feed-failed", error);
+            }
+        }
+        throw new CalDavFailure("caldav:too-many-redirects");
+    }
+
+    private async feedUrl(id: string): Promise<URL> {
+        let url: URL;
+        try {
+            url = new URL(id.replace(/^webcal:/i, "https:"));
+        } catch {
+            throw new CalDavFailure("caldav:invalid-feed");
+        }
+        if (url.protocol === "http:" && !this.config.allowInsecureHttp)
+            throw new CalDavFailure("caldav:https-required");
+        if (url.protocol !== "https:" && url.protocol !== "http:")
+            throw new CalDavFailure("caldav:invalid-feed");
+        url.username = "";
+        url.password = "";
+        return url;
     }
 
     private async calendar(client: CalDavClient, id: string) {

@@ -71,16 +71,17 @@ const escapeText = (value: string) =>
         .replaceAll(";", "\\;")
         .replaceAll(",", "\\,");
 
-function contentLine(line: string) {
-    let separator = -1;
+function valueSeparator(line: string): number {
     let quoted = false;
     for (let index = 0; index < line.length; index += 1) {
         if (line[index] === '"') quoted = !quoted;
-        if (line[index] === ":" && !quoted) {
-            separator = index;
-            break;
-        }
+        if (line[index] === ":" && !quoted) return index;
     }
+    return -1;
+}
+
+function contentLine(line: string) {
+    const separator = valueSeparator(line);
     if (separator < 1) throw new Error("invalid vCard content line");
     const head = line.slice(0, separator);
     const value = line.slice(separator + 1);
@@ -123,6 +124,15 @@ function typedValue(
     };
 }
 
+/**
+ * Lines whose structured value loses information the client did not edit.
+ * Kept off the contact so a query response cannot echo them back.
+ */
+const originalLines = new WeakMap<
+    Contact,
+    { organization?: string; nickname?: string; photoLines?: string[] }
+>();
+
 export function parseVCard(body: string, id: string, etag?: string): Contact {
     const all = unfold(body);
     let first = 0;
@@ -136,6 +146,9 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
         throw new Error("unterminated vCard");
     const contact: Partial<Contact> & { type: "person" } = { type: "person" };
     const preserved: PreservedVCardProperty[] = [];
+    const photoLines: string[] = [];
+    let organizationLine: string | undefined;
+    let nicknameLine: string | undefined;
     let version: "3.0" | "4.0" | undefined;
     for (const raw of lines.slice(1, -1)) {
         if (!raw) continue;
@@ -153,18 +166,21 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
                 contact.name = unescapeText(line.value);
                 break;
             case "N": {
-                const parts = splitEscaped(line.value, ";").map(unescapeText);
-                [contact.familyName, contact.givenName] = parts;
-                if (parts[2])
-                    contact.additionalNames = splitEscaped(parts[2], ",");
-                if (parts[3])
-                    contact.honorificPrefixes = splitEscaped(parts[3], ",");
-                if (parts[4])
-                    contact.honorificSuffixes = splitEscaped(parts[4], ",");
+                // Components are split on unescaped ";" and list items on
+                // unescaped "," before unescaping, so "\," stays inside a value.
+                const parts = splitEscaped(line.value, ";");
+                const list = (part: string | undefined) =>
+                    part ? splitEscaped(part, ",").map(unescapeText) : [];
+                contact.familyName = unescapeText(parts[0] ?? "");
+                contact.givenName = unescapeText(parts[1] ?? "");
+                if (parts[2]) contact.additionalNames = list(parts[2]);
+                if (parts[3]) contact.honorificPrefixes = list(parts[3]);
+                if (parts[4]) contact.honorificSuffixes = list(parts[4]);
                 break;
             }
             case "NICKNAME":
                 contact.nickname = unescapeText(line.value);
+                nicknameLine = raw;
                 break;
             case "EMAIL":
                 contact.emails = [
@@ -202,6 +218,7 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
                 contact.organization = unescapeText(
                     splitEscaped(line.value, ";")[0],
                 );
+                organizationLine = raw;
                 break;
             case "TITLE":
                 contact.title = unescapeText(line.value);
@@ -224,6 +241,7 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
                         ...(contact.photoUrls ?? []),
                         line.value,
                     ];
+                    photoLines.push(raw);
                 } else preserved.push({ raw });
                 break;
             case "NOTE":
@@ -254,7 +272,87 @@ export function parseVCard(body: string, id: string, etag?: string): Contact {
             value: preserved,
             enumerable: false,
         });
+    if (organizationLine || nicknameLine || photoLines.length)
+        originalLines.set(result, {
+            ...(organizationLine ? { organization: organizationLine } : {}),
+            ...(nicknameLine ? { nickname: nicknameLine } : {}),
+            ...(photoLines.length ? { photoLines } : {}),
+        });
     return result;
+}
+
+function assertRetained(line: string, name: string): string {
+    if (/[\r\n]/.test(line) || contentLine(line).name !== name)
+        throw new Error(`invalid vCard ${name}`);
+    return line;
+}
+
+function replaceOrganizationName(line: string, name: string): string {
+    const separator = valueSeparator(line);
+    if (separator < 1) throw new Error("invalid vCard organization");
+    const parts = splitEscaped(line.slice(separator + 1), ";");
+    parts[0] = escapeText(name);
+    return assertRetained(
+        `${line.slice(0, separator)}:${parts.join(";")}`,
+        "ORG",
+    );
+}
+
+/**
+ * An update rebuilds the card from the client object. Query results only
+ * carry the first ORG component, a single nickname string, and URI photos,
+ * so echoing those values used to delete departments, collapse nickname
+ * lists, and drop inline photos. Replay the server's line when the client
+ * sent the same parsed value back, and keep the rest of ORG when only the
+ * organization name changed.
+ */
+export function prepareVCardUpdate(
+    input: ContactInput,
+    stored: Contact,
+): {
+    input: ContactInput;
+    preserved: PreservedVCardProperty[];
+    retainedLines?: { organization?: string; nickname?: string };
+} {
+    const record = originalLines.get(stored);
+    const retainedLines: { organization?: string; nickname?: string } = {};
+    if (record?.organization && input.organization !== undefined) {
+        retainedLines.organization =
+            input.organization === stored.organization
+                ? assertRetained(record.organization, "ORG")
+                : replaceOrganizationName(
+                      record.organization,
+                      input.organization,
+                  );
+    }
+    if (
+        record?.nickname &&
+        input.nickname !== undefined &&
+        input.nickname === stored.nickname
+    )
+        retainedLines.nickname = assertRetained(record.nickname, "NICKNAME");
+
+    const storedPhotos = stored.photoUrls ?? [];
+    const inputPhotos = input.photoUrls;
+    const photoLines = record?.photoLines;
+    const preserved = stored.preservedProperties ?? [];
+    const echoedPhotos =
+        photoLines !== undefined &&
+        inputPhotos !== undefined &&
+        photoLines.length > 0 &&
+        photoLines.length === storedPhotos.length &&
+        inputPhotos.length === storedPhotos.length &&
+        inputPhotos.every((url, index) => url === storedPhotos[index]);
+    return {
+        input: echoedPhotos ? { ...input, photoUrls: undefined } : input,
+        preserved:
+            echoedPhotos && photoLines
+                ? [...preserved, ...photoLines.map((raw) => ({ raw }))]
+                : preserved,
+        ...(retainedLines.organization || retainedLines.nickname
+            ? { retainedLines }
+            : {}),
+    };
 }
 
 function params(value: ContactValue | ContactAddress): string {
@@ -288,6 +386,7 @@ function fold(line: string): string {
 export function buildVCard(
     input: ContactInput,
     preserved: PreservedVCardProperty[] = [],
+    retainedLines?: { organization?: string; nickname?: string },
 ): { uid: string; body: string } {
     const uid = input.uid ?? crypto.randomUUID();
     if (/[\r\n/%\\]/.test(uid)) throw new Error("unsafe vCard UID");
@@ -295,13 +394,17 @@ export function buildVCard(
         if (/[\r\n]/.test(value)) throw new Error(`invalid vCard ${field}`);
         return value;
     };
+    // List components join escaped items with a bare ",", the list separator;
+    // escaping after joining would turn the list into one comma-bearing value.
+    const list = (values: string[] | undefined) =>
+        (values ?? []).map(escapeText).join(",");
     const n = [
-        input.familyName,
-        input.givenName,
-        input.additionalNames?.join(","),
-        input.honorificPrefixes?.join(","),
-        input.honorificSuffixes?.join(","),
-    ].map((value) => escapeText(value ?? ""));
+        escapeText(input.familyName ?? ""),
+        escapeText(input.givenName ?? ""),
+        list(input.additionalNames),
+        list(input.honorificPrefixes),
+        list(input.honorificSuffixes),
+    ];
     const lines = [
         "BEGIN:VCARD",
         "VERSION:4.0",
@@ -310,7 +413,10 @@ export function buildVCard(
         `FN:${escapeText(input.name)}`,
         `N:${n.join(";")}`,
     ];
-    if (input.nickname) lines.push(`NICKNAME:${escapeText(input.nickname)}`);
+    if (retainedLines?.nickname)
+        lines.push(assertRetained(retainedLines.nickname, "NICKNAME"));
+    else if (input.nickname)
+        lines.push(`NICKNAME:${escapeText(input.nickname)}`);
     for (const email of input.emails ?? [])
         lines.push(`EMAIL${params(email)}:${escapeText(email.value)}`);
     for (const telephone of input.telephones ?? [])
@@ -329,7 +435,10 @@ export function buildVCard(
             `ADR${params(address)}:${parts.map((value) => escapeText(value ?? "")).join(";")}`,
         );
     }
-    if (input.organization) lines.push(`ORG:${escapeText(input.organization)}`);
+    if (retainedLines?.organization)
+        lines.push(assertRetained(retainedLines.organization, "ORG"));
+    else if (input.organization)
+        lines.push(`ORG:${escapeText(input.organization)}`);
     if (input.title) lines.push(`TITLE:${escapeText(input.title)}`);
     if (input.role) lines.push(`ROLE:${escapeText(input.role)}`);
     for (const url of input.urls ?? [])
