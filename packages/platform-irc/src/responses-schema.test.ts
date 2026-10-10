@@ -69,6 +69,40 @@ describe("irc messages (inbound) object validation", () => {
         ).toEqual("");
     });
 
+    test("accepts an attendance query without a members list", () => {
+        expect(
+            validateActivityStream({
+                "@context": FULL_CTX,
+                type: "query",
+                actor: { id: "u@localhost", type: "person" },
+                target: {
+                    id: "#room@localhost",
+                    type: "room",
+                    name: "#room",
+                },
+                object: { type: "attendance" },
+                // biome-ignore lint/suspicious/noExplicitAny: test
+            } as any),
+        ).toEqual("");
+    });
+
+    test("rejects an attendance query that supplies members", () => {
+        expect(
+            validateActivityStream({
+                "@context": FULL_CTX,
+                type: "query",
+                actor: { id: "u@localhost", type: "person" },
+                target: {
+                    id: "#room@localhost",
+                    type: "room",
+                    name: "#room",
+                },
+                object: { type: "attendance", members: ["alice"] },
+                // biome-ignore lint/suspicious/noExplicitAny: test
+            } as any),
+        ).not.toEqual("");
+    });
+
     test("accepts an inbound update (topic object)", () => {
         expect(
             validateActivityStream({
