@@ -79,6 +79,27 @@ export class ASEmitter {
         });
     }
 
+    attendance(channel, nick, members) {
+        this.emitEvent(EVENT_INCOMING, {
+            "@context": this.contexts,
+            type: "query",
+            actor: {
+                type: "room",
+                id: `${channel}@${this.server}`,
+                name: channel,
+            },
+            target: {
+                type: "person",
+                id: `${nick}@${this.server}`,
+                name: nick,
+            },
+            object: {
+                type: "attendance",
+                members: members,
+            },
+        });
+    }
+
     channelError(channel, nick, content) {
         this.emitEvent(EVENT_ERROR, {
             "@context": this.contexts,
