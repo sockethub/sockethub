@@ -118,17 +118,14 @@ describe("CardDAV client", () => {
             "",
         ].join("\r\n");
         let written = "";
-        globalThis.fetch = (async (
-            _url: URL | RequestInfo,
-            init?: RequestInit,
-        ) => {
-            if (init?.method === "GET") return new Response(source);
-            written = init?.body?.toString() ?? "";
+        const fetch: DavFetch = async (_url, init) => {
+            if (init.method === "GET") return new Response(source);
+            written = init.body?.toString() ?? "";
             return new Response(null, {
                 status: 204,
                 headers: { etag: '"v2"' },
             });
-        }) as typeof fetch;
+        };
         const echoed = JSON.parse(
             JSON.stringify(
                 parseVCard(
@@ -145,9 +142,12 @@ describe("CardDAV client", () => {
             type: "person";
         };
         echoed.name = "Alice Updated";
-        const client = new CardDavClient("https://dav.example/", {
-            token: "access-token",
-        });
+        const client = new CardDavClient(
+            "https://dav.example/",
+            { token: "access-token" },
+            15_000,
+            { fetch },
+        );
         await client.update(echoed);
         expect(written).toContain("FN:Alice Updated\r\n");
         expect(written).toContain("NICKNAME:Bob,Bobby\r\n");
