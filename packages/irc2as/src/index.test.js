@@ -345,6 +345,42 @@ describe("IrcToActivityStreams", () => {
         irc2as.input(":alice!user@example.test JOIN :#room");
     });
 
+    it("keeps # channels and a one-word topic when LIST includes other prefixes", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.type).toEqual("query");
+            expect(stream.object).toEqual({
+                type: "channels",
+                items: [
+                    {
+                        type: "room",
+                        id: "#general@localhost",
+                        name: "#general",
+                        members: 4,
+                        summary: "Welcome",
+                    },
+                    {
+                        type: "room",
+                        id: "#lobby@localhost",
+                        name: "#lobby",
+                        members: 8,
+                        summary: "Lobby chat",
+                    },
+                ],
+            });
+            done();
+        });
+        // Ergo sends a one-word topic with no colon. `&`, `+`, and `!`
+        // channels, and a bare `#`, are not valid room ids.
+        irc2as.input(":irc.example.net 321 alice Channel :Users  Name");
+        irc2as.input(":irc.example.net 322 alice #general 4 Welcome");
+        irc2as.input(":irc.example.net 322 alice &local 2 :local only");
+        irc2as.input(":irc.example.net 322 alice +modeless 1 :no modes");
+        irc2as.input(":irc.example.net 322 alice !ABCDESecret 3 :safe");
+        irc2as.input(":irc.example.net 322 alice #");
+        irc2as.input(":irc.example.net 322 alice #lobby 8 :Lobby chat");
+        irc2as.input(":irc.example.net 323 alice :End of /LIST");
+    });
+
     it("keeps a positional JOIN channel when the realname is trailing", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.target).toEqual({
