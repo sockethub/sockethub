@@ -27,7 +27,8 @@ bun run dev
 
 Both methods start Sockethub on `http://localhost:10550`. The root URL shows a
 short server info page with the connection details; the examples live under
-`/examples`.
+`/examples`. `GET /health` answers `200 {"status":"ok"}` while Redis is
+reachable and `503` otherwise, for load balancers and monitors.
 
 ## Try the Examples
 
