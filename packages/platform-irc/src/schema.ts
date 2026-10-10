@@ -90,12 +90,6 @@ export const PlatformIrcSchema = {
                     additionalProperties: false,
                     properties: { type: { enum: ["address"] } },
                 },
-                attendance: {
-                    type: "object",
-                    required: ["type"],
-                    additionalProperties: false,
-                    properties: { type: { enum: ["attendance"] } },
-                },
             },
         },
     },
