@@ -80,13 +80,12 @@ describe("IrcToActivityStreams", () => {
     });
 
     describe("handle many room joins", () => {
-        let totalCount = 0;
         it("send join messages", (done) => {
-            irc2as.events.on("incoming", () => {
-                totalCount += 1;
-                if (totalCount === 5 * 100) {
-                    done();
-                }
+            // 5 NAMES lines of 1 + 500 nicks each, one attendance message.
+            irc2as.events.on("incoming", (stream) => {
+                expect(stream.type).toEqual("query");
+                expect(stream.object.members.length).toEqual(5 * 501);
+                done();
             });
             for (let i = 0; i < 5; i++) {
                 let names =
@@ -306,24 +305,23 @@ describe("IrcToActivityStreams", () => {
     it("parses a single-nick RPL_NAMREPLY that omits the trailing colon", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object).toEqual({
-                type: "presence",
-                role: "member",
+                type: "attendance",
+                members: ["onlynick"],
             });
             expect(stream.actor).toEqual({
-                type: "person",
-                id: "onlynick@localhost",
-                name: "onlynick",
-            });
-            expect(stream.target).toEqual({
                 type: "room",
                 id: "#room@localhost",
                 name: "#room",
             });
+            expect(stream.target).toEqual({
+                type: "person",
+                id: "alice@localhost",
+                name: "alice",
+            });
             done();
         });
-        irc2as.input(
-            ":irc.example.net 353 alice @ #room onlynick",
-        );
+        irc2as.input(":irc.example.net 353 alice @ #room onlynick");
+        irc2as.input(":irc.example.net 366 alice #room :End of /NAMES list.");
     });
 
     // UnrealIRCd sends this form unless the client negotiated extended-join.
