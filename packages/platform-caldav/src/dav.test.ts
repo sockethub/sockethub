@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { createHash } from "node:crypto";
-import { CalDavClient, CalDavFailure } from "./dav.js";
+import type { DavAuthentication } from "@sockethub/dav";
+import { CalDavClient as RealCalDavClient, CalDavFailure } from "./dav.js";
+
+// DavClient uses undici's own fetch (not the runtime global), so the tests
+// below stub globalThis.fetch and route the client through it lazily.
+const CalDavClient = (url: string, authentication: DavAuthentication) =>
+    new RealCalDavClient(url, authentication, 15_000, {
+        fetch: (u, init) => globalThis.fetch(u, init),
+    });
 
 const originalFetch = globalThis.fetch;
 
@@ -35,14 +43,14 @@ describe("CalDAV client", () => {
     it("requires HTTPS before sending credentials", () => {
         expect(
             () =>
-                new CalDavClient(
+                new RealCalDavClient(
                     "http://calendar.example/dav/",
                     { username: "alice", password: "secret" },
                 ),
         ).toThrow(new CalDavFailure("caldav:https-required"));
         expect(
             () =>
-                new CalDavClient(
+                new RealCalDavClient(
                     "http://calendar.example/dav/",
                     { username: "alice", password: "secret" },
                     15_000,
@@ -59,7 +67,7 @@ describe("CalDAV client", () => {
             const body = value.endsWith("/dav/") ? discovery : value.includes("principals") ? principal : calendars;
             return new Response(body, { status: 207, headers: { "content-type": "application/xml" } });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+        const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
         const result = await client.discoverCalendars();
         await client.close();
         expect(requests).toEqual([
@@ -85,7 +93,7 @@ describe("CalDAV client", () => {
                 { status: 207 },
             );
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", {
+        const client = CalDavClient("https://calendar.example/dav/", {
             username: "alice",
             password: "secret",
         });
@@ -115,7 +123,7 @@ describe("CalDAV client", () => {
                   : calendarResponse;
             return new Response(body, { status: 207 });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", {
+        const client = CalDavClient("https://calendar.example/dav/", {
             username: "alice",
             password: "secret",
         });
@@ -130,7 +138,7 @@ describe("CalDAV client", () => {
             calls += 1;
             return new Response(null, { status: 302, headers: { location: "https://evil.example/dav/" } });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+        const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
         await expect(client.discoverCalendars()).rejects.toEqual(new CalDavFailure("caldav:unsafe-redirect"));
         await client.close();
         expect(calls).toBe(1);
@@ -145,7 +153,7 @@ describe("CalDAV client", () => {
                 headers: { location: "/other/item.ics" },
             });
         }) as typeof fetch;
-        const client = new CalDavClient(
+        const client = CalDavClient(
             "https://calendar.example/dav/",
             { username: "alice", password: "secret" },
         );
@@ -178,7 +186,7 @@ describe("CalDAV client", () => {
                   : discovery;
             return new Response(body, { status: 207 });
         }) as typeof fetch;
-        const client = new CalDavClient(
+        const client = CalDavClient(
             "https://calendar.example/custom/",
             { username: "alice", password: "secret" },
         );
@@ -196,7 +204,7 @@ describe("CalDAV client", () => {
             requestInit = init;
             return new Response(null, { status: 201, headers: { etag: '"v1"' } });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+        const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
         const result = await client.create(
             { id: "https://calendar.example/calendars/alice/work/", type: "calendar", name: "Work", components: ["event"] },
             "one@example.test",
@@ -215,7 +223,7 @@ describe("CalDAV client", () => {
             authorization = new Headers(init?.headers).get("authorization");
             return new Response(discovery, { status: 207 });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", { token: "access-token" });
+        const client = CalDavClient("https://calendar.example/dav/", { token: "access-token" });
         await expect(client.discoverCalendars()).rejects.toEqual(new CalDavFailure("caldav:not-caldav"));
         await client.close();
         expect(authorization).toBe("Bearer access-token");
@@ -253,7 +261,7 @@ describe("CalDAV client", () => {
                       : discovery;
                 return new Response(body, { status: 207 });
             }) as typeof fetch;
-            const client = new CalDavClient(
+            const client = CalDavClient(
                 "https://calendar.example/dav/",
                 { username: "alice", password: "secret" },
             );
@@ -301,7 +309,7 @@ describe("CalDAV client", () => {
             }
             return new Response(discovery, { status: 207 });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", {
+        const client = CalDavClient("https://calendar.example/dav/", {
             username: "alice",
             password: "secret",
         });
@@ -329,7 +337,7 @@ describe("CalDAV client", () => {
             }
             return new Response(discovery, { status: 207 });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", {
+        const client = CalDavClient("https://calendar.example/dav/", {
             username: "alice",
             password: "secret",
         });
@@ -374,7 +382,7 @@ describe("CalDAV client", () => {
                   : discovery;
             return new Response(body, { status: 207 });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", {
+        const client = CalDavClient("https://calendar.example/dav/", {
             username: "alice",
             password: "secret",
         });
@@ -391,7 +399,7 @@ describe("CalDAV client", () => {
                 status: 401,
                 headers: { "www-authenticate": "Negotiate" },
             })) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", {
+        const client = CalDavClient("https://calendar.example/dav/", {
             username: "alice",
             password: "secret",
         });
@@ -414,7 +422,7 @@ describe("CalDAV client", () => {
             }
             return new Response(null, { status: init?.method === "DELETE" ? 204 : 200, headers: { etag: '"v2"' } });
         }) as typeof fetch;
-        const client = new CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+        const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
         const calendar = { id: "https://calendar.example/calendars/alice/work/", type: "calendar" as const, name: "Work", components: ["event" as const] };
         const queried = await client.query(calendar, { type: "event" });
         expect(queried).toHaveLength(1);

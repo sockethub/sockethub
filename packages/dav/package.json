@@ -31,11 +31,11 @@
   },
   "dependencies": {
     "@sockethub/util": "^1.0.0-alpha.13",
-    "fast-xml-parser": "^5.10.1"
+    "fast-xml-parser": "^5.10.1",
+    "undici": "^7.30.0"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "undici": "^7.19.0"
+    "@types/bun": "latest"
   },
   "gitHead": "45acaca6570f8e8429d996ec1d3b95979e8c54a9"
 }

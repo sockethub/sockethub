@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import { XMLParser } from "fast-xml-parser";
-import type { Agent } from "undici";
+import { type Agent, fetch as undiciFetch } from "undici";
 
 const MAX_REDIRECTS = 5;
 const MAX_AUTH_ATTEMPTS = 2;
@@ -9,10 +9,22 @@ const MAX_AUTH_ATTEMPTS = 2;
 export type DavAuthentication =
     | { username: string; password: string }
     | { token: string };
+/** `fetch`-compatible function that honours an undici `dispatcher` option. */
+export type DavFetch = (
+    url: URL,
+    init: RequestInit & { dispatcher?: Agent },
+) => Promise<Response>;
 export interface DavNetworkOptions {
     allowPrivateAddresses?: boolean;
     allowInsecureHttp?: boolean;
     maxResponseBytes?: number;
+    /**
+     * Fetch implementation. Defaults to undici's own `fetch` so the request
+     * and the guarded dispatcher come from the same undici build (a global
+     * `fetch` from a different undici major returns empty headers). Mainly a
+     * test seam.
+     */
+    fetch?: DavFetch;
 }
 
 export class DavFailure extends Error {
@@ -221,6 +233,7 @@ const quote = (value: string) =>
 
 export class DavClient {
     private readonly dispatcher: Agent;
+    private readonly fetchImpl: DavFetch;
     private authenticationScheme?: "basic" | "digest";
     private challenge?: DigestChallenge;
     private nonceCount = 0;
@@ -250,6 +263,8 @@ export class DavClient {
             maxResponseBytes:
                 networkOptions.maxResponseBytes ?? 10 * 1024 * 1024,
         });
+        this.fetchImpl =
+            networkOptions.fetch ?? (undiciFetch as unknown as DavFetch);
     }
 
     async close(): Promise<void> {
@@ -275,7 +290,7 @@ export class DavClient {
         let response: Response;
         try {
             const authorization = this.authorization(url, init);
-            response = await fetch(url, {
+            response = await this.fetchImpl(url, {
                 ...init,
                 redirect: "manual",
                 signal,
@@ -284,7 +299,7 @@ export class DavClient {
                     ...(authorization ? { authorization } : {}),
                 },
                 dispatcher: this.dispatcher,
-            } as RequestInit);
+            });
         } catch (error) {
             throw new DavFailure(
                 `${this.errorPrefix}:connection-failed`,
