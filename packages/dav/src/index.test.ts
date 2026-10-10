@@ -1,17 +1,14 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
     asArray,
     DavClient,
+    type DavFetch,
     DavFailure,
     isDavCollectionChild,
     parseDavXml,
 } from "./index.js";
 
 describe("shared DAV helpers", () => {
-    const originalFetch = globalThis.fetch;
-    afterEach(() => {
-        globalThis.fetch = originalFetch;
-    });
 
     it("requires HTTPS unless the administrator opts in", () => {
         expect(
@@ -57,15 +54,17 @@ describe("shared DAV helpers", () => {
     });
 
     it("rejects cross-origin and unsafe write redirects", async () => {
-        globalThis.fetch = (async () =>
+        const fetch: DavFetch = async () =>
             new Response(null, {
                 status: 302,
                 headers: { location: "https://other.example/dav/" },
-            })) as typeof fetch;
+            });
         const client = new DavClient(
             "https://dav.example/",
             { token: "token" },
             "davtest",
+            15_000,
+            { fetch },
         );
         await expect(
             client.request(new URL("https://dav.example/"), { method: "GET" }),
@@ -78,17 +77,19 @@ describe("shared DAV helpers", () => {
 
     it("limits redirect chains across the whole request", async () => {
         const signals = new Set<AbortSignal | null | undefined>();
-        globalThis.fetch = (async (_url, init) => {
-            signals.add(init?.signal);
+        const fetch: DavFetch = async (_url, init) => {
+            signals.add(init.signal);
             return new Response(null, {
                 status: 302,
                 headers: { location: "/next" },
             });
-        }) as typeof fetch;
+        };
         const client = new DavClient(
             "https://dav.example/",
             { token: "token" },
             "davtest",
+            15_000,
+            { fetch },
         );
         await expect(
             client.request(new URL("https://dav.example/"), { method: "GET" }),
@@ -99,17 +100,19 @@ describe("shared DAV helpers", () => {
 
     it("rejects unsupported Digest modes", async () => {
         for (const unsupported of ["userhash=true", 'qop="auth-int"']) {
-            globalThis.fetch = (async () =>
+            const fetch: DavFetch = async () =>
                 new Response(null, {
                     status: 401,
                     headers: {
                         "www-authenticate": `Digest realm="dav", nonce="nonce", ${unsupported}`,
                     },
-                })) as typeof fetch;
+                });
             const client = new DavClient(
                 "https://dav.example/",
                 { username: "alice", password: "secret" },
                 "davtest",
+                15_000,
+                { fetch },
             );
             await expect(
                 client.request(new URL("https://dav.example/"), {
@@ -123,12 +126,13 @@ describe("shared DAV helpers", () => {
     });
 
     it("maps Bearer token rejection to authentication-failed", async () => {
-        globalThis.fetch = (async () =>
-            new Response(null, { status: 401 })) as typeof fetch;
+        const fetch: DavFetch = async () => new Response(null, { status: 401 });
         const client = new DavClient(
             "https://dav.example/",
             { token: "token" },
             "davtest",
+            15_000,
+            { fetch },
         );
         await expect(
             client.request(new URL("https://dav.example/"), { method: "GET" }),

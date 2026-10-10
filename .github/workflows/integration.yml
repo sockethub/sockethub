@@ -219,6 +219,55 @@ jobs:
         continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
 
+  dav:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The DAV clients hand an undici Agent to `fetch`. Each Node major
+        # ships a different undici, so exercise the auth-challenge handshake
+        # against a real server on every supported release (see #1293).
+        node-version: ['22', '24', '26']
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Use Bun latest
+        uses: oven-sh/setup-bun@v2.0.1
+        with:
+          bun-version: latest
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: bun install
+      - run: bun run build
+
+      - run: bun run docker:start:caldav
+
+      - name: Verify Radicale is listening
+        run: nc -zv localhost 5232
+
+      - name: Verify Baikal is listening
+        run: nc -zv localhost 5233
+
+      - name: CalDAV Integration Tests
+        run: bun run integration:caldav
+
+      - name: CardDAV Integration Tests
+        run: bun run integration:carddav
+
+      - name: DAV auth handshake on Node ${{ matrix.node-version }}
+        run: bun run integration:dav-node
+
+      - name: DAV server logs
+        if: always()
+        continue-on-error: true
+        run: bun run docker:logs:caldav
+
   contract:
     runs-on: ubuntu-latest
 

@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "undici": "^7.19.0"
+    "undici": "^7.30.0"
   },
   "gitHead": "45acaca6570f8e8429d996ec1d3b95979e8c54a9"
 }
