@@ -1,6 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import type { PlatformSession } from "@sockethub/schemas";
 import { CalDavFailure } from "./dav.js";
 import CalDav, { assertCalendarResource } from "./index.js";
@@ -178,71 +176,6 @@ describe("CalDAV read", () => {
         ).toBe("caldav:invalid-response");
     });
 
-    // Regression for the Node 26 half of sockethub/sockethub#1293: a feed read
-    // passed our undici Agent to the runtime global fetch. On Node 26 that
-    // global is undici 8, and the response comes back with no headers, so a
-    // redirect's Location is invisible and the read fails. The real fetch must
-    // be undici's, which keeps Location. Bun's runner ignores dispatchers, so
-    // this runs under Node against the built package.
-    it("follows a redirect through undici fetch on Node", async () => {
-        const moduleUrl = pathToFileURL(
-            join(import.meta.dir, "../dist/index.js"),
-        ).href;
-        const script = `
-            import { createServer } from "node:http";
-            import CalDav from ${JSON.stringify(moduleUrl)};
-            const ics = ${JSON.stringify(ics)};
-            const server = createServer((req, res) => {
-                if (req.url === "/cal.ics") {
-                    res.writeHead(302, { location: "/moved.ics" });
-                    res.end();
-                    return;
-                }
-                res.setHeader("content-type", "text/calendar");
-                res.end(ics);
-            });
-            await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-            const { port } = server.address();
-            const platform = new CalDav({
-                log: { error() {}, warn() {}, info() {}, debug() {} },
-            });
-            platform.config.allowPrivateAddresses = true;
-            platform.config.allowInsecureHttp = true;
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    platform.read(
-                        {
-                            type: "read",
-                            actor: { id: "caldav:alice", type: "person" },
-                            target: { id: "http://127.0.0.1:" + port + "/cal.ics", type: "feed" },
-                        },
-                        (error, value) => error ? reject(new Error(String(error))) : resolve(value),
-                    );
-                });
-                const item = result.items?.[0];
-                if (!item || item.name !== "A" || !String(item.id).endsWith("/moved.ics#a")) {
-                    console.error(JSON.stringify(result));
-                    process.exitCode = 1;
-                }
-            } finally {
-                await new Promise((resolve) => platform.cleanup(resolve));
-                server.close();
-            }
-        `;
-        const child = Bun.spawn(
-            ["node", "--input-type=module", "--eval", script],
-            {
-                stdout: "pipe",
-                stderr: "pipe",
-                env: { ...process.env, NODE_NO_WARNINGS: "1" },
-            },
-        );
-        const [exitCode, stdout, stderr] = await Promise.all([
-            child.exited,
-            new Response(child.stdout).text(),
-            new Response(child.stderr).text(),
-        ]);
-        expect(`${stdout}${stderr}`).toBe("");
-        expect(exitCode).toBe(0);
-    });
+    // Node-runtime redirect + undici fetch regression: integration/dav-node.integration.mjs
+    // (Node 22/24/26 matrix in .github/workflows/integration.yml).
 });
