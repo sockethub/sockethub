@@ -11,11 +11,11 @@ import type { JobDataDecrypted } from "@sockethub/data-layer";
 import {
     assertAcceptedCredentials,
     derivePlatformCredentialsSecret,
-    mergePackageConfig,
     migrateRenamedActorCredentials,
     renameActorCredentialsInStore,
     storeActorCredentials,
-} from "./platform.js";
+} from "./platform-credentials.js";
+import { mergePackageConfig } from "./platform.js";
 
 /**
  * Tests for platform.ts credential handling logic
