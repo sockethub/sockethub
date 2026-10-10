@@ -230,45 +230,11 @@ export const TestData = [
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
         type: "update",
-        object: { type: "presence", role: "member" },
         actor: {
             type: "person",
             id: "hyper_slvrbckt@localhost",
             name: "hyper_slvrbckt",
         },
-        target: {
-            type: "room",
-            id: "#kosmos-random@localhost",
-            name: "#kosmos-random",
-        },
-    },
-    {
-        "@context": [
-            "https://www.w3.org/ns/activitystreams",
-            "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-        ],
-        type: "update",
-        actor: {
-            type: "person",
-            id: "hyper_slvrbckt@localhost",
-            name: "hyper_slvrbckt",
-        },
-        target: {
-            type: "room",
-            id: "#kosmos-random@localhost",
-            name: "#kosmos-random",
-        },
-        object: { type: "presence", role: "member" },
-    },
-    {
-        "@context": [
-            "https://www.w3.org/ns/activitystreams",
-            "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-        ],
-        type: "update",
-        actor: { type: "person", id: "gregkare@localhost", name: "gregkare" },
         target: {
             type: "room",
             id: "#kosmos-random@localhost",
@@ -355,21 +321,6 @@ export const TestData = [
         type: "update",
         actor: { type: "person", id: "gregkare@localhost", name: "gregkare" },
         target: { type: "room", id: "#kosmos@localhost", name: "#kosmos" },
-        object: { type: "presence", role: "member" },
-    },
-    {
-        "@context": [
-            "https://www.w3.org/ns/activitystreams",
-            "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-        ],
-        type: "update",
-        actor: { type: "person", id: "hal8000@localhost", name: "hal8000" },
-        target: {
-            type: "room",
-            id: "#kosmos-random@localhost",
-            name: "#kosmos-random",
-        },
         object: { type: "presence", role: "member" },
     },
     {
@@ -646,14 +597,21 @@ export const TestData = [
             "https://sockethub.org/ns/context/v1.jsonld",
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
-        type: "update",
-        actor: { type: "person", id: "myuser@localhost", name: "myuser" },
-        target: {
+        type: "query",
+        actor: {
             type: "room",
             id: "#kosmos-random@localhost",
             name: "#kosmos-random",
         },
-        object: { type: "presence", role: "member" },
+        target: {
+            type: "person",
+            id: "hyper_slvrbckt@localhost",
+            name: "hyper_slvrbckt",
+        },
+        object: {
+            type: "attendance",
+            members: ["hyper_slvrbckt", "gregkare", "hal8000"],
+        },
     },
     {
         "@context": [
@@ -661,14 +619,18 @@ export const TestData = [
             "https://sockethub.org/ns/context/v1.jsonld",
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
-        type: "update",
-        actor: { type: "person", id: "botka@localhost", name: "botka" },
-        target: {
+        type: "query",
+        actor: {
             type: "room",
             id: "#kosmos-random@localhost",
             name: "#kosmos-random",
         },
-        object: { type: "presence", role: "owner" },
+        target: {
+            type: "person",
+            id: "hyper_slvrbckt@localhost",
+            name: "hyper_slvrbckt",
+        },
+        object: { type: "attendance", members: [] },
     },
     {
         "@context": [
@@ -676,13 +638,13 @@ export const TestData = [
             "https://sockethub.org/ns/context/v1.jsonld",
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
-        type: "update",
-        actor: { type: "person", id: "foouser@localhost", name: "foouser" },
-        target: {
+        type: "query",
+        actor: {
             type: "room",
             id: "#kosmos-random@localhost",
             name: "#kosmos-random",
         },
-        object: { type: "presence", role: "member" },
+        target: { type: "person", id: "myuser@localhost", name: "myuser" },
+        object: { type: "attendance", members: ["myuser", "botka", "foouser"] },
     },
 ];

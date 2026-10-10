@@ -30,7 +30,7 @@ const MODE = "MODE";
 const MOTD = "372";
 const MOTD_END = "376";
 const NAMES = "353";
-// NAMES_END = "366",
+const NAMES_END = "366";
 const NICK = "NICK";
 const NOTICE = "NOTICE";
 const PART = "PART";
@@ -254,24 +254,32 @@ export class IrcToActivityStreams {
                 // user list. A single nick has no spaces, so servers may omit
                 // the trailing colon; `content` is then undefined and calling
                 // `.split` on it throws, which kills the platform process.
+                // Buffered per channel; one attendance message is emitted on
+                // NAMES_END (see sockethub/sockethub#277).
                 const names = trailingParam(content, msg.join(" "));
                 if (typeof names !== "string" || names.length === 0) {
                     break;
                 }
+                const members = this.__buffer[NAMES][channel] || [];
                 for (const entry of names.split(" ")) {
                     if (!entry) {
                         continue;
                     }
-                    role = "member";
-                    let username = entry;
-                    if (ROLE[entry[0]]) {
-                        username = entry.substr(1);
-                        role = ROLE[entry[0]];
-                    }
-                    ase.presence(username, role, channel);
+                    members.push(ROLE[entry[0]] ? entry.substr(1) : entry);
                 }
+                this.__buffer[NAMES][channel] = members;
                 break;
             }
+
+            /** */
+            case NAMES_END:
+                ase.attendance(
+                    channel,
+                    pos1,
+                    this.__buffer[NAMES][channel] || [],
+                );
+                delete this.__buffer[NAMES][channel];
+                break;
 
             /** */
             case NICK: // nick change
