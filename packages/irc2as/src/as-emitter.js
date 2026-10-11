@@ -79,6 +79,30 @@ export class ASEmitter {
         });
     }
 
+    // roles maps nick to owner/admin/participant; nicks absent from it are
+    // plain members.
+    attendance(channel, nick, members, roles) {
+        this.emitEvent(EVENT_INCOMING, {
+            "@context": this.contexts,
+            type: "query",
+            actor: {
+                type: "room",
+                id: `${channel}@${this.server}`,
+                name: channel,
+            },
+            target: {
+                type: "person",
+                id: `${nick}@${this.server}`,
+                name: nick,
+            },
+            object: {
+                type: "attendance",
+                members: members,
+                roles: roles,
+            },
+        });
+    }
+
     channelError(channel, nick, content) {
         this.emitEvent(EVENT_ERROR, {
             "@context": this.contexts,

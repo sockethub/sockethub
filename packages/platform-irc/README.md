@@ -185,13 +185,21 @@ name as it appears on IRC (for example `#general`).
     "type": "room",
     "name": "#general"
   },
-  "target": {},
+  "target": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person",
+    "name": "mynick"
+  },
   "object": {
     "type": "attendance",
-    "members": ["alice", "bob", "carol"]
+    "members": ["alice", "bob", "carol"],
+    "roles": { "alice": "owner", "bob": "participant" }
   }
 }
 ```
+
+`roles` maps a nick to `owner` (channel op, admin or founder), `admin` (half-op)
+or `participant` (voiced). Nicks absent from it are plain members.
 
 ### Query Channels Example
 

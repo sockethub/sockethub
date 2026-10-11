@@ -131,6 +131,7 @@ export const PlatformIrcSchema = {
                 oneOf: [
                     { $ref: "#/definitions/responses/person" },
                     { $ref: "#/definitions/responses/service" },
+                    { $ref: "#/definitions/responses/room" },
                 ],
             },
             target: {
@@ -150,6 +151,7 @@ export const PlatformIrcSchema = {
                     { $ref: "#/definitions/responses/address" },
                     { $ref: "#/definitions/responses/relationship" },
                     { $ref: "#/definitions/responses/channels" },
+                    { $ref: "#/definitions/responses/attendance" },
                 ],
             },
         },
@@ -212,6 +214,21 @@ export const PlatformIrcSchema = {
                         type: { enum: ["presence"] },
                         role: {
                             enum: ["owner", "member", "participant", "admin"],
+                        },
+                    },
+                },
+                attendance: {
+                    type: "object",
+                    required: ["type", "members"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["attendance"] },
+                        members: { type: "array", items: { type: "string" } },
+                        roles: {
+                            type: "object",
+                            additionalProperties: {
+                                enum: ["owner", "admin", "participant"],
+                            },
                         },
                     },
                 },

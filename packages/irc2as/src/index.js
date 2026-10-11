@@ -37,7 +37,7 @@ const MODE = "MODE";
 const MOTD = "372";
 const MOTD_END = "376";
 const NAMES = "353";
-// NAMES_END = "366",
+const NAMES_END = "366";
 const NICK = "NICK";
 const NOTICE = "NOTICE";
 const PART = "PART";
@@ -52,10 +52,18 @@ const WHO = "352";
 const WHO_OLD = "354";
 // WHO_END = "315";
 
-const ROLE = {
+// Status prefixes servers attach to nicks in RPL_NAMREPLY, highest first.
+// RFC 2812 defines "@" (op) and "+" (voice); UnrealIRCd and InspIRCd add "~"
+// (founder), "&" (admin), "%" (halfop) and "!"; some networks use "*". With
+// multi-prefix a nick carries several, highest first. Mapped onto the same
+// role names MODE and WHO use; unlisted prefixes are stripped as plain members.
+const NICK_PREFIXES = /^[~&@%+!*]+/;
+const PREFIX_ROLE = {
+    "~": "owner",
+    "&": "owner",
     "@": "owner",
     "%": "admin",
-    "*": "participant",
+    "+": "participant",
 };
 
 const MODES = {
@@ -362,22 +370,54 @@ export class IrcToActivityStreams {
                 // user list. A single nick has no spaces, so servers may omit
                 // the trailing colon; `content` is then undefined and calling
                 // `.split` on it throws, which kills the platform process.
+                // Buffered per channel; one attendance message is emitted on
+                // NAMES_END (see sockethub/sockethub#277).
+                if (!channel) {
+                    break; // `channel` only recognises `#` rooms; skip others
+                }
                 const names = trailingParam(content, msg.join(" "));
                 if (typeof names !== "string" || names.length === 0) {
                     break;
                 }
+                const list = this.__buffer[NAMES][channel] || {
+                    members: [],
+                    roles: [],
+                };
                 for (const entry of names.split(" ")) {
-                    if (!entry) {
-                        continue;
+                    const nick = entry.replace(NICK_PREFIXES, "");
+                    if (!nick) {
+                        continue; // empty, or prefixes with no nick
                     }
-                    role = "member";
-                    let username = entry;
-                    if (ROLE[entry[0]]) {
-                        username = entry.substr(1);
-                        role = ROLE[entry[0]];
+                    list.members.push(nick);
+                    for (const prefix of entry.slice(0, -nick.length)) {
+                        if (PREFIX_ROLE[prefix]) {
+                            list.roles.push([nick, PREFIX_ROLE[prefix]]);
+                            break; // highest prefix comes first
+                        }
                     }
-                    ase.presence(username, role, channel);
                 }
+                this.__buffer[NAMES][channel] = list;
+                break;
+            }
+
+            /** */
+            case NAMES_END: {
+                if (!channel) {
+                    break;
+                }
+                const list = this.__buffer[NAMES][channel] || {
+                    members: [],
+                    roles: [],
+                };
+                // fromEntries defines own properties, so a nick named
+                // `__proto__` keeps its role instead of setting the prototype.
+                ase.attendance(
+                    channel,
+                    pos1,
+                    list.members,
+                    Object.fromEntries(list.roles),
+                );
+                delete this.__buffer[NAMES][channel];
                 break;
             }
 

@@ -80,13 +80,12 @@ describe("IrcToActivityStreams", () => {
     });
 
     describe("handle many room joins", () => {
-        let totalCount = 0;
         it("send join messages", (done) => {
-            irc2as.events.on("incoming", () => {
-                totalCount += 1;
-                if (totalCount === 5 * 100) {
-                    done();
-                }
+            // 5 NAMES lines of 1 + 500 nicks each, one attendance message.
+            irc2as.events.on("incoming", (stream) => {
+                expect(stream.type).toEqual("query");
+                expect(stream.object.members.length).toEqual(5 * 501);
+                done();
             });
             for (let i = 0; i < 5; i++) {
                 let names =
@@ -306,24 +305,90 @@ describe("IrcToActivityStreams", () => {
     it("parses a single-nick RPL_NAMREPLY that omits the trailing colon", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object).toEqual({
-                type: "presence",
-                role: "member",
+                type: "attendance",
+                members: ["onlynick"],
+                roles: {},
             });
             expect(stream.actor).toEqual({
-                type: "person",
-                id: "onlynick@localhost",
-                name: "onlynick",
-            });
-            expect(stream.target).toEqual({
                 type: "room",
                 id: "#room@localhost",
                 name: "#room",
             });
+            expect(stream.target).toEqual({
+                type: "person",
+                id: "alice@localhost",
+                name: "alice",
+            });
+            done();
+        });
+        irc2as.input(":irc.example.net 353 alice @ #room onlynick");
+        irc2as.input(":irc.example.net 366 alice #room :End of /NAMES list.");
+    });
+
+    // RFC 2812 prefixes ops with "@" and voiced users with "+". UnrealIRCd and
+    // InspIRCd also send "~", "&", "%", and "!". The prefix is not part of the
+    it("ignores NAMES for a channel type it does not route", (done) => {
+        // Only `#` rooms are recognised as channels; a `&local` reply must
+        // not surface as an attendance message with an `undefined` room id.
+        irc2as.events.on("incoming", (stream) => {
+            done(new Error(`unexpected message ${JSON.stringify(stream)}`));
+        });
+        irc2as.input(":irc.example.net 353 alice @ &local :alice bob");
+        irc2as.input(":irc.example.net 366 alice &local :End of /NAMES list.");
+        setTimeout(done, 0);
+    });
+
+    it("keeps the role of a nick named __proto__", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object.members).toEqual(["__proto__", "bob"]);
+            expect(JSON.stringify(stream.object.roles)).toEqual(
+                '{"__proto__":"owner"}',
+            );
+            done();
+        });
+        irc2as.input(":irc.example.net 353 alice @ #room :@__proto__ bob");
+        irc2as.input(":irc.example.net 366 alice #room :End of /NAMES list.");
+    });
+
+    // nick; the role it stands for travels in `roles`.
+    it("strips status prefixes from attendance members and reports roles", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "attendance",
+                members: [
+                    "alice",
+                    "op",
+                    "voice",
+                    "halfop",
+                    "founder",
+                    "admin",
+                    "oper",
+                ],
+                roles: {
+                    op: "owner",
+                    voice: "participant",
+                    halfop: "admin",
+                    founder: "owner",
+                    admin: "owner",
+                },
+            });
             done();
         });
         irc2as.input(
-            ":irc.example.net 353 alice @ #room onlynick",
+            ":irc.example.net 353 me = #room :alice @op +voice %halfop ~founder &admin !oper",
         );
+        irc2as.input(":irc.example.net 366 me #room :End of /NAMES list.");
+    });
+
+    // multi-prefix lists every status a nick holds, highest first.
+    it("keeps the highest role of a multi-prefix nick", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object.members).toEqual(["alice"]);
+            expect(stream.object.roles).toEqual({ alice: "owner" });
+            done();
+        });
+        irc2as.input(":irc.example.net 353 me = #room :@+alice");
+        irc2as.input(":irc.example.net 366 me #room :End of /NAMES list.");
     });
 
     // UnrealIRCd sends this form unless the client negotiated extended-join.
