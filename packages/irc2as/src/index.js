@@ -372,6 +372,9 @@ export class IrcToActivityStreams {
                 // `.split` on it throws, which kills the platform process.
                 // Buffered per channel; one attendance message is emitted on
                 // NAMES_END (see sockethub/sockethub#277).
+                if (!channel) {
+                    break; // `channel` only recognises `#` rooms; skip others
+                }
                 const names = trailingParam(content, msg.join(" "));
                 if (typeof names !== "string" || names.length === 0) {
                     break;
@@ -399,6 +402,9 @@ export class IrcToActivityStreams {
 
             /** */
             case NAMES_END: {
+                if (!channel) {
+                    break;
+                }
                 const list = this.__buffer[NAMES][channel] || {
                     members: [],
                     roles: [],

@@ -327,6 +327,17 @@ describe("IrcToActivityStreams", () => {
 
     // RFC 2812 prefixes ops with "@" and voiced users with "+". UnrealIRCd and
     // InspIRCd also send "~", "&", "%", and "!". The prefix is not part of the
+    it("ignores NAMES for a channel type it does not route", (done) => {
+        // Only `#` rooms are recognised as channels; a `&local` reply must
+        // not surface as an attendance message with an `undefined` room id.
+        irc2as.events.on("incoming", (stream) => {
+            done(new Error(`unexpected message ${JSON.stringify(stream)}`));
+        });
+        irc2as.input(":irc.example.net 353 alice @ &local :alice bob");
+        irc2as.input(":irc.example.net 366 alice &local :End of /NAMES list.");
+        setTimeout(done, 0);
+    });
+
     it("keeps the role of a nick named __proto__", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object.members).toEqual(["__proto__", "bob"]);
