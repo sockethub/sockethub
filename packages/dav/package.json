@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/dav",
   "description": "Shared WebDAV transport, authentication, and XML utilities for Sockethub platforms",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-beta.0",
   "type": "module",
   "private": false,
   "license": "LGPL-3.0+",
@@ -30,12 +30,12 @@
     "test": "bun test src/"
   },
   "dependencies": {
-    "@sockethub/util": "^1.0.0-alpha.13",
+    "@sockethub/util": "^1.0.0-beta.0",
     "fast-xml-parser": "^5.10.1",
     "undici": "^7.30.0"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
-  "gitHead": "45acaca6570f8e8429d996ec1d3b95979e8c54a9"
+  "gitHead": "75002ae8f15d7679bd58a9327f5a1d7eeaffa237"
 }
