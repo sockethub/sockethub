@@ -8,7 +8,7 @@ import {
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 
-import { derivePlatformCredentialsSecret } from "../src/platform.js";
+import { derivePlatformCredentialsSecret } from "../src/platform-credentials.js";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = process.env.REDIS_URL || `redis://${REDIS_HOST}:6379`;

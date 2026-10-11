@@ -7,10 +7,10 @@ import {
     resolveConnectionScope,
 } from "./connection-scope.js";
 import PlatformInstance, {
-    type MessageFromParent,
     type PlatformInstanceParams,
     platformInstances,
 } from "./platform-instance.js";
+import type { MessageToPlatformChild } from "./platform-ipc.js";
 
 class ProcessManager {
     private readonly parentId: string;
@@ -80,7 +80,7 @@ class ProcessManager {
         scope?: string,
         queueId?: string,
     ): PlatformInstance {
-        const secrets: MessageFromParent = [
+        const secrets: MessageToPlatformChild = [
             "secrets",
             {
                 parentSecret1: this.parentSecret1,
