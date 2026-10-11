@@ -3,7 +3,6 @@
  * connection answers a PING, 503 otherwise. Unauthenticated and content-free
  * beyond the verdict, so it leaks nothing an operator would not want public.
  */
-import { setTimeout as sleep } from "node:timers/promises";
 import {
     createCredentialsRedisConnection,
     type RedisConfig,
@@ -19,16 +18,22 @@ export type HealthDependencies = {
 };
 
 export async function checkHealth(ping: () => Promise<unknown>) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
         await Promise.race([
             ping(),
-            sleep(PING_TIMEOUT_MS).then(() => {
-                throw new Error("redis ping timed out");
+            new Promise<never>((_, reject) => {
+                timer = setTimeout(
+                    () => reject(new Error("redis ping timed out")),
+                    PING_TIMEOUT_MS,
+                );
             }),
         ]);
         return { status: "ok", redis: "ok" } as const;
     } catch {
         return { status: "error", redis: "error" } as const;
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
     }
 }
 
