@@ -9,6 +9,7 @@ import type {
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
 import { createGuardedDispatcher } from "@sockethub/util/net";
+import { fetch as undiciFetch } from "undici";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 import { buildICalendar } from "./ical.js";
 import { parseICalendarFeed } from "./ics.js";
@@ -78,6 +79,12 @@ export function assertCalendarResource(
 export default class CalDav implements PlatformInterface {
     private readonly log: Logger;
     private feedDispatcher?: ReturnType<typeof createGuardedDispatcher>;
+    /**
+     * Same undici build as the guarded dispatcher. The runtime global `fetch`
+     * on Node 26 is undici 8; handing it a 7.x Agent returns a response with
+     * no headers, so a redirected feed loses `Location` and fails.
+     */
+    private fetchImpl = undiciFetch;
     config: StatelessPlatformConfig = {
         persist: false,
         requireCredentials: ["fetch", "query", "create", "update", "delete"],
@@ -313,12 +320,12 @@ export default class CalDav implements PlatformInterface {
         for (let hop = 0; hop <= MAX_FEED_REDIRECTS; hop += 1) {
             let response: Response;
             try {
-                response = await fetch(current, {
+                response = (await this.fetchImpl(current, {
                     redirect: "manual",
                     signal,
                     headers: { accept: "text/calendar, */*;q=0.1" },
                     dispatcher: this.dispatcher(),
-                } as RequestInit);
+                })) as unknown as Response;
             } catch (error) {
                 throw new CalDavFailure("caldav:feed-failed", error);
             }

@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { PlatformSession } from "@sockethub/schemas";
+import { fetch as undiciFetch } from "undici";
 import { CalDavFailure } from "./dav.js";
 import CalDav, { assertCalendarResource } from "./index.js";
 
@@ -31,13 +32,16 @@ describe("CalDAV resource membership", () => {
 });
 
 describe("CalDAV read", () => {
-    const originalFetch = globalThis.fetch;
-    afterEach(() => {
-        globalThis.fetch = originalFetch;
-    });
     const session = {
         log: { error() {}, warn() {}, info() {}, debug() {} },
     } as unknown as PlatformSession;
+
+    function useFetch(fetchImpl: typeof fetch): CalDav {
+        const platform = new CalDav(session);
+        (platform as unknown as { fetchImpl: typeof fetch }).fetchImpl =
+            fetchImpl;
+        return platform;
+    }
     const ics =
         "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:a\r\nDTSTART:20260101T100000Z\r\nSUMMARY:A\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
 
@@ -55,15 +59,23 @@ describe("CalDAV read", () => {
         });
     }
 
+    it("feeds through undici fetch, matching the guarded dispatcher", () => {
+        const platform = new CalDav(session);
+        expect(
+            (platform as unknown as { fetchImpl: unknown }).fetchImpl,
+        ).toBe(undiciFetch);
+    });
+
     it("fetches a webcal link over HTTPS without credentials", async () => {
         const requests: string[] = [];
-        globalThis.fetch = (async (url: URL | RequestInfo, init?: RequestInit) => {
+        const platform = useFetch((async (url: URL | RequestInfo, init?: RequestInit) => {
             requests.push(String(url));
             expect(init?.headers).toMatchObject({ accept: "text/calendar, */*;q=0.1" });
             expect((init?.headers as Record<string, string>).authorization).toBeUndefined();
+            expect(init).toHaveProperty("dispatcher");
             return new Response(ics, { status: 200, headers: { "content-type": "text/calendar" } });
-        }) as typeof fetch;
-        const [error, result] = await read(new CalDav(session), "webcal://example.test/cal.ics");
+        }) as typeof fetch);
+        const [error, result] = await read(platform, "webcal://example.test/cal.ics");
         expect(error).toBeNull();
         expect(requests).toEqual(["https://example.test/cal.ics"]);
         expect(result).toMatchObject({
@@ -75,8 +87,9 @@ describe("CalDAV read", () => {
     });
 
     it("refuses plain HTTP unless the server allows it", async () => {
-        globalThis.fetch = (async () => new Response(ics, { status: 200 })) as typeof fetch;
-        const platform = new CalDav(session);
+        const platform = useFetch(
+            (async () => new Response(ics, { status: 200 })) as typeof fetch,
+        );
         expect((await read(platform, "http://example.test/cal.ics"))[0]).toBe("caldav:https-required");
         expect((await read(platform, "ftp://example.test/cal.ics"))[0]).toBe("caldav:invalid-feed");
         platform.config.allowInsecureHttp = true;
@@ -93,24 +106,59 @@ describe("CalDAV read", () => {
                     ? new Response(null, { status: 302, headers: { location } })
                     : new Response(ics, { status: 200 });
             }) as typeof fetch;
-        globalThis.fetch = redirectTo("http://example.test/moved.ics");
-        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:https-required");
+        expect(
+            (
+                await read(
+                    useFetch(redirectTo("http://example.test/moved.ics")),
+                    "https://example.test/cal.ics",
+                )
+            )[0],
+        ).toBe("caldav:https-required");
         expect(requests).toEqual(["https://example.test/cal.ics"]);
         requests.length = 0;
-        globalThis.fetch = redirectTo("/moved.ics");
-        const [error, result] = await read(new CalDav(session), "https://example.test/cal.ics");
+        const [error, result] = await read(
+            useFetch(redirectTo("/moved.ics")),
+            "https://example.test/cal.ics",
+        );
         expect(error).toBeNull();
         expect(requests).toEqual(["https://example.test/cal.ics", "https://example.test/moved.ics"]);
         expect(result).toMatchObject({ items: [{ id: "https://example.test/moved.ics#a" }] });
-        globalThis.fetch = (async () =>
-            new Response(null, { status: 302, headers: { location: "https://example.test/loop.ics" } })) as typeof fetch;
-        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:too-many-redirects");
+        expect(
+            (
+                await read(
+                    useFetch((async () =>
+                        new Response(null, {
+                            status: 302,
+                            headers: { location: "https://example.test/loop.ics" },
+                        })) as typeof fetch),
+                    "https://example.test/cal.ics",
+                )
+            )[0],
+        ).toBe("caldav:too-many-redirects");
     });
 
     it("reports failed requests and non-calendar bodies", async () => {
-        globalThis.fetch = (async () => new Response("missing", { status: 404 })) as typeof fetch;
-        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:feed-failed");
-        globalThis.fetch = (async () => new Response("<html></html>", { status: 200 })) as typeof fetch;
-        expect((await read(new CalDav(session), "https://example.test/cal.ics"))[0]).toBe("caldav:invalid-response");
+        expect(
+            (
+                await read(
+                    useFetch(
+                        (async () =>
+                            new Response("missing", { status: 404 })) as typeof fetch,
+                    ),
+                    "https://example.test/cal.ics",
+                )
+            )[0],
+        ).toBe("caldav:feed-failed");
+        expect(
+            (
+                await read(
+                    useFetch(
+                        (async () =>
+                            new Response("<html></html>", { status: 200 })) as typeof fetch,
+                    ),
+                    "https://example.test/cal.ics",
+                )
+            )[0],
+        ).toBe("caldav:invalid-response");
     });
 });
