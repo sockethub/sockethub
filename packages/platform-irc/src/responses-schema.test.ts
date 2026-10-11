@@ -7,6 +7,7 @@ import {
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
 // Canonical irc2as translation outputs — the messages the irc platform emits.
+import { IrcToActivityStreams } from "../../irc2as/src/index.js";
 import { TestData } from "../../irc2as/src/index.test.data.js";
 import { PlatformIrcSchema } from "./schema.js";
 
@@ -36,6 +37,72 @@ describe("irc responses schema", () => {
                 "@context": CTX,
                 type: "bogus",
                 actor: { id: "a@b", type: "person" },
+                // biome-ignore lint/suspicious/noExplicitAny: test
+            } as any),
+        ).not.toEqual("");
+    });
+
+    test("accepts a channel list that omitted non-# rows", () => {
+        const irc2as = new IrcToActivityStreams({
+            server: "irc.example.net",
+            contexts: FULL_CTX,
+        });
+        let listed: Record<string, unknown> | undefined;
+        irc2as.events.on("incoming", (stream: Record<string, unknown>) => {
+            listed = stream;
+        });
+        irc2as.input(":irc.example.net 322 alice #general 4 Welcome");
+        irc2as.input(":irc.example.net 322 alice &local 2 :local only");
+        irc2as.input(":irc.example.net 323 alice :End of /LIST");
+        expect(listed?.object).toEqual({
+            type: "channels",
+            items: [
+                {
+                    type: "room",
+                    id: "#general@irc.example.net",
+                    name: "#general",
+                    members: 4,
+                    summary: "Welcome",
+                },
+            ],
+        });
+        expect(
+            validateActivityStreamResponse(
+                // biome-ignore lint/suspicious/noExplicitAny: parser output
+                listed as any,
+            ),
+        ).toEqual("");
+    });
+
+    test("rejects a channel list when any row is not a # room", () => {
+        expect(
+            validateActivityStreamResponse({
+                "@context": FULL_CTX,
+                type: "query",
+                actor: {
+                    type: "service",
+                    id: "irc.example.net",
+                    name: "irc.example.net",
+                },
+                object: {
+                    type: "channels",
+                    items: [
+                        {
+                            type: "room",
+                            id: "#general@irc.example.net",
+                            name: "#general",
+                            members: 4,
+                            summary: "Welcome",
+                        },
+                        {
+                            type: "room",
+                            id: "&local@irc.example.net",
+                            name: "&local",
+                            members: 2,
+                            summary: "local only",
+                        },
+                    ],
+                },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
         ).not.toEqual("");

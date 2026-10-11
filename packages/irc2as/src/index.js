@@ -211,15 +211,29 @@ export class IrcToActivityStreams {
                 break;
             case LIST: {
                 // :server 322 nick #channel <members> :topic
+                // A one-word topic omits the leading colon (RFC 1459). Ergo
+                // does this; a format string that always writes " :" does not.
+                // Only `#` channels are representable: the responses schema
+                // rejects the whole list when any item id fails
+                // `^#[^\s]+@[^\s@]+$`. One local (`&`), modeless (`+`), or
+                // safe (`!`) row would otherwise discard every channel.
                 if (!this.__buffer[LIST]) {
                     this.__buffer[LIST] = [];
                 }
+                if (typeof pos2 !== "string" || !pos2.startsWith("#")) {
+                    break;
+                }
+                const id = `${pos2}@${this.server}`;
+                if (!/^#[^\s]+@[^\s@]+$/.test(id)) {
+                    break;
+                }
+                const summary = trailingParam(content, msg[msg.length - 1]);
                 this.__buffer[LIST].push({
                     type: "room",
-                    id: `${pos2}@${this.server}`,
+                    id,
                     name: pos2,
                     members: Number.parseInt(pos3, 10) || 0,
-                    summary: content ?? "",
+                    summary: typeof summary === "string" ? summary : "",
                 });
                 break;
             }
