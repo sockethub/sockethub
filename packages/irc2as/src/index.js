@@ -378,7 +378,7 @@ export class IrcToActivityStreams {
                 }
                 const list = this.__buffer[NAMES][channel] || {
                     members: [],
-                    roles: {},
+                    roles: [],
                 };
                 for (const entry of names.split(" ")) {
                     const nick = entry.replace(NICK_PREFIXES, "");
@@ -388,7 +388,7 @@ export class IrcToActivityStreams {
                     list.members.push(nick);
                     for (const prefix of entry.slice(0, -nick.length)) {
                         if (PREFIX_ROLE[prefix]) {
-                            list.roles[nick] = PREFIX_ROLE[prefix];
+                            list.roles.push([nick, PREFIX_ROLE[prefix]]);
                             break; // highest prefix comes first
                         }
                     }
@@ -401,9 +401,16 @@ export class IrcToActivityStreams {
             case NAMES_END: {
                 const list = this.__buffer[NAMES][channel] || {
                     members: [],
-                    roles: {},
+                    roles: [],
                 };
-                ase.attendance(channel, pos1, list.members, list.roles);
+                // fromEntries defines own properties, so a nick named
+                // `__proto__` keeps its role instead of setting the prototype.
+                ase.attendance(
+                    channel,
+                    pos1,
+                    list.members,
+                    Object.fromEntries(list.roles),
+                );
                 delete this.__buffer[NAMES][channel];
                 break;
             }

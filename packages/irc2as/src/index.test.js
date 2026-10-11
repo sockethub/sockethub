@@ -327,6 +327,18 @@ describe("IrcToActivityStreams", () => {
 
     // RFC 2812 prefixes ops with "@" and voiced users with "+". UnrealIRCd and
     // InspIRCd also send "~", "&", "%", and "!". The prefix is not part of the
+    it("keeps the role of a nick named __proto__", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object.members).toEqual(["__proto__", "bob"]);
+            expect(JSON.stringify(stream.object.roles)).toEqual(
+                '{"__proto__":"owner"}',
+            );
+            done();
+        });
+        irc2as.input(":irc.example.net 353 alice @ #room :@__proto__ bob");
+        irc2as.input(":irc.example.net 366 alice #room :End of /NAMES list.");
+    });
+
     // nick; the role it stands for travels in `roles`.
     it("strips status prefixes from attendance members and reports roles", (done) => {
         irc2as.events.on("incoming", (stream) => {
