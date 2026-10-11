@@ -79,10 +79,6 @@ function trailingParam(content, positional) {
     return content !== undefined ? content : positional;
 }
 
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function isChannelName(channelName, chantypes) {
     if (typeof channelName !== "string" || channelName.length < 2) {
         return false;
@@ -96,11 +92,6 @@ function isChannelName(channelName, chantypes) {
         return false;
     }
     return true;
-}
-
-function channelRoomIdPattern(chantypes) {
-    const escaped = escapeRegExp(chantypes);
-    return new RegExp(`^[${escaped}][^\\s]+@[^\\s@]+$`);
 }
 
 function parseIsupportChantypes(pos2, pos3, msg) {
@@ -280,9 +271,6 @@ export class IrcToActivityStreams {
                     break;
                 }
                 const id = `${pos2}@${this.server}`;
-                if (!channelRoomIdPattern(this.chantypes).test(id)) {
-                    break;
-                }
                 if (this.__buffer[LIST].length >= LIST_MAX_ITEMS) {
                     this.__listTruncated = true;
                     break;
