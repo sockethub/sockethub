@@ -31,4 +31,8 @@ WORKDIR /app
 COPY --from=install --chown=node:node /app/node_modules ./node_modules
 RUN chown node:node /app
 USER node
+# node:*-slim ships no curl/wget, so probe with node's fetch. PORT is the same
+# variable convict binds to sockethub.port, so overriding it moves both.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||10550)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "/app/node_modules/sockethub/bin/sockethub", "--host", "0.0.0.0"]
