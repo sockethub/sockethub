@@ -27,7 +27,8 @@ bun run dev
 
 Both methods start Sockethub on `http://localhost:10550`. The root URL shows a
 short server info page with the connection details; the examples live under
-`/examples`.
+`/examples`. `GET /health` answers `200 {"status":"ok"}` while Redis is
+reachable and `503` otherwise, for load balancers and monitors.
 
 ## Try the Examples
 
@@ -145,6 +146,11 @@ sockethub --host 0.0.0.0
 
 When developing from source, build with the Bun toolchain (`bun run build`),
 then run the built server on Node.js (`npm start`).
+
+The Docker image declares a `HEALTHCHECK` against `GET /health`, so
+`docker ps` and orchestrators see the container go unhealthy when Redis is
+unreachable. It probes the port in `PORT`, which is also what sets
+`sockethub.port`, so overriding one moves both.
 
 ## Next Steps
 
