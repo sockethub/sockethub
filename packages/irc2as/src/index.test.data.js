@@ -685,4 +685,36 @@ export const TestData = [
         },
         object: { type: "presence", role: "member" },
     },
+    {
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
+        type: "query",
+        actor: {
+            type: "service",
+            id: "localhost",
+            name: "localhost",
+        },
+        object: {
+            type: "channels",
+            items: [
+                {
+                    type: "room",
+                    id: "#kosmos-random@localhost",
+                    name: "#kosmos-random",
+                    members: 3,
+                    summary: "Kosmos random chat",
+                },
+                {
+                    type: "room",
+                    id: "#sockethub@localhost",
+                    name: "#sockethub",
+                    members: 1,
+                    summary: "",
+                },
+            ],
+        },
+    },
 ];

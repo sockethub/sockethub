@@ -193,6 +193,68 @@ name as it appears on IRC (for example `#general`).
 }
 ```
 
+### Query Channels Example
+
+Lists channels on the server. `object.name` is an optional `LIST` mask (one
+parameter, no spaces). Rows use the server's `CHANTYPES` (`#` and `&` by
+default). The server still sends every row; the response is capped at 5000
+items and includes `"truncated": true` when rows were dropped.
+
+```json
+{
+  "type": "query",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  },
+  "target": {
+    "id": "irc.libera.chat",
+    "type": "service"
+  },
+  "object": {
+    "type": "channels",
+    "name": "#sockethub*"
+  }
+}
+```
+
+### Query Channels Response Example
+
+One message is sent once the server finishes the list.
+
+```json
+{
+  "type": "query",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "irc.libera.chat",
+    "type": "service",
+    "name": "irc.libera.chat"
+  },
+  "object": {
+    "type": "channels",
+    "items": [
+      {
+        "id": "#sockethub@irc.libera.chat",
+        "type": "room",
+        "name": "#sockethub",
+        "members": 12,
+        "summary": "Sockethub development"
+      }
+    ]
+  }
+}
+```
+
 ### Disconnect Example
 
 ```json

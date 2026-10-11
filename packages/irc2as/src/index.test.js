@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import { readFileSync } from "fs";
 import equal from "fast-deep-equal";
 
-import { IrcToActivityStreams } from "./index.js";
+import { IrcToActivityStreams, LIST_MAX_ITEMS } from "./index.js";
 import { TestData } from "./index.test.data.js";
 const ircdata = readFileSync(__dirname + "/index.test.data.irc.txt", "utf-8");
 const inputs = ircdata.split("\n");
@@ -343,6 +343,90 @@ describe("IrcToActivityStreams", () => {
             done();
         });
         irc2as.input(":alice!user@example.test JOIN :#room");
+    });
+
+    it("keeps supported CHANTYPES and a one-word topic when LIST has other rows", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.type).toEqual("query");
+            expect(stream.object).toEqual({
+                type: "channels",
+                items: [
+                    {
+                        type: "room",
+                        id: "#general@localhost",
+                        name: "#general",
+                        members: 4,
+                        summary: "Welcome",
+                    },
+                    {
+                        type: "room",
+                        id: "&local@localhost",
+                        name: "&local",
+                        members: 2,
+                        summary: "local only",
+                    },
+                    {
+                        type: "room",
+                        id: "#lobby@localhost",
+                        name: "#lobby",
+                        members: 8,
+                        summary: "Lobby chat",
+                    },
+                ],
+            });
+            done();
+        });
+        // Ergo sends a one-word topic with no colon. `+` and `!` channels and
+        // a bare `#` are outside default CHANTYPES (`#&`).
+        irc2as.input(":irc.example.net 321 alice Channel :Users  Name");
+        irc2as.input(":irc.example.net 322 alice #general 4 Welcome");
+        irc2as.input(":irc.example.net 322 alice &local 2 :local only");
+        irc2as.input(":irc.example.net 322 alice +modeless 1 :no modes");
+        irc2as.input(":irc.example.net 322 alice !ABCDESecret 3 :safe");
+        irc2as.input(":irc.example.net 322 alice #");
+        irc2as.input(":irc.example.net 322 alice #lobby 8 :Lobby chat");
+        irc2as.input(":irc.example.net 323 alice :End of /LIST");
+    });
+
+    it("honours CHANTYPES from RPL_ISUPPORT when filtering LIST rows", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "channels",
+                items: [
+                    {
+                        type: "room",
+                        id: "+modeless@localhost",
+                        name: "+modeless",
+                        members: 1,
+                        summary: "no modes",
+                    },
+                ],
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.net 005 alice CHANTYPES=+ CHANMODES=beI,fkL,lj,psmnt :are supported",
+        );
+        irc2as.input(":irc.example.net 321 alice Channel :Users  Name");
+        irc2as.input(":irc.example.net 322 alice #general 4 Welcome");
+        irc2as.input(":irc.example.net 322 alice +modeless 1 :no modes");
+        irc2as.input(":irc.example.net 323 alice :End of /LIST");
+    });
+
+    it("truncates oversized LIST results and sets truncated", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object.type).toEqual("channels");
+            expect(stream.object.items).toHaveLength(LIST_MAX_ITEMS);
+            expect(stream.object.truncated).toEqual(true);
+            done();
+        });
+        irc2as.input(":irc.example.net 321 alice Channel :Users  Name");
+        for (let i = 0; i < LIST_MAX_ITEMS + 5; i++) {
+            irc2as.input(
+                `:irc.example.net 322 alice #chan${i} 1 :topic ${i}`,
+            );
+        }
+        irc2as.input(":irc.example.net 323 alice :End of /LIST");
     });
 
     it("keeps a positional JOIN channel when the realname is trailing", (done) => {
