@@ -66,14 +66,13 @@ export const PlatformIrcSchema = {
                         content: { type: "string" },
                     },
                 },
+                // Clients ask who is in a room; the member list is the
+                // response, not part of the request.
                 attendance: {
                     type: "object",
-                    required: ["type", "members"],
+                    required: ["type"],
                     additionalProperties: false,
-                    properties: {
-                        type: { enum: ["attendance"] },
-                        members: { type: "array", items: { type: "string" } },
-                    },
+                    properties: { type: { enum: ["attendance"] } },
                 },
                 topic: {
                     type: "object",
