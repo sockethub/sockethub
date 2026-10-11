@@ -224,9 +224,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The DAV clients hand an undici Agent to `fetch`. Each Node major
-        # ships a different undici, so exercise the auth-challenge handshake
-        # against a real server on every supported release (see #1293).
+        # DAV HTTP paths hand an undici Agent to `fetch`. Each Node major ships
+        # a different undici, so exercise auth handshakes, feed redirects, and
+        # related header handling on every supported release (see #1293).
         node-version: ['22', '24', '26']
 
     steps:
