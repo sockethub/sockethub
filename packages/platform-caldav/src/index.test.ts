@@ -37,10 +37,7 @@ describe("CalDAV read", () => {
     const ics =
         "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:a\r\nDTSTART:20260101T100000Z\r\nSUMMARY:A\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
 
-    type FeedFetch = (
-        url: URL,
-        init: RequestInit & { dispatcher?: unknown },
-    ) => Promise<Response>;
+    type FeedFetch = NonNullable<ConstructorParameters<typeof CalDav>[1]>;
 
     function read(platform: CalDav, target: string, object?: object) {
         return new Promise<[unknown, unknown]>((resolve) => {

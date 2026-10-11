@@ -138,49 +138,54 @@ await check("CardDavClient full lifecycle authenticates", async () => {
     }
 });
 
-await check("CalDav.read follows feed redirects through undici fetch", async () => {
-    const server = createServer((req, res) => {
-        if (req.url === "/cal.ics") {
-            res.writeHead(302, { location: "/moved.ics" });
-            res.end();
-            return;
-        }
-        res.setHeader("content-type", "text/calendar");
-        res.end(feedIcs);
-    });
-    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-    const { port } = server.address();
-    const platform = new CalDav({
-        log: { error() {}, warn() {}, info() {}, debug() {} },
-    });
-    platform.config.allowPrivateAddresses = true;
-    platform.config.allowInsecureHttp = true;
-    try {
-        const result = await new Promise((resolve, reject) => {
-            platform.read(
-                {
-                    type: "read",
-                    actor: { id: "caldav:alice", type: "person" },
-                    target: {
-                        id: `http://127.0.0.1:${port}/cal.ics`,
-                        type: "feed",
-                    },
-                },
-                (error, value) =>
-                    error ? reject(new Error(String(error))) : resolve(value),
-            );
+await check(
+    "CalDav.read follows feed redirects through undici fetch",
+    async () => {
+        const server = createServer((req, res) => {
+            if (req.url === "/cal.ics") {
+                res.writeHead(302, { location: "/moved.ics" });
+                res.end();
+                return;
+            }
+            res.setHeader("content-type", "text/calendar");
+            res.end(feedIcs);
         });
-        const item = result.items?.[0];
-        assert(
-            item &&
-                item.name === "A" &&
-                String(item.id).endsWith("/moved.ics#a"),
-            `unexpected read result: ${JSON.stringify(result)}`,
-        );
-    } finally {
-        await new Promise((resolve) => platform.cleanup(resolve));
-        server.close();
-    }
-});
+        await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const { port } = server.address();
+        const platform = new CalDav({
+            log: { error() {}, warn() {}, info() {}, debug() {} },
+        });
+        platform.config.allowPrivateAddresses = true;
+        platform.config.allowInsecureHttp = true;
+        try {
+            const result = await new Promise((resolve, reject) => {
+                platform.read(
+                    {
+                        type: "read",
+                        actor: { id: "caldav:alice", type: "person" },
+                        target: {
+                            id: `http://127.0.0.1:${port}/cal.ics`,
+                            type: "feed",
+                        },
+                    },
+                    (error, value) =>
+                        error
+                            ? reject(new Error(String(error)))
+                            : resolve(value),
+                );
+            });
+            const item = result.items?.[0];
+            assert(
+                item &&
+                    item.name === "A" &&
+                    String(item.id).endsWith("/moved.ics#a"),
+                `unexpected read result: ${JSON.stringify(result)}`,
+            );
+        } finally {
+            await new Promise((resolve) => platform.cleanup(resolve));
+            server.close();
+        }
+    },
+);
 
 process.exitCode = failed ? 1 : 0;
