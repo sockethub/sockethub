@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it, test } from "bun:test";
 import {
     addPlatformContext,
     addPlatformSchema,
@@ -42,7 +42,7 @@ describe("irc responses schema", () => {
         ).not.toEqual("");
     });
 
-    test("accepts a channel list that omitted non-# rows", () => {
+    it("accepts a channel list that omitted unsupported CHANTYPES rows", () => {
         const irc2as = new IrcToActivityStreams({
             server: "irc.example.net",
             contexts: FULL_CTX,
@@ -52,7 +52,7 @@ describe("irc responses schema", () => {
             listed = stream;
         });
         irc2as.input(":irc.example.net 322 alice #general 4 Welcome");
-        irc2as.input(":irc.example.net 322 alice &local 2 :local only");
+        irc2as.input(":irc.example.net 322 alice +modeless 1 :no modes");
         irc2as.input(":irc.example.net 323 alice :End of /LIST");
         expect(listed?.object).toEqual({
             type: "channels",
@@ -74,7 +74,7 @@ describe("irc responses schema", () => {
         ).toEqual("");
     });
 
-    test("rejects a channel list when any row is not a # room", () => {
+    it("rejects a channel list when a row is missing required fields", () => {
         expect(
             validateActivityStreamResponse({
                 "@context": FULL_CTX,
@@ -96,10 +96,8 @@ describe("irc responses schema", () => {
                         },
                         {
                             type: "room",
-                            id: "&local@irc.example.net",
-                            name: "&local",
-                            members: 2,
-                            summary: "local only",
+                            id: "#other@irc.example.net",
+                            name: "#other",
                         },
                     ],
                 },

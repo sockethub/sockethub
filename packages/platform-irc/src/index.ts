@@ -574,6 +574,16 @@ export class IRC implements PersistentPlatformInterface {
                 // irc2as collects RPL_LIST (322) rows and emits one `channels`
                 // message on RPL_LISTEND (323).
                 const mask = job.object.name;
+                if (
+                    mask !== undefined &&
+                    (typeof mask !== "string" ||
+                        mask.length === 0 ||
+                        /\s/.test(mask))
+                ) {
+                    return done(
+                        "IRC LIST mask must be a single non-empty parameter without spaces",
+                    );
+                }
                 this.log.debug(`query() - sending LIST ${mask ?? ""}`);
                 client.raw(mask ? ["LIST", mask] : ["LIST"]);
                 done();

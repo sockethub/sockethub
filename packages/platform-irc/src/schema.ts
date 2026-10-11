@@ -88,14 +88,18 @@ export const PlatformIrcSchema = {
                     additionalProperties: false,
                     properties: { type: { enum: ["attendance"] } },
                 },
-                // `name` is an optional LIST mask, passed through verbatim.
+                // `name` is an optional LIST mask (one IRC middle parameter).
                 channels: {
                     type: "object",
                     required: ["type"],
                     additionalProperties: false,
                     properties: {
                         type: { enum: ["channels"] },
-                        name: { type: "string" },
+                        name: {
+                            type: "string",
+                            minLength: 1,
+                            pattern: "^[^\\s]+$",
+                        },
                     },
                 },
             },
@@ -261,16 +265,23 @@ export const PlatformIrcSchema = {
                     additionalProperties: false,
                     properties: {
                         type: { enum: ["channels"] },
+                        truncated: { type: "boolean" },
                         items: {
                             type: "array",
                             items: {
                                 type: "object",
-                                required: ["id", "type", "name"],
+                                required: [
+                                    "id",
+                                    "type",
+                                    "name",
+                                    "members",
+                                    "summary",
+                                ],
                                 additionalProperties: false,
                                 properties: {
                                     id: {
                                         type: "string",
-                                        pattern: "^#[^\\s]+@[^\\s@]+$",
+                                        pattern: "^[#&+!][^\\s]+@[^\\s@]+$",
                                     },
                                     type: { enum: ["room"] },
                                     name: { type: "string" },

@@ -29,6 +29,10 @@ const JOIN = "JOIN";
 const LIST_START = "321";
 const LIST = "322";
 const LIST_END = "323";
+const RPL_ISUPPORT = "005";
+const DEFAULT_CHANTYPES = "#&";
+/** Cap LIST rows buffered and delivered in one channels response. */
+export const LIST_MAX_ITEMS = 5000;
 const MODE = "MODE";
 const MOTD = "372";
 const MOTD_END = "376";
@@ -75,6 +79,49 @@ function trailingParam(content, positional) {
     return content !== undefined ? content : positional;
 }
 
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isChannelName(channelName, chantypes) {
+    if (typeof channelName !== "string" || channelName.length < 2) {
+        return false;
+    }
+    const prefix = channelName[0];
+    if (!chantypes.includes(prefix)) {
+        return false;
+    }
+    const body = channelName.slice(1);
+    if (body.length === 0 || /\s/.test(channelName)) {
+        return false;
+    }
+    return true;
+}
+
+function channelRoomIdPattern(chantypes) {
+    const escaped = escapeRegExp(chantypes);
+    return new RegExp(`^[${escaped}][^\\s]+@[^\\s@]+$`);
+}
+
+function parseIsupportChantypes(pos2, pos3, msg) {
+    const tokens = [pos2, pos3, ...msg];
+    for (const token of tokens) {
+        if (typeof token !== "string" || token.startsWith(":")) {
+            break;
+        }
+        const eq = token.indexOf("=");
+        if (eq === -1) {
+            continue;
+        }
+        const key = token.slice(0, eq);
+        const value = token.slice(eq + 1);
+        if (key === "CHANTYPES") {
+            return value.length > 0 ? value : DEFAULT_CHANTYPES;
+        }
+    }
+    return undefined;
+}
+
 export class IrcToActivityStreams {
     constructor(cfg) {
         const config = cfg || {};
@@ -86,8 +133,10 @@ export class IrcToActivityStreams {
         }
         this.contexts = [...config.contexts];
         this.events = new events.EventEmitter();
+        this.chantypes = DEFAULT_CHANTYPES;
         this.__buffer = {};
         this.__buffer[NAMES] = {};
+        this.__listTruncated = false;
     }
 
     input(payload) {
@@ -206,25 +255,36 @@ export class IrcToActivityStreams {
             }
 
             /** */
+            case RPL_ISUPPORT: {
+                const chantypes = parseIsupportChantypes(pos2, pos3, msg);
+                if (chantypes !== undefined) {
+                    this.chantypes = chantypes;
+                }
+                break;
+            }
+
             case LIST_START:
                 this.__buffer[LIST] = [];
+                this.__listTruncated = false;
                 break;
             case LIST: {
                 // :server 322 nick #channel <members> :topic
                 // A one-word topic omits the leading colon (RFC 1459). Ergo
                 // does this; a format string that always writes " :" does not.
-                // Only `#` channels are representable: the responses schema
-                // rejects the whole list when any item id fails
-                // `^#[^\s]+@[^\s@]+$`. One local (`&`), modeless (`+`), or
-                // safe (`!`) row would otherwise discard every channel.
+                // Rows outside the server's CHANTYPES are skipped so the
+                // aggregated response stays schema-valid.
                 if (!this.__buffer[LIST]) {
                     this.__buffer[LIST] = [];
                 }
-                if (typeof pos2 !== "string" || !pos2.startsWith("#")) {
+                if (!isChannelName(pos2, this.chantypes)) {
                     break;
                 }
                 const id = `${pos2}@${this.server}`;
-                if (!/^#[^\s]+@[^\s@]+$/.test(id)) {
+                if (!channelRoomIdPattern(this.chantypes).test(id)) {
+                    break;
+                }
+                if (this.__buffer[LIST].length >= LIST_MAX_ITEMS) {
+                    this.__listTruncated = true;
                     break;
                 }
                 const summary = trailingParam(content, msg[msg.length - 1]);
@@ -237,9 +297,16 @@ export class IrcToActivityStreams {
                 });
                 break;
             }
-            case LIST_END:
+            case LIST_END: {
                 // One message for the whole list: a full LIST on a large
                 // network is thousands of channels.
+                const listObject = {
+                    type: "channels",
+                    items: this.__buffer[LIST] ?? [],
+                };
+                if (this.__listTruncated) {
+                    listObject.truncated = true;
+                }
                 ase.emitEvent(EVENT_INCOMING, {
                     "@context": this.contexts,
                     type: "query",
@@ -248,13 +315,12 @@ export class IrcToActivityStreams {
                         id: this.server,
                         name: this.server,
                     },
-                    object: {
-                        type: "channels",
-                        items: this.__buffer[LIST] ?? [],
-                    },
+                    object: listObject,
                 });
                 delete this.__buffer[LIST];
+                this.__listTruncated = false;
                 break;
+            }
 
             // custom event indicating a channel mode has been updated, used to re-query user or channel
             case MODE: {

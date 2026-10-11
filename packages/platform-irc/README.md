@@ -195,7 +195,10 @@ name as it appears on IRC (for example `#general`).
 
 ### Query Channels Example
 
-Lists channels on the server. `object.name` is an optional `LIST` mask.
+Lists channels on the server. `object.name` is an optional `LIST` mask (one
+parameter, no spaces). Rows use the server's `CHANTYPES` (`#` and `&` by
+default). Very large lists are capped server-side; when truncated, the
+response includes `"truncated": true`.
 
 ```json
 {

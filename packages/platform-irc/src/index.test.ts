@@ -1687,6 +1687,28 @@ describe("Initialize IRC Platform", () => {
                         },
                     );
                 });
+
+                it("rejects a mask with spaces before writing", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor,
+                            target: { type: "service", id: "irc.example.com" },
+                            object: {
+                                type: "channels",
+                                name: "#foo other.server",
+                            },
+                        },
+                        (err) => {
+                            expect(err).toContain(
+                                "IRC LIST mask must be a single non-empty parameter without spaces",
+                            );
+                            expect(rawCalls).toEqual([]);
+                            done();
+                        },
+                    );
+                });
             });
 
             describe("query() attendance", () => {
