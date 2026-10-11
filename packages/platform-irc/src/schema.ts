@@ -67,15 +67,6 @@ export const PlatformIrcSchema = {
                         content: { type: "string" },
                     },
                 },
-                attendance: {
-                    type: "object",
-                    required: ["type", "members"],
-                    additionalProperties: false,
-                    properties: {
-                        type: { enum: ["attendance"] },
-                        members: { type: "array", items: { type: "string" } },
-                    },
-                },
                 topic: {
                     type: "object",
                     required: ["type", "content"],
@@ -233,6 +224,12 @@ export const PlatformIrcSchema = {
                     properties: {
                         type: { enum: ["attendance"] },
                         members: { type: "array", items: { type: "string" } },
+                        roles: {
+                            type: "object",
+                            additionalProperties: {
+                                enum: ["owner", "admin", "participant"],
+                            },
+                        },
                     },
                 },
                 topic: {

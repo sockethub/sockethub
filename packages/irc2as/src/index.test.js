@@ -307,6 +307,7 @@ describe("IrcToActivityStreams", () => {
             expect(stream.object).toEqual({
                 type: "attendance",
                 members: ["onlynick"],
+                roles: {},
             });
             expect(stream.actor).toEqual({
                 type: "room",
@@ -322,6 +323,49 @@ describe("IrcToActivityStreams", () => {
         });
         irc2as.input(":irc.example.net 353 alice @ #room onlynick");
         irc2as.input(":irc.example.net 366 alice #room :End of /NAMES list.");
+    });
+
+    // RFC 2812 prefixes ops with "@" and voiced users with "+". UnrealIRCd and
+    // InspIRCd also send "~", "&", "%", and "!". The prefix is not part of the
+    // nick; the role it stands for travels in `roles`.
+    it("strips status prefixes from attendance members and reports roles", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object).toEqual({
+                type: "attendance",
+                members: [
+                    "alice",
+                    "op",
+                    "voice",
+                    "halfop",
+                    "founder",
+                    "admin",
+                    "oper",
+                ],
+                roles: {
+                    op: "owner",
+                    voice: "participant",
+                    halfop: "admin",
+                    founder: "owner",
+                    admin: "owner",
+                },
+            });
+            done();
+        });
+        irc2as.input(
+            ":irc.example.net 353 me = #room :alice @op +voice %halfop ~founder &admin !oper",
+        );
+        irc2as.input(":irc.example.net 366 me #room :End of /NAMES list.");
+    });
+
+    // multi-prefix lists every status a nick holds, highest first.
+    it("keeps the highest role of a multi-prefix nick", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.object.members).toEqual(["alice"]);
+            expect(stream.object.roles).toEqual({ alice: "owner" });
+            done();
+        });
+        irc2as.input(":irc.example.net 353 me = #room :@+alice");
+        irc2as.input(":irc.example.net 366 me #room :End of /NAMES list.");
     });
 
     // UnrealIRCd sends this form unless the client negotiated extended-join.

@@ -611,6 +611,7 @@ export const TestData = [
         object: {
             type: "attendance",
             members: ["hyper_slvrbckt", "gregkare", "hal8000"],
+            roles: {},
         },
     },
     {
@@ -630,7 +631,7 @@ export const TestData = [
             id: "hyper_slvrbckt@localhost",
             name: "hyper_slvrbckt",
         },
-        object: { type: "attendance", members: [] },
+        object: { type: "attendance", members: [], roles: {} },
     },
     {
         "@context": [
@@ -645,7 +646,11 @@ export const TestData = [
             name: "#kosmos-random",
         },
         target: { type: "person", id: "myuser@localhost", name: "myuser" },
-        object: { type: "attendance", members: ["myuser", "botka", "foouser"] },
+        object: {
+            type: "attendance",
+            members: ["myuser", "botka", "foouser"],
+            roles: { botka: "owner" },
+        },
     },
     {
         "@context": [

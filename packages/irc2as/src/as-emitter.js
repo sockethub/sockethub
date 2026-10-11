@@ -79,7 +79,9 @@ export class ASEmitter {
         });
     }
 
-    attendance(channel, nick, members) {
+    // roles maps nick to owner/admin/participant; nicks absent from it are
+    // plain members.
+    attendance(channel, nick, members, roles) {
         this.emitEvent(EVENT_INCOMING, {
             "@context": this.contexts,
             type: "query",
@@ -96,6 +98,7 @@ export class ASEmitter {
             object: {
                 type: "attendance",
                 members: members,
+                roles: roles,
             },
         });
     }

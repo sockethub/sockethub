@@ -52,10 +52,18 @@ const WHO = "352";
 const WHO_OLD = "354";
 // WHO_END = "315";
 
-const ROLE = {
+// Status prefixes servers attach to nicks in RPL_NAMREPLY, highest first.
+// RFC 2812 defines "@" (op) and "+" (voice); UnrealIRCd and InspIRCd add "~"
+// (founder), "&" (admin), "%" (halfop) and "!"; some networks use "*". With
+// multi-prefix a nick carries several, highest first. Mapped onto the same
+// role names MODE and WHO use; unlisted prefixes are stripped as plain members.
+const NICK_PREFIXES = /^[~&@%+!*]+/;
+const PREFIX_ROLE = {
+    "~": "owner",
+    "&": "owner",
     "@": "owner",
     "%": "admin",
-    "*": "participant",
+    "+": "participant",
 };
 
 const MODES = {
@@ -368,26 +376,37 @@ export class IrcToActivityStreams {
                 if (typeof names !== "string" || names.length === 0) {
                     break;
                 }
-                const members = this.__buffer[NAMES][channel] || [];
+                const list = this.__buffer[NAMES][channel] || {
+                    members: [],
+                    roles: {},
+                };
                 for (const entry of names.split(" ")) {
-                    if (!entry) {
-                        continue;
+                    const nick = entry.replace(NICK_PREFIXES, "");
+                    if (!nick) {
+                        continue; // empty, or prefixes with no nick
                     }
-                    members.push(ROLE[entry[0]] ? entry.substr(1) : entry);
+                    list.members.push(nick);
+                    for (const prefix of entry.slice(0, -nick.length)) {
+                        if (PREFIX_ROLE[prefix]) {
+                            list.roles[nick] = PREFIX_ROLE[prefix];
+                            break; // highest prefix comes first
+                        }
+                    }
                 }
-                this.__buffer[NAMES][channel] = members;
+                this.__buffer[NAMES][channel] = list;
                 break;
             }
 
             /** */
-            case NAMES_END:
-                ase.attendance(
-                    channel,
-                    pos1,
-                    this.__buffer[NAMES][channel] || [],
-                );
+            case NAMES_END: {
+                const list = this.__buffer[NAMES][channel] || {
+                    members: [],
+                    roles: {},
+                };
+                ase.attendance(channel, pos1, list.members, list.roles);
                 delete this.__buffer[NAMES][channel];
                 break;
+            }
 
             /** */
             case NICK: // nick change
