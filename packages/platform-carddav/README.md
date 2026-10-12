@@ -5,8 +5,12 @@ creating, updating, and deleting vCard contacts.
 
 The platform accepts public HTTPS services by default. Administrators may opt
 in to HTTP or private-network services with `allowInsecureHttp` and
-`allowPrivateAddresses`. Authentication supports Basic, Digest, or a
-caller-provided Bearer token through the standard Sockethub credentials flow.
+`allowPrivateAddresses`. Address checks use the shared outbound URL guard,
+including IPv6 embeddings of private ranges and the local-use NAT64 prefix
+`64:ff9b:1::/48`. See
+[Outbound URL guard](../../docs/configuration.md#outbound-url-guard).
+Authentication supports Basic, Digest, or a caller-provided Bearer token
+through the standard Sockethub credentials flow.
 
 ## Authentication
 

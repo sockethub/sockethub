@@ -209,6 +209,32 @@ entry are validated at startup — an unknown or mis-typed key is rejected (see
 [Validation](#validation)). Entries for platforms without a declared schema are
 passed through to the platform unvalidated.
 
+#### Outbound URL guard
+
+Feeds, metadata, CalDAV, and CardDAV fetch client-supplied URLs through the
+shared guarded dispatcher in `@sockethub/util`. The check runs when the socket
+connects, including every redirect hop. An address that does not parse is
+refused. A connection is refused when the resolved address is any of:
+
+- IPv4 loopback, private, link-local, carrier-grade NAT, or "this network":
+  `0.0.0.0/8`, `10.0.0.0/8`, `127.0.0.0/8`, `169.254.0.0/16` (including the
+  cloud metadata address `169.254.169.254`), `172.16.0.0/12`,
+  `192.168.0.0/16`, `100.64.0.0/10`.
+- IPv6 unique-local (`fc00::/7`) or link-local (`fe80::/10`).
+- An IPv4 address embedded as IPv4-mapped (`::ffff:0:0/96`), IPv4-compatible
+  (`::/96`), or well-known NAT64 (`64:ff9b::/96`). Those are judged with the
+  IPv4 rules, so a public embedding such as `64:ff9b::8.8.8.8` is allowed.
+- Any address under the local-use NAT64 prefix `64:ff9b:1::/48` (RFC 8215).
+  The whole prefix is refused. Translation lengths inside it overlap, so
+  decoding one length would treat a private target as public. The prefix is
+  not globally routed; public IPv4 uses `64:ff9b::/96`.
+
+`packageConfig.<platform>.allowPrivateAddresses: true` disables only this
+address check. Scheme limits stay in effect. Feeds accept only `http:` and
+`https:` URLs. Metadata rejects any other scheme. CalDAV and CardDAV require
+`https:` unless `allowInsecureHttp` is set. Do not enable
+`allowPrivateAddresses` on a server that accepts untrusted clients.
+
 ### Rate Limiting
 
 Protect against event flooding from individual clients:
@@ -272,6 +298,13 @@ the same.
 Because the scope is part of the lookup, a client that guesses an `actor.id`
 cannot reach — or detect — someone else's connection. It gets its own
 connection attempt and whatever answer the remote service gives it.
+
+A successful IRC nick change re-keys that instance under the new actor id
+(`newnick@server`). The scope fingerprint stays the credential object
+originally submitted; it is not recomputed from the new nick. A reconnect
+finds the live connection only when it sends the new actor id together with
+that original object. The client library does this on reconnect. See
+[Nick changes](../packages/platform-irc/README.md#nick-changes).
 
 Sockethub still allows a narrow reconnect case for anonymous sessions, so a
 page refresh does not drop the connection:
@@ -602,6 +635,26 @@ For authentication:
   }
 }
 ```
+
+### Health checks
+
+`GET /health` is registered on every server. It is unauthenticated and checks
+only that the shared Redis connection answers `PING` within 2 seconds. It does
+not report platform processes, queue depth, or version.
+
+- Redis answers: `200` and `{"status":"ok","redis":"ok"}`.
+- Redis errors or the ping times out: `503` and
+  `{"status":"error","redis":"error"}`.
+
+The response sets `Cache-Control: no-store`. The body has no hostnames,
+credentials, or package versions.
+
+The Docker images probe `http://127.0.0.1:$PORT/health`. The probe reads
+`PORT` (default `10550`). When `PORT` is set it is also `sockethub.port`, so
+overriding it moves the listen port and the probe together. A port set only
+in the config file is not what the image probes. The interval is 30 seconds,
+the timeout is 5 seconds, the start period is 15 seconds, and three
+consecutive failures mark the container unhealthy.
 
 ### Examples
 

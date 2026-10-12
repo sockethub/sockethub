@@ -10,11 +10,17 @@ messages.
 
 ## Implemented Verbs (`type`)
 
+* **connect** - Open the IRC connection after credentials are stored
 * **send** - Send messages to channels or users
 * **join** - Join IRC channels
 * **leave** - Leave IRC channels
-* **observe** - Monitor channel activity and user events
-* **update** - Update user information (nick, etc.)
+* **update** - Change a nick (`address`) or a channel topic (`topic`)
+* **query** - List who is in a channel, or list channels on the server
+* **disconnect** - Close the IRC connection
+
+Incoming chat, joins, presence, and nick changes arrive as messages. There is
+no separate observe command. `/me` is a `send` whose `object.content` starts
+with `/me`.
 
 ## Usage
 
@@ -137,13 +143,48 @@ name as it appears on IRC (for example `#general`).
   },
   "target": {
     "id": "newnick@irc.libera.chat",
-    "type": "person"
+    "type": "person",
+    "name": "newnick"
   },
   "object": {
     "type": "address"
   }
 }
 ```
+
+### Nick changes
+
+`target.name` is the nick sent in `NICK`. `target.id` is that nick as a person
+id, `newnick@server`. On success the connection is re-keyed to that actor.
+Later commands must use the new `actor.id`.
+
+The client library moves stored credentials, connect, and join entries when
+the update is acknowledged without an error, and when the server reports a
+rename of an actor this session holds. The credential object stays as
+submitted (`nick`, `password`, `token`, and the rest). The live connection is
+selected by a fingerprint of that original object, so a reconnect that also
+rewrites `nick` misses it and opens another session. See the
+[client guide](../../docs/client-guide.md#irc-nick-changes).
+
+A callback or message that contains `error` means the nick did not change.
+Keep the previous actor. That includes:
+
+* Another account is already stored for the target actor, in this session or
+  in another session on the same connection. `NICK` is not sent. The error is
+  `cannot rename <old-actor> to <new-actor>: credentials already stored for <new-actor>`.
+  The same credential object already stored at the new actor is not a
+  collision.
+* The IRC server rejects the nick. The callback `error` is the server's
+  reason text. These numeric replies fail the command instead of leaving it
+  waiting: 431 (no nickname), 432 (erroneous nickname), 433 (nickname in
+  use), 436 (collision), 437 (temporarily unavailable), and 438 (nick change
+  too fast; sent by solanum, ircu, and Unreal).
+
+A server-forced rename of this connection arrives as an `update` with
+`object.type` `address`, `actor` the previous identity and `target` the new
+one. If Sockethub cannot re-key the worker, that message includes `error`
+and the session stays on the previous actor. Other users' nick changes use
+the same shape and are delivered as ordinary messages.
 
 ### Query Attendance Example
 
@@ -385,6 +426,23 @@ distinction clear:
   }
 }
 ```
+
+## Messages and CTCP
+
+A normal `send` is a channel or private `PRIVMSG`. The request schema only
+accepts `object.type` `message`; the content decides the IRC command. Content
+starting with `/me` is sent as a CTCP `ACTION` and content starting with
+`/notice` is sent as a `NOTICE`, with the prefix stripped. An incoming
+`ACTION` is delivered with `object.type` `me`. An incoming `NOTICE` is
+delivered as a plain `message`.
+
+Other incoming CTCP is not delivered to the application. The platform answers
+`VERSION` with `Sockethub <platform version>` and `PING` by echoing the
+argument. Other requests, and every CTCP reply, are ignored. Sending CTCP
+other than `me` is not supported.
+
+Channel and private `send` values, nicks, and topics must not contain CR or
+LF. A value that does is rejected before anything is written to the socket.
 
 ## Features
 

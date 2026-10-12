@@ -223,6 +223,14 @@ change, whether you requested it and the server acknowledged it or the server re
 stored entries move to the new actor so a reconnect replays the identity the connection currently
 holds.
 
+Only `actor.id` and `actor.name` move. The credential object stays as the
+application submitted it, including `nick`, `password`, and `token`. The
+server selects the live connection by a fingerprint of that object, so
+rewriting `nick` on reconnect opens a different session. An acknowledgement
+or incoming update that contains `error` does not move the stored entries;
+keep sending as the previous actor. A timeout or a dropped socket, delivered
+as an `Error`, does not move them either.
+
 #### Storage Location
 
 **All state is stored ONLY in JavaScript memory.** Nothing is persisted to:

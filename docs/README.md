@@ -13,7 +13,14 @@ about using, deploying, and extending Sockethub.
 ### For App Developers
 
 * **[Client Guide](client-guide.md)** - Using the Sockethub client in web applications
-* **[Platforms](platforms.md)** - Available platforms and usage examples
+* **Platforms** - protocol usage and constraints live in each package README:
+  * **[IRC](../packages/platform-irc/README.md)** - channels, queries, nick changes
+  * **[XMPP](../packages/platform-xmpp/README.md)** - chat and multi-user rooms
+  * **[Feeds](../packages/platform-feeds/README.md)** - RSS and Atom
+  * **[Metadata](../packages/platform-metadata/README.md)** - link previews
+  * **[CalDAV](../packages/platform-caldav/README.md)** - calendars and iCalendar feeds
+  * **[CardDAV](../packages/platform-carddav/README.md)** - address books
+  * **[Dummy](../packages/platform-dummy/README.md)** - echo platform for tests
 
 ### For Platform Developers
 

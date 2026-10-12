@@ -276,6 +276,29 @@ Small exception: after a browser refresh, a reconnect from the same client IP
 lands back on the original connection while the old stale socket is waiting for
 janitor cleanup.
 
+### IRC nick changes
+
+Send `update` with `object.type` `"address"`. `actor` is the current identity.
+`target` is the new one: `id` is `newnick@server` and `name` is the nick.
+
+When the acknowledgement has no `error`, switch to the new actor for later
+commands. `@sockethub/client` does that for reconnect replay: it moves the
+stored credentials, connect, and join entries to the new actor. It does not
+rewrite the credential object. `nick`, `password`, and `token` stay as
+submitted. The server selects the live connection by a fingerprint of that
+object, so a reconnect that also changes `nick` opens a different session.
+
+An acknowledgement that contains `error`, or that arrives as an `Error`
+(timeout or a dropped socket), leaves replay state on the previous actor.
+An incoming `update` that reports a rename of an actor this session holds
+moves replay state the same way, unless that message includes `error`. A
+rename of some other nick does not.
+
+The IRC server's reason text is the `error` string when it rejects the nick.
+A collision with credentials already stored for the new actor is refused
+before `NICK` is sent. Details and the numeric replies that fail the command
+are in the [IRC platform README](../packages/platform-irc/README.md#nick-changes).
+
 ## Platform Examples
 
 ### Dummy (Testing)

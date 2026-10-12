@@ -8,9 +8,13 @@ subscription links, without a CalDAV account.
 Requests accept only public HTTPS services by default. Administrators can opt
 in to HTTP with `packageConfig.allowInsecureHttp` and private-network targets
 with `packageConfig.allowPrivateAddresses`; these are server settings and
-cannot be enabled by a connected client. Credentials and OAuth tokens are sent
-only to the configured origin. Every calendar and item target is checked
-against the authenticated account before it is used.
+cannot be enabled by a connected client. Address checks use the shared
+outbound URL guard, including IPv6 embeddings of private ranges and the
+local-use NAT64 prefix `64:ff9b:1::/48`. See
+[Outbound URL guard](../../docs/configuration.md#outbound-url-guard).
+Credentials and OAuth tokens are sent only to the configured origin. Every
+calendar and item target is checked against the authenticated account before
+it is used.
 
 ## Authentication
 

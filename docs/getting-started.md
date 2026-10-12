@@ -27,8 +27,10 @@ bun run dev
 
 Both methods start Sockethub on `http://localhost:10550`. The root URL shows a
 short server info page with the connection details; the examples live under
-`/examples`. `GET /health` answers `200 {"status":"ok"}` while Redis is
-reachable and `503` otherwise, for load balancers and monitors.
+`/examples`. `GET /health` is an unauthenticated Redis check for load
+balancers: `200` with `{"status":"ok","redis":"ok"}` when Redis answers
+`PING` within 2 seconds, and `503` with `{"status":"error","redis":"error"}`
+otherwise. See [Health checks](configuration.md#health-checks).
 
 ## Try the Examples
 
@@ -157,10 +159,9 @@ unreachable. It probes the port in `PORT`, which is also what sets
 ### For App Developers
 
 - **[Client Guide](client-guide.md)** - Detailed client library usage
-- **[Platform Documentation](platforms.md)** - Working with specific platforms
+- **[Platform READMEs](README.md#for-app-developers)** - IRC, XMPP, feeds, metadata, CalDAV, and CardDAV
 - **[Configuration](configuration.md)** - Server configuration options
 
 ### For Platform Developers
 
-- **[Creating Platforms](platform-development/creating-platforms.md)** - Build custom platforms
-- **[Platform API](platform-development/platform-api.md)** - Development interface
+- **[Platform Development](platform-development.md)** - Build custom platforms

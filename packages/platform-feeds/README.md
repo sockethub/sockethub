@@ -160,8 +160,12 @@ exhaustion, using the shared guarded fetch dispatcher from `@sockethub/util`:
 * The connection is refused if the destination resolves to a loopback, private,
   link-local, carrier-grade NAT, or otherwise non-public address — validated at
   the connection layer, so it also covers every redirect hop (no
-  check-then-fetch rebinding gap). IPv4-mapped, IPv4-compatible, and NAT64 IPv6
-  spellings of those ranges are normalized and blocked as well.
+  check-then-fetch rebinding gap). IPv4-mapped, IPv4-compatible, and
+  well-known NAT64 (`64:ff9b::/96`) embeddings are judged as the embedded IPv4
+  address, so a public embedding is allowed. The local-use NAT64 prefix
+  `64:ff9b:1::/48` is refused entirely. The same address rules apply to
+  metadata, CalDAV, and CardDAV; see
+  [Outbound URL guard](../../docs/configuration.md#outbound-url-guard).
 * Response bodies are capped (a missing or lying `Content-Length` does not
   bypass the cap).
 * Non-2xx responses fail the job with a descriptive error.
