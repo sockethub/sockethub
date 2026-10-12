@@ -151,9 +151,14 @@ Because the server fetches whatever URL a client supplies as `actor.id`, metadat
 requests are hardened against server-side request forgery (SSRF) and resource
 exhaustion. The fetch runs through a guarded connection layer that:
 
+* rejects URL schemes other than `http` and `https`;
 * refuses to connect to loopback, private, link-local, carrier-grade NAT, or
-  cloud-metadata addresses (e.g. `169.254.169.254`), in every IPv4/IPv6 spelling,
-  validated at connection time so it also covers redirect hops;
+  cloud-metadata addresses (e.g. `169.254.169.254`), validated at connection
+  time so it also covers redirect hops. IPv4-mapped, IPv4-compatible, and
+  well-known NAT64 (`64:ff9b::/96`) embeddings are judged as the embedded IPv4
+  address. The local-use NAT64 prefix `64:ff9b:1::/48` is refused entirely.
+  The ranges are listed under
+  [Outbound URL guard](../../docs/configuration.md#outbound-url-guard);
 * caps the response body size.
 
 ### `allowPrivateAddresses`
