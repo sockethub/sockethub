@@ -19,7 +19,8 @@ messages.
 * **disconnect** - Close the IRC connection
 
 Incoming chat, joins, presence, and nick changes arrive as messages. There is
-no separate observe command. `/me` is a `send` whose `object.type` is `me`.
+no separate observe command. `/me` is a `send` whose `object.content` starts
+with `/me`.
 
 ## Usage
 
@@ -428,9 +429,12 @@ distinction clear:
 
 ## Messages and CTCP
 
-A normal `send` is a channel or private `PRIVMSG`. `object.type` `me` is sent
-as a CTCP `ACTION` and arrives the same way. `object.type` `notice` is a
-`NOTICE`.
+A normal `send` is a channel or private `PRIVMSG`. The request schema only
+accepts `object.type` `message`; the content decides the IRC command. Content
+starting with `/me` is sent as a CTCP `ACTION` and content starting with
+`/notice` is sent as a `NOTICE`, with the prefix stripped. An incoming
+`ACTION` is delivered with `object.type` `me`. An incoming `NOTICE` is
+delivered as a plain `message`.
 
 Other incoming CTCP is not delivered to the application. The platform answers
 `VERSION` with `Sockethub <platform version>` and `PING` by echoing the
