@@ -7,6 +7,7 @@ A protocol gateway for the web.
 [![Compliance](https://github.com/sockethub/sockethub/actions/workflows/compliance.yml/badge.svg)](https://github.com/sockethub/sockethub/actions/workflows/compliance.yml)
 [![CodeQL](https://github.com/sockethub/sockethub/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sockethub/sockethub/actions/workflows/codeql-analysis.yml)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
+[![Next](https://img.shields.io/npm/v/sockethub/next.svg?style=flat&label=next)](https://www.npmjs.com/package/sockethub/v/next)
 
 Sockethub lets browser apps talk to IRC, XMPP, feeds, and other protocols using
 one ActivityStreams JSON format. Your app sends a single message shape, and
