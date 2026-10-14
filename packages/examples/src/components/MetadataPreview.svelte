@@ -71,8 +71,16 @@ const host = $derived.by(() => {
     }
 });
 
-let faviconFailed = $state(false);
-let imageFailed = $state(false);
+// Track the failed URL rather than a flag so a new page (the activity
+// log modal reuses this component) is not stuck showing the fallback.
+let failedFavicon: string | undefined = $state();
+let failedImage: string | undefined = $state();
+const faviconFailed = $derived(
+    faviconUrl !== undefined && failedFavicon === faviconUrl,
+);
+const imageFailed = $derived(
+    image !== undefined && failedImage === image.url,
+);
 </script>
 
 <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden max-w-xl">
@@ -90,7 +98,7 @@ let imageFailed = $state(false);
             class="w-full max-h-80 object-cover bg-gray-100"
             src={image.url}
             alt={image.alt ?? page.title ?? ""}
-            onerror={() => (imageFailed = true)}
+            onerror={() => (failedImage = image?.url)}
         />
     {:else}
         <div class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
@@ -105,7 +113,7 @@ let imageFailed = $state(false);
                     class="w-4 h-4"
                     src={faviconUrl}
                     alt=""
-                    onerror={() => (faviconFailed = true)}
+                    onerror={() => (failedFavicon = faviconUrl)}
                 />
             {/if}
             <span>{page.name || host}</span>

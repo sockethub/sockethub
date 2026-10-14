@@ -807,7 +807,9 @@ export default class Metadata implements PlatformInterface {
                         : scrapedImages?.length
                           ? scrapedImages
                           : youtubeOEmbedImage(youtube),
-                    url: reddit ? job.actor.id : result.ogUrl,
+                    // actor.id was just updated to og:url when the page
+                    // declares one, so this falls back to the fetched URL.
+                    url: job.actor.id,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
                     // relative on purpose: clients resolve it against the
