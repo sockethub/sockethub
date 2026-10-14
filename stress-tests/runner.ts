@@ -11,11 +11,13 @@ import {
     ALL_TESTS,
     ARTILLERY_ERROR_THRESHOLD_RATIO,
     CI_ERROR_RATE_THRESHOLD_PCT,
+    DEFAULT_SOCKETHUB_URL,
     PERFORMANCE_TESTS,
     SOAK_TESTS,
     SOCKETHUB_ERROR_THRESHOLD_PCT,
     STRESS_TESTS,
 } from "./config";
+import { extractMetrics } from "./metrics";
 import { generateConsoleSummary } from "./reporter";
 import type { Baseline, TestConfig, TestResult } from "./types";
 
@@ -69,7 +71,7 @@ async function main() {
                 type: "performance",
                 platform: "dummy",
                 scenario: "ci/smoke-test",
-                sockethub_url: "http://localhost:10550",
+                sockethub_url: DEFAULT_SOCKETHUB_URL,
                 tolerance_pct: 15,
             },
         ];
@@ -92,6 +94,8 @@ async function main() {
             `Mode: ${options.type || "all"} tests (${testsToRun.length} scenarios)\n`,
         );
     }
+
+    if (!existsSync(REPORTS_DIR)) mkdirSync(REPORTS_DIR, { recursive: true });
 
     // Run tests
     const results: TestResult[] = [];
@@ -185,7 +189,11 @@ async function runTest(
             scenarioPath,
             reportPath,
             sockethubUrl: test.sockethub_url,
-            timeoutMs: ciMode ? CI_TEST_TIMEOUT_MS : DEFAULT_TEST_TIMEOUT_MS,
+            timeoutMs: ciMode
+                ? CI_TEST_TIMEOUT_MS
+                : test.type === "soak"
+                  ? 40 * 60 * 1000
+                  : DEFAULT_TEST_TIMEOUT_MS,
         });
 
         // Parse Artillery report
@@ -210,40 +218,24 @@ async function runTest(
                 0,
         };
 
-        const totalSockethubErrors = Object.values(sockethubErrors).reduce(
-            (a, b) => a + b,
-            0,
-        );
-
-        const metrics = {
-            latency_p50:
-                report.aggregate?.summaries?.["sockethub.latency.echo"]
-                    ?.median || 0,
-            latency_p95:
-                report.aggregate?.summaries?.["sockethub.latency.echo"]?.p95 ||
-                0,
-            latency_p99:
-                report.aggregate?.summaries?.["sockethub.latency.echo"]?.p99 ||
-                0,
-            throughput: report.aggregate?.rates?.["http.request_rate"] || 0,
-            error_rate: calculateErrorRate(report, totalSockethubErrors),
-            connections: vusersCreated - vusersFailed,
-            sockethub_errors: totalSockethubErrors,
-        };
+        const { metrics, duration_sec } = extractMetrics(report, test);
+        const totalSockethubErrors = metrics.sockethub_errors || 0;
 
         // Build result
         const result: TestResult = {
             test_name: test.scenario,
             timestamp: new Date().toISOString(),
-            duration_sec: Math.round(
-                (report.aggregate?.lastCounterAt || 0) / 1000,
-            ),
+            duration_sec,
             metrics,
             status: "pass",
         };
 
         // Check for connection failures
-        if (vusersCreated > 0 && vusersFailed === vusersCreated) {
+        if (
+            vusersCreated === 0 ||
+            (metrics.connections || 0) === 0 ||
+            vusersFailed === vusersCreated
+        ) {
             result.status = "fail";
             console.error(
                 `      All connections failed (${vusersFailed}/${vusersCreated})`,
@@ -261,7 +253,8 @@ async function runTest(
 
         // Check for Sockethub errors (validation, malformed messages, etc.)
         if (totalSockethubErrors > 0) {
-            const errorPct = (totalSockethubErrors / vusersCreated) * 100;
+            const errorPct =
+                (sockethubErrors.usersWithErrors / vusersCreated) * 100;
             if (errorPct > SOCKETHUB_ERROR_THRESHOLD_PCT) {
                 result.status = "fail";
                 console.error(
@@ -287,6 +280,14 @@ async function runTest(
             }
         }
 
+        if (
+            !ciMode &&
+            (metrics.error_rate ?? 100) > SOCKETHUB_ERROR_THRESHOLD_PCT
+        ) {
+            result.status = "fail";
+            return result;
+        }
+
         // Compare to baseline (skip in CI mode)
         if (baseline && !ciMode) {
             const comparison = compareToBaseline(result, baseline);
@@ -294,7 +295,7 @@ async function runTest(
             result.status = comparison.status;
         } else if (ciMode) {
             // In CI mode, only check for crashes
-            if (metrics.error_rate > CI_ERROR_RATE_THRESHOLD_PCT) {
+            if ((metrics.error_rate ?? 100) > CI_ERROR_RATE_THRESHOLD_PCT) {
                 result.status = "fail";
             }
         }
@@ -310,18 +311,6 @@ async function runTest(
             status: "fail",
         };
     }
-}
-
-interface ArtilleryReport {
-    aggregate?: {
-        counters?: Record<string, number>;
-        rates?: Record<string, number>;
-        summaries?: Record<
-            string,
-            { median?: number; p95?: number; p99?: number }
-        >;
-        lastCounterAt?: number;
-    };
 }
 
 async function isServiceReachable(url: string): Promise<boolean> {
@@ -450,17 +439,8 @@ async function runArtilleryWithGuards(options: {
     });
 }
 
-function calculateErrorRate(
-    report: ArtilleryReport,
-    sockethubErrors = 0,
-): number {
-    const vusersCreated = report.aggregate?.counters?.["vusers.created"] || 0;
-    const artilleryErrors = report.aggregate?.counters?.["errors.total"] || 0;
-
-    const totalErrors = artilleryErrors + sockethubErrors;
-
-    if (vusersCreated === 0) return 100;
-    return (totalErrors / vusersCreated) * 100;
-}
-
-main().catch(console.error);
+if (import.meta.main)
+    main().catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });

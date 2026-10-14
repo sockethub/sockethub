@@ -5,7 +5,8 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { io } from "socket.io-client";
-import { DEFAULT_THRESHOLDS } from "../config";
+import { DEFAULT_THRESHOLDS, PERFORMANCE_TESTS } from "../config";
+import { extractMetrics } from "../metrics";
 import type { Baseline, SystemProfile, TestResult } from "../types";
 import { getBaselineFilename, getSystemProfile } from "./system-profiler";
 
@@ -139,11 +140,18 @@ async function main() {
     const baselineFile = join(BASELINE_DIR, getBaselineFilename(systemProfile));
     if (existsSync(baselineFile)) {
         console.log(`⚠️  Baseline already exists: ${baselineFile}`);
-        console.log("Delete it to regenerate, or use --force flag\n");
+        console.log(
+            "Delete it explicitly to regenerate; keep it for release comparisons\n",
+        );
 
         const existingBaseline: Baseline = JSON.parse(
             readFileSync(baselineFile, "utf-8"),
         );
+        if (existingBaseline.measurement_version !== 2) {
+            throw new Error(
+                `Baseline uses obsolete metrics; remove ${baselineFile} explicitly and regenerate once`,
+            );
+        }
         console.log(
             `Existing baseline from: ${existingBaseline.generated_date}`,
         );
@@ -155,6 +163,8 @@ async function main() {
     if (!existsSync(BASELINE_DIR)) {
         mkdirSync(BASELINE_DIR, { recursive: true });
     }
+
+    mkdirSync(join(import.meta.dir, "..", "reports"), { recursive: true });
 
     // Initial health check
     console.log("Checking Sockethub connectivity...");
@@ -195,9 +205,7 @@ async function main() {
 
     // Display baseline
     console.log("Baseline Metrics:");
-    console.log(
-        `  Connection P95: ${baseline.performance_metrics.connection_p95_ms}ms`,
-    );
+
     console.log(
         `  Message Latency P95: ${baseline.performance_metrics.message_latency_p95_ms}ms`,
     );
@@ -239,29 +247,28 @@ async function runTest(scenario: string): Promise<TestResult> {
             readFileSync(reportPath, "utf-8"),
         );
 
+        const extracted = extractMetrics(report, PERFORMANCE_TESTS[1]);
+        if (
+            extracted.metrics.latency_p95 === undefined ||
+            !extracted.metrics.throughput ||
+            extracted.metrics.error_rate !== 0 ||
+            (report.aggregate.counters["vusers.failed"] || 0) > 0
+        ) {
+            throw new Error(
+                "Cannot save a baseline from failed or missing measurements",
+            );
+        }
         return {
             test_name: scenario,
             timestamp: new Date().toISOString(),
-            duration_sec: 0,
-            metrics: {
-                latency_p95:
-                    report.aggregate.summaries["sockethub.latency.echo"]?.p95 ||
-                    0,
-                throughput: report.aggregate.rates["http.request_rate"] || 0,
-                error_rate: calculateErrorRate(report),
-            },
+            duration_sec: extracted.duration_sec,
+            metrics: extracted.metrics,
             status: "pass",
         };
     } catch (error) {
         console.error(`Error running test: ${error}`);
         throw error;
     }
-}
-
-function calculateErrorRate(report: ArtilleryReport): number {
-    const total = report.aggregate.counters["http.requests"] || 1;
-    const errors = report.aggregate.counters["errors.total"] || 0;
-    return (errors / total) * 100;
 }
 
 function calculateBaseline(
@@ -283,21 +290,19 @@ function calculateBaseline(
         sortedThroughputs[Math.floor(sortedThroughputs.length / 2)];
 
     return {
+        measurement_version: 2,
         system: systemProfile,
         sockethub_version: sockethubVersion,
         generated_date: new Date().toISOString().split("T")[0],
         performance_metrics: {
-            connection_p95_ms: 50, // Default, would need connection-baseline test
             message_latency_p95_ms: Math.round(medianLatency),
             throughput_msg_per_sec: Math.round(medianThroughput),
-        },
-        stress_limits: {
-            max_concurrent_connections: 1000, // Default, would need connection-storm test
-            max_throughput_msg_per_sec: 5000, // Default, would need message-flood test
-            degradation_start_connections: 800,
         },
         thresholds: DEFAULT_THRESHOLDS,
     };
 }
 
-main().catch(console.error);
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

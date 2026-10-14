@@ -11,7 +11,7 @@ export interface SystemProfile {
 }
 
 export interface PerformanceMetrics {
-    connection_p95_ms: number;
+    connection_p95_ms?: number;
     message_latency_p95_ms: number;
     throughput_msg_per_sec: number;
 }
@@ -30,11 +30,12 @@ export interface Thresholds {
 }
 
 export interface Baseline {
+    measurement_version?: number;
     system: SystemProfile;
     sockethub_version: string;
     generated_date: string;
     performance_metrics: PerformanceMetrics;
-    stress_limits: StressLimits;
+    stress_limits?: StressLimits;
     thresholds: Thresholds;
 }
 
@@ -50,11 +51,13 @@ export interface TestResult {
         latency_p99?: number;
         error_rate?: number;
         memory_mb?: number;
+        sockethub_errors?: number;
     };
     status: "pass" | "warn" | "fail";
     baseline_comparison?: {
         within_tolerance: boolean;
         deviations: Record<string, number>;
+        status: "pass" | "warn" | "fail";
     };
 }
 
