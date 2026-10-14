@@ -281,13 +281,61 @@ export function isFacebookUrl(url: string): boolean {
  * Remove the engagement-stats segment Facebook prepends to video titles:
  * "2.2M views · 21K reactions | <video title> | <author>". The stats are
  * localized to the *scraping server's* geo-IP language, so match their
- * shape — a leading pipe-delimited segment containing a digit and the "·"
- * separator — rather than any particular wording.
+ * shape rather than any particular wording: a leading pipe-delimited
+ * segment that either contains a digit and the "·" separator, or — when
+ * Facebook reports a single count, e.g. "330.213 Aufrufe | Reel by X" or
+ * "2,2 mil. zhlédnutí | …" — is just a number, an optional abbreviation,
+ * and one word. The narrow single-count shape keeps a caption that merely
+ * starts with a number ("10 Best Goals | Author") intact.
  */
 export function stripFacebookEngagement(
     title: string | undefined,
 ): string | undefined {
-    return title?.replace(/^[^|]*\p{Nd}[^|]*·[^|]*\|\s*/u, "");
+    return title?.replace(
+        /^(?:[^|]*\p{Nd}[^|]*·[^|]*|\s*\p{Nd}[\p{Nd}.,\s]*\p{L}{0,2}(?:\s+\p{L}+\.)?\s+\p{L}+\s*)\|\s*/u,
+        "",
+    );
+}
+
+/**
+ * Facebook's public embed plugin for a post. Unlike the post page, it is
+ * meant to be rendered by third-party sites, so it still carries the
+ * media thumbnail when the post page withholds its Open Graph image from
+ * an unrecognized or datacenter client. Video posts (reels, watch) use
+ * the video plugin; everything else the post plugin.
+ */
+export function resolveFacebookEmbed(
+    url: string,
+    ogType: string | undefined,
+): string | null {
+    if (!isFacebookUrl(url)) {
+        return null;
+    }
+    const plugin = ogType?.startsWith("video") ? "video.php" : "post.php";
+    return `https://www.facebook.com/plugins/${plugin}?href=${encodeURIComponent(url)}`;
+}
+
+/** Cap the embed-plugin HTML searched for the thumbnail. */
+const FACEBOOK_EMBED_MAX_CHARS = 500_000;
+
+/**
+ * The media thumbnail from a Facebook embed-plugin page: the first `<img>`
+ * served from Facebook's CDN. The plugin renders the post media before
+ * the author avatar, so the first CDN image is the thumbnail.
+ */
+export function extractFacebookEmbedImage(html: string): string | undefined {
+    const match = html
+        .slice(0, FACEBOOK_EMBED_MAX_CHARS)
+        .match(/<img\b[^>]*\bsrc="(https:\/\/[^"]*\.fbcdn\.net\/[^"]*)"/i);
+    if (!match) {
+        return undefined;
+    }
+    const url = match[1].replace(/&amp;/g, "&");
+    try {
+        return new URL(url).hostname.endsWith(".fbcdn.net") ? url : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 /**

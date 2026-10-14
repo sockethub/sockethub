@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+    extractFacebookEmbedImage,
     extractYouTubeDescription,
     isFacebookUrl,
     isRedditUrl,
@@ -13,6 +14,7 @@ import {
     redditPostVideo,
     resolveRedditEmbed,
     resolveRedditJson,
+    resolveFacebookEmbed,
     resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
@@ -534,6 +536,20 @@ describe("stripFacebookEngagement", () => {
         ).toEqual("فيديو | Author");
     });
 
+    it("strips a lone view count from share-page titles", () => {
+        // Share landing pages report only views, with no "·" separator and
+        // a non-breaking space inside the count.
+        expect(
+            stripFacebookEngagement("330.213\u00a0Aufrufe | Reel by Gino Hard"),
+        ).toEqual("Reel by Gino Hard");
+        expect(stripFacebookEngagement("347K views | Reel by Gino Hard")).toEqual(
+            "Reel by Gino Hard",
+        );
+        expect(
+            stripFacebookEngagement("2,2 mil. zhlédnutí | Video | Author"),
+        ).toEqual("Video | Author");
+    });
+
     it("leaves titles without a stats segment untouched", () => {
         expect(stripFacebookEngagement("Steven Bartlett")).toEqual(
             "Steven Bartlett",
@@ -541,7 +557,63 @@ describe("stripFacebookEngagement", () => {
         expect(stripFacebookEngagement("My video | Author")).toEqual(
             "My video | Author",
         );
+        // A caption that merely starts with a number is not a view count.
+        expect(stripFacebookEngagement("10 Best Goals | Author")).toEqual(
+            "10 Best Goals | Author",
+        );
         expect(stripFacebookEngagement(undefined)).toBeUndefined();
+    });
+});
+
+describe("resolveFacebookEmbed", () => {
+    it("picks the video plugin for video posts and the post plugin otherwise", () => {
+        expect(
+            resolveFacebookEmbed(
+                "https://www.facebook.com/reel/1618650499849940/",
+                "video.other",
+            ),
+        ).toEqual(
+            "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F1618650499849940%2F",
+        );
+        expect(
+            resolveFacebookEmbed(
+                "https://www.facebook.com/someone/posts/123/",
+                "article",
+            ),
+        ).toEqual(
+            "https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fsomeone%2Fposts%2F123%2F",
+        );
+    });
+
+    it("ignores non-Facebook URLs", () => {
+        expect(
+            resolveFacebookEmbed("https://example.com/reel/1/", "video.other"),
+        ).toBeNull();
+    });
+});
+
+describe("extractFacebookEmbedImage", () => {
+    it("returns the first CDN image with entities decoded", () => {
+        const html = `<html><body><div>
+            <img class="_1p6f img" src="https://scontent-xxc1-1.xx.fbcdn.net/v/t15.5256-10/thumb.jpg?stp=dst-jpg&amp;_nc_cat=109" alt="">
+            <img class="_2qgu img" src="https://scontent-xxc1-1.xx.fbcdn.net/v/t39.30808-1/avatar.jpg">
+        </div></body></html>`;
+        expect(extractFacebookEmbedImage(html)).toEqual(
+            "https://scontent-xxc1-1.xx.fbcdn.net/v/t15.5256-10/thumb.jpg?stp=dst-jpg&_nc_cat=109",
+        );
+    });
+
+    it("returns undefined when no CDN image is present", () => {
+        expect(
+            extractFacebookEmbedImage(
+                '<html><body><img src="https://example.com/x.jpg"></body></html>',
+            ),
+        ).toBeUndefined();
+        expect(
+            extractFacebookEmbedImage(
+                '<img src="https://evil.example/fbcdn.net/x.jpg">',
+            ),
+        ).toBeUndefined();
     });
 });
 
