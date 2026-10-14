@@ -88,6 +88,7 @@ export { SchemaLogs };
 </script>
 
 <script lang="ts">
+    import MetadataPreview, { isPageObject, type PageObject } from "../MetadataPreview.svelte";
     import LogEntry from "./LogEntry.svelte";
     import SchemaLogEntryComponent from "./SchemaLogEntry.svelte";
     import Highlight from "svelte-highlight";
@@ -104,6 +105,8 @@ export { SchemaLogs };
     let jsonSend = $state("");
     let jsonResp = $state("");
     let modalTitle = $state("ActivityStreams Data Exchange");
+    /** Page object from the response shown in the modal, for a rendered preview. */
+    let modalPage: PageObject | undefined = $state();
 
     Logs.subscribe((data: LogEntries) => {
         logs = data;
@@ -138,6 +141,8 @@ export { SchemaLogs };
                 response && Object.keys(response as object).length > 0
                     ? JSON.stringify(response, null, 2)
                     : "";
+            const object = (response as AnyActivityStream | undefined)?.object;
+            modalPage = isPageObject(object) ? object : undefined;
         };
     }
 
@@ -147,6 +152,7 @@ export { SchemaLogs };
             logModalState = true;
             jsonSend = JSON.stringify(entry.payload, null, 2);
             jsonResp = "";
+            modalPage = undefined;
         };
     }
 </script>
@@ -263,6 +269,16 @@ export { SchemaLogs };
         
         <!-- Modal Content -->
         <div class="flex-1 overflow-auto p-6 space-y-6">
+            {#if modalPage}
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+                <h4 class="font-semibold text-purple-900 mb-3 flex items-center">
+                    <span class="mr-2">🖼️</span>
+                    Rendered Preview
+                </h4>
+                <MetadataPreview page={modalPage} />
+            </div>
+            {/if}
+
             <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
                 <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
                     <span class="mr-2">{jsonResp ? '📤' : '📋'}</span>
