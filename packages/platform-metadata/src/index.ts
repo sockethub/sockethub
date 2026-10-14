@@ -356,6 +356,8 @@ export default class Metadata implements PlatformInterface {
                 dispatcher: ReturnType<typeof createGuardedDispatcher>;
             });
             if (!res.ok) {
+                // Release the connection promptly on blocked embeds.
+                await res.body?.cancel().catch(() => undefined);
                 throw new Error(`Facebook embed returned HTTP ${res.status}`);
             }
             const image = extractFacebookEmbedImage(await res.text());

@@ -283,16 +283,20 @@ export function isFacebookUrl(url: string): boolean {
  * localized to the *scraping server's* geo-IP language, so match their
  * shape rather than any particular wording: a leading pipe-delimited
  * segment that either contains a digit and the "·" separator, or — when
- * Facebook reports a single count, e.g. "330.213 Aufrufe | Reel by X" or
- * "2,2 mil. zhlédnutí | …" — is just a number, an optional abbreviation,
- * and one word. The narrow single-count shape keeps a caption that merely
- * starts with a number ("10 Best Goals | Author") intact.
+ * Facebook reports a single count, e.g. "330.213 Aufrufe | Reel by X",
+ * "347K views | …" or "2,2 mil. zhlédnutí | …" — is a count-shaped number
+ * (grouping or decimal separator, magnitude suffix, or at least four
+ * digits), an optional abbreviation, and one word. The view label itself
+ * cannot be matched: it is whatever Facebook's geo-IP locale produces. The
+ * count shape keeps a caption that merely starts with a small number
+ * ("10 Goals | Author") intact; only counts below 1,000 with no suffix
+ * would leak into the title.
  */
 export function stripFacebookEngagement(
     title: string | undefined,
 ): string | undefined {
     return title?.replace(
-        /^(?:[^|]*\p{Nd}[^|]*·[^|]*|\s*\p{Nd}[\p{Nd}.,\s]*\p{L}{0,2}(?:\s+\p{L}+\.)?\s+\p{L}+\s*)\|\s*/u,
+        /^(?:[^|]*\p{Nd}[^|]*·[^|]*|\s*(?:\p{Nd}+[.,]\p{Nd}+(?:[.,\s]\p{Nd}+)*\p{L}{0,2}|\p{Nd}{1,3}\p{L}{1,2}|\p{Nd}{4,})(?:\s+\p{L}+\.)?\s+\p{L}+\s*)\|\s*/u,
         "",
     );
 }
@@ -311,7 +315,12 @@ export function resolveFacebookEmbed(
     if (!isFacebookUrl(url)) {
         return null;
     }
-    const plugin = ogType?.startsWith("video") ? "video.php" : "post.php";
+    // The scrape may carry no og:type; reel, watch, and /videos/ paths are
+    // video posts regardless.
+    const isVideo =
+        ogType?.startsWith("video") ||
+        /^\/(?:reel|watch)(?:\/|$)|\/videos\//i.test(new URL(url).pathname);
+    const plugin = isVideo ? "video.php" : "post.php";
     return `https://www.facebook.com/plugins/${plugin}?href=${encodeURIComponent(url)}`;
 }
 

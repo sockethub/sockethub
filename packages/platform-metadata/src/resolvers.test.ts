@@ -548,6 +548,9 @@ describe("stripFacebookEngagement", () => {
         expect(
             stripFacebookEngagement("2,2 mil. zhlédnutí | Video | Author"),
         ).toEqual("Video | Author");
+        expect(stripFacebookEngagement("1234 views | Reel by X")).toEqual(
+            "Reel by X",
+        );
     });
 
     it("leaves titles without a stats segment untouched", () => {
@@ -560,6 +563,9 @@ describe("stripFacebookEngagement", () => {
         // A caption that merely starts with a number is not a view count.
         expect(stripFacebookEngagement("10 Best Goals | Author")).toEqual(
             "10 Best Goals | Author",
+        );
+        expect(stripFacebookEngagement("10 Goals | Author")).toEqual(
+            "10 Goals | Author",
         );
         expect(stripFacebookEngagement(undefined)).toBeUndefined();
     });
@@ -583,6 +589,24 @@ describe("resolveFacebookEmbed", () => {
         ).toEqual(
             "https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fsomeone%2Fposts%2F123%2F",
         );
+    });
+
+    it("treats reel, watch, and /videos/ paths as video without og:type", () => {
+        for (const url of [
+            "https://www.facebook.com/reel/123/",
+            "https://www.facebook.com/watch?v=123",
+            "https://www.facebook.com/someone/videos/123/",
+        ]) {
+            expect(resolveFacebookEmbed(url, undefined)).toStartWith(
+                "https://www.facebook.com/plugins/video.php?href=",
+            );
+        }
+        expect(
+            resolveFacebookEmbed(
+                "https://www.facebook.com/someone/posts/123/",
+                undefined,
+            ),
+        ).toStartWith("https://www.facebook.com/plugins/post.php?href=");
     });
 
     it("ignores non-Facebook URLs", () => {
