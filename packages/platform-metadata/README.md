@@ -101,8 +101,12 @@ so those URLs are resolved through preview services built for this purpose:
   self-text, and direct `i.redd.it` image are mapped into the preview; text posts
   intentionally have no image. oEmbed remains a title-only failure fallback.
   See `compatUserAgent` below.
-* **Facebook** remains best-effort: post text usually comes through, but
-  media requires authentication and no public preview service exists.
+* **Facebook** remains best-effort: post text usually comes through. The
+  video or photo thumbnail is taken from the post's Open Graph image, then
+  its Twitter card image, and finally the image rendered by Facebook's public
+  embed plugin (`/plugins/video.php` or `/plugins/post.php`), which Facebook
+  serves to third parties when it withholds Open Graph media from a
+  datacenter address. Full media still requires authentication.
 
 ### `userAgent`
 

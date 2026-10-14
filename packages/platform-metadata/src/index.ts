@@ -13,6 +13,7 @@ import ogs from "open-graph-scraper";
 import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
 import {
+    extractFacebookEmbedImage,
     extractYouTubeDescription,
     type FxTwitterStatus,
     isFacebookUrl,
@@ -26,6 +27,7 @@ import {
     redditPostImage,
     redditPostImages,
     redditPostVideo,
+    resolveFacebookEmbed,
     resolveRedditJson,
     resolveRedditMedia,
     resolveTwitterStatus,
@@ -65,6 +67,7 @@ const TWEET_API_TIMEOUT_MS = 10_000;
 const REDDIT_OEMBED_URL = "https://www.reddit.com/oembed";
 const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
 const YOUTUBE_OEMBED_TIMEOUT_MS = 4_000;
+const FACEBOOK_EMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_TIMEOUT_MS = 2_500;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
@@ -331,6 +334,40 @@ export default class Metadata implements PlatformInterface {
         } catch (err) {
             this.log.debug(
                 `youtube oEmbed fetch failed for ${embedUrl}: ${String(err)}; using scraped metadata`,
+            );
+            return undefined;
+        }
+    }
+
+    /**
+     * Last-resort thumbnail for a Facebook post whose page carried no
+     * Open Graph image: the media image rendered by Facebook's public embed
+     * plugin, which is served to third parties without a login wall.
+     */
+    private async fetchFacebookEmbedImage(
+        embedUrl: string,
+    ): Promise<string | undefined> {
+        try {
+            const res = await this.fetchImpl(embedUrl, {
+                dispatcher: this.getDispatcher(),
+                headers: { "user-agent": this.userAgent() },
+                signal: AbortSignal.timeout(FACEBOOK_EMBED_TIMEOUT_MS),
+            } as RequestInit & {
+                dispatcher: ReturnType<typeof createGuardedDispatcher>;
+            });
+            if (!res.ok) {
+                // Release the connection promptly on blocked embeds.
+                await res.body?.cancel().catch(() => undefined);
+                throw new Error(`Facebook embed returned HTTP ${res.status}`);
+            }
+            const image = extractFacebookEmbedImage(await res.text());
+            if (!image) {
+                throw new Error("Facebook embed contained no CDN image");
+            }
+            return image;
+        } catch (err) {
+            this.log.debug(
+                `facebook embed fetch failed for ${embedUrl}: ${String(err)}; using scraped metadata`,
             );
             return undefined;
         }
@@ -701,6 +738,33 @@ export default class Metadata implements PlatformInterface {
                         );
                     }
                 }
+                // Facebook withholds og:image from some clients (seen from a
+                // hosted server, not from residential addresses) while still
+                // serving the rest of the post. Its Twitter card image is the
+                // same thumbnail, and the public embed plugin renders it when
+                // both are missing.
+                if (facebook && !result.ogImage?.length) {
+                    if (result.twitterImage?.length) {
+                        result = { ...result, ogImage: result.twitterImage };
+                    } else {
+                        const embedUrl = resolveFacebookEmbed(
+                            result.ogUrl || job.actor.id,
+                            result.ogType,
+                        );
+                        const embedImage = embedUrl
+                            ? await withDeadline(
+                                  this.fetchFacebookEmbedImage(embedUrl),
+                                  FACEBOOK_EMBED_TIMEOUT_MS,
+                              ).catch(() => undefined)
+                            : undefined;
+                        if (embedImage) {
+                            result = {
+                                ...result,
+                                ogImage: [{ url: embedImage }],
+                            };
+                        }
+                    }
+                }
                 const embed = reddit ? await redditEmbed : undefined;
                 const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;
@@ -743,7 +807,9 @@ export default class Metadata implements PlatformInterface {
                         : scrapedImages?.length
                           ? scrapedImages
                           : youtubeOEmbedImage(youtube),
-                    url: reddit ? job.actor.id : result.ogUrl,
+                    // actor.id was just updated to og:url when the page
+                    // declares one, so this falls back to the fetched URL.
+                    url: job.actor.id,
                     // Fall back to the conventional location when the page
                     // declares no icon (vxreddit, many plain sites). It's
                     // relative on purpose: clients resolve it against the
