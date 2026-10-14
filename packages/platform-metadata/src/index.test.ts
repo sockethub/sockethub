@@ -516,6 +516,102 @@ describe("facebook scrape", () => {
         ]);
     });
 
+    it("falls back to the Twitter card image when Facebook omits og:image", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle: "347K views | Reel by Gino Hard",
+                    ogUrl: "https://www.facebook.com/reel/123/",
+                    twitterImage: [
+                        { url: "https://scontent.example/card.jpg" },
+                    ],
+                },
+            });
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "https://www.facebook.com/reel/123/",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object).toMatchObject({
+            title: "Reel by Gino Hard",
+            image: [{ url: "https://scontent.example/card.jpg" }],
+        });
+    });
+
+    it("fetches the embed plugin thumbnail when Facebook serves no image at all", async () => {
+        const realFetch = globalThis.fetch;
+        const fetched: string[] = [];
+        // biome-ignore lint/suspicious/noExplicitAny: controlled embed response
+        globalThis.fetch = ((url: string) => {
+            fetched.push(String(url));
+            return Promise.resolve(
+                new Response(
+                    '<html><body><img class="img" src="https://scontent.example.fbcdn.net/v/t15.5256-10/thumb.jpg?a=1&amp;b=2"></body></html>',
+                    { status: 200, headers: { "content-type": "text/html" } },
+                ),
+            );
+        }) as any;
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogType: "video.other",
+                    ogTitle: "330.213\u00a0Aufrufe | Reel by Gino Hard",
+                    ogDescription: "Never forget",
+                    ogUrl: "https://www.facebook.com/reel/123/",
+                },
+            });
+        try {
+            const { err, result } = await runFetch(
+                makePlatform(),
+                "https://www.facebook.com/reel/123/",
+            );
+            expect(err).toBeNull();
+            expect(fetched).toEqual([
+                "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F123%2F",
+            ]);
+            // biome-ignore lint/suspicious/noExplicitAny: test result shape
+            expect((result as any).object).toMatchObject({
+                title: "Reel by Gino Hard",
+                description: "Never forget",
+                image: [
+                    {
+                        url: "https://scontent.example.fbcdn.net/v/t15.5256-10/thumb.jpg?a=1&b=2",
+                    },
+                ],
+            });
+        } finally {
+            globalThis.fetch = realFetch;
+        }
+    });
+
+    it("still returns the post when the embed plugin fetch fails", async () => {
+        const realFetch = globalThis.fetch;
+        // biome-ignore lint/suspicious/noExplicitAny: controlled embed failure
+        globalThis.fetch = (() =>
+            Promise.reject(new Error("blocked"))) as any;
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle: "Reel by Someone",
+                    ogUrl: "https://www.facebook.com/reel/123/",
+                },
+            });
+        try {
+            const { err, result } = await runFetch(
+                makePlatform(),
+                "https://www.facebook.com/reel/123/",
+            );
+            expect(err).toBeNull();
+            // biome-ignore lint/suspicious/noExplicitAny: test result shape
+            expect((result as any).object.title).toEqual("Reel by Someone");
+            // biome-ignore lint/suspicious/noExplicitAny: test result shape
+            expect((result as any).object.image).toBeUndefined();
+        } finally {
+            globalThis.fetch = realFetch;
+        }
+    });
+
     it("does not rewrite titles on non-facebook pages", async () => {
         ogsBehavior = () =>
             Promise.resolve({

@@ -2,6 +2,10 @@
 import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
+import MetadataPreview, {
+    isPageObject,
+    type PageObject,
+} from "$components/MetadataPreview.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
@@ -12,6 +16,8 @@ const sockethubState = writable({
 });
 
 let url = $state("https://sockethub.org");
+let preview: PageObject | undefined = $state();
+let previewError = $state("");
 
 const actor = $derived({
     id: url,
@@ -20,11 +26,21 @@ const actor = $derived({
 });
 
 async function sendFetch(): Promise<void> {
-    await send({
-        "@context": await contextFor("metadata"),
-        type: "fetch",
-        actor: actorAsObject(actor),
-    } as AnyActivityStream);
+    preview = undefined;
+    previewError = "";
+    try {
+        const resp = await send({
+            "@context": await contextFor("metadata"),
+            type: "fetch",
+            actor: actorAsObject(actor),
+        } as AnyActivityStream);
+        if (isPageObject(resp.object)) {
+            preview = resp.object;
+        }
+    } catch (err) {
+        previewError = String(err);
+        throw err;
+    }
 }
 </script>
 
@@ -67,5 +83,20 @@ async function sendFetch(): Promise<void> {
                 Extract Metadata
             </SockethubButton>
         </div>
+
+        {#if preview}
+            <div class="space-y-2">
+                <h3 class="text-lg font-semibold text-gray-800">Preview</h3>
+                <p class="text-gray-600 text-sm">
+                    How a chat client would render the fetched metadata. The raw
+                    response is in the activity log below.
+                </p>
+                <MetadataPreview page={preview} />
+            </div>
+        {:else if previewError}
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {previewError}
+            </div>
+        {/if}
     </div>
 </BaseExample>
