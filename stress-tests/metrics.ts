@@ -31,7 +31,8 @@ export function extractMetrics(
               )
             : 0;
     const protocol =
-        test.scenario === "connection-baseline"
+        test.scenario === "connection-baseline" ||
+        test.scenario === "connection-storm"
             ? "connection"
             : test.platform === "dummy"
               ? "echo"

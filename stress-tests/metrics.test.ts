@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { compareToBaseline } from "./bun/baseline-comparator";
-import { DEFAULT_THRESHOLDS, PERFORMANCE_TESTS } from "./config";
+import { DEFAULT_THRESHOLDS, PERFORMANCE_TESTS, STRESS_TESTS } from "./config";
 import { extractMetrics } from "./metrics";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -82,6 +82,55 @@ describe("benchmark metrics", () => {
                 PERFORMANCE_TESTS[0],
             ).metrics.latency_p95,
         ).toBe(12);
+    });
+    it("uses connection metrics for a successful connection storm without message attempts", () => {
+        const { metrics } = extractMetrics(
+            {
+                aggregate: {
+                    counters: {
+                        "vusers.created": 100,
+                        "sockethub.connected": 100,
+                    },
+                    summaries: {
+                        "sockethub.latency.connection": { p95: 12 },
+                    },
+                },
+            },
+            STRESS_TESTS[0],
+        );
+        expect(metrics.error_rate).toBe(0);
+        expect(metrics.latency_p95).toBe(12);
+        expect(metrics.throughput).toBeUndefined();
+    });
+    it("includes failed connections and credential errors in connection-storm error rates", () => {
+        for (const [failedUsers, usersWithErrors, expected] of [
+            [10, 0, 10],
+            [0, 20, 20],
+            [10, 20, 20],
+        ]) {
+            const { metrics } = extractMetrics(
+                {
+                    aggregate: {
+                        counters: {
+                            "vusers.created": 100,
+                            "vusers.failed": failedUsers,
+                            "sockethub.users_with_errors": usersWithErrors,
+                        },
+                    },
+                },
+                STRESS_TESTS[0],
+            );
+            expect(metrics.error_rate).toBe(expected);
+        }
+    });
+    it("keeps empty connection storms and missing message workloads failed", () => {
+        expect(extractMetrics({}, STRESS_TESTS[0]).metrics.error_rate).toBe(100);
+        expect(
+            extractMetrics(
+                { aggregate: { counters: { "vusers.created": 100 } } },
+                PERFORMANCE_TESTS[1],
+            ).metrics.error_rate,
+        ).toBe(100);
     });
     it("accepts improvements and flags throughput or latency regressions", () => {
         expect(
