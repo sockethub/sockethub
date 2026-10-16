@@ -11,6 +11,13 @@ bun run docker:start:deps
 # 2. Start Sockethub locally
 bun run start
 
+# For XMPP scenarios, supply a seeded test account (password from your environment):
+export XMPP_USER=jimmy@prosody
+export XMPP_SERVER=xmpp://localhost:5222
+export XMPP_ROOM=testroom@conference.prosody
+# Set XMPP_PASSWORD in your shell or secret manager.
+# Feed stress requires FEED_URL pointing to a real, controlled RSS/Atom fixture.
+
 # 3. Generate baseline (first time only)
 bun run stress:baseline
 
@@ -22,7 +29,7 @@ bun run stress:all           # All tests (~60 min)
 bun run stress:ci            # CI smoke test (1-2 min)
 
 # 5. View results
-bun run stress:report --latest
+bun run stress:report --latest --html
 ```
 
 ## What We Test
@@ -32,8 +39,8 @@ bun run stress:report --latest
 **Goal**: Measure normal performance with realistic load
 
 - **Connection Baseline**: 100 connections over 2 minutes
-- **Message Throughput**: 50 clients × 10 msg/sec sustained
-- **Multi-Client Broadcast**: 20 clients in shared XMPP room
+- **Message Throughput**: 50 clients, each sending up to 10 msg/sec for 3000 iterations
+- **Multi-Client Broadcast**: 20 clients in shared XMPP room (action acknowledgement latency)
 
 **Platform**: Dummy (fast baseline), XMPP (real protocol)
 
@@ -43,7 +50,7 @@ bun run stress:report --latest
 
 - **Connection Storm**: Ramp 0→1000 connections in 30 seconds
 - **Message Flood**: Ramp 1→100 msg/sec with XMPP protocol
-- **Feed Processing**: 50 clients requesting feeds simultaneously
+- **Feed Processing**: 50 new clients/sec fetching a controlled feed fixture
 - **Spike Test**: Baseline → 10x spike → baseline recovery
 
 **Platform**: XMPP (realistic overhead), Feed (different pattern)
@@ -53,10 +60,10 @@ bun run stress:report --latest
 **Goal**: Detect resource leaks over time
 
 - **Long Duration**: 30 minutes sustained load
-- **Memory Tracking**: Heap growth monitoring
-- **Platform Stability**: Process cleanup validation
+- **Memory Tracking**: Server/worker resource sampling is not implemented; collect externally
+- **Platform Stability**: Sustained-load error detection
 
-**Platform**: Dummy (fast) + XMPP (real-world)
+**Platform**: Dummy (fast)
 
 ### CI Smoke Test
 
@@ -94,17 +101,17 @@ Redis + Platforms (XMPP, Feed, etc.)
 
 ### How Baselines Work
 
-1. **System Profile**: Unique ID per hardware (CPUs, RAM, hostname)
+1. **System Profile**: Filename keyed by CPUs, RAM, and hostname;
+   this is not a complete environment fingerprint
 2. **Generation**: 3 warmup runs + 5 baseline runs → median
 3. **Storage**: `baselines/{hostname}-{cpus}c-{memory}gb.json`
-4. **Comparison**: ±15% tolerance for pass/fail
+4. **Comparison**: 15% regression tolerance for message-throughput;
+   improvements do not fail
 
 ### When to Regenerate
 
 - First time running tests
-- After Sockethub version upgrade
-- After major refactors
-- Weekly trend tracking
+- After runtime, dependency, workload, or hardware changes (start a new comparison series)
 
 ```bash
 # Force regenerate baseline
@@ -132,7 +139,7 @@ bun run stress:baseline
 
 - P99 latency > 2x baseline
 - Error rate > 1%
-- Memory leak (continuous growth)
+- Memory leak (continuous growth, measured with external server monitoring)
 - Platform process crashes
 - Sockethub validation errors (malformed ActivityStreams)
 
@@ -247,10 +254,8 @@ bunx artillery run stress-tests/artillery/scenarios/performance/message-throughp
 
 ### Custom Sockethub URL
 
-Edit `stress-tests/config.ts`:
-
-```typescript
-export const DEFAULT_SOCKETHUB_URL = 'http://custom-host:10550';
+```bash
+SOCKETHUB_URL=http://custom-host:10550 bun run stress:performance
 ```
 
 ### Adjust Tolerance
@@ -296,7 +301,7 @@ bun add -d artillery
 
 1. **Test local code** - Use `docker:start:deps` + `bun run start`, not Docker Sockethub
 2. **Run on dedicated hardware** (not laptop with throttling)
-3. **Clear Redis between runs** for consistency
+3. **Clear only the benchmark Redis instance between runs** for consistency
 4. **Disable debug logging** in production mode
 5. **Run full suite before releases**
 6. **Track trends over time** (weekly runs)
@@ -312,7 +317,42 @@ bun add -d artillery
 ## Next Steps
 
 - Add historical trend tracking
-- Implement HTML report generation
+- Extend the standalone HTML report with historical release charts
 - Add platform-specific metrics (XMPP connection pools, Feed cache hits)
 - Create Docker Compose profile for stress testing
 - Add profiling integration (flame graphs, heap snapshots)
+
+## Measurement contract
+
+Latency histograms contain successful action acknowledgements only, or Socket.IO
+connection establishment time for connection-baseline. XMPP action acknowledgements
+do not measure recipient delivery or broadcast fan-out. Missing samples are shown
+as absent, never as zero. Throughput is successful protocol actions divided by
+the total scenario elapsed time (including setup and teardown); error rate is
+failed protocol attempts divided by all protocol attempts. Connection-only tests
+use failed-user counts instead. Sockethub error events and users with errors are
+reported separately to avoid double counting.
+
+The workload uses closed-loop pacing: each user waits for an acknowledgement and
+then the configured think time. Slow responses lower the offered message rate.
+The fixed-client performance scenarios use arrivalCount, whereas stress scenarios
+intentionally ramp new users per second.
+
+The baseline generator measures only message-throughput. It rejects missing or
+failed measurements and does not invent connection or capacity limits. Keep the
+reference unchanged when testing another release on the same environment.
+Old baselines used different throughput semantics and are ignored by the loader;
+regenerate them once after this correction. New baselines carry measurement_version 2.
+Other scenarios are not compared against the echo baseline.
+
+Generate a portable HTML table and latency chart with:
+
+```bash
+bun run stress:report --latest --html
+bun run stress:report stress-tests/reports/<suite-report>.json --html
+```
+
+The latest-report selector excludes raw temporary Artillery and baseline files.
+Reports remain local and unversioned; release history and remote automation require
+the separate automated benchmarking system. Feed fixtures on private addresses
+require the integration configuration's allowPrivateAddresses setting.

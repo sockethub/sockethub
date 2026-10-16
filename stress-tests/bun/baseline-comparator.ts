@@ -17,7 +17,14 @@ export async function loadBaseline(): Promise<Baseline | null> {
         return null;
     }
 
-    return JSON.parse(readFileSync(baselineFile, "utf-8"));
+    const baseline: Baseline = JSON.parse(readFileSync(baselineFile, "utf-8"));
+    if (baseline.measurement_version !== 2) {
+        console.warn(
+            "Ignoring baseline with obsolete metrics; regenerate it once",
+        );
+        return null;
+    }
+    return baseline;
 }
 
 export function compareToBaseline(
@@ -32,7 +39,8 @@ export function compareToBaseline(
 
     // Compare latency P95
     if (
-        result.metrics.latency_p95 &&
+        result.test_name === "message-throughput" &&
+        result.metrics.latency_p95 !== undefined &&
         baseline.performance_metrics.message_latency_p95_ms
     ) {
         const deviation =
@@ -45,12 +53,13 @@ export function compareToBaseline(
 
     // Compare throughput
     if (
-        result.metrics.throughput &&
+        result.test_name === "message-throughput" &&
+        result.metrics.throughput !== undefined &&
         baseline.performance_metrics.throughput_msg_per_sec
     ) {
         const deviation =
-            ((result.metrics.throughput -
-                baseline.performance_metrics.throughput_msg_per_sec) /
+            ((baseline.performance_metrics.throughput_msg_per_sec -
+                result.metrics.throughput) /
                 baseline.performance_metrics.throughput_msg_per_sec) *
             100;
         deviations.throughput = Math.round(deviation);
@@ -61,7 +70,7 @@ export function compareToBaseline(
 
     // Check if within tolerance
     const within_tolerance = Object.values(deviations).every(
-        (dev) => Math.abs(dev) <= TOLERANCE_PCT,
+        (dev) => dev <= TOLERANCE_PCT,
     );
 
     // Check error rate
@@ -93,13 +102,11 @@ export function compareToBaseline(
     }
 
     // Check deviation tolerance
-    if (!within_tolerance && status === "pass") {
-        const maxDeviation = Math.max(
-            ...Object.values(deviations).map(Math.abs),
-        );
+    if (!within_tolerance) {
+        const maxDeviation = Math.max(...Object.values(deviations));
         if (maxDeviation > TOLERANCE_PCT * 2) {
             status = "fail";
-        } else if (maxDeviation > TOLERANCE_PCT) {
+        } else if (maxDeviation > TOLERANCE_PCT && status === "pass") {
             status = "warn";
         }
     }

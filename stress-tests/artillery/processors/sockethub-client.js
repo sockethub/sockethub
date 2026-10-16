@@ -54,6 +54,7 @@ module.exports = {
     setupClient,
     sendCredentials,
     sendDummyEcho,
+    setupXMPP,
     sendXMPPMessage,
     sendFeedMessage,
     disconnectClient,
@@ -92,7 +93,8 @@ function setupClient(context, events, done) {
         );
     }
 
-    const socket = io("http://localhost:10550", {
+    const connectionStarted = Date.now();
+    const socket = io(process.env.SOCKETHUB_URL || context.vars.target, {
         path: "/sockethub",
         transports: ["websocket"],
         reconnection: false, // Don't auto-reconnect during stress tests
@@ -107,6 +109,11 @@ function setupClient(context, events, done) {
     // Track connection
     socket.on("connect", () => {
         events.emit("counter", "sockethub.connected", 1);
+        events.emit(
+            "histogram",
+            "sockethub.latency.connection",
+            Date.now() - connectionStarted,
+        );
         context.vars.connected = true;
         recordSuccess();
     });
@@ -152,7 +159,8 @@ function setupClient(context, events, done) {
                 events.emit("counter", "sockethub.schemas_timeout", 1);
                 context.vars.errors.push(`Schemas timeout: ${reason}`);
             }
-            done();
+            socket.disconnect();
+            done(new Error(reason));
         });
 }
 
@@ -243,6 +251,7 @@ function sendDummyEcho(context, events, done) {
         },
     };
 
+    events.emit("counter", "sockethub.attempt.echo", 1);
     const startTime = Date.now();
 
     emitWithTimeout(
@@ -252,7 +261,6 @@ function sendDummyEcho(context, events, done) {
         DEFAULT_RESPONSE_TIMEOUT_MS,
         (err, response) => {
             const latency = Date.now() - startTime;
-            events.emit("histogram", "sockethub.latency.echo", latency);
 
             if (err) {
                 events.emit("counter", "sockethub.error.echo", 1);
@@ -266,11 +274,79 @@ function sendDummyEcho(context, events, done) {
                 console.error("Echo error:", response.error);
                 context.vars.errors.push(`Echo: ${response.error}`);
             } else {
+                events.emit("histogram", "sockethub.latency.echo", latency);
                 events.emit("counter", "sockethub.success.echo", 1);
             }
             done();
         },
     );
+}
+
+/** Establish a distinct XMPP resource and room nickname for each user. */
+async function setupXMPP(context, events, done) {
+    const userAddress = process.env.XMPP_USER;
+    const password = process.env.XMPP_PASSWORD;
+    if (!userAddress || !password) {
+        context.vars.client?.socket.disconnect();
+        return done(new Error("XMPP_USER and XMPP_PASSWORD are required"));
+    }
+    const resource = `stress-${context.vars.$uuid}`;
+    const actor = {
+        id: `${userAddress}/${resource}`,
+        type: "person",
+        name: resource,
+    };
+    context.vars.actorId = actor.id;
+    const client = context.vars.client;
+    const emit = (event, payload) =>
+        new Promise((resolve, reject) => {
+            emitWithTimeout(
+                client.socket,
+                event,
+                payload,
+                10000,
+                (err, response) => {
+                    if (err || response?.error)
+                        reject(err || new Error(response.error));
+                    else resolve(response);
+                },
+            );
+        });
+    try {
+        await emit("credentials", {
+            type: "credentials",
+            "@context": contextFor("xmpp"),
+            actor,
+            object: {
+                type: "credentials",
+                userAddress,
+                password,
+                resource,
+                server: process.env.XMPP_SERVER || "xmpp://localhost:5222",
+                port: Number(process.env.XMPP_PORT || 5222),
+            },
+        });
+        await emit("message", {
+            type: "connect",
+            "@context": contextFor("xmpp"),
+            actor,
+        });
+        await emit("message", {
+            type: "join",
+            "@context": contextFor("xmpp"),
+            actor,
+            target: {
+                id: process.env.XMPP_ROOM || "testroom@conference.prosody",
+                type: "room",
+            },
+        });
+        done();
+    } catch {
+        events.emit("counter", "sockethub.error.xmpp_setup", 1);
+        context.vars.errors.push("XMPP setup failed");
+        client.socket.disconnect();
+        done(new Error("XMPP setup failed; check server logs"));
+    }
 }
 
 /**
@@ -298,7 +374,7 @@ function sendXMPPMessage(context, events, done) {
             type: "person",
         },
         target: {
-            id: "testroom@conference.localhost",
+            id: process.env.XMPP_ROOM || "testroom@conference.prosody",
             type: "room",
         },
         object: {
@@ -308,6 +384,7 @@ function sendXMPPMessage(context, events, done) {
         },
     };
 
+    events.emit("counter", "sockethub.attempt.xmpp", 1);
     const startTime = Date.now();
 
     emitWithTimeout(
@@ -317,7 +394,6 @@ function sendXMPPMessage(context, events, done) {
         DEFAULT_RESPONSE_TIMEOUT_MS,
         (err, response) => {
             const latency = Date.now() - startTime;
-            events.emit("histogram", "sockethub.latency.xmpp", latency);
 
             if (err) {
                 events.emit("counter", "sockethub.error.xmpp", 1);
@@ -331,6 +407,7 @@ function sendXMPPMessage(context, events, done) {
                 console.error("XMPP error:", response.error);
                 context.vars.errors.push(`XMPP: ${response.error}`);
             } else {
+                events.emit("histogram", "sockethub.latency.xmpp", latency);
                 events.emit("counter", "sockethub.success.xmpp", 1);
             }
             done();
@@ -347,7 +424,6 @@ function sendFeedMessage(context, events, done) {
         return done();
     }
     const client = context.vars.client;
-    const actorId = context.vars.actorId;
 
     if (!context.vars.connected) {
         events.emit("counter", "sockethub.error.not_connected", 1);
@@ -355,25 +431,19 @@ function sendFeedMessage(context, events, done) {
         return done();
     }
 
-    const feedUrls = [
-        "https://example.com/feed1.xml",
-        "https://example.com/feed2.xml",
-        "https://example.com/feed3.xml",
-    ];
-
+    if (!process.env.FEED_URL) {
+        client.socket.disconnect();
+        return done(
+            new Error("FEED_URL must point to a benchmark feed fixture"),
+        );
+    }
     const message = {
         type: "fetch",
         "@context": contextFor("feeds"),
-        actor: {
-            id: actorId,
-            type: "person",
-        },
-        object: {
-            type: "feed",
-            id: feedUrls[Math.floor(Math.random() * feedUrls.length)],
-        },
+        actor: { id: process.env.FEED_URL, type: "feed" },
     };
 
+    events.emit("counter", "sockethub.attempt.feed", 1);
     const startTime = Date.now();
 
     emitWithTimeout(
@@ -383,7 +453,6 @@ function sendFeedMessage(context, events, done) {
         DEFAULT_RESPONSE_TIMEOUT_MS,
         (err, response) => {
             const latency = Date.now() - startTime;
-            events.emit("histogram", "sockethub.latency.feed", latency);
 
             if (err) {
                 events.emit("counter", "sockethub.error.feed", 1);
@@ -397,6 +466,7 @@ function sendFeedMessage(context, events, done) {
                 console.error("Feed error:", response.error);
                 context.vars.errors.push(`Feed: ${response.error}`);
             } else {
+                events.emit("histogram", "sockethub.latency.feed", latency);
                 events.emit("counter", "sockethub.success.feed", 1);
             }
             done();

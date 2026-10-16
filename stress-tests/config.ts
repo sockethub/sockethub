@@ -3,7 +3,8 @@
  */
 import type { TestConfig, Thresholds } from "./types";
 
-export const DEFAULT_SOCKETHUB_URL = "http://localhost:10550";
+export const DEFAULT_SOCKETHUB_URL =
+    process.env.SOCKETHUB_URL || "http://localhost:10550";
 
 export const TOLERANCE_PCT = 15; // ±15% baseline tolerance
 
