@@ -12,6 +12,10 @@ import {
     registerPlatformContext,
     resolvePlatformContextUrl,
 } from "./context.js";
+import {
+    isCodegenAvailable,
+    warnCodegenUnavailable,
+} from "./helpers/codegen.js";
 import getErrorMessage, {
     type ValidationErrorOptions,
 } from "./helpers/error-parser.js";
@@ -20,10 +24,6 @@ import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
 import type { ActivityStream } from "./types.js";
-
-const ajv = new Ajv({ strictTypes: false, allErrors: true });
-addFormats(ajv as unknown as Parameters<typeof addFormats>[0]);
-additionsFormats2019(ajv as unknown as Ajv);
 
 type SchemasDict = Record<string, Schema>;
 
@@ -34,8 +34,27 @@ let systemContextsRegistered = false;
 
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamSchema;
 
-for (const uri in schemas) {
-    ajv.addSchema(schemas[uri], uri);
+// Ajv is created lazily: constructing it and adding schemas compiles them with
+// `new Function`, which a Content Security Policy that forbids eval (browser
+// extensions) blocks. When code generation is unavailable, schema validation is
+// skipped and the Sockethub server remains the authority.
+let ajv: Ajv | undefined;
+
+function getAjv(): Ajv | undefined {
+    if (!isCodegenAvailable()) {
+        warnCodegenUnavailable();
+        return undefined;
+    }
+    if (!ajv) {
+        const instance = new Ajv({ strictTypes: false, allErrors: true });
+        addFormats(instance as unknown as Parameters<typeof addFormats>[0]);
+        additionsFormats2019(instance as unknown as Ajv);
+        for (const uri in schemas) {
+            instance.addSchema(schemas[uri], uri);
+        }
+        ajv = instance;
+    }
+    return ajv;
 }
 
 function registerSystemContext(platformId: string, contextUrl: string): void {
@@ -46,14 +65,19 @@ function registerSystemContext(platformId: string, contextUrl: string): void {
         `${schemaURL}/context/${platformId}/credentials`,
     );
 
+    const instance = getAjv();
+    if (!instance) {
+        return;
+    }
+
     const messageSchemaRef = `${schemaURL}/context/${platformId}/messages`;
-    if (!ajv.getSchema(messageSchemaRef)) {
-        ajv.addSchema({}, messageSchemaRef);
+    if (!instance.getSchema(messageSchemaRef)) {
+        instance.addSchema({}, messageSchemaRef);
     }
 
     const credentialsSchemaRef = `${schemaURL}/context/${platformId}/credentials`;
-    if (!ajv.getSchema(credentialsSchemaRef)) {
-        ajv.addSchema({}, credentialsSchemaRef);
+    if (!instance.getSchema(credentialsSchemaRef)) {
+        instance.addSchema({}, credentialsSchemaRef);
     }
 }
 
@@ -69,7 +93,11 @@ export function registerSystemPlatformContexts(): void {
 registerSystemPlatformContexts();
 
 function handleValidation(schemaRef: string, msg: ActivityStream): string {
-    const validator = ajv.getSchema(schemaRef);
+    const instance = getAjv();
+    if (!instance) {
+        return "";
+    }
+    const validator = instance.getSchema(schemaRef);
     if (!validator) {
         return `schema ${schemaRef} not found`;
     }
@@ -103,7 +131,7 @@ export function setValidationErrorOptions(
     validationErrorOptions = { ...validationErrorOptions, ...options };
 }
 
-let sockethubConfigValidator: ReturnType<typeof ajv.compile> | undefined;
+let sockethubConfigValidator: ReturnType<Ajv["compile"]> | undefined;
 
 /**
  * Validate a (fully-materialized) Sockethub server config object against the
@@ -113,18 +141,26 @@ let sockethubConfigValidator: ReturnType<typeof ajv.compile> | undefined;
  * rather than reaching a platform wrong-typed.
  */
 export function validateSockethubConfig(config: unknown): string {
+    const instance = getAjv();
+    if (!instance) {
+        return "";
+    }
     if (!sockethubConfigValidator) {
-        sockethubConfigValidator = ajv.compile(SockethubConfigSchema);
+        sockethubConfigValidator = instance.compile(SockethubConfigSchema);
     }
     if (sockethubConfigValidator(config)) {
         return "";
     }
-    return ajv.errorsText(sockethubConfigValidator.errors, {
+    return instance.errorsText(sockethubConfigValidator.errors, {
         dataVar: "config",
     });
 }
 
 export function validateActivityStream(msg: ActivityStream): string {
+    if (!isCodegenAvailable()) {
+        warnCodegenUnavailable();
+        return "";
+    }
     const streamValidationError = handleValidation(
         `${schemaURL}/activity-stream`,
         msg,
@@ -149,6 +185,10 @@ export function validateActivityStream(msg: ActivityStream): string {
  * so outbound validation can be adopted platform-by-platform.
  */
 export function validateActivityStreamResponse(msg: ActivityStream): string {
+    if (!isCodegenAvailable()) {
+        warnCodegenUnavailable();
+        return "";
+    }
     const platformContextUrl = resolvePlatformContextUrl(msg);
     if (!platformContextUrl) {
         return "";
@@ -158,13 +198,18 @@ export function validateActivityStreamResponse(msg: ActivityStream): string {
         return "";
     }
     const responsesSchemaId = `${schemaURL}/context/${platformId}/responses`;
-    if (!ajv.getSchema(responsesSchemaId)) {
+    const instance = getAjv();
+    if (!instance || !instance.getSchema(responsesSchemaId)) {
         return "";
     }
     return handleValidation(responsesSchemaId, msg);
 }
 
 export function validateCredentials(msg: ActivityStream): string {
+    if (!isCodegenAvailable()) {
+        warnCodegenUnavailable();
+        return "";
+    }
     if (!Array.isArray(msg["@context"])) {
         return "credential activity streams must have an @context set";
     }
@@ -191,16 +236,19 @@ export function validateCredentials(msg: ActivityStream): string {
 }
 
 export function validatePlatformSchema(schema: Schema): string {
-    const validate = ajv.compile(PlatformSchema);
-    // validate schema property
-    const err = validate(schema);
-    if (!err) {
-        const validationError = validate.errors[0];
-        let message = `${validationError.instancePath} ${validationError.message}`;
-        if (validationError.keyword === "additionalProperties") {
-            message += `: ${validationError.params.additionalProperty}`;
+    const instance = getAjv();
+    if (instance) {
+        const validate = instance.compile(PlatformSchema);
+        // validate schema property
+        const err = validate(schema);
+        if (!err) {
+            const validationError = validate.errors?.[0];
+            let message = `${validationError?.instancePath ?? ""} ${validationError?.message ?? "is invalid"}`;
+            if (validationError?.keyword === "additionalProperties") {
+                message += `: ${validationError.params.additionalProperty}`;
+            }
+            return `platform schema failed to validate: ${message}`;
         }
-        return `platform schema failed to validate: ${message}`;
     }
     const platform = schema as Record<string, unknown>;
     const messages = platform.messages as Record<string, unknown> | undefined;
@@ -246,14 +294,18 @@ export function validatePlatformSchema(schema: Schema): string {
 }
 
 export function addPlatformSchema(schema: Schema, platform_type: string) {
+    const instance = getAjv();
+    if (!instance) {
+        return;
+    }
     const schemaRef = `${schemaURL}/context/${platform_type}`;
-    if (!ajv.getSchema(schemaRef)) {
-        ajv.addSchema(schema, schemaRef);
+    if (!instance.getSchema(schemaRef)) {
+        instance.addSchema(schema, schemaRef);
     }
 }
 
 export function getPlatformSchema(platform_type: string) {
-    return ajv.getSchema(`${schemaURL}/context/${platform_type}`);
+    return getAjv()?.getSchema(`${schemaURL}/context/${platform_type}`);
 }
 
 export function addPlatformContext(

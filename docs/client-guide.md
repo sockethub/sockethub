@@ -352,8 +352,26 @@ sc.socket.emit('message', {
 - **Auto-replay**: Credentials and connections restored on reconnect
 - **ActivityStream handling**: outbound messages are normalized and validated against
   the platform's schema (via `@sockethub/schemas`) before sending; incoming messages
-  are normalized before delivery
+  are normalized before delivery. Validation is skipped automatically where the
+  environment blocks code generation (see
+  [Browser extensions and CSP](#browser-extensions-and-csp))
 - **Connection state**: Check `sc.socket.connected` for status
+
+## Browser extensions and CSP
+
+Browser-extension pages (Manifest V3) run under a Content Security Policy that
+forbids `eval` and `new Function`, which Ajv needs to compile JSON schemas. In
+such an environment the client detects that code generation is unavailable and
+skips client-side schema validation instead of throwing while loading. No
+configuration is required, and the Sockethub server still validates every
+message.
+
+To skip client-side validation everywhere — for example, to keep Ajv out of the
+runtime path entirely — pass `validation: "off"`:
+
+```javascript
+const sc = await SockethubClient.connect(baseUrl, { validation: "off" });
+```
 
 ## HTTP Actions (no WebSocket)
 

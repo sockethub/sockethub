@@ -1202,3 +1202,26 @@ describe("SockethubClient", () => {
         });
     });
 });
+
+describe("SockethubClient validation option", () => {
+    function makeClient(options: Record<string, unknown>): any {
+        const socket = new EventEmitter() as any;
+        socket.connected = false;
+        return new SockethubClient(socket, options as never);
+    }
+
+    it('skips validation when validation is "off"', () => {
+        const client = makeClient({ validation: "off" });
+        expect(
+            client.validateActivity({
+                type: "send",
+                actor: { id: "x", type: "person" },
+            }),
+        ).to.equal("");
+    });
+
+    it('defaults to "auto" validation', () => {
+        const client = makeClient({});
+        expect(client.options.validation).to.equal("auto");
+    });
+});

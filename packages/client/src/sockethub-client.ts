@@ -82,6 +82,13 @@ export interface SockethubClientOptions {
     initTimeoutMs?: number;
     maxQueuedOutbound?: number;
     maxQueuedAgeMs?: number;
+    /**
+     * Client-side schema validation. `"auto"` (default) validates with Ajv when
+     * the environment allows code generation; environments that forbid it (a
+     * browser-extension CSP) skip validation automatically. `"off"` always
+     * skips it. The server validates every message regardless.
+     */
+    validation?: "auto" | "off";
 }
 
 export interface ConnectOptions
@@ -334,6 +341,7 @@ export default class SockethubClient {
             initTimeoutMs: options.initTimeoutMs ?? 5000,
             maxQueuedOutbound: options.maxQueuedOutbound ?? 1000,
             maxQueuedAgeMs: options.maxQueuedAgeMs ?? 30000,
+            validation: options.validation ?? "auto",
         };
 
         this.socket = this.createPublicEmitter();
@@ -475,6 +483,9 @@ export default class SockethubClient {
      * Returns an empty string when valid.
      */
     public validateActivity(activity: ActivityStream): string {
+        if (this.options.validation === "off") {
+            return "";
+        }
         if (activity.type === "credentials") {
             return validateCredentials(activity);
         }

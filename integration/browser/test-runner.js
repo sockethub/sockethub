@@ -13,6 +13,13 @@ if (!testFile) {
 
 // Create temporary WTR config file with injected global config and HTTP-loaded scripts
 const configPath = join(process.cwd(), "web-test-runner.config.temp.mjs");
+// `--csp` serves the page under a Content Security Policy that blocks eval, to
+// prove the client works in CSP-restricted environments (browser extensions).
+// Inline scripts stay allowed so the injected config and test framework load.
+const csp = process.argv.includes("--csp");
+const cspMeta = csp
+    ? `<meta http-equiv="Content-Security-Policy" content="default-src 'self' ${config.sockethub.url}; script-src 'self' 'unsafe-inline' ${config.sockethub.url}; connect-src 'self' ${config.sockethub.url} ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">`
+    : "";
 const configContent = `export default {
     nodeResolve: true,
     open: ${process.argv.includes("--open")},
@@ -26,6 +33,7 @@ const configContent = `export default {
         <!DOCTYPE html>
         <html>
             <head>
+                ${cspMeta}
                 <script>
                     window.TEST_CONFIG = ${JSON.stringify(config)};
                 </script>
