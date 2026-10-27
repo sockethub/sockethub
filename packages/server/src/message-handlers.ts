@@ -11,7 +11,9 @@ import type {
 } from "@sockethub/schemas";
 import { resolvePlatformId } from "@sockethub/schemas";
 import { errorMessage } from "@sockethub/util/error";
-import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-stream.js";
+import normalizeActivityStreamMiddleware, {
+    exceedsDepth,
+} from "./middleware/normalize-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import middleware from "./middleware.js";
@@ -52,6 +54,19 @@ export function attachError<T extends ActivityStream>(err: unknown, msg?: T) {
     const message = errorMessage(err);
     if (!msg) {
         return new Error(message);
+    }
+    if (exceedsDepth(msg)) {
+        // Echoing an over-deep payload would overflow the (recursive) ack
+        // encoder, so reply with a bounded summary instead.
+        const context = msg["@context"];
+        return {
+            ...(Array.isArray(context) &&
+            context.every((entry) => typeof entry === "string")
+                ? { "@context": context }
+                : {}),
+            ...(typeof msg.type === "string" ? { type: msg.type } : {}),
+            error: message,
+        } as unknown as T;
     }
 
     const cleaned = { ...msg, error: message } as T & {
