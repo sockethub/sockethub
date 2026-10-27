@@ -64,6 +64,12 @@ function isServiceDescriptorShape(
         if (!isAbsolutePath(endpoints.socketIO)) {
             return false;
         }
+        if (
+            endpoints.httpActions !== undefined &&
+            !isAbsolutePath(endpoints.httpActions)
+        ) {
+            return false;
+        }
     }
     return true;
 }

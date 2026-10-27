@@ -366,8 +366,7 @@ skips client-side schema validation instead of throwing while loading. No
 configuration is required, and the Sockethub server still validates every
 message.
 
-To skip client-side validation everywhere — for example, to keep Ajv out of the
-runtime path entirely — pass `validation: "off"`:
+To skip client-side activity validation everywhere, pass `validation: "off"`:
 
 ```javascript
 const sc = await SockethubClient.connect(baseUrl, { validation: "off" });

@@ -75,6 +75,19 @@ export async function server() {
         return;
     }
 
+    // Schema validation compiles JSON schemas with `new Function`. Refuse to
+    // start when the environment forbids code generation: the validators would
+    // otherwise silently accept every message instead of failing closed.
+    const { isCodegenAvailable } = await import("@sockethub/schemas");
+    if (!isCodegenAvailable()) {
+        console.error(
+            "Sockethub requires schema validation, but this environment " +
+                "forbids code generation (new Function).",
+        );
+        process.exitCode = 1;
+        return;
+    }
+
     // Loaded lazily (not statically) so the import-time Config singleton
     // doesn't run for the --write-config path above.
     const { default: config } = await import("./config.js");

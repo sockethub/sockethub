@@ -44,6 +44,13 @@ describe("codegen fallback (CSP without unsafe-eval)", () => {
             { ...descriptor, apiVersion: 1.5 },
             { ...descriptor, endpoints: {} },
             { ...descriptor, endpoints: { socketIO: "//other.example/x" } },
+            {
+                ...descriptor,
+                endpoints: {
+                    socketIO: "/sockethub",
+                    httpActions: "//other.example/x",
+                },
+            },
             { ...descriptor, platforms: [{ apiVersion: 1 }] },
         ]) {
             expect(validateServiceDescriptor(bad)).toBeFalse();

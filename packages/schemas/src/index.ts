@@ -41,6 +41,7 @@ import {
 } from "./validator.js";
 
 export { normalizeActivityStream } from "./activity-stream-helper.js";
+export { isCodegenAvailable } from "./helpers/codegen.js";
 
 export {
     AS2_BASE_CONTEXT_URL,
