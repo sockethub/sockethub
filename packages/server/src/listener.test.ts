@@ -17,6 +17,8 @@ it("disables Socket.IO payload debug logging even under wildcard settings", asyn
         expect(debug.enabled("socket.io-parser")).toBeFalse();
         expect(debug.enabled("engine:ws")).toBeFalse();
         expect(debug.enabled("engine:polling")).toBeFalse();
+        expect(debug.enabled("engine:socket")).toBeFalse();
+        expect(debug.enabled("engine")).toBeFalse();
         expect(debug.enabled("socket.io:server")).toBeTrue();
         expect(debug.enabled("sockethub:server")).toBeTrue();
     } finally {
@@ -37,7 +39,7 @@ it("excludes payload loggers before separate debug copies load at startup", () =
             require(dependency);
             const dependencyRequire = createRequire(require.resolve(dependency));
             const debug = dependencyRequire("debug");
-            for (const namespace of ["socket.io:socket", "socket.io-parser", "engine:ws", "engine:polling"]) {
+            for (const namespace of ["socket.io:socket", "socket.io-parser", "engine:ws", "engine:polling", "engine:socket", "engine"]) {
                 assert.equal(debug.enabled(namespace), false, dependency + ": " + namespace);
             }
             assert.equal(debug.enabled("socket.io:server"), true);
