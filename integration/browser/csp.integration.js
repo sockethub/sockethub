@@ -6,6 +6,11 @@ import { expect } from "@esm-bundle/chai";
 // code generation it would throw while loading, before any test runs.
 const config = window.TEST_CONFIG;
 
+// This suite doesn't load shared-setup.js, so set Mocha's timeout here. It must
+// exceed the 5s ready() and 10s acknowledgement deadlines below; Mocha's 2s
+// default would otherwise fail first on a slow connection.
+mocha.timeout("30s");
+
 /** Emit a socket.io event and resolve with its acknowledgement response. */
 function emitWithAck(socket, event, message) {
     return new Promise((resolve, reject) => {
