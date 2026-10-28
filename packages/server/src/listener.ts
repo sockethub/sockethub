@@ -3,7 +3,6 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
-import debug from "debug";
 import express, {
     type Express,
     type NextFunction,
@@ -14,6 +13,7 @@ import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import { parseCorsOrigins } from "./cors.js";
+import disablePayloadDebug from "./payload-debug.js";
 import routes from "./routes.js";
 import { EXAMPLES_PATH } from "./server-info.js";
 import { resolveTrustProxy } from "./trust-proxy.js";
@@ -42,8 +42,7 @@ class Listener {
      * the `http` and `io` class properties will be set.
      */
     start() {
-        // Socket.IO formats raw packets with recursive %j before middleware runs.
-        debug.enable(`${debug.disable()},-socket.io:socket,-socket.io-parser`);
+        disablePayloadDebug();
 
         // initialize express and socket.io objects
         const app = Listener.initExpress();
