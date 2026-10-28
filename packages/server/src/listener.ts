@@ -3,6 +3,7 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
+import debug from "debug";
 import express, {
     type Express,
     type NextFunction,
@@ -41,6 +42,9 @@ class Listener {
      * the `http` and `io` class properties will be set.
      */
     start() {
+        // Socket.IO formats raw packets with recursive %j before middleware runs.
+        debug.enable(`${debug.disable()},-socket.io:socket,-socket.io-parser`);
+
         // initialize express and socket.io objects
         const app = Listener.initExpress();
         this.app = app;

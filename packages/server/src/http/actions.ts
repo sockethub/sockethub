@@ -38,6 +38,7 @@ import config from "../config.js";
 import { clearSessionScopes } from "../connection-scope.js";
 import { createCorsMiddleware } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
+import { exceedsDepth } from "../middleware/normalize-activity-stream.js";
 import type ProcessManager from "../process-manager.js";
 import {
     registerHttpSession,
@@ -111,6 +112,9 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function classifyPayload(payload: unknown): PayloadKind {
     if (!isObject(payload)) {
         return "unknown";
+    }
+    if (exceedsDepth(payload)) {
+        return "message";
     }
     // ActivityStream messages may identify their platform via context, @context, or platform.
     if ("type" in payload && "actor" in payload) {

@@ -10,6 +10,7 @@ import {
 import express from "express";
 
 import { buildPlatformRegistryPayload } from "../api-info.js";
+import { createMessageHandlers } from "../message-handlers.js";
 import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import { apiVersionFromSemver, SOCKETHUB_VERSION } from "../version.js";
 import { redactRequestId, registerHttpActionsRoutes } from "./actions.js";
@@ -292,6 +293,23 @@ describe("http actions", () => {
 
         expect(res.statusCode).toBe(200);
         expect(writes.length).toBe(1);
+    });
+
+    it("rejects deeply nested type arrays through the shared handler", async () => {
+        let nested = "0";
+        for (let i = 0; i < 12000; i++) nested = `[${nested}]`;
+        const handlers = buildHandlers({
+            fakeRedis: new FakeRedis(),
+            createMessageHandlersOverride: createMessageHandlers,
+        });
+        const { req, res, writes } = createReqRes({
+            body: JSON.parse(`{"type":${nested},"actor":{}}`),
+            headers: { "x-request-id": "deep-type" },
+        });
+        await handlers["/sockethub-http"](req, res);
+        expect(res.statusCode).toBe(200);
+        expect(writes).toHaveLength(1);
+        expect(JSON.parse(writes[0]).error).toBe("activity stream nesting too deep.");
     });
 
     it("tears down the session credential store after completion", async () => {
