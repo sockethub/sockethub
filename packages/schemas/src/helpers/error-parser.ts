@@ -27,6 +27,7 @@ function parseMsg(error: ErrorObject): string {
 // Recursion guard: callers may pass unvalidated, arbitrarily deep input.
 const MAX_TYPE_LIST_DEPTH = 64;
 
+/** Collect nested type labels, stopping before untrusted input can exhaust the stack. */
 function getTypeList(
     msg: ActivityStream | ActivityObject,
     depth = 0,

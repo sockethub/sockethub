@@ -3,6 +3,7 @@ import { normalizeActivityStream } from "@sockethub/schemas";
 
 import type { MiddlewareChainInterface } from "../middleware.js";
 
+/** Accept JSON records as activity candidates, excluding arrays and null. */
 function ensureObject(msg: unknown): msg is Record<string, unknown> {
     return typeof msg === "object" && msg !== null && !Array.isArray(msg);
 }
@@ -36,6 +37,7 @@ export function exceedsDepth(root: unknown, max = MAX_MESSAGE_DEPTH): boolean {
     return false;
 }
 
+/** Reject malformed or over-deep input before normalizing an activity. */
 export default function normalizeActivityStreamMiddleware<
     T extends ActivityStream,
 >(msg: T, done: MiddlewareChainInterface<T>) {
