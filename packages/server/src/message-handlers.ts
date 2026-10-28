@@ -49,7 +49,7 @@ export interface MessageHandlersOptions {
  * Removes internal-only properties that must never be sent to clients.
  */
 export function attachError<T extends ActivityStream>(err: unknown, msg?: T) {
-    const message = errorMessage(err);
+    const message = errorMessage(err).slice(0, 256);
     if (!msg) {
         return new Error(message);
     }

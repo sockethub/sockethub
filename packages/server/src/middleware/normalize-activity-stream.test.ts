@@ -108,6 +108,21 @@ describe("Middleware: Normalize Activity Stream", () => {
                 error: "boom",
             });
         });
+        it("attachError bounds error text with and without a payload", () => {
+            const context = "https://unregistered.example/" + "x".repeat(1000);
+            const error = new Error(
+                `Unregistered platform @context value: ${context}`,
+            );
+            const ack = attachError(error, stream({})) as ActivityStream;
+            expect(ack.error).toBe(error.message.slice(0, 256));
+            expect((attachError(error) as Error).message).toBe(
+                error.message.slice(0, 256),
+            );
+            const boundary = "x".repeat(256);
+            expect((attachError(boundary, stream({})) as ActivityStream).error)
+                .toBe(boundary);
+        });
+
         it("attachError omits oversized and malformed summary fields", () => {
             for (const context of [
                 Array(9).fill("x"),

@@ -416,6 +416,46 @@ describe("http actions", () => {
         );
     });
 
+    it("bounds invalid credential actor IDs without truncating valid correlations", async () => {
+        for (const { length, error } of [
+            { length: 256, error: "invalid credentials" },
+            { length: 257, error: "invalid credentials" },
+            { length: 257, error: undefined },
+        ]) {
+            const fakeRedis = new FakeRedis();
+            const handlers = buildHandlers({
+                fakeRedis,
+                createMessageHandlersOverride: () => ({
+                    credentials: (
+                        _payload: unknown,
+                        cb: (data: unknown) => void,
+                    ) => cb({ error }),
+                }),
+            });
+            const actorId = "a".repeat(length);
+            const requestId = `actor-bound-${length}-${error ? "error" : "success"}`;
+            const { req, res, writes } = createReqRes({
+                body: [{ type: "credentials", actor: { id: actorId } }],
+                headers: { "x-request-id": requestId },
+            });
+            await handlers["/sockethub-http"](req, res);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            expect(writes).toHaveLength(1);
+            const ack = JSON.parse(writes[0]);
+            expect(ack.error).toBe(error);
+            if (error && length > 256) {
+                expect(ack.actor?.id).toBeUndefined();
+                expect(writes[0]).not.toContain(actorId);
+            } else {
+                expect(ack.actor.id).toBe(actorId);
+                expect(ack.type).toBe("credentials-ack");
+            }
+            expect(
+                fakeRedis.lists.get(`sockethub:http-actions:results:${requestId}`),
+            ).toEqual([writes[0].trim()]);
+        }
+    });
+
     it("redacts credentials from handler error acknowledgements", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
