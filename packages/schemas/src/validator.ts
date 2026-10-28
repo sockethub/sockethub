@@ -34,12 +34,15 @@ let systemContextsRegistered = false;
 
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamSchema;
 
-// Ajv is created lazily: constructing it and adding schemas compiles them with
-// `new Function`, which a Content Security Policy that forbids eval (browser
-// extensions) blocks. When code generation is unavailable, schema validation is
-// skipped and the Sockethub server remains the authority.
 let ajv: Ajv | undefined;
 
+/**
+ * Lazily create the shared Ajv instance and register every known schema.
+ * Constructing Ajv and adding schemas compiles them with `new Function`, which
+ * a Content Security Policy that forbids eval (browser extensions) blocks.
+ * Returns `undefined` when code generation is unavailable, so callers skip
+ * validation; the Sockethub server remains the authority.
+ */
 function getAjv(): Ajv | undefined {
     if (!isCodegenAvailable()) {
         warnCodegenUnavailable();
@@ -57,6 +60,11 @@ function getAjv(): Ajv | undefined {
     return ajv;
 }
 
+/**
+ * Register a built-in (system) platform's context and, when Ajv is available,
+ * empty message and credentials schemas for it. Also used as a no-op Ajv step
+ * under a code-generation-blocking CSP.
+ */
 function registerSystemContext(platformId: string, contextUrl: string): void {
     registerPlatformContext(
         platformId,
@@ -92,6 +100,11 @@ export function registerSystemPlatformContexts(): void {
 
 registerSystemPlatformContexts();
 
+/**
+ * Validate `msg` against the schema registered at `schemaRef`. Returns an empty
+ * string when valid, otherwise a human-readable error; returns "" if Ajv is
+ * unavailable or the schema is not registered.
+ */
 function handleValidation(schemaRef: string, msg: ActivityStream): string {
     const instance = getAjv();
     if (!instance) {
@@ -156,6 +169,11 @@ export function validateSockethubConfig(config: unknown): string {
     });
 }
 
+/**
+ * Validate an inbound activity stream against the shared envelope and its
+ * registered platform message schema. Returns "" when valid; skipped (also "")
+ * when code generation is unavailable.
+ */
 export function validateActivityStream(msg: ActivityStream): string {
     if (!isCodegenAvailable()) {
         warnCodegenUnavailable();
@@ -205,6 +223,11 @@ export function validateActivityStreamResponse(msg: ActivityStream): string {
     return handleValidation(responsesSchemaId, msg);
 }
 
+/**
+ * Validate a credentials activity stream against the shared envelope and its
+ * registered platform credentials schema. Returns "" when valid; skipped (also
+ * "") when code generation is unavailable.
+ */
 export function validateCredentials(msg: ActivityStream): string {
     if (!isCodegenAvailable()) {
         warnCodegenUnavailable();
@@ -235,6 +258,11 @@ export function validateCredentials(msg: ActivityStream): string {
     return handleValidation(credentialsSchemaId, msg);
 }
 
+/**
+ * Validate a platform schema: its structural shape via Ajv (when available)
+ * and that its actor/target types are registered in the shared ActivityStreams
+ * envelope. Returns "" when valid, otherwise an error string.
+ */
 export function validatePlatformSchema(schema: Schema): string {
     const instance = getAjv();
     if (instance) {
@@ -293,6 +321,11 @@ export function validatePlatformSchema(schema: Schema): string {
     return "";
 }
 
+/**
+ * Register a platform's message or credentials schema with the validators, so
+ * local validation uses the same canonical sources as the server. No-op when
+ * code generation is unavailable.
+ */
 export function addPlatformSchema(schema: Schema, platform_type: string) {
     const instance = getAjv();
     if (!instance) {
@@ -304,6 +337,10 @@ export function addPlatformSchema(schema: Schema, platform_type: string) {
     }
 }
 
+/**
+ * Look up a registered platform schema validator, or `undefined` when no such
+ * schema is registered or code generation is unavailable.
+ */
 export function getPlatformSchema(platform_type: string) {
     return getAjv()?.getSchema(`${schemaURL}/context/${platform_type}`);
 }

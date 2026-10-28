@@ -6,6 +6,7 @@ import { expect } from "@esm-bundle/chai";
 // code generation it would throw while loading, before any test runs.
 const config = window.TEST_CONFIG;
 
+/** Emit a socket.io event and resolve with its acknowledgement response. */
 function emitWithAck(socket, event, message) {
     return new Promise((resolve, reject) => {
         const timer = setTimeout(

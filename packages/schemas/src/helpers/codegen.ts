@@ -12,6 +12,11 @@
 let available: boolean | undefined;
 let warned = false;
 
+/**
+ * Report whether the environment allows code generation, i.e. whether
+ * `new Function` succeeds. The result is probed once and cached, so callers may
+ * invoke this freely.
+ */
 export function isCodegenAvailable(): boolean {
     if (available === undefined) {
         try {

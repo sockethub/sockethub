@@ -35,6 +35,12 @@ async function reportFatal(err: Error, code = 1): Promise<never> {
     process.exit(code);
 }
 
+/**
+ * Start the Sockethub server. Handles the `--help`/`--version`/`--write-config`
+ * short-circuits, then boots the HTTP/Socket.IO listener. Refuses to start when
+ * the environment forbids code generation, since schema validation would fail
+ * open.
+ */
 export async function server() {
     const argv = process.argv.slice(2);
 

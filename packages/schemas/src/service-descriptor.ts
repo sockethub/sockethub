@@ -12,6 +12,11 @@ import {
 let ajv: Ajv | undefined;
 let validator: ValidateFunction<ServiceDescriptor> | undefined;
 
+/**
+ * Type guard for a server's service descriptor. Validates with Ajv when code
+ * generation is available and falls back to a structural check when a Content
+ * Security Policy blocks it.
+ */
 export function validateServiceDescriptor(
     descriptor: unknown,
 ): descriptor is ServiceDescriptor {
@@ -26,8 +31,10 @@ export function validateServiceDescriptor(
     return validator(descriptor);
 }
 
-// Structural fallback used when code generation (and therefore Ajv) is
-// unavailable. Mirrors the required members of ServiceDescriptorSchema.
+/**
+ * Structural fallback used when code generation (and therefore Ajv) is
+ * unavailable. Mirrors the required members of ServiceDescriptorSchema.
+ */
 function isServiceDescriptorShape(
     descriptor: unknown,
 ): descriptor is ServiceDescriptor {
@@ -74,12 +81,15 @@ function isServiceDescriptorShape(
     return true;
 }
 
+/** Whether `value` is a Sockethub API version: a non-negative integer. */
 function isApiVersion(value: unknown): boolean {
     return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
-// A server-absolute path: a single leading "/" with no whitespace or backslash
-// (matches ServiceDescriptorSchema's `absolutePath`).
+/**
+ * A server-absolute path: a single leading "/" with no whitespace or backslash
+ * (matches ServiceDescriptorSchema's `absolutePath`).
+ */
 function isAbsolutePath(value: unknown): boolean {
     return typeof value === "string" && /^\/(?![/\\])[^\s\\]*$/.test(value);
 }
