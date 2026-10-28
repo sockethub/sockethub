@@ -129,6 +129,14 @@ jobs:
         continue-on-error: true
         run: docker logs sockethub-sockethub-1
 
+      - name: CSP Browser Integration Tests
+        run: bun run integration:browser:csp
+
+      - name: Sockethub Logs - CSP
+        if: always()
+        continue-on-error: true
+        run: docker logs sockethub-sockethub-1
+
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
       - name: Multiclient XMPP Integration Tests

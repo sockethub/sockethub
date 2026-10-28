@@ -5,6 +5,7 @@ import { createSandbox, restore } from "sinon";
 import SockethubClient, {
     type ClientReadyInfo,
     type PlatformRegistryPayload,
+    type SockethubClientOptions,
 } from "./sockethub-client";
 
 const TEST_REGISTRY = {
@@ -1200,5 +1201,33 @@ describe("SockethubClient", () => {
                 done();
             }, 10);
         });
+    });
+});
+
+describe("SockethubClient validation option", () => {
+    function makeClient(options: SockethubClientOptions): SockethubClient {
+        const socket = new EventEmitter() as unknown as ConstructorParameters<
+            typeof SockethubClient
+        >[0];
+        (socket as { connected: boolean }).connected = false;
+        return new SockethubClient(socket, options);
+    }
+
+    it('skips validation when validation is "off"', () => {
+        const client = makeClient({ validation: "off" });
+        expect(
+            client.validateActivity({
+                type: "send",
+                actor: { id: "x", type: "person" },
+            } as never),
+        ).to.equal("");
+    });
+
+    it('defaults to "auto" validation', () => {
+        const client = makeClient({});
+        const options = (
+            client as unknown as { options: { validation: string } }
+        ).options;
+        expect(options.validation).to.equal("auto");
     });
 });

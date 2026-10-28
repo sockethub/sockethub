@@ -35,6 +35,12 @@ async function reportFatal(err: Error, code = 1): Promise<never> {
     process.exit(code);
 }
 
+/**
+ * Start the Sockethub server. Handles the `--help`/`--version`/`--write-config`
+ * short-circuits, then boots the HTTP/Socket.IO listener. Refuses to start when
+ * the environment forbids code generation, since schema validation would fail
+ * open.
+ */
 export async function server() {
     const argv = process.argv.slice(2);
 
@@ -72,6 +78,19 @@ export async function server() {
             console.error(toError(err).message);
             process.exitCode = 1;
         }
+        return;
+    }
+
+    // Schema validation compiles JSON schemas with `new Function`. Refuse to
+    // start when the environment forbids code generation: the validators would
+    // otherwise silently accept every message instead of failing closed.
+    const { isCodegenAvailable } = await import("@sockethub/schemas");
+    if (!isCodegenAvailable()) {
+        console.error(
+            "Sockethub requires schema validation, but this environment " +
+                "forbids code generation (new Function).",
+        );
+        process.exitCode = 1;
         return;
     }
 
