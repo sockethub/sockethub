@@ -1,3 +1,5 @@
+import "./payload-debug.js";
+
 import path from "node:path";
 import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
 import { toError } from "@sockethub/util/error";

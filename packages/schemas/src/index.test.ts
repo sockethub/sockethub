@@ -297,6 +297,27 @@ describe("schemas/src/index.ts", () => {
         );
     });
 
+    describe("deeply nested input", () => {
+        it("returns an error instead of overflowing the stack", () => {
+            let object: Record<string, unknown> = { type: "x" };
+            for (let i = 0; i < 200000; i++) {
+                object = { type: "x", o: object };
+            }
+            const err = validateActivityStream({
+                type: "send",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+                ],
+                actor: { id: "dood@irc.freenode.net", type: "person" },
+                object,
+            } as unknown as ActivityStream);
+            expect(typeof err).toEqual("string");
+            expect(err).not.toEqual("");
+        });
+    });
+
     describe("validateActivityStreamResponse", () => {
         test("is a no-op (passes) when the platform has no responses schema", () => {
             const msg = {

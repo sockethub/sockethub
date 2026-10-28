@@ -49,18 +49,25 @@ export interface MessageHandlersOptions {
  * Removes internal-only properties that must never be sent to clients.
  */
 export function attachError<T extends ActivityStream>(err: unknown, msg?: T) {
-    const message = errorMessage(err);
+    const message = errorMessage(err).slice(0, 256);
     if (!msg) {
         return new Error(message);
     }
-
-    const cleaned = { ...msg, error: message } as T & {
-        sessionSecret?: string;
-    };
-    if ("sessionSecret" in cleaned) {
-        delete cleaned.sessionSecret;
-    }
-    return cleaned;
+    // Never echo client payloads, including credentials, into error acks.
+    const context = msg["@context"];
+    return {
+        ...(Array.isArray(context) &&
+        context.length <= 8 &&
+        context.every(
+            (entry) => typeof entry === "string" && entry.length <= 256,
+        )
+            ? { "@context": context }
+            : {}),
+        ...(typeof msg.type === "string" && msg.type.length <= 64
+            ? { type: msg.type }
+            : {}),
+        error: message,
+    } as unknown as T;
 }
 
 export function createMessageHandlers(

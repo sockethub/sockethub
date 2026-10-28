@@ -38,6 +38,7 @@ import config from "../config.js";
 import { clearSessionScopes } from "../connection-scope.js";
 import { createCorsMiddleware } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
+import { exceedsDepth } from "../middleware/normalize-activity-stream.js";
 import type ProcessManager from "../process-manager.js";
 import {
     registerHttpSession,
@@ -56,6 +57,7 @@ const DEFAULT_HTTP_ACTIONS_PATH = "/sockethub-http";
 const IDEMPOTENCY_PREFIX = "sockethub:http-actions";
 const IDEMPOTENCY_BATCH_SIZE = 100;
 const MAX_REQUEST_ID_LENGTH = 128;
+const MAX_ERROR_ACTOR_ID_LENGTH = 256;
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]+$/;
 // CORS: the endpoint is a browser-facing API, so it honors the same
 // `sockethub:cors:origin` config that governs socket.io.
@@ -112,6 +114,9 @@ function classifyPayload(payload: unknown): PayloadKind {
     if (!isObject(payload)) {
         return "unknown";
     }
+    if (exceedsDepth(payload)) {
+        return "message";
+    }
     // ActivityStream messages may identify their platform via context, @context, or platform.
     if ("type" in payload && "actor" in payload) {
         const typeValue = String(payload.type);
@@ -164,18 +169,16 @@ function buildCredentialsAck(
     const actor = isObject(payload) ? payload.actor : undefined;
     const actorId =
         isObject(actor) && typeof actor.id === "string" ? actor.id : undefined;
-    if (!actorId) {
-        // Never the raw result: the chain's error handler spreads the whole
-        // submitted activity (`{ ...msg, error }`, stripping only
-        // `sessionSecret`), so `object.password` / `object.token` are still on
-        // it. That would be written to the NDJSON stream and persisted to the
-        // idempotency cache, which an unauthenticated GET replays. Only the
-        // message travels.
-        const message =
-            isObject(result) && typeof result.error === "string"
-                ? result.error
-                : "invalid credentials payload";
-        return new Error(message);
+    const error =
+        isObject(result) && typeof result.error === "string"
+            ? result.error
+            : undefined;
+    if (
+        !actorId ||
+        (error !== undefined && actorId.length > MAX_ERROR_ACTOR_ID_LENGTH)
+    ) {
+        // Invalid identifiers must not inflate responses or cached errors.
+        return new Error(error ?? "invalid credentials payload");
     }
 
     const ack: ActivityStream = {
@@ -186,8 +189,8 @@ function buildCredentialsAck(
             type: "person",
         },
     };
-    if (isObject(result) && typeof result.error === "string") {
-        ack.error = result.error;
+    if (error !== undefined) {
+        ack.error = error;
     }
     return ack;
 }

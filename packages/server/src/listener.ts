@@ -13,6 +13,7 @@ import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import { parseCorsOrigins } from "./cors.js";
+import disablePayloadDebug from "./payload-debug.js";
 import routes from "./routes.js";
 import { EXAMPLES_PATH } from "./server-info.js";
 import { resolveTrustProxy } from "./trust-proxy.js";
@@ -41,6 +42,8 @@ class Listener {
      * the `http` and `io` class properties will be set.
      */
     start() {
+        disablePayloadDebug();
+
         // initialize express and socket.io objects
         const app = Listener.initExpress();
         this.app = app;

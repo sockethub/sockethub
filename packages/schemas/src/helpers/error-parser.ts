@@ -24,8 +24,18 @@ function parseMsg(error: ErrorObject): string {
     return err;
 }
 
-function getTypeList(msg: ActivityStream | ActivityObject): Array<string> {
+// Recursion guard: callers may pass unvalidated, arbitrarily deep input.
+const MAX_TYPE_LIST_DEPTH = 64;
+
+/** Collect nested type labels, stopping before untrusted input can exhaust the stack. */
+function getTypeList(
+    msg: ActivityStream | ActivityObject,
+    depth = 0,
+): Array<string> {
     const types: Array<string> = [];
+    if (depth > MAX_TYPE_LIST_DEPTH) {
+        return types;
+    }
     if (msg?.type) {
         types.push(msg.type);
     }
@@ -34,7 +44,10 @@ function getTypeList(msg: ActivityStream | ActivityObject): Array<string> {
         const value = record[prop];
         if (value && typeof value === "object" && "type" in value) {
             types.push(
-                ...getTypeList(value as ActivityStream | ActivityObject),
+                ...getTypeList(
+                    value as ActivityStream | ActivityObject,
+                    depth + 1,
+                ),
             );
         }
     }

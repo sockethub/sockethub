@@ -10,6 +10,7 @@ import {
 import express from "express";
 
 import { buildPlatformRegistryPayload } from "../api-info.js";
+import { createMessageHandlers } from "../message-handlers.js";
 import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import { apiVersionFromSemver, SOCKETHUB_VERSION } from "../version.js";
 import { redactRequestId, registerHttpActionsRoutes } from "./actions.js";
@@ -294,6 +295,23 @@ describe("http actions", () => {
         expect(writes.length).toBe(1);
     });
 
+    it("rejects deeply nested type arrays through the shared handler", async () => {
+        let nested = "0";
+        for (let i = 0; i < 12000; i++) nested = `[${nested}]`;
+        const handlers = buildHandlers({
+            fakeRedis: new FakeRedis(),
+            createMessageHandlersOverride: createMessageHandlers,
+        });
+        const { req, res, writes } = createReqRes({
+            body: JSON.parse(`{"type":${nested},"actor":{}}`),
+            headers: { "x-request-id": "deep-type" },
+        });
+        await handlers["/sockethub-http"](req, res);
+        expect(res.statusCode).toBe(200);
+        expect(writes).toHaveLength(1);
+        expect(JSON.parse(writes[0]).error).toBe("activity stream nesting too deep.");
+    });
+
     it("tears down the session credential store after completion", async () => {
         const fakeRedis = new FakeRedis();
         let teardowns = 0;
@@ -396,6 +414,46 @@ describe("http actions", () => {
         expect(JSON.stringify({ writes, cached })).not.toContain(
             "calendar-test-password",
         );
+    });
+
+    it("bounds invalid credential actor IDs without truncating valid correlations", async () => {
+        for (const { length, error } of [
+            { length: 256, error: "invalid credentials" },
+            { length: 257, error: "invalid credentials" },
+            { length: 257, error: undefined },
+        ]) {
+            const fakeRedis = new FakeRedis();
+            const handlers = buildHandlers({
+                fakeRedis,
+                createMessageHandlersOverride: () => ({
+                    credentials: (
+                        _payload: unknown,
+                        cb: (data: unknown) => void,
+                    ) => cb({ error }),
+                }),
+            });
+            const actorId = "a".repeat(length);
+            const requestId = `actor-bound-${length}-${error ? "error" : "success"}`;
+            const { req, res, writes } = createReqRes({
+                body: [{ type: "credentials", actor: { id: actorId } }],
+                headers: { "x-request-id": requestId },
+            });
+            await handlers["/sockethub-http"](req, res);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            expect(writes).toHaveLength(1);
+            const ack = JSON.parse(writes[0]);
+            expect(ack.error).toBe(error);
+            if (error && length > 256) {
+                expect(ack.actor?.id).toBeUndefined();
+                expect(writes[0]).not.toContain(actorId);
+            } else {
+                expect(ack.actor.id).toBe(actorId);
+                expect(ack.type).toBe("credentials-ack");
+            }
+            expect(
+                fakeRedis.lists.get(`sockethub:http-actions:results:${requestId}`),
+            ).toEqual([writes[0].trim()]);
+        }
     });
 
     it("redacts credentials from handler error acknowledgements", async () => {
