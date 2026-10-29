@@ -150,6 +150,10 @@ export default class PlatformInstance {
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
+        // Platform TLS connections need the operator's additional trusted CAs too.
+        if (process.env.NODE_EXTRA_CA_CERTS) {
+            env.NODE_EXTRA_CA_CERTS = process.env.NODE_EXTRA_CA_CERTS;
+        }
         // Forward the credential-key TTL so the child's per-job reads refresh
         // the sliding expiry the parent set on save.
         const credentialsTtl = config.get("credentials:ttlMs");

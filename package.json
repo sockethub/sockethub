@@ -48,7 +48,7 @@
     "dev": "bun run build:runtime && SOCKETHUB_HTTP_ACTIONS_ENABLED=true bun run --hot packages/sockethub/bin/sockethub --examples",
     "doc": "bun run --filter='*' doc",
     "docker:start": "bun run docker:start:xmpp && bun run docker:start:irc && bun run docker:start:caldav && docker compose up sockethub -d",
-    "docker:start:xmpp": "bash scripts/docker-compose-retry.sh up prosody -d",
+    "docker:start:xmpp": "bash scripts/setup-xmpp-test-tls.sh && bash scripts/docker-compose-retry.sh up prosody -d",
     "docker:start:irc": "bash scripts/docker-compose-retry.sh up ergo -d",
     "docker:start:caldav": "bash scripts/docker-compose-retry.sh up radicale baikal -d --build --wait",
     "docker:start:redis": "docker compose up redis -d",

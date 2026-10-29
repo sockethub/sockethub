@@ -11,6 +11,7 @@ sockethub.config.json
 packages/sockethub/sockethub.config.json.sentry
 test-install/
 test-results/
+integration/prosody/certs/
 .local-tarballs/
 **sockethub.log
 packages/*/API.md

@@ -69,6 +69,8 @@ jobs:
 
       - name: Verifying Child Process Termination
         run: VERBOSE=true bun run integration:process
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/integration/prosody/certs/test.crt
 
       - name: HTTP actions integration tests
         run: REQUIRE_HTTP_ACTIONS=true bun run integration:http-actions
@@ -298,6 +300,7 @@ jobs:
       # which need Sockethub + Redis (sockethub depends_on redis) — no XMPP/IRC.
       # Running in a dedicated job keeps a flaky XMPP/IRC delivery race in the
       # browser job from blocking unrelated contract changes, and vice versa.
+      - run: bash scripts/setup-xmpp-test-tls.sh
       - run: docker compose up sockethub -d
       - run: sleep 5
 

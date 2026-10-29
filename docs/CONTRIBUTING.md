@@ -323,6 +323,18 @@ bun run docker:start:redis # Start only Redis service
 bun run docker:stop        # Stop all Docker services
 ```
 
+`bun run docker:start:xmpp` generates an ignored, disposable TLS certificate for
+the Prosody fixture. Docker Compose configures Sockethub to trust that certificate.
+When running Sockethub or the process integration tests on the host, pass the trust
+file explicitly:
+
+```bash
+NODE_EXTRA_CA_CERTS="$PWD/integration/prosody/certs/test.crt" bun run integration:process
+```
+
+Use `bash scripts/setup-xmpp-test-tls.sh` before starting Compose services directly.
+The fixture certificate is for local integration tests only.
+
 ## Key Files to Understand
 
 - `sockethub.config.json` (repo root; create with `bun run start -- --write-config`) -

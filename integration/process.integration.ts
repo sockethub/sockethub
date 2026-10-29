@@ -263,7 +263,8 @@ describe("Parent Process Sudden Termination", () => {
             "packages/sockethub/bin/sockethub",
         );
 
-        testConfig.sockethubProcess = spawn("bun", ["run", sockethubPath], {
+        // Exercise the deployment runtime, including Node's STARTTLS socket upgrade.
+        testConfig.sockethubProcess = spawn("node", [sockethubPath], {
             env: {
                 ...process.env,
                 REDIS_URL: config.redis.url,
