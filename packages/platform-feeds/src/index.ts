@@ -54,9 +54,9 @@ const full = new RegExp(
 );
 
 function isHtml(s: string): boolean {
-    // limit it to a reasonable length to improve performance.
-    const limitedString = s.trim().slice(0, 1000);
-    return basic.test(limitedString) || full.test(s);
+    // Bound all classification work, including trimming, on untrusted descriptions.
+    const limitedString = s.slice(0, 1000).trim();
+    return basic.test(limitedString) || full.test(limitedString);
 }
 
 /**

@@ -133,6 +133,23 @@ describe("buildFeedItem", () => {
         expect(result.published).toEqual("2024-01-01T00:00:00.000Z");
     });
 
+    it.each([
+        ["plain text", "text"],
+        ["<p>HTML content</p>", "html"],
+        ["<!doctype html>", "html"],
+        ["<x-custom>content</x-custom>", "html"],
+        [`${"a".repeat(997)}<p>`, "html"],
+        [`${"a".repeat(998)}<p>`, "text"],
+        [`${" ".repeat(1000)}<p>HTML beyond the prefix</p>`, "text"],
+        [`${"a".repeat(1000)}<p>HTML beyond the prefix</p>`, "text"],
+        ["<a ".repeat(11_000), "text"],
+    ])("classifies a bounded prefix of description %#", (description, contentType) => {
+        const result = buildFeedItem({ ...baseItem, description }, channelUrl);
+
+        expect(result.contentType).toBe(contentType);
+        expect(result.content).toBe(description);
+    });
+
     it("falls back to channel URL when item has no link", () => {
         const { link: _link, ...withoutLink } = baseItem;
         const result = buildFeedItem(
