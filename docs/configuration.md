@@ -433,8 +433,9 @@ its origin is allowed:
   the matching origin is echoed in `Access-Control-Allow-Origin` (with
   `Vary: Origin`), and the server rejects requests from other origins with 403.
 
-The allow-list is enforced on socket.io handshakes for all transports, including
-WebSocket, and on HTTP actions requests before body parsing or dispatch. Requests
+The allow-list is enforced on every socket.io transport request, including
+WebSocket upgrades that reuse an existing session, and on HTTP actions requests
+before body parsing or dispatch. Requests
 without an `Origin` header remain allowed for non-browser clients. HTTP actions
 POST requests must use `Content-Type: application/json`; other media types return
 415.

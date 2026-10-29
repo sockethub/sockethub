@@ -1,5 +1,6 @@
 import { expect, it, spyOn } from "bun:test";
 import { spawnSync } from "node:child_process";
+import { request } from "node:http";
 import type { AddressInfo } from "node:net";
 import debug from "debug";
 import { io } from "socket.io-client";
@@ -88,6 +89,56 @@ it("enforces the origin allow-list on polling and WebSocket handshakes", async (
                     socket.disconnect();
                 }
             }
+        }
+    } finally {
+        await new Promise<void>((resolve) => listener.io.close(() => resolve()));
+        get.mockRestore();
+    }
+});
+
+
+it("checks origins when upgrading an existing polling session", async () => {
+    const getConfig = config.get.bind(config);
+    const get = spyOn(config, "get").mockImplementation((key: string) => {
+        if (key === "sockethub:port") return 0;
+        if (key === "sockethub:host") return "127.0.0.1";
+        if (key === "sockethub:cors:origin") return "https://app.example";
+        return getConfig(key);
+    });
+    try {
+        listener.start();
+        if (!listener.http.listening) {
+            await new Promise<void>((resolve) => listener.http.once("listening", resolve));
+        }
+        const { port } = listener.http.address() as AddressInfo;
+        const endpoint = `http://127.0.0.1:${port}${getConfig("sockethub:path")}/`;
+        for (const origin of ["https://evil.example", "https://app.example", undefined]) {
+            const polling = await fetch(`${endpoint}?EIO=4&transport=polling`);
+            expect(polling.status).toBe(200);
+            const { sid } = JSON.parse((await polling.text()).slice(1));
+            const status = await new Promise<number>((resolve, reject) => {
+                const upgrade = request(`${endpoint}?EIO=4&transport=websocket&sid=${sid}`, {
+                    headers: {
+                        Connection: "Upgrade",
+                        Upgrade: "websocket",
+                        "Sec-WebSocket-Version": "13",
+                        "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+                        ...(origin === undefined ? {} : { Origin: origin }),
+                    },
+                });
+                upgrade.once("response", (response) => {
+                    response.resume();
+                    resolve(response.statusCode ?? 0);
+                });
+                upgrade.once("upgrade", (response, socket) => {
+                    socket.destroy();
+                    resolve(response.statusCode ?? 0);
+                });
+                upgrade.once("error", reject);
+                upgrade.setTimeout(2000, () => upgrade.destroy(new Error("upgrade timed out")));
+                upgrade.end();
+            });
+            expect(status, String(origin)).toBe(origin === "https://evil.example" ? 400 : 101);
         }
     } finally {
         await new Promise<void>((resolve) => listener.io.close(() => resolve()));

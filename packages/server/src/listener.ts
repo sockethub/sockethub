@@ -58,16 +58,25 @@ class Listener {
                 origin: allowedOrigins,
                 methods: ["GET", "POST"],
             },
-            allowRequest: (req, callback) => {
-                const origin = req.headers.origin;
-                callback(
-                    null,
-                    origin === undefined ||
-                        resolveAllowedOrigin(allowedOrigins, origin) !==
-                            undefined,
-                );
-            },
         });
+        // allowRequest skips requests with a sid; middleware also checks upgrades.
+        this.io.engine.use(
+            (
+                req: HTTP.IncomingMessage,
+                _res: HTTP.ServerResponse,
+                next: (err?: Error) => void,
+            ) => {
+                const origin = req.headers.origin;
+                if (
+                    origin !== undefined &&
+                    resolveAllowedOrigin(allowedOrigins, origin) === undefined
+                ) {
+                    next(new Error("origin not allowed"));
+                    return;
+                }
+                next();
+            },
+        );
 
         routes.setup(app);
 
