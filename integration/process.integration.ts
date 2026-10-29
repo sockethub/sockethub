@@ -270,6 +270,12 @@ describe("Parent Process Sudden Termination", () => {
                 REDIS_URL: config.redis.url,
                 PORT: config.sockethub.port,
                 NODE_ENV: "test",
+                // Prosody listens on loopback, which the XMPP address guard
+                // blocks unless this config enables allowPrivateAddresses.
+                SOCKETHUB_CONFIG: join(
+                    process.cwd(),
+                    "integration/sockethub.ci.config.json",
+                ),
                 SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS: "500",
                 SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS: "2000",
             },

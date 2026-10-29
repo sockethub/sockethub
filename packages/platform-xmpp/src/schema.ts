@@ -293,7 +293,9 @@ export const PlatformSchema: PlatformSchemaStruct = {
                         type: "string",
                     },
                     port: {
-                        type: "number",
+                        type: "integer",
+                        minimum: 1,
+                        maximum: 65535,
                     },
                     resource: {
                         type: "string",

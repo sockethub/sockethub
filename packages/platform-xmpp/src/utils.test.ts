@@ -114,11 +114,63 @@ describe("Utils", () => {
                 } as XmppCredentialsObject),
             ).toEqual({
                 password: "bar",
-                service: "dinosaur.com.au:123",
+                service: "xmpp://dinosaur.com.au:123",
                 domain: "dinosaur.com.au",
                 username: "barney",
                 resource: "Home",
             });
+        });
+
+        const withServer = (server: string, port?: number) =>
+            utils.buildXmppCredentials({
+                object: {
+                    type: "credentials",
+                    userAddress: "barney@dinosaur.com.au",
+                    server,
+                    port,
+                    password: "bar",
+                    resource: "Home",
+                },
+            } as XmppCredentialsObject).service;
+
+        test("accepts xmpp:// and xmpps:// service URIs", () => {
+            expect(withServer("xmpp://localhost:5222")).toBe("xmpp://localhost:5222");
+            expect(withServer("xmpps://chat.example.org")).toBe("xmpps://chat.example.org");
+            expect(withServer("xmpp://chat.example.org/")).toBe("xmpp://chat.example.org");
+            expect(withServer("xmpp://[2001:db8::1]:5222")).toBe("xmpp://[2001:db8::1]:5222");
+        });
+
+        test("the port field overrides the URI port and pins a bare host", () => {
+            expect(withServer("xmpp://chat.example.org:5222", 5269)).toBe("xmpp://chat.example.org:5269");
+            expect(withServer("chat.example.org", 5223)).toBe("xmpp://chat.example.org:5223");
+        });
+
+        test.each([
+            "ws://127.0.0.1:8080/v-verifier/path?x=1",
+            "wss://example.org/xmpp-websocket",
+            "https://example.org",
+            "xmpp://example.org/path",
+            "xmpp://example.org?x=1",
+            "xmpp://user:pw@example.org",
+            "127.0.0.1:8080",
+            "example.org/path",
+            "::1",
+            "not a host",
+        ])("rejects server value %p", (server) => {
+            expect(() => withServer(server)).toThrow("credentials.object.server");
+        });
+
+        test("rejects a userAddress server portion that is not a host", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: {
+                        type: "credentials",
+                        userAddress: "barney@127.0.0.1:8080",
+                        password: "bar",
+                        resource: "Home",
+                    },
+                } as XmppCredentialsObject),
+            ).toThrow("must be a host name");
         });
     });
 

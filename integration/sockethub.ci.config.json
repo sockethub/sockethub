@@ -14,6 +14,9 @@
     "@sockethub/platform-caldav": {
       "allowPrivateAddresses": true,
       "allowInsecureHttp": true
+    },
+    "@sockethub/platform-xmpp": {
+      "allowPrivateAddresses": true
     }
   }
 }

@@ -38,6 +38,7 @@ import {
     xml,
 } from "@xmpp/client";
 
+import { guardXmppConnections } from "./guard.js";
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { PlatformSchema } from "./schema.js";
 import type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
@@ -102,6 +103,7 @@ export default class XMPP implements PersistentPlatformInterface {
     public credentialsHash: string | undefined;
     readonly config: PersistentPlatformConfig = {
         connectTimeoutMs: 10000,
+        allowPrivateAddresses: false,
         persist: true,
         requireCredentials: ["connect"],
     };
@@ -266,7 +268,13 @@ export default class XMPP implements PersistentPlatformInterface {
         }
         this.log.debug(`connect() called for ${job.actor.id}`);
 
-        const xmppCreds = utils.buildXmppCredentials(credentials);
+        let xmppCreds: ReturnType<typeof utils.buildXmppCredentials>;
+        try {
+            xmppCreds = utils.buildXmppCredentials(credentials);
+        } catch (err) {
+            done(toError(err));
+            return;
+        }
         this.log.debug(
             `building XMPP credentials for ${job.actor.id}:`,
             JSON.stringify({
@@ -343,6 +351,10 @@ export default class XMPP implements PersistentPlatformInterface {
             });
             this.__client = xmppClient;
             setTlsServername(this.__client, xmppCreds.domain);
+            guardXmppConnections(
+                this.__client,
+                this.config.allowPrivateAddresses === true,
+            );
             this.log.debug(
                 `XMPP client created successfully for ${job.actor.id}`,
             );

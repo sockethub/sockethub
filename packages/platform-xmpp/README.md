@@ -39,8 +39,33 @@ This requirement also applies to automatic reconnections.
 | `userAddress` | string | yes | Bare JID, e.g. `user@jabber.net`. |
 | `resource` | string | yes | XMPP resource identifier (e.g. `"phone"`). |
 | `password` | string | yes | SASL password. Use this field for PLAIN-slot tokens too. |
-| `server` | string | no | Overrides the hostname from `userAddress`. |
-| `port` | number | no | Overrides the default port. |
+| `server` | string | no | Overrides the host from `userAddress`. Host name or `xmpp(s)://` URI. |
+| `port` | integer | no | Overrides the default port (1-65535). |
+
+Without a `port`, a bare host is looked up through its `_xmpps-client` and
+`_xmpp-client` SRV records, falling back to port 5222. The platform does not use
+HTTP host-meta discovery or the WebSocket transport.
+
+### Private addresses
+
+The platform refuses to connect to loopback, private, link-local, and cloud
+metadata addresses, using the same address rules as the
+[outbound URL guard](../../docs/configuration.md#outbound-url-guard). To reach
+an XMPP server on a private network, set `allowPrivateAddresses` in this
+platform's `packageConfig` entry:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-xmpp": {
+      "allowPrivateAddresses": true
+    }
+  }
+}
+```
+
+Do not enable it on a server that accepts untrusted clients. Any client could
+then make Sockethub connect to internal services.
 
 ### Password authentication
 
