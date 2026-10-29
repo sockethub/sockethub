@@ -179,6 +179,7 @@ export default class XMPP implements PersistentPlatformInterface {
             "ENOTFOUND",
             "EHOSTUNREACH",
             "ENETUNREACH",
+            "XMPP_AUTHENTICATION_INTERRUPTED",
         ];
 
         if (
@@ -316,8 +317,13 @@ export default class XMPP implements PersistentPlatformInterface {
                                 onDisconnect = () => {
                                     detachSasl();
                                     reject(
-                                        new Error(
-                                            "XMPP authentication interrupted by disconnect",
+                                        Object.assign(
+                                            new Error(
+                                                "XMPP authentication interrupted by disconnect",
+                                            ),
+                                            {
+                                                code: "XMPP_AUTHENTICATION_INTERRUPTED",
+                                            },
                                         ),
                                     );
                                 };

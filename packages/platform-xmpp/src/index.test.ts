@@ -401,6 +401,12 @@ describe("XMPP", () => {
             expect(instance.listenerCount("nonza")).toBe(existingListeners);
             sinon.assert.calledOnce(unrelatedListener);
             expect((await authFailed).message).toContain("authentication interrupted");
+            expect(xp.__client).toBe(instance);
+            expect(xp.isInitialized()).toBe(true);
+            sinon.assert.notCalled(instance.stop as sinon.SinonSpy);
+            expect((xp.sendToClient as sinon.SinonSpy).getCalls().some(
+                (call) => call.args[0].object?.status === "reconnecting",
+            )).toBe(true);
         });
 
         it("accepts a secure WebSocket transport", async () => {
@@ -523,6 +529,23 @@ describe("XMPP", () => {
 
                 done();
             });
+        });
+
+        it.each([
+            "refusing to authenticate over an unencrypted XMPP stream",
+            "not-authorized",
+        ])("stops reconnection for fatal authentication error: %s", async (message) => {
+            await new Promise<void>((resolve) => {
+                xp.connect(job.connect, credentials as never, () => resolve());
+            });
+            const errorHandler = clientObjectFake.on.getCalls().find(
+                (call: sinon.SinonSpyCall) => call.args[0] === "error",
+            )!.args[1] as (err: Error) => void;
+            errorHandler(new Error(message));
+            sinon.assert.calledOnce(clientObjectFake.stop);
+            expect(xp.__client).toBeUndefined();
+            expect((xp.sendToClient as sinon.SinonSpy).lastCall.args[0].object.status)
+                .toBe("failed");
         });
 
         test("does NOT terminate process on XMPP protocol errors (non-recoverable)", (done) => {
