@@ -36,7 +36,7 @@ import RedisStore from "rate-limit-redis";
 import { buildServiceDescriptor } from "../api-info.js";
 import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import config from "../config.js";
-import { clearSessionScopes } from "../connection-scope.js";
+import { clearSessionScopes, normalizeIp } from "../connection-scope.js";
 import { createCorsMiddleware } from "../cors.js";
 import { createMessageHandlers } from "../message-handlers.js";
 import { exceedsDepth } from "../middleware/normalize-activity-stream.js";
@@ -725,6 +725,8 @@ export function registerHttpActionsRoutes(
                 sessionSecret,
                 credentialsStore,
                 transport: "http",
+                // Express ignores forwarding headers unless trust proxy is configured.
+                clientIp: normalizeIp(req.ip ?? req.socket.remoteAddress),
                 onPlatformInstance: (platformInstance) => {
                     // Only persistent platforms need lifecycle tracking during
                     // HTTP-only requests.

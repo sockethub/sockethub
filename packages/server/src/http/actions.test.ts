@@ -272,6 +272,51 @@ function buildHandlers({
 }
 
 describe("http actions", () => {
+    it("passes normalized trusted HTTP client IPs to owner quota accounting", async () => {
+        const clients: string[] = [];
+        const handlers = buildHandlers({
+            fakeRedis: new FakeRedis(),
+            createMessageHandlersOverride: ({
+                clientIp,
+                platformSessionId,
+            }: any) => {
+                clients.push(clientIp);
+                expect(platformSessionId).toBeUndefined();
+                return {
+                    credentials: (_payload: unknown, cb: (data: unknown) => void) =>
+                        cb({ ok: true }),
+                    message: (_payload: unknown, cb: (data: unknown) => void) =>
+                        cb({ ok: true }),
+                };
+            },
+        });
+        const addresses = [
+            "::ffff:192.0.2.1",
+            "192.0.2.1",
+            "2001:db8::1",
+            undefined,
+        ];
+        for (const [index, ip] of addresses.entries()) {
+            const { req, res } = createReqRes({
+                body: [singlePayload],
+                headers: {
+                    "x-request-id": `owner-ip-${index}`,
+                    "x-forwarded-for": "198.51.100.1",
+                },
+            });
+            req.ip = ip;
+            req.socket.remoteAddress = "::ffff:192.0.2.2";
+            await handlers["/sockethub-http"](req, res);
+            expect(res.statusCode).toBe(200);
+        }
+        expect(clients).toEqual([
+            "192.0.2.1",
+            "192.0.2.1",
+            "2001:db8::1",
+            "192.0.2.2",
+        ]);
+    });
+
     it("accepts canonical @context messages", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
