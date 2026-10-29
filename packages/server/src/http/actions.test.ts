@@ -1255,9 +1255,66 @@ describe("http actions service descriptor over HTTP", () => {
                 const denied = await fetch(`${baseUrl}/sockethub-http`, {
                     headers: { Origin: "https://evil.example" },
                 });
+                expect(denied.status).toBe(403);
                 expect(
                     denied.headers.get("access-control-allow-origin"),
                 ).toBeNull();
+            },
+        );
+    });
+
+    it("rejects disallowed POSTs and preflights before parsing JSON", async () => {
+        await withServer(
+            { "sockethub:cors:origin": "https://inbox.example" },
+            async (baseUrl) => {
+                for (const method of ["POST", "OPTIONS"]) {
+                    const denied = await fetch(`${baseUrl}/sockethub-http`, {
+                        method,
+                        headers: {
+                            Origin: "https://evil.example",
+                            "Content-Type": "application/json",
+                        },
+                        ...(method === "POST" ? { body: "{invalid" } : {}),
+                    });
+                    expect(denied.status).toBe(403);
+                    expect(await denied.json()).toEqual({ error: "origin not allowed" });
+                }
+                const allowed = await fetch(`${baseUrl}/sockethub-http`, {
+                    method: "OPTIONS",
+                    headers: { Origin: "https://inbox.example" },
+                });
+                expect(allowed.status).toBe(204);
+            },
+        );
+    });
+
+    it("requires JSON POST bodies even for allowed or absent origins", async () => {
+        await withServer(
+            { "sockethub:cors:origin": "https://inbox.example" },
+            async (baseUrl) => {
+                for (const origin of ["https://inbox.example", undefined]) {
+                    for (const contentType of ["application/x-www-form-urlencoded", "text/plain", "multipart/form-data", undefined]) {
+                        const response = await fetch(`${baseUrl}/sockethub-http`, {
+                            method: "POST",
+                            headers: {
+                                ...(origin ? { Origin: origin } : {}),
+                                ...(contentType ? { "Content-Type": contentType } : {}),
+                            },
+                            ...(contentType ? { body: "messages[0][type]=echo" } : {}),
+                        });
+                        expect(response.status).toBe(415);
+                    }
+                    const response = await fetch(`${baseUrl}/sockethub-http`, {
+                        method: "POST",
+                        headers: {
+                            ...(origin ? { Origin: origin } : {}),
+                            "Content-Type": "application/json; charset=utf-8",
+                        },
+                        body: "{}",
+                    });
+                    expect(response.status).toBe(400);
+                    expect(await response.json()).toEqual({ error: "requestId is required" });
+                }
             },
         );
     });

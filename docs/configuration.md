@@ -431,7 +431,14 @@ its origin is allowed:
 - `"*"` (default) — any origin may call the endpoint.
 - A single origin or comma-separated list — only those origins are allowed;
   the matching origin is echoed in `Access-Control-Allow-Origin` (with
-  `Vary: Origin`), and requests from other origins are blocked by the browser.
+  `Vary: Origin`), and the server rejects requests from other origins with 403.
+
+The allow-list is enforced on every socket.io transport request, including
+WebSocket upgrades that reuse an existing session, and on HTTP actions requests
+before body parsing or dispatch. Requests
+without an `Origin` header remain allowed for non-browser clients. HTTP actions
+POST requests must use `Content-Type: application/json`; other media types return
+415.
 
 Configured origins are normalized to the serialization browsers send in the
 `Origin` header (lowercase scheme/host, no trailing slash, default ports
