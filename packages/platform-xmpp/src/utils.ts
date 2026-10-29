@@ -1,5 +1,4 @@
 import { isIP } from "node:net";
-import { domainToASCII } from "node:url";
 import type { XmppElement } from "@xmpp/client";
 
 import type { XmppBuiltCredentials, XmppCredentialsObject } from "./types.js";
@@ -34,28 +33,20 @@ const INVALID_SERVER =
     "xmpp credentials.object.server must be a host name, or an xmpp:// or xmpps:// URI without a path";
 
 /**
- * Convert a validated host to the form DNS and sockets expect: IP literals
- * are kept, and internationalized names become their IDNA ASCII form.
- * Returns "" when the name is not a valid host.
- */
-function toConnectHost(host: string): string {
-    if (host.startsWith("[") || isIP(host) !== 0) {
-        return host;
-    }
-    return domainToASCII(host);
-}
-
-/**
  * Turn the client-supplied `server` override into either a bare host (left to
  * SRV discovery) or an explicit `xmpp://` / `xmpps://` service URI.
  */
 function buildService(server: string, port: number | undefined): string {
     if (!server.includes("://")) {
-        const host = isPlainHost(server) ? toConnectHost(server) : "";
-        if (!host) {
+        // Node's resolver handles a bare internationalized name, but in a URI
+        // xmpp.js would percent-encode it, so it cannot take a port.
+        if (
+            !isPlainHost(server) ||
+            (port !== undefined && /[\u0080-\uffff]/.test(server))
+        ) {
             throw new Error(INVALID_SERVER);
         }
-        return port ? `xmpp://${host}:${port}` : host;
+        return port !== undefined ? `xmpp://${server}:${port}` : server;
     }
     let url: URL;
     try {
@@ -75,16 +66,8 @@ function buildService(server: string, port: number | undefined): string {
         throw new Error(INVALID_SERVER);
     }
     // xmpp: is not a special URL scheme, so a non-ASCII host comes back
-    // percent-encoded rather than IDNA-encoded.
-    let decoded = "";
-    try {
-        decoded = decodeURIComponent(url.hostname);
-    } catch {
-        // Malformed percent-encoding: rejected below.
-    }
-    // Check before IDNA conversion, which silently truncates at "/".
-    const host = isPlainHost(decoded) ? toConnectHost(decoded) : "";
-    if (!host) {
+    // percent-encoded, and the "%" makes isPlainHost reject it.
+    if (!isPlainHost(url.hostname)) {
         throw new Error(INVALID_SERVER);
     }
     // URL parsing already rejects ports above 65535, but not port 0.
@@ -93,8 +76,8 @@ function buildService(server: string, port: number | undefined): string {
     }
     const effectivePort = port ?? (url.port ? Number(url.port) : undefined);
     return effectivePort !== undefined
-        ? `${url.protocol}//${host}:${effectivePort}`
-        : `${url.protocol}//${host}`;
+        ? `${url.protocol}//${url.hostname}:${effectivePort}`
+        : `${url.protocol}//${url.hostname}`;
 }
 
 export const utils = {

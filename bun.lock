@@ -247,6 +247,7 @@
       "dependencies": {
         "@sockethub/util": "^1.0.0-alpha.13",
         "@xmpp/client": "^0.13.6",
+        "@xmpp/resolve": "^0.13.3",
       },
       "devDependencies": {
         "@sockethub/schemas": "^3.0.0-alpha.25",

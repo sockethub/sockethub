@@ -43,10 +43,15 @@ This requirement also applies to automatic reconnections.
 | `port` | integer | no | Overrides the default port (1-65535). |
 
 Without a `port`, a bare host is looked up through its `_xmpps-client` and
-`_xmpp-client` SRV records, falling back to port 5222. A bare host with a `port`
-skips SRV lookup and connects with `xmpp://` (STARTTLS) on that port. For direct
-TLS, set `server` to an `xmpps://` URI. The platform does not use HTTP host-meta
-discovery or the WebSocket transport.
+`_xmpp-client` SRV records, and its own addresses on ports 5223 (direct TLS)
+and 5222. A bare host with a `port` skips SRV lookup and connects with
+`xmpp://` (STARTTLS) on that port. For direct TLS, set `server` to an
+`xmpps://` URI. The platform does not use HTTP host-meta discovery or the
+WebSocket transport.
+
+An internationalized host name (such as `bücher.example`) works only as a bare
+host without a `port`. With a `port`, or inside an `xmpp(s)://` URI, it is
+refused; use its ASCII form (`xn--bcher-kva.example`) instead.
 
 ### Private addresses
 

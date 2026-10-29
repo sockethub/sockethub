@@ -1,94 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import type { SrvRecord } from "node:dns";
-import { EventEmitter } from "node:events";
 import { createServer } from "node:net";
-import sinon from "sinon";
 import { client as xmppClient, type XmppClientInstance } from "@xmpp/client";
+import hostMeta from "@xmpp/resolve/lib/http.js";
 
-import { discoverServices, guardXmppConnections } from "./guard.js";
+import { guardXmppConnections } from "./guard.js";
 
-const srv = (name: string, port: number, priority = 0, weight = 0): SrvRecord => ({
-    name,
-    port,
-    priority,
-    weight,
-});
-
-const resolverFor =
-    (records: Record<string, SrvRecord[]>) =>
-    async (name: string): Promise<SrvRecord[]> => {
-        const found = records[name];
-        if (!found) {
-            throw Object.assign(new Error("queryNoData"), { code: "ENODATA" });
-        }
-        return found;
-    };
-
-describe("discoverServices", () => {
-    it("passes explicit service URIs through untouched", async () => {
-        const resolve = async () => {
-            throw new Error("must not be called");
-        };
-        expect(await discoverServices("xmpp://chat.example.org:5222", resolve)).toEqual([
-            "xmpp://chat.example.org:5222",
-        ]);
-    });
-
-    it("falls back to xmpp://host:5222 without SRV records", async () => {
-        expect(await discoverServices("example.org", resolverFor({}))).toEqual(["xmpp://example.org:5222"]);
-    });
-
-    it("orders every SRV record across xmpps and xmpp", async () => {
-        const resolve = resolverFor({
-            "_xmpps-client._tcp.example.org": [srv("tls.example.org", 5223, 10)],
-            "_xmpp-client._tcp.example.org": [
-                srv("low.example.org", 5222, 5, 1),
-                srv("high.example.org", 5222, 5, 50),
-            ],
-        });
-        expect(await discoverServices("example.org", resolve)).toEqual([
-            "xmpp://high.example.org:5222",
-            "xmpp://low.example.org:5222",
-            "xmpps://tls.example.org:5223",
-        ]);
-    });
-
-    it("uses direct TLS first when the xmpps record wins", async () => {
-        const resolve = resolverFor({
-            "_xmpps-client._tcp.example.org": [srv("tls.example.org", 5223, 0)],
-            "_xmpp-client._tcp.example.org": [srv("plain.example.org", 5222, 10)],
-        });
-        expect(await discoverServices("example.org", resolve)).toEqual([
-            "xmpps://tls.example.org:5223",
-            "xmpp://plain.example.org:5222",
-        ]);
-    });
-
-    it("rejects a '.' target, which marks the service unavailable", async () => {
-        const resolve = resolverFor({
-            "_xmpp-client._tcp.example.org": [srv(".", 0)],
-        });
-        await expect(discoverServices("example.org", resolve)).rejects.toThrow(
-            "XMPP service is not available at example.org",
-        );
-    });
-
-    it("rejects the empty target Node's resolver returns for '.'", async () => {
-        const resolve = resolverFor({
-            "_xmpp-client._tcp.example.org": [srv("", 0)],
-        });
-        await expect(discoverServices("example.org", resolve)).rejects.toThrow(
-            "XMPP service is not available at example.org",
-        );
-    });
-
-    it("still uses the other scheme when only one is marked unavailable", async () => {
-        const resolve = resolverFor({
-            "_xmpps-client._tcp.example.org": [srv(".", 0)],
-            "_xmpp-client._tcp.example.org": [srv("plain.example.org", 5222)],
-        });
-        expect(await discoverServices("example.org", resolve)).toEqual(["xmpp://plain.example.org:5222"]);
-    });
+it("turns off host-meta discovery", async () => {
+    expect(await hostMeta.resolve("example.org")).toEqual([]);
 });
 
 describe("guardXmppConnections", () => {
@@ -174,11 +92,7 @@ describe("guardXmppConnections", () => {
             reconnect: { stop(): void };
         };
 
-        const connectTo = async (
-            service: string,
-            allowPrivateAddresses: boolean,
-            resolve = resolverFor({}),
-        ) => {
+        const connectTo = async (service: string, allowPrivateAddresses: boolean) => {
             const xmpp = xmppClient({
                 service,
                 domain: "example.org",
@@ -186,18 +100,15 @@ describe("guardXmppConnections", () => {
                 password: "p",
                 timeout: 2000,
             }) as Entity;
-            const errors: Error[] = [];
-            const statuses: string[] = [];
-            xmpp.on("error", (err) => errors.push(err as Error));
-            xmpp.on("status", (status) => statuses.push(status as string));
-            guardXmppConnections(xmpp, allowPrivateAddresses, resolve);
+            xmpp.reconnect.stop();
+            xmpp.on("error", () => {});
+            guardXmppConnections(xmpp, allowPrivateAddresses);
             try {
                 await xmpp.connect(service);
-                return { error: undefined, errors, statuses };
+                return undefined;
             } catch (err) {
-                return { error: err as Error, errors, statuses };
+                return err as Error;
             } finally {
-                xmpp.reconnect.stop();
                 await xmpp.stop().catch(() => {});
             }
         };
@@ -219,123 +130,28 @@ describe("guardXmppConnections", () => {
             return state.connections;
         };
 
-        const closedPort = async () => {
-            const server = createServer();
-            await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-            const { port } = server.address() as { port: number };
-            await new Promise((resolve) => server.close(resolve));
-            return port;
-        };
-
         it("never opens a socket to a blocked loopback target", async () => {
             const connections = await withListener(async (port) => {
-                const literal = await connectTo(`xmpp://127.0.0.1:${port}`, false);
-                expect(literal.error?.message).toContain("blocked non-public address");
-                const named = await connectTo(`xmpp://localhost:${port}`, false);
-                expect(named.error?.message).toContain("blocked non-public address");
+                // xmpp.js reports a refused IP literal as having no transport.
+                expect((await connectTo(`xmpp://127.0.0.1:${port}`, false))?.message).toContain(
+                    "No compatible connection method found",
+                );
+                expect((await connectTo(`xmpp://localhost:${port}`, false))?.message).toContain(
+                    "blocked non-public address",
+                );
+                // A bare host resolves to IP literals, which are all refused.
+                expect(await connectTo("localhost", false)).toBeInstanceOf(Error);
             });
             expect(connections).toBe(0);
         });
 
-        it("reports a refused connect through the client, so reconnects are not silent", async () => {
-            const result = await connectTo("xmpp://127.0.0.1:5222", false);
-            expect(result.errors.map((e) => e.message)).toEqual(["blocked non-public address 127.0.0.1"]);
-            expect(result.statuses).toContain("disconnect");
-        });
-
         it("connects to loopback when allowPrivateAddresses is set", async () => {
             const connections = await withListener(async (port) => {
-                expect((await connectTo(`xmpp://127.0.0.1:${port}`, true)).error).toBeUndefined();
+                expect(await connectTo(`xmpp://127.0.0.1:${port}`, true)).toBeUndefined();
                 // Let the listener observe the accepted socket.
                 await new Promise((resolve) => setTimeout(resolve, 20));
             });
             expect(connections).toBe(1);
-        });
-
-        it("falls back to the next SRV candidate when one fails", async () => {
-            const down = await closedPort();
-            const connections = await withListener(async (port) => {
-                const resolve = resolverFor({
-                    "_xmpp-client._tcp.example.org": [srv("127.0.0.1", down, 0), srv("127.0.0.1", port, 10)],
-                });
-                const result = await connectTo("example.org", true, resolve);
-                expect(result.error).toBeUndefined();
-                // The failed first candidate is not reported as a client error.
-                // (The listener resetting the accepted socket may be.)
-                expect(result.errors.some((e) => (e as Error & { code?: string }).code === "ECONNREFUSED")).toBe(
-                    false,
-                );
-                await new Promise((resolve) => setTimeout(resolve, 20));
-            });
-            expect(connections).toBe(1);
-        });
-
-        const makeEntity = (resolve = resolverFor({})) => {
-            const xmpp = xmppClient({
-                service: "example.org",
-                domain: "example.org",
-                username: "u",
-                password: "p",
-                timeout: 2000,
-            }) as Entity & { _findTransport(uri: string): unknown; _attachSocket(s: unknown): void };
-            xmpp.on("error", () => {});
-            guardXmppConnections(xmpp, true, resolve);
-            return xmpp;
-        };
-
-        it("does not connect when stopped during discovery", async () => {
-            const releases: Array<() => void> = [];
-            const release = () => {
-                for (const fn of releases) fn();
-            };
-            const slow = (name: string) =>
-                new Promise<SrvRecord[]>((resolve) => {
-                    releases.push(() => resolve(name.startsWith("_xmpp-client") ? [srv("127.0.0.1", 5222)] : []));
-                });
-            const xmpp = makeEntity(slow);
-            const attach = sinon.spy(xmpp, "_attachSocket");
-            const pending = xmpp.connect("example.org");
-            await xmpp.stop().catch(() => {});
-            release();
-            await expect(pending).rejects.toThrow("stopped while connecting");
-            sinon.assert.notCalled(attach);
-            xmpp.reconnect.stop();
-        });
-
-        it("aborts a candidate still connecting when stopped, and never attaches it", async () => {
-            const sockets: Array<EventEmitter & { destroyed: boolean }> = [];
-            class HangingSocket extends EventEmitter {
-                destroyed = false;
-                connect() {
-                    sockets.push(this);
-                }
-                destroy() {
-                    this.destroyed = true;
-                }
-            }
-            const xmpp = makeEntity();
-            const attach = sinon.spy(xmpp, "_attachSocket");
-            sinon.stub(xmpp, "_findTransport").returns({
-                prototype: { Socket: HangingSocket, socketParameters: () => ({}), Parser: null },
-            });
-            const pending = xmpp.connect("xmpp://chat.example.org:5222");
-            await new Promise((resolve) => setTimeout(resolve, 0));
-            expect(sockets).toHaveLength(1);
-            await xmpp.stop().catch(() => {});
-            await expect(pending).rejects.toThrow("stopped while connecting");
-            expect(sockets[0].destroyed).toBe(true);
-            // A late connect from the aborted socket is ignored.
-            sockets[0].emit("connect");
-            sinon.assert.notCalled(attach);
-            xmpp.reconnect.stop();
-        });
-
-        it("skips a blocked SRV candidate in favour of the next one", async () => {
-            const resolve = resolverFor({
-                "_xmpp-client._tcp.example.org": [srv("127.0.0.1", 5222, 0), srv("10.0.0.1", 5222, 10)],
-            });
-            const result = await connectTo("example.org", false, resolve);
-            expect(result.error?.message).toBe("blocked non-public address 10.0.0.1");
         });
     });
 });

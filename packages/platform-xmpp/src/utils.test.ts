@@ -140,10 +140,11 @@ describe("Utils", () => {
             expect(withServer("xmpp://[2001:db8::1]:5222")).toBe("xmpp://[2001:db8::1]:5222");
         });
 
-        test("converts internationalized host names to their ASCII form", () => {
-            expect(withServer("bücher.example")).toBe("xn--bcher-kva.example");
-            expect(withServer("bücher.example", 5222)).toBe("xmpp://xn--bcher-kva.example:5222");
-            expect(withServer("xmpps://bücher.example:5223")).toBe("xmpps://xn--bcher-kva.example:5223");
+        test("accepts an internationalized host only as a bare host without a port", () => {
+            expect(withServer("bücher.example")).toBe("bücher.example");
+            expect(() => withServer("bücher.example", 5222)).toThrow("credentials.object.server");
+            expect(() => withServer("xmpps://bücher.example:5223")).toThrow("credentials.object.server");
+            expect(withServer("xmpps://xn--bcher-kva.example:5223")).toBe("xmpps://xn--bcher-kva.example:5223");
         });
 
         test("the port field overrides the URI port and pins a bare host", () => {

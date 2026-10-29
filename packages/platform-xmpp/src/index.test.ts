@@ -370,15 +370,13 @@ describe("XMPP", () => {
                 if (element.name === "auth") authSent();
                 return Promise.resolve();
             });
-            // The platform's connection guard wraps `stop`, so keep the fake.
-            const stop = sinon.fake.resolves();
             (clientFake as sinon.SinonStub).callsFake((options: XmppClientOptions) => {
                 const instance = client(options) as XmppClientInstance & {
                     reconnect: { stop(): void };
                 };
                 instance.reconnect.stop();
                 instance.start = sinon.fake.resolves();
-                instance.stop = stop;
+                instance.stop = sinon.fake.resolves();
                 instance.send = send;
                 instance.socket = { writable: true, url: "wss://jabber.net/xmpp" };
                 return instance;
@@ -405,7 +403,7 @@ describe("XMPP", () => {
             expect((await authFailed).message).toContain("authentication interrupted");
             expect(xp.__client).toBe(instance);
             expect(xp.isInitialized()).toBe(true);
-            sinon.assert.notCalled(stop);
+            sinon.assert.notCalled(instance.stop as sinon.SinonSpy);
             expect((xp.sendToClient as sinon.SinonSpy).getCalls().some(
                 (call) => call.args[0].object?.status === "reconnecting",
             )).toBe(true);
