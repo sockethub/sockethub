@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, it, test } from "bun:test";
 import sinon from "sinon";
 
 import * as schemas from "@sockethub/schemas";
@@ -137,7 +137,7 @@ describe("Incoming handlers", () => {
             sinon.assert.notCalled(sendToClient);
         });
 
-        test("emits presence updates for roster pushes from the server or own bare JID", () => {
+        it("emits presence updates for roster pushes from the server or own bare JID", () => {
             ih.stanza(
                 parse(
                     `<iq to='user@example.org/res' type='set' id='r1'>
@@ -162,7 +162,7 @@ describe("Incoming handlers", () => {
             expect(sendToClient.getCall(1).args[0].actor.id).toEqual("other@example.org");
         });
 
-        test("ignores roster-shaped IQs from any other sender", () => {
+        it("ignores roster-shaped IQs from any other sender", () => {
             ih.stanza(
                 parse(
                     `<iq from='user@example.org/res' to='user@example.org/res' type='set' id='x0'>
