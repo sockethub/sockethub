@@ -12,7 +12,7 @@ import express, {
 import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
 import config from "./config.js";
-import { parseCorsOrigins } from "./cors.js";
+import { parseCorsOrigins, resolveAllowedOrigin } from "./cors.js";
 import disablePayloadDebug from "./payload-debug.js";
 import routes from "./routes.js";
 import { EXAMPLES_PATH } from "./server-info.js";
@@ -48,14 +48,24 @@ class Listener {
         const app = Listener.initExpress();
         this.app = app;
         this.http = new HTTP.Server(app);
+        const allowedOrigins = Listener.corsOrigin();
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
             maxHttpBufferSize: config.get(
                 "sockethub:maxPayloadBytes",
             ) as number,
             cors: {
-                origin: Listener.corsOrigin(),
+                origin: allowedOrigins,
                 methods: ["GET", "POST"],
+            },
+            allowRequest: (req, callback) => {
+                const origin = req.headers.origin;
+                callback(
+                    null,
+                    origin === undefined ||
+                        resolveAllowedOrigin(allowedOrigins, origin) !==
+                            undefined,
+                );
             },
         });
 
@@ -184,7 +194,7 @@ class Listener {
      * website can connect visitors' browsers to this instance and use it
      * as a relay.
      */
-    private static corsOrigin(): string | Array<string> {
+    private static corsOrigin(): "*" | Array<string> {
         return parseCorsOrigins(config.get("sockethub:cors:origin"));
     }
 
@@ -219,8 +229,6 @@ class Listener {
         }
         // templating engines
         app.set("view engine", "ejs");
-        // Express bundles body-parser as express.urlencoded(); use it directly.
-        app.use(express.urlencoded({ extended: true }));
         // JSON parsing is scoped to the HTTP actions POST route (see
         // registerHttpActionsRoutes) rather than applied globally, so its
         // lenient `strict: false` and `httpActions:maxPayloadBytes` limit do

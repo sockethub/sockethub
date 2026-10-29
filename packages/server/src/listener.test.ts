@@ -1,6 +1,8 @@
 import { expect, it, spyOn } from "bun:test";
 import { spawnSync } from "node:child_process";
+import type { AddressInfo } from "node:net";
 import debug from "debug";
+import { io } from "socket.io-client";
 import config from "./config.js";
 import listener from "./listener.js";
 
@@ -47,4 +49,48 @@ it("excludes payload loggers before separate debug copies load at startup", () =
     `], { env: { ...process.env, DEBUG: "*" }, encoding: "utf8", timeout: 10000 });
     expect(child.error).toBeUndefined();
     expect(child.status, child.stderr).toBe(0);
+});
+
+it("enforces the origin allow-list on polling and WebSocket handshakes", async () => {
+    const getConfig = config.get.bind(config);
+    const get = spyOn(config, "get").mockImplementation((key: string) => {
+        if (key === "sockethub:port") return 0;
+        if (key === "sockethub:host") return "127.0.0.1";
+        if (key === "sockethub:cors:origin") return "https://App.Example/";
+        return getConfig(key);
+    });
+    try {
+        listener.start();
+        if (!listener.http.listening) {
+            await new Promise<void>((resolve) => listener.http.once("listening", resolve));
+        }
+        const { port } = listener.http.address() as AddressInfo;
+        for (const transport of ["polling", "websocket"]) {
+            for (const origin of ["https://app.example", "https://evil.example", "null", "not a url", "", undefined]) {
+                const socket = io(`http://127.0.0.1:${port}`, {
+                    path: getConfig("sockethub:path") as string,
+                    transports: [transport],
+                    extraHeaders: origin === undefined ? {} : { Origin: origin },
+                    reconnection: false,
+                    timeout: 2000,
+                    autoConnect: false,
+                });
+                try {
+                    const connected = await new Promise<boolean>((resolve) => {
+                        socket.once("connect", () => resolve(true));
+                        socket.once("connect_error", () => resolve(false));
+                        socket.connect();
+                    });
+                    expect(connected, `${transport}: ${String(origin)}`).toBe(
+                        origin === undefined || origin === "https://app.example",
+                    );
+                } finally {
+                    socket.disconnect();
+                }
+            }
+        }
+    } finally {
+        await new Promise<void>((resolve) => listener.io.close(() => resolve()));
+        get.mockRestore();
+    }
 });

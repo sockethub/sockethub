@@ -407,6 +407,7 @@ describe("server-info", () => {
                         origin: "https://evil.example",
                     },
                 });
+                expect(denied.status).toBe(403);
                 expect(
                     denied.headers.get("access-control-allow-origin"),
                 ).toBeNull();

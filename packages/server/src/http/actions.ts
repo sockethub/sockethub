@@ -26,6 +26,7 @@ import {
 import { crypto } from "@sockethub/util/crypto";
 import express, {
     type Express,
+    type NextFunction,
     type Request,
     type RequestHandler,
     type Response,
@@ -589,6 +590,15 @@ export function registerHttpActionsRoutes(
         routePath,
         cors,
         rateLimiter,
+        (req: Request, res: Response, next: NextFunction) => {
+            if (!req.is("application/json")) {
+                res.status(415).json({
+                    error: "content-type must be application/json",
+                });
+                return;
+            }
+            next();
+        },
         parseJson,
         async (req: Request, res: Response) => {
             const payloads = normalizePayloads(req.body);
