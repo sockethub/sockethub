@@ -269,12 +269,26 @@ export const SockethubConfigSchema = {
             type: "object",
             additionalProperties: false,
             properties: {
+                maxInstancesPerSession: {
+                    type: "integer",
+                    minimum: 0,
+                    default: 10,
+                    description:
+                        "Maximum persistent instances per socket session. 0 disables the cap.",
+                },
+                maxInstancesPerIp: {
+                    type: "integer",
+                    minimum: 0,
+                    default: 20,
+                    description:
+                        "Maximum persistent instances per client IP, including HTTP actions. 0 disables the cap.",
+                },
                 maxPlatformInstances: {
                     type: "number",
                     minimum: 0,
                     default: 100,
                     description:
-                        "Upper bound on concurrently running platform instances " +
+                        "Upper bound on concurrently running persistent platform instances " +
                         "(child processes). Each persistent-platform actor forks " +
                         "its own process, so an unbounded count is a resource " +
                         "exhaustion risk on public instances. 0 disables the cap.",

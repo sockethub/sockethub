@@ -33,6 +33,7 @@ import {
     stopCleanup,
 } from "./rate-limiter.js";
 import { registerServerInfoRoute } from "./server-info.js";
+import { getRequestClientIp } from "./trust-proxy.js";
 
 const log = createLogger("server:core");
 
@@ -71,6 +72,9 @@ function getClientIp(socket: Socket): string {
         }
     }
 
+    if (ipSource === "socket" && listener.app) {
+        return getRequestClientIp(socket.request, listener.app);
+    }
     return normalizeIp(socket.handshake.address);
 }
 

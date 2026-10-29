@@ -5,6 +5,17 @@ import { validateSockethubConfig } from "./validator.js";
 describe("validateSockethubConfig", () => {
     const base = { platforms: ["@sockethub/platform-feeds"] };
 
+    it("requires non-negative integer instance quotas", () => {
+        for (const field of ["maxInstancesPerSession", "maxInstancesPerIp"]) {
+            for (const value of [0, 1, 20]) {
+                expect(validateSockethubConfig({ ...base, limits: { [field]: value } })).toBe("");
+            }
+            for (const value of [-1, 1.5]) {
+                expect(validateSockethubConfig({ ...base, limits: { [field]: value } })).not.toBe("");
+            }
+        }
+    });
+
     it("accepts a minimal valid config", () => {
         expect(validateSockethubConfig(base)).toEqual("");
     });

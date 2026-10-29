@@ -157,9 +157,14 @@ class ProcessManager {
     ): Promise<PlatformInstance> {
         const existing = platformInstances.get(identifier);
         const reusable = existing && this.isProcessAlive(existing);
-        if (!reusable) {
-            this.assertInstanceCapacity(platform, identifier);
-        }
+        this.assertInstanceCapacity(
+            platform,
+            identifier,
+            actor === undefined,
+            sessionId,
+            sessionIp,
+            !!reusable,
+        );
         let inheritedQueueId: string | undefined;
         if (existing && !reusable) {
             // The replacement created below shares `identifier` and the Redis
@@ -172,6 +177,15 @@ class ProcessManager {
             inheritedQueueId = existing.queueId;
             existing.markReplaced();
             await existing.shutdown();
+            // Teardown yields; other identifiers may have consumed capacity meanwhile.
+            this.assertInstanceCapacity(
+                platform,
+                identifier,
+                actor === undefined,
+                sessionId,
+                sessionIp,
+                !!reusable,
+            );
         }
         const platformInstance = reusable
             ? existing
@@ -182,6 +196,9 @@ class ProcessManager {
                   connectionScope?.scope,
                   inheritedQueueId,
               );
+        if (sessionIp && !platformInstance.global) {
+            platformInstance.ownerIps.add(sessionIp);
+        }
         if (sessionId) {
             platformInstance.registerSession(sessionId, sessionIp);
         }
@@ -200,28 +217,48 @@ class ProcessManager {
         return platformInstance;
     }
 
-    /**
-     * Each platform instance forks a full child process; without an upper
-     * bound, a public instance can be driven into resource exhaustion.
-     * Throws when the configured cap (`limits.maxPlatformInstances`, 0 =
-     * disabled) has been reached and a new instance would be created.
-     *
-     * `identifier`'s existing (dead) slot, if any, is excluded from the
-     * count: replacing a crashed instance for the same actor doesn't
-     * increase the total instance count, so it shouldn't be blocked by
-     * the cap.
+    /** Stateless workers are bounded by the enabled platform count, independently
+     * of client occupancy. Check owners even when attaching to a shared worker.
      */
-    private assertInstanceCapacity(platform: string, identifier: string): void {
+    private assertInstanceCapacity(
+        platform: string,
+        identifier: string,
+        global: boolean,
+        sessionId?: string,
+        sessionIp?: string,
+        reusable = false,
+    ): void {
+        if (global) return;
+        const others = [...platformInstances.values()].filter(
+            (pi) => pi.id !== identifier && !pi.global,
+        );
         const max = Number(config.get("limits:maxPlatformInstances") ?? 0);
-        if (!Number.isFinite(max) || max <= 0) {
-            return;
-        }
-        const occupied = platformInstances.has(identifier)
-            ? platformInstances.size - 1
-            : platformInstances.size;
-        if (occupied >= max) {
+        if (!reusable && max > 0 && others.length >= max) {
             throw new Error(
                 `platform instance limit reached (${max}); cannot start new ${platform} instance`,
+            );
+        }
+        const perSession = Number(
+            config.get("limits:maxInstancesPerSession") ?? 0,
+        );
+        if (
+            perSession > 0 &&
+            sessionId &&
+            others.filter((pi) => pi.sessions.has(sessionId)).length >=
+                perSession
+        ) {
+            throw new Error(
+                `per-session platform instance limit reached (${perSession})`,
+            );
+        }
+        const perIp = Number(config.get("limits:maxInstancesPerIp") ?? 0);
+        if (
+            perIp > 0 &&
+            sessionIp &&
+            others.filter((pi) => pi.ownerIps.has(sessionIp)).length >= perIp
+        ) {
+            throw new Error(
+                `per-address platform instance limit reached (${perIp})`,
             );
         }
     }

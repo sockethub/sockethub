@@ -69,7 +69,9 @@ add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
     "maxConnectionsPerIp": 20
   },
   "limits": {
-    "maxPlatformInstances": 100
+    "maxPlatformInstances": 100,
+    "maxInstancesPerSession": 10,
+    "maxInstancesPerIp": 20
   },
   "credentialCheck": {
     "reconnectIpSource": "socket",
@@ -248,29 +250,30 @@ Protect against event flooding from individual clients:
     "maxConnectionsPerIp": 20  // Concurrent sockets per client IP
   },
   "limits": {
-    "maxPlatformInstances": 100 // Concurrent platform child processes
+    "maxPlatformInstances": 100,
+    "maxInstancesPerSession": 10,
+    "maxInstancesPerIp": 20 // Persistent instances per IP
   }
 }
 ```
 
 **Default limits:** 100 events per second per client, a 5 second block, 20
-concurrent sockets per client IP, and 100 concurrent platform processes.
+concurrent sockets per client IP, 100 persistent platform processes, 10 persistent
+instances per socket session, and 20 persistent instances per client IP.
 
-`maxPlatformInstances` is a server-wide limit, not a per-user limit. Persistent
-platforms such as IRC and XMPP use one process for each unique actor, while
-sessions for the same actor reuse that process. Stateless platforms such as
-CalDAV, CardDAV, feeds, and metadata use one shared process per platform.
+`maxPlatformInstances` limits persistent workers across the server. IRC and XMPP
+use one process per actor and credential scope. Shared instances count against
+every attached session and IP; reusing the same instance consumes no extra slot.
+An IP remains charged until the worker shuts down, including for HTTP actions
+that have no socket session. Clients behind a shared NAT share the IP quota.
 
-As a sizing example, 20 users each connected to IRC and XMPP, with all four
-stateless platforms active, use approximately `20 * 2 + 4 = 44` platform
-processes. Users with multiple identities on a persistent platform use an
-additional process for each identity. Increase the default for deployments that
-expect more than 100 concurrent persistent actors, allowing for active stateless
-platforms.
+Stateless platforms (CalDAV, CardDAV, feeds, and metadata) use one shared worker
+per enabled platform and are excluded from these caps, so persistent connections
+cannot prevent their startup or restart. With all four stateless platforms
+active, the default process budget is at most `100 + 4 = 104` workers.
 
-Setting `maxPlatformInstances` to `0` removes the server-wide platform process
-limit entirely. Setting `maxConnectionsPerIp` to `0` likewise removes the
-per-IP connection limit.
+Each instance limit can independently be disabled by setting it to `0`.
+Setting `maxConnectionsPerIp` to `0` removes the per-IP socket connection limit.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
@@ -326,7 +329,9 @@ Configure how reconnect IP is read:
 }
 ```
 
-- `reconnectIpSource`: `socket` (default) uses `socket.handshake.address`.
+- `reconnectIpSource`: `socket` (default) uses the socket peer address, resolved
+  through `sockethub.trustProxy` when enabled, matching HTTP instance quota
+  accounting.
 - `reconnectIpSource: "proxy"` uses the header named by `proxyHeader`.
 - `proxyHeader`: defaults to `x-forwarded-for`; only the first IP is used.
 

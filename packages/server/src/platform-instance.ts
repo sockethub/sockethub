@@ -111,6 +111,8 @@ export default class PlatformInstance {
     readonly parentId: string;
     private readonly parentSecret1?: string;
     readonly sessions: Set<string> = new Set();
+    // Keep admission IPs for the worker lifetime, including socketless HTTP owners.
+    readonly ownerIps: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
     private readonly sessionSecrets: Map<string, string> = new Map();
     private processMessageListener?: (message: MessageFromPlatform) => void;
