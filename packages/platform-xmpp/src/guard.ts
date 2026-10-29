@@ -131,7 +131,27 @@ export function guardXmppConnections(
     // candidate socket is only attached to the client once it connects, so a
     // failed candidate does not surface as a client error before the next one
     // is tried.
+    //
+    // An unattached candidate is invisible to `stop()`, so stop is wrapped to
+    // abort it. Otherwise a reconnect still in flight when the platform
+    // cleans up would attach to the discarded client and log in.
+    const attempts: Attempts = { stops: 0, pending: new Set() };
+    const stop = entity.stop;
+    entity.stop = function (this: GuardedEntity) {
+        attempts.stops++;
+        for (const abort of attempts.pending) {
+            abort();
+        }
+        attempts.pending.clear();
+        return stop.call(this);
+    };
     entity.connect = async function (this: GuardedEntity, service: string) {
+        const stops = attempts.stops;
+        const assertNotStopped = () => {
+            if (attempts.stops !== stops) {
+                throw new StoppedError();
+            }
+        };
         let lastError: unknown;
         let uris: string[] = [];
         try {
@@ -139,11 +159,21 @@ export function guardXmppConnections(
         } catch (err) {
             lastError = err;
         }
+        assertNotStopped();
         for (const uri of uris) {
             try {
-                await connectCandidate(this, uri, allowPrivateAddresses);
+                await connectCandidate(
+                    this,
+                    uri,
+                    allowPrivateAddresses,
+                    attempts,
+                    assertNotStopped,
+                );
                 return;
             } catch (err) {
+                if (err instanceof StoppedError) {
+                    throw err;
+                }
                 lastError = err;
             }
         }
@@ -160,12 +190,31 @@ export function guardXmppConnections(
     };
 }
 
+/** Raised when the client is stopped while a connect is in flight. */
+class StoppedError extends Error {
+    constructor() {
+        super("XMPP client stopped while connecting");
+    }
+}
+
+interface Attempts {
+    /** Incremented by every `stop()`; a connect compares it to bail out. */
+    stops: number;
+    /** Aborts for candidate sockets that are connecting but not attached. */
+    pending: Set<() => void>;
+}
+
+type CandidateSocket = NodeJS.EventEmitter & {
+    connect(params: unknown): void;
+    destroy?: () => void;
+    /** `@xmpp/tls` wraps the real TLS socket here. */
+    socket?: { destroy(): void };
+};
+
 type Transport = {
     prototype: {
         socketParameters(service: string): unknown;
-        Socket: new () => NodeJS.EventEmitter & {
-            connect(params: unknown): void;
-        };
+        Socket: new () => CandidateSocket;
         Parser: unknown;
     };
 };
@@ -187,6 +236,8 @@ async function connectCandidate(
     entity: GuardedEntity,
     uri: string,
     allowPrivateAddresses: boolean,
+    attempts: Attempts,
+    assertNotStopped: () => void,
 ): Promise<void> {
     // Fail with a clear error here; the transport wrapper's refusal surfaces
     // from `_findTransport` as "no transport".
@@ -200,19 +251,43 @@ async function connectCandidate(
     }
     entity._status("connecting", uri);
     const socket = new Transport.prototype.Socket();
-    await new Promise<void>((resolve, reject) => {
-        const onConnect = () => {
-            socket.removeListener("error", onError);
-            resolve();
-        };
-        const onError = (err: unknown) => {
-            socket.removeListener("connect", onConnect);
-            reject(err);
-        };
-        socket.once("connect", onConnect);
-        socket.once("error", onError);
-        socket.connect(Transport.prototype.socketParameters(uri));
-    });
+    let abort = () => {};
+    try {
+        await new Promise<void>((resolve, reject) => {
+            const onConnect = () => {
+                socket.removeListener("error", onError);
+                resolve();
+            };
+            const onError = (err: unknown) => {
+                socket.removeListener("connect", onConnect);
+                reject(err);
+            };
+            abort = () => {
+                socket.removeListener("connect", onConnect);
+                socket.removeListener("error", onError);
+                socket.on("error", () => {});
+                if (typeof socket.destroy === "function") {
+                    socket.destroy();
+                } else {
+                    socket.socket?.destroy();
+                }
+                reject(new StoppedError());
+            };
+            attempts.pending.add(abort);
+            socket.once("connect", onConnect);
+            socket.once("error", onError);
+            socket.connect(Transport.prototype.socketParameters(uri));
+        });
+    } finally {
+        attempts.pending.delete(abort);
+    }
+    // Belt and braces: never attach once the client has been stopped.
+    try {
+        assertNotStopped();
+    } catch (err) {
+        abort();
+        throw err;
+    }
     entity._attachSocket(socket);
     socket.emit("connect");
     entity.Transport = Transport;

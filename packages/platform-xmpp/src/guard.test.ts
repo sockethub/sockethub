@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import type { SrvRecord } from "node:dns";
+import { EventEmitter } from "node:events";
 import { createServer } from "node:net";
+import sinon from "sinon";
 import { client as xmppClient, type XmppClientInstance } from "@xmpp/client";
 
 import { discoverServices, guardXmppConnections } from "./guard.js";
@@ -266,6 +268,66 @@ describe("guardXmppConnections", () => {
                 await new Promise((resolve) => setTimeout(resolve, 20));
             });
             expect(connections).toBe(1);
+        });
+
+        const makeEntity = (resolve = resolverFor({})) => {
+            const xmpp = xmppClient({
+                service: "example.org",
+                domain: "example.org",
+                username: "u",
+                password: "p",
+                timeout: 2000,
+            }) as Entity & { _findTransport(uri: string): unknown; _attachSocket(s: unknown): void };
+            xmpp.on("error", () => {});
+            guardXmppConnections(xmpp, true, resolve);
+            return xmpp;
+        };
+
+        it("does not connect when stopped during discovery", async () => {
+            const releases: Array<() => void> = [];
+            const release = () => {
+                for (const fn of releases) fn();
+            };
+            const slow = (name: string) =>
+                new Promise<SrvRecord[]>((resolve) => {
+                    releases.push(() => resolve(name.startsWith("_xmpp-client") ? [srv("127.0.0.1", 5222)] : []));
+                });
+            const xmpp = makeEntity(slow);
+            const attach = sinon.spy(xmpp, "_attachSocket");
+            const pending = xmpp.connect("example.org");
+            await xmpp.stop().catch(() => {});
+            release();
+            await expect(pending).rejects.toThrow("stopped while connecting");
+            sinon.assert.notCalled(attach);
+            xmpp.reconnect.stop();
+        });
+
+        it("aborts a candidate still connecting when stopped, and never attaches it", async () => {
+            const sockets: Array<EventEmitter & { destroyed: boolean }> = [];
+            class HangingSocket extends EventEmitter {
+                destroyed = false;
+                connect() {
+                    sockets.push(this);
+                }
+                destroy() {
+                    this.destroyed = true;
+                }
+            }
+            const xmpp = makeEntity();
+            const attach = sinon.spy(xmpp, "_attachSocket");
+            sinon.stub(xmpp, "_findTransport").returns({
+                prototype: { Socket: HangingSocket, socketParameters: () => ({}), Parser: null },
+            });
+            const pending = xmpp.connect("xmpp://chat.example.org:5222");
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            expect(sockets).toHaveLength(1);
+            await xmpp.stop().catch(() => {});
+            await expect(pending).rejects.toThrow("stopped while connecting");
+            expect(sockets[0].destroyed).toBe(true);
+            // A late connect from the aborted socket is ignored.
+            sockets[0].emit("connect");
+            sinon.assert.notCalled(attach);
+            xmpp.reconnect.stop();
         });
 
         it("skips a blocked SRV candidate in favour of the next one", async () => {
