@@ -71,6 +71,15 @@ describe("discoverServices", () => {
         );
     });
 
+    it("rejects the empty target Node's resolver returns for '.'", async () => {
+        const resolve = resolverFor({
+            "_xmpp-client._tcp.example.org": [srv("", 0)],
+        });
+        await expect(discoverServices("example.org", resolve)).rejects.toThrow(
+            "XMPP service is not available at example.org",
+        );
+    });
+
     it("still uses the other scheme when only one is marked unavailable", async () => {
         const resolve = resolverFor({
             "_xmpps-client._tcp.example.org": [srv(".", 0)],

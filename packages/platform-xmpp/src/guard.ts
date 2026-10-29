@@ -37,13 +37,15 @@ export async function discoverServices(
     });
     const answers = await Promise.all(lookups);
     // RFC 2782: a lone "." target means the service is decidedly not
-    // available, so it must not trigger the host fallback.
+    // available, so it must not trigger the host fallback. Node's resolver
+    // reports that root target as an empty name.
+    const isRoot = (name: string) => name === "" || name === ".";
     const unavailable = answers.some(
-        (records) => records.length === 1 && records[0].name === ".",
+        (records) => records.length === 1 && isRoot(records[0].name),
     );
     const records = answers
         .flat()
-        .filter((record) => record.name && record.name !== ".")
+        .filter((record) => !isRoot(record.name))
         .sort((a, b) => a.priority - b.priority || b.weight - a.weight);
     if (records.length === 0) {
         if (unavailable) {
