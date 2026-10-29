@@ -6,11 +6,12 @@ import { join } from "node:path";
 // that the bundled client uses, so check it against a fresh build of the
 // published bundle rather than against src. It is built inside the package,
 // like dist/, so anything left unbundled resolves the same way.
-const outdir = mkdtempSync(join(import.meta.dir, "..", ".dist-test-"));
+let outdir = "";
 const fetches: string[] = [];
 const realFetch = globalThis.fetch;
 
 beforeAll(async () => {
+    outdir = mkdtempSync(join(import.meta.dir, "..", ".dist-test-"));
     const result = await Bun.build({
         entrypoints: [join(import.meta.dir, "index.ts")],
         outdir,
@@ -29,7 +30,9 @@ beforeAll(async () => {
 
 afterAll(() => {
     globalThis.fetch = realFetch;
-    rmSync(outdir, { recursive: true, force: true });
+    if (outdir) {
+        rmSync(outdir, { recursive: true, force: true });
+    }
 });
 
 it("never fetches host-meta when connecting to a bare host", async () => {
