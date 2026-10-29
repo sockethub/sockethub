@@ -111,6 +111,8 @@ export default class XMPP implements PersistentPlatformInterface {
     readonly sendToClient: PlatformSendToClient;
     /** @internal Set of bare JIDs for rooms this client has joined. */
     public __knownRooms: Set<string>;
+    /** @internal Bare JID of the authenticated account, used by IncomingHandlers. */
+    public __bareJid: string | undefined;
     protected __clientConstructor: (
         options: XmppClientOptions,
     ) => XmppClientInstance;
@@ -275,6 +277,7 @@ export default class XMPP implements PersistentPlatformInterface {
             done(toError(err));
             return;
         }
+        this.__bareJid = `${xmppCreds.username}@${xmppCreds.domain}`;
         this.log.debug(
             `building XMPP credentials for ${job.actor.id}:`,
             JSON.stringify({

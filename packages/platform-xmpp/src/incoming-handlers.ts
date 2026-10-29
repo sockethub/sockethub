@@ -441,12 +441,11 @@ export class IncomingHandlers {
                 return;
             }
 
-            // RFC 6121 2.1.6: only trust roster data from the server (no 'from')
-            // or the account's own bare JID; both attrs are server-stamped.
+            // RFC 6121 2.1.6: only trust roster data from the server (no 'from',
+            // which clients cannot forge) or the account's own bare JID.
             const query = stanza.getChild("query", "jabber:iq:roster");
             const from = stanza.attrs.from;
-            const ownJid = (stanza.attrs.to ?? "").split("/")[0];
-            if (query && (!from || from === ownJid)) {
+            if (query && (!from || from === this.session?.__bareJid)) {
                 const entries = query.getChildren("item");
                 for (const e in entries) {
                     if (!Object.hasOwn(entries, e)) {

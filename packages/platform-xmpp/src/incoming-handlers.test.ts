@@ -16,6 +16,7 @@ function makeSession(overrides: Partial<XmppHandlerSession> = {}): XmppHandlerSe
         sendToClient: sinon.fake(),
         log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
         __knownRooms: new Set(),
+        __bareJid: "user@example.org",
         actor: undefined,
         connection: undefined,
         ...overrides,
@@ -80,11 +81,7 @@ describe("Incoming handlers", () => {
             }
             schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);
             sendToClient = sinon.fake();
-            ih = new IncomingHandlers({
-                sendToClient: sendToClient,
-                log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
-                __knownRooms: new Set(),
-            });
+            ih = new IncomingHandlers(makeSession({ sendToClient }));
         });
 
         test("handles IQ error response for room-info query", () => {
@@ -152,7 +149,7 @@ describe("Incoming handlers", () => {
             );
             ih.stanza(
                 parse(
-                    `<iq from='user@example.org' to='user@example.org/res' type='set' id='r2'>
+                    `<iq from='user@example.org' type='set' id='r2'>
                       <query xmlns='jabber:iq:roster'>
                         <item jid='other@example.org' subscription='both'/>
                       </query>
@@ -166,6 +163,15 @@ describe("Incoming handlers", () => {
         });
 
         test("ignores roster-shaped IQs from any other sender", () => {
+            ih.stanza(
+                parse(
+                    `<iq from='user@example.org/res' to='user@example.org/res' type='set' id='x0'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='spoof@corp.example' subscription='both'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
             for (const type of ["set", "result", "get"]) {
                 ih.stanza(
                     parse(
