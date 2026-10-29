@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, test } from "bun:test";
 import { TLSSocket } from "node:tls";
+import type { EventEmitter } from "node:events";
 import sinon from "sinon";
 import { buildCanonicalContext } from "@sockethub/schemas";
 
 import XMPP, { setTlsServername } from "./index.js";
 import { PlatformSchema } from "./schema.js";
 import type { XmppClientInstance, XmppClientOptions, XmppElement } from "@xmpp/client";
+import { client, xml } from "@xmpp/client";
 
 const actor = {
     type: "person",
@@ -218,6 +220,8 @@ describe("XMPP", () => {
     beforeEach(() => {
         clientObjectFake = {
             on: sinon.fake(),
+            listeners: sinon.fake.returns([]),
+            removeListener: sinon.fake(),
             start: sinon.fake.resolves(),
             send: sinon.fake.resolves(),
             join: sinon.fake.resolves(),
@@ -359,12 +363,56 @@ describe("XMPP", () => {
             sinon.assert.calledOnce(send);
         });
 
+        it("detaches interrupted SASL exchanges before a plaintext reconnect can challenge them", async () => {
+            let authSent!: () => void;
+            const firstAuth = new Promise<void>((resolve) => { authSent = resolve; });
+            const send = sinon.fake((element: XmppElement) => {
+                if (element.name === "auth") authSent();
+                return Promise.resolve();
+            });
+            (clientFake as sinon.SinonStub).callsFake((options: XmppClientOptions) => {
+                const instance = client(options) as XmppClientInstance & {
+                    reconnect: { stop(): void };
+                };
+                instance.reconnect.stop();
+                instance.start = sinon.fake.resolves();
+                instance.stop = sinon.fake.resolves();
+                instance.send = send;
+                instance.socket = { writable: true, url: "wss://jabber.net/xmpp" };
+                return instance;
+            });
+            await authentication();
+            const instance = xp.__client! as XmppClientInstance & EventEmitter;
+            const namespace = "urn:ietf:params:xml:ns:xmpp-sasl";
+            const unrelatedListener = sinon.fake();
+            instance.on("nonza", unrelatedListener);
+            const existingListeners = instance.listenerCount("nonza");
+            const authFailed = new Promise<Error>((resolve) => instance.once("error", resolve));
+            instance.emit("element", xml("features", { xmlns: "http://etherx.jabber.org/streams" },
+                xml("mechanisms", { xmlns: namespace }, xml("mechanism", {}, "PLAIN"))));
+            await firstAuth;
+            expect(instance.listenerCount("nonza")).toBe(existingListeners + 1);
+            expect(send.firstCall.args[0].name).toBe("auth");
+
+            instance.socket = { writable: true };
+            instance.emit("disconnect");
+            instance.emit("nonza", xml("challenge", { xmlns: namespace }, ""));
+            expect(send.getCalls().some((call) => call.args[0].name === "response")).toBe(false);
+            expect(instance.listenerCount("nonza")).toBe(existingListeners);
+            sinon.assert.calledOnce(unrelatedListener);
+            expect((await authFailed).message).toContain("authentication interrupted");
+        });
+
         it("accepts a secure WebSocket transport", async () => {
             const authenticate = await authentication();
             clientObjectFake.socket = { writable: true, url: "wss://jabber.net/xmpp" };
             const send = sinon.fake.resolves();
             await authenticate(send);
             sinon.assert.calledOnce(send);
+            const onDisconnect = (clientObjectFake.on as sinon.SinonSpy).getCalls()
+                .find((call) => call.args[0] === "disconnect")!.args[1];
+            sinon.assert.calledWithExactly(clientObjectFake.removeListener as sinon.SinonSpy,
+                "disconnect", onDisconnect);
         });
 
         it("propagates authentication failures", async () => {
@@ -372,6 +420,10 @@ describe("XMPP", () => {
             clientObjectFake.socket = { writable: true, url: "wss://jabber.net/xmpp" };
             await expect(authenticate(sinon.fake.rejects(new Error("not-authorized"))))
                 .rejects.toThrow("not-authorized");
+            const onDisconnect = (clientObjectFake.on as sinon.SinonSpy).getCalls()
+                .find((call) => call.args[0] === "disconnect")!.args[1];
+            sinon.assert.calledWithExactly(clientObjectFake.removeListener as sinon.SinonSpy,
+                "disconnect", onDisconnect);
         });
     });
 

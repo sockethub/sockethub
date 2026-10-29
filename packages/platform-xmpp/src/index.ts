@@ -295,7 +295,44 @@ export default class XMPP implements PersistentPlatformInterface {
                             "refusing to authenticate over an unencrypted XMPP stream",
                         );
                     }
-                    await authenticate({ username, password });
+                    const previousListeners = new Set(
+                        xmppClient.listeners("nonza"),
+                    );
+                    const authentication = authenticate({ username, password });
+                    // xmpp.js leaves its SASL listener attached if the stream disconnects.
+                    const saslListeners = xmppClient
+                        .listeners("nonza")
+                        .filter((listener) => !previousListeners.has(listener));
+                    const detachSasl = () => {
+                        for (const listener of saslListeners) {
+                            xmppClient.removeListener("nonza", listener);
+                        }
+                    };
+                    let onDisconnect: (() => void) | undefined;
+                    try {
+                        await Promise.race([
+                            authentication,
+                            new Promise<never>((_resolve, reject) => {
+                                onDisconnect = () => {
+                                    detachSasl();
+                                    reject(
+                                        new Error(
+                                            "XMPP authentication interrupted by disconnect",
+                                        ),
+                                    );
+                                };
+                                xmppClient.on("disconnect", onDisconnect);
+                            }),
+                        ]);
+                    } finally {
+                        if (onDisconnect) {
+                            xmppClient.removeListener(
+                                "disconnect",
+                                onDisconnect,
+                            );
+                        }
+                        detachSasl();
+                    }
                 },
             });
             this.__client = xmppClient;
