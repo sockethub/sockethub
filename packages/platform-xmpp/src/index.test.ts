@@ -293,6 +293,18 @@ describe("XMPP", () => {
                 done();
             });
         });
+
+        it("records the bare JID from credentials, then from the bound address", (done) => {
+            xp.connect(job.connect, credentials as never, () => {
+                expect(xp.__bareJid).toEqual("testingham@jabber.net");
+                const online = clientObjectFake.on
+                    .getCalls()
+                    .find((c) => c.args[0] === "online")!.args[1];
+                online({ toString: () => "Testingham@jabber.net/bound" });
+                expect(xp.__bareJid).toEqual("Testingham@jabber.net");
+                done();
+            });
+        });
     });
 
     describe("Encrypted authentication", () => {

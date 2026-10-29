@@ -38,6 +38,8 @@ export interface XmppHandlerSession {
     log: Logger;
     sendToClient: PlatformSendToClient;
     __knownRooms: Set<string>;
+    /** Bare JID of the authenticated account, set on connect. */
+    __bareJid?: string;
     actor?: ActivityActor;
     connection?: { disconnect?: () => void };
 }

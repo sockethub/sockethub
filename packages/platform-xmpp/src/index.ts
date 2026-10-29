@@ -111,6 +111,8 @@ export default class XMPP implements PersistentPlatformInterface {
     readonly sendToClient: PlatformSendToClient;
     /** @internal Set of bare JIDs for rooms this client has joined. */
     public __knownRooms: Set<string>;
+    /** @internal Bare JID of the authenticated account, used by IncomingHandlers. */
+    public __bareJid: string | undefined;
     protected __clientConstructor: (
         options: XmppClientOptions,
     ) => XmppClientInstance;
@@ -275,6 +277,7 @@ export default class XMPP implements PersistentPlatformInterface {
             done(toError(err));
             return;
         }
+        this.__bareJid = `${xmppCreds.username}@${xmppCreds.domain}`;
         this.log.debug(
             `building XMPP credentials for ${job.actor.id}:`,
             JSON.stringify({
@@ -428,8 +431,12 @@ export default class XMPP implements PersistentPlatformInterface {
             });
         });
 
-        this.__client.on("online", () => {
+        this.__client.on("online", (address: unknown) => {
             this.log.debug(`online event received for ${job.actor.id}`);
+            // Prefer the server-bound JID; the server may canonicalize it.
+            if (address) {
+                this.__bareJid = String(address).split("/")[0];
+            }
         });
 
         this.log.debug(`starting XMPP client connection for ${job.actor.id}`);

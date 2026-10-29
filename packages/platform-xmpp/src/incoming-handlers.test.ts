@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, it, test } from "bun:test";
 import sinon from "sinon";
 
 import * as schemas from "@sockethub/schemas";
@@ -16,6 +16,7 @@ function makeSession(overrides: Partial<XmppHandlerSession> = {}): XmppHandlerSe
         sendToClient: sinon.fake(),
         log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
         __knownRooms: new Set(),
+        __bareJid: "user@example.org",
         actor: undefined,
         connection: undefined,
         ...overrides,
@@ -80,11 +81,7 @@ describe("Incoming handlers", () => {
             }
             schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);
             sendToClient = sinon.fake();
-            ih = new IncomingHandlers({
-                sendToClient: sendToClient,
-                log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
-                __knownRooms: new Set(),
-            });
+            ih = new IncomingHandlers(makeSession({ sendToClient }));
         });
 
         test("handles IQ error response for room-info query", () => {
@@ -137,10 +134,57 @@ describe("Incoming handlers", () => {
             ih.stanza(oldIdStanza);
             ih.stanza(unrelatedIdStanza);
 
+            sinon.assert.notCalled(sendToClient);
+        });
+
+        it("emits presence updates for roster pushes from the server or own bare JID", () => {
+            ih.stanza(
+                parse(
+                    `<iq to='user@example.org/res' type='set' id='r1'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='friend@example.org' name='Friend' subscription='both'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
+            ih.stanza(
+                parse(
+                    `<iq from='user@example.org' type='set' id='r2'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='other@example.org' subscription='both'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
             sinon.assert.calledTwice(sendToClient);
-            for (const call of sendToClient.getCalls()) {
-                expect(call.args[0].object?.type).not.toEqual("attendance");
+            expect(sendToClient.getCall(0).args[0].actor.id).toEqual("friend@example.org");
+            expect(sendToClient.getCall(0).args[0].object.presence).toEqual("online");
+            expect(sendToClient.getCall(1).args[0].actor.id).toEqual("other@example.org");
+        });
+
+        it("ignores roster-shaped IQs from any other sender", () => {
+            ih.stanza(
+                parse(
+                    `<iq from='user@example.org/res' to='user@example.org/res' type='set' id='x0'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='spoof@corp.example' subscription='both'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
+            for (const type of ["set", "result", "get"]) {
+                ih.stanza(
+                    parse(
+                        `<iq from='mallory@example.org/pc' to='user@example.org/res' type='${type}' id='x1'>
+                          <query xmlns='jabber:iq:roster'>
+                            <item jid='ceo@corp.example' name='CEO' subscription='both'/>
+                            <item jid='spoof@corp.example' subscription='none'/>
+                          </query>
+                        </iq>`,
+                    ),
+                );
             }
+            sinon.assert.notCalled(sendToClient);
         });
 
         test("sends error response for disco#info result with wrong xmlns", () => {
