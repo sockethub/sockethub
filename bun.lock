@@ -294,6 +294,7 @@
         "express": "^5.1.0",
         "express-rate-limit": "^8.2.1",
         "jquery": "^3.7.1",
+        "proxy-addr": "^2.0.7",
         "rate-limit-redis": "^4.2.0",
         "socket.io": "^4.8.3",
       },
@@ -301,6 +302,7 @@
         "@types/bun": "latest",
         "@types/convict": "^6.1.6",
         "@types/debug": "^4.1.12",
+        "@types/proxy-addr": "^2.0.3",
         "@types/express": "^5.0.0",
         "@types/jquery": "^3.5.33",
         "@types/sinon": "^17.0.4",
@@ -1330,6 +1332,8 @@
     "@types/pg": ["@types/pg@8.15.6", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-NoaMtzhxOrubeL/7UZuNTrejB4MPAJ0RpxZqXQf2qXuVlTPuG6Y8p4u9dKRaue4yjmC7ZhzVO2/Yyyn25znrPQ=="],
 
     "@types/pg-pool": ["@types/pg-pool@2.0.7", "", { "dependencies": { "@types/pg": "*" } }, "sha512-U4CwmGVQcbEuqpyju8/ptOKg6gEC+Tqsvj2xS9o1g71bUh8twxnC6ZL5rZKCsGN0iyH0CwgUyc9VR5owNQF9Ng=="],
+
+    "@types/proxy-addr": ["@types/proxy-addr@2.0.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-TgAHHO4tNG3HgLTUhB+hM4iwW6JUNeQHCLnF1DjaDA9c69PN+IasoFu2MYDhubFc+ZIw5c5t9DMtjvrD6R3Egg=="],
 
     "@types/qs": ["@types/qs@6.9.18", "", {}, "sha512-kK7dgTYDyGqS+e2Q4aK9X3D7q234CIZ1Bv0q/7Z5IwRDoADNU81xXJK/YVyLbLTZCoIwUoDoffFeF+p/eIklAA=="],
 

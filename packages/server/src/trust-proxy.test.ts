@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
-import { resolveTrustProxy } from "./trust-proxy.js";
+import type { IncomingMessage } from "node:http";
+import express from "express";
+
+import { getRequestClientIp, resolveTrustProxy } from "./trust-proxy.js";
 
 describe("resolveTrustProxy", () => {
     it("trusts nothing by default", () => {
@@ -72,5 +75,26 @@ describe("resolveTrustProxy", () => {
         expect(resolveTrustProxy("loopback", "proxy", "x-real-ip")).toBe(
             "loopback",
         );
+    });
+});
+
+
+describe("socket admission IP", () => {
+    it("matches Express HTTP identity across proxy policies", () => {
+        for (const trust of [false, true, 1, 2, "loopback"]) {
+            const app = express();
+            app.set("trust proxy", resolveTrustProxy(trust, "socket"));
+            const request = {
+                socket: { remoteAddress: "::ffff:127.0.0.1" },
+                headers: { "x-forwarded-for": "192.0.2.1, 198.51.100.2" },
+            } as IncomingMessage;
+            const httpRequest = Object.assign(Object.create(app.request), request, {
+                app,
+            });
+            const socketIp = getRequestClientIp(request, app);
+            const httpIp = httpRequest.ip.replace(/^::ffff:/, "");
+            expect(socketIp).toBe(httpIp);
+            expect(socketIp).toBe(trust === false ? "127.0.0.1" : trust === 1 || trust === "loopback" ? "198.51.100.2" : "192.0.2.1");
+        }
     });
 });

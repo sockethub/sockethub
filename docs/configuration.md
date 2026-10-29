@@ -329,7 +329,9 @@ Configure how reconnect IP is read:
 }
 ```
 
-- `reconnectIpSource`: `socket` (default) uses `socket.handshake.address`.
+- `reconnectIpSource`: `socket` (default) uses the socket peer address, resolved
+  through `sockethub.trustProxy` when enabled, matching HTTP instance quota
+  accounting.
 - `reconnectIpSource: "proxy"` uses the header named by `proxyHeader`.
 - `proxyHeader`: defaults to `x-forwarded-for`; only the first IP is used.
 

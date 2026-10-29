@@ -270,14 +270,14 @@ export const SockethubConfigSchema = {
             additionalProperties: false,
             properties: {
                 maxInstancesPerSession: {
-                    type: "number",
+                    type: "integer",
                     minimum: 0,
                     default: 10,
                     description:
                         "Maximum persistent instances per socket session. 0 disables the cap.",
                 },
                 maxInstancesPerIp: {
-                    type: "number",
+                    type: "integer",
                     minimum: 0,
                     default: 20,
                     description:

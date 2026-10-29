@@ -1,3 +1,16 @@
+import type { IncomingMessage } from "node:http";
+import type { Express } from "express";
+import proxyaddr from "proxy-addr";
+import { normalizeIp } from "./connection-scope.js";
+
+/** Resolve socket admission using the same compiled proxy policy as Express req.ip. */
+export function getRequestClientIp(
+    request: IncomingMessage,
+    app: Express,
+): string {
+    return normalizeIp(proxyaddr(request, app.get("trust proxy fn")));
+}
+
 /**
  * Resolution of Express's `trust proxy` setting.
  *
