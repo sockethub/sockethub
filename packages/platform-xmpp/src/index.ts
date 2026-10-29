@@ -18,6 +18,7 @@
 
 import { randomUUID } from "node:crypto";
 import { isIP } from "node:net";
+import { TLSSocket } from "node:tls";
 import type {
     ActivityStream,
     Logger,
@@ -278,10 +279,24 @@ export default class XMPP implements PersistentPlatformInterface {
         this.log.debug(`creating XMPP client for ${job.actor.id}`);
 
         try {
+            const { username, password, ...options } = xmppCreds;
             this.__client = this.__clientConstructor({
-                ...xmppCreds,
+                ...options,
                 timeout: this.config.connectTimeoutMs,
-                tls: false,
+                credentials: async (authenticate) => {
+                    // Check the current transport on every SASL attempt, including reconnects.
+                    const socket = this.__client?.socket;
+                    if (
+                        !(socket instanceof TLSSocket) &&
+                        !(socket?.socket instanceof TLSSocket) &&
+                        !socket?.url?.startsWith("wss:")
+                    ) {
+                        throw new Error(
+                            "refusing to authenticate over an unencrypted XMPP stream",
+                        );
+                    }
+                    await authenticate({ username, password });
+                },
             });
             setTlsServername(this.__client, xmppCreds.domain);
             this.log.debug(

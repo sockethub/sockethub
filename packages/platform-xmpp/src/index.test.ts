@@ -1,10 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, test } from "bun:test";
+import { TLSSocket } from "node:tls";
 import sinon from "sinon";
 import { buildCanonicalContext } from "@sockethub/schemas";
 
 import XMPP, { setTlsServername } from "./index.js";
 import { PlatformSchema } from "./schema.js";
-import type { XmppClientInstance, XmppElement } from "@xmpp/client";
+import type { XmppClientInstance, XmppClientOptions, XmppElement } from "@xmpp/client";
 
 const actor = {
     type: "person",
@@ -287,6 +288,68 @@ describe("XMPP", () => {
                 sinon.assert.notCalled(xp.sendToClient as ReturnType<typeof sinon.fake>);
                 done();
             });
+        });
+    });
+
+    describe("Encrypted authentication", () => {
+        const refusal = "refusing to authenticate over an unencrypted XMPP stream";
+
+        async function authentication() {
+            await new Promise<void>((resolve) => {
+                xp.connect(job.connect, credentials as never, () => resolve());
+            });
+            const options = clientFake.firstCall.args[0] as XmppClientOptions;
+            expect(options).not.toHaveProperty("username");
+            expect(options).not.toHaveProperty("password");
+            expect(options).not.toHaveProperty("tls");
+            return options.credentials;
+        }
+
+        it("rejects missing and plaintext transports before sending credentials", async () => {
+            const authenticate = await authentication();
+            const send = sinon.fake.resolves();
+            for (const socket of [undefined, { writable: true }, { writable: true, url: "ws://localhost/xmpp" }]) {
+                clientObjectFake.socket = socket;
+                await expect(authenticate(send)).rejects.toThrow(refusal);
+            }
+            sinon.assert.notCalled(send);
+        });
+
+        it("accepts direct TLS and STARTTLS and rechecks the socket on reconnect", async () => {
+            const authenticate = await authentication();
+            const send = sinon.fake.resolves();
+            const tls = new TLSSocket();
+            try {
+                for (const socket of [tls, { writable: true, socket: tls }]) {
+                    clientObjectFake.socket = socket;
+                    await authenticate(send);
+                }
+                sinon.assert.calledTwice(send);
+                sinon.assert.alwaysCalledWithExactly(send, {
+                    username: "testingham",
+                    password: "foobar",
+                });
+                clientObjectFake.socket = { writable: true };
+                await expect(authenticate(send)).rejects.toThrow(refusal);
+                sinon.assert.calledTwice(send);
+            } finally {
+                tls.destroy();
+            }
+        });
+
+        it("accepts a secure WebSocket transport", async () => {
+            const authenticate = await authentication();
+            clientObjectFake.socket = { writable: true, url: "wss://jabber.net/xmpp" };
+            const send = sinon.fake.resolves();
+            await authenticate(send);
+            sinon.assert.calledOnce(send);
+        });
+
+        it("propagates authentication failures", async () => {
+            const authenticate = await authentication();
+            clientObjectFake.socket = { writable: true, url: "wss://jabber.net/xmpp" };
+            await expect(authenticate(sinon.fake.rejects(new Error("not-authorized"))))
+                .rejects.toThrow("not-authorized");
         });
     });
 
