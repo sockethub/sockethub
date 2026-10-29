@@ -295,10 +295,19 @@ export function isFacebookUrl(url: string): boolean {
 export function stripFacebookEngagement(
     title: string | undefined,
 ): string | undefined {
-    return title?.replace(
-        /^(?:[^|]*\p{Nd}[^|]*·[^|]*|\s*(?:\p{Nd}+[.,]\p{Nd}+(?:[.,\s]\p{Nd}+)*\p{L}{0,2}|\p{Nd}{1,3}\p{L}{1,2}|\p{Nd}{4,})(?:\s+\p{L}+\.)?\s+\p{L}+\s*)\|\s*/u,
-        "",
-    );
+    const bar = title?.indexOf("|") ?? -1;
+    if (title === undefined || bar === -1) {
+        return title;
+    }
+    // Test the first segment on its own: a single regex spanning it with
+    // chained `[^|]*` backtracks cubically on long untrusted og:title text.
+    const segment = title.slice(0, bar);
+    const isStats =
+        (segment.includes("·") && /\p{Nd}/u.test(segment)) ||
+        /^\s*(?:\p{Nd}+[.,]\p{Nd}+(?:[.,\s]\p{Nd}+)*\p{L}{0,2}|\p{Nd}{1,3}\p{L}{1,2}|\p{Nd}{4,})(?:\s+\p{L}+\.)?\s+\p{L}+\s*$/u.test(
+            segment,
+        );
+    return isStats ? title.slice(bar + 1).trimStart() : title;
 }
 
 /**

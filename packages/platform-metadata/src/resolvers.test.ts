@@ -553,6 +553,19 @@ describe("stripFacebookEngagement", () => {
         );
     });
 
+    it("runs in linear time on long untrusted titles", () => {
+        for (const title of [
+            "1·".repeat(8192),
+            `${"1·".repeat(8192)}| x`,
+            `${"1 ".repeat(8192)}| x`,
+            `${"1,".repeat(8192)}| x`,
+        ]) {
+            const start = performance.now();
+            stripFacebookEngagement(title);
+            expect(performance.now() - start).toBeLessThan(50);
+        }
+    });
+
     it("leaves titles without a stats segment untouched", () => {
         expect(stripFacebookEngagement("Steven Bartlett")).toEqual(
             "Steven Bartlett",
