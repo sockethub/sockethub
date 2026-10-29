@@ -224,7 +224,7 @@ describe("XMPP", () => {
             stop: sinon.fake.resolves(),
             removeAllListeners: sinon.fake(),
         };
-        clientFake = sinon.fake.returns(clientObjectFake);
+        clientFake = sinon.stub().returns(clientObjectFake);
 
         const mockXmlElement: Partial<XmppElement> & { c: ReturnType<typeof sinon.fake>; getChild: ReturnType<typeof sinon.fake> } = {
             name: "presence",
@@ -335,6 +335,28 @@ describe("XMPP", () => {
             } finally {
                 tls.destroy();
             }
+        });
+
+        it("does not trust a secure replacement when an older client authenticates", async () => {
+            const authenticateOld = await authentication();
+            clientObjectFake.socket = { writable: true };
+            const replacement = {
+                ...clientObjectFake,
+                socket: { writable: true, url: "wss://jabber.net/xmpp" },
+            };
+            (clientFake as sinon.SinonStub).onSecondCall().returns(replacement);
+            await new Promise<void>((resolve) => {
+                xp.connect(job.connect, credentials as never, () => resolve());
+            });
+            expect(xp.__client).toBe(replacement);
+
+            const send = sinon.fake.resolves();
+            await expect(authenticateOld(send)).rejects.toThrow(refusal);
+            sinon.assert.notCalled(send);
+
+            const options = clientFake.secondCall.args[0] as XmppClientOptions;
+            await options.credentials(send);
+            sinon.assert.calledOnce(send);
         });
 
         it("accepts a secure WebSocket transport", async () => {

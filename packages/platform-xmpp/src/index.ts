@@ -280,12 +280,12 @@ export default class XMPP implements PersistentPlatformInterface {
 
         try {
             const { username, password, ...options } = xmppCreds;
-            this.__client = this.__clientConstructor({
+            const xmppClient = this.__clientConstructor({
                 ...options,
                 timeout: this.config.connectTimeoutMs,
                 credentials: async (authenticate) => {
-                    // Check the current transport on every SASL attempt, including reconnects.
-                    const socket = this.__client?.socket;
+                    // Check this client's transport even if a later connect replaces it.
+                    const socket = xmppClient.socket;
                     if (
                         !(socket instanceof TLSSocket) &&
                         !(socket?.socket instanceof TLSSocket) &&
@@ -298,6 +298,7 @@ export default class XMPP implements PersistentPlatformInterface {
                     await authenticate({ username, password });
                 },
             });
+            this.__client = xmppClient;
             setTlsServername(this.__client, xmppCreds.domain);
             this.log.debug(
                 `XMPP client created successfully for ${job.actor.id}`,
