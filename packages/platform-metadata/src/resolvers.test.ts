@@ -534,6 +534,10 @@ describe("stripFacebookEngagement", () => {
                 "٢٫٢ مليون مشاهدة · ٢١ ألف تفاعل | فيديو | Author",
             ),
         ).toEqual("فيديو | Author");
+        // A digit anywhere before the last separator counts.
+        expect(
+            stripFacebookEngagement("Reactions · 2 views · 3 shares | Title"),
+        ).toEqual("Title");
     });
 
     it("strips a lone view count from share-page titles", () => {
@@ -553,12 +557,29 @@ describe("stripFacebookEngagement", () => {
         );
     });
 
+    it("runs in linear time on long untrusted titles", () => {
+        for (const title of [
+            "1·".repeat(8192),
+            `${"1·".repeat(8192)}| x`,
+            `${"1 ".repeat(8192)}| x`,
+            `${"1,".repeat(8192)}| x`,
+        ]) {
+            const start = performance.now();
+            stripFacebookEngagement(title);
+            expect(performance.now() - start).toBeLessThan(50);
+        }
+    });
+
     it("leaves titles without a stats segment untouched", () => {
         expect(stripFacebookEngagement("Steven Bartlett")).toEqual(
             "Steven Bartlett",
         );
         expect(stripFacebookEngagement("My video | Author")).toEqual(
             "My video | Author",
+        );
+        // A digit after the separator is not a stats segment either.
+        expect(stripFacebookEngagement("Episode · 2 | Author")).toEqual(
+            "Episode · 2 | Author",
         );
         // A caption that merely starts with a number is not a view count.
         expect(stripFacebookEngagement("10 Best Goals | Author")).toEqual(
