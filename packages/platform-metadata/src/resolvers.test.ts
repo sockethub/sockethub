@@ -573,6 +573,10 @@ describe("stripFacebookEngagement", () => {
         expect(stripFacebookEngagement("My video | Author")).toEqual(
             "My video | Author",
         );
+        // A digit after the separator is not a stats segment either.
+        expect(stripFacebookEngagement("Episode · 2 | Author")).toEqual(
+            "Episode · 2 | Author",
+        );
         // A caption that merely starts with a number is not a view count.
         expect(stripFacebookEngagement("10 Best Goals | Author")).toEqual(
             "10 Best Goals | Author",
