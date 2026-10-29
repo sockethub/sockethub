@@ -164,6 +164,7 @@ describe("Utils", () => {
             "not a host",
             "xmpp://example.org%2Fpath",
             "xmpp://example.org%00",
+            "xmpp://example.org:0",
             "example.org%2Fpath",
         ])("rejects server value %p", (server) => {
             expect(() => withServer(server)).toThrow("credentials.object.server");

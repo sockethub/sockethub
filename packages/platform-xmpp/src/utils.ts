@@ -87,8 +87,12 @@ function buildService(server: string, port: number | undefined): string {
     if (!host) {
         throw new Error(INVALID_SERVER);
     }
+    // URL parsing already rejects ports above 65535, but not port 0.
+    if (url.port === "0") {
+        throw new Error(INVALID_SERVER);
+    }
     const effectivePort = port ?? (url.port ? Number(url.port) : undefined);
-    return effectivePort
+    return effectivePort !== undefined
         ? `${url.protocol}//${host}:${effectivePort}`
         : `${url.protocol}//${host}`;
 }
