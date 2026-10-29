@@ -441,8 +441,12 @@ export class IncomingHandlers {
                 return;
             }
 
-            const query = stanza.getChild("query");
-            if (query) {
+            // RFC 6121 2.1.6: only trust roster data from the server (no 'from')
+            // or the account's own bare JID; both attrs are server-stamped.
+            const query = stanza.getChild("query", "jabber:iq:roster");
+            const from = stanza.attrs.from;
+            const ownJid = (stanza.attrs.to ?? "").split("/")[0];
+            if (query && (!from || from === ownJid)) {
                 const entries = query.getChildren("item");
                 for (const e in entries) {
                     if (!Object.hasOwn(entries, e)) {

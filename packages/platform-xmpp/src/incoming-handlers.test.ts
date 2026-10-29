@@ -137,10 +137,48 @@ describe("Incoming handlers", () => {
             ih.stanza(oldIdStanza);
             ih.stanza(unrelatedIdStanza);
 
+            sinon.assert.notCalled(sendToClient);
+        });
+
+        test("emits presence updates for roster pushes from the server or own bare JID", () => {
+            ih.stanza(
+                parse(
+                    `<iq to='user@example.org/res' type='set' id='r1'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='friend@example.org' name='Friend' subscription='both'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
+            ih.stanza(
+                parse(
+                    `<iq from='user@example.org' to='user@example.org/res' type='set' id='r2'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='other@example.org' subscription='both'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
             sinon.assert.calledTwice(sendToClient);
-            for (const call of sendToClient.getCalls()) {
-                expect(call.args[0].object?.type).not.toEqual("attendance");
+            expect(sendToClient.getCall(0).args[0].actor.id).toEqual("friend@example.org");
+            expect(sendToClient.getCall(0).args[0].object.presence).toEqual("online");
+            expect(sendToClient.getCall(1).args[0].actor.id).toEqual("other@example.org");
+        });
+
+        test("ignores roster-shaped IQs from any other sender", () => {
+            for (const type of ["set", "result", "get"]) {
+                ih.stanza(
+                    parse(
+                        `<iq from='mallory@example.org/pc' to='user@example.org/res' type='${type}' id='x1'>
+                          <query xmlns='jabber:iq:roster'>
+                            <item jid='ceo@corp.example' name='CEO' subscription='both'/>
+                            <item jid='spoof@corp.example' subscription='none'/>
+                          </query>
+                        </iq>`,
+                    ),
+                );
             }
+            sinon.assert.notCalled(sendToClient);
         });
 
         test("sends error response for disco#info result with wrong xmlns", () => {
