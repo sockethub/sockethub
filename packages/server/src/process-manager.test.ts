@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
 import config from "./config.js";
@@ -13,6 +13,8 @@ import ProcessManager from "./process-manager.js";
 describe("ProcessManager", () => {
     let sandbox: sinon.SinonSandbox;
     let maxPlatformInstances: number;
+    let maxInstancesPerSession: number;
+    let maxInstancesPerIp: number;
     let manager: ProcessManager;
 
     function fakePlatforms(persist: boolean) {
@@ -39,6 +41,8 @@ describe("ProcessManager", () => {
         sandbox = sinon.createSandbox();
         platformInstances.clear();
         maxPlatformInstances = 0;
+        maxInstancesPerSession = 0;
+        maxInstancesPerIp = 0;
 
         sandbox
             .stub(PlatformInstance.prototype, "createQueue")
@@ -74,6 +78,8 @@ describe("ProcessManager", () => {
             if (key === "limits:maxPlatformInstances") {
                 return maxPlatformInstances;
             }
+            if (key === "limits:maxInstancesPerSession") return maxInstancesPerSession;
+            if (key === "limits:maxInstancesPerIp") return maxInstancesPerIp;
             return realGet(key);
         });
 
@@ -106,7 +112,7 @@ describe("ProcessManager", () => {
         } as never);
     }
 
-    test("disabled cap (0) allows unbounded instance creation", async () => {
+    it("disabled cap (0) allows unbounded instance creation", async () => {
         maxPlatformInstances = 0;
         for (let i = 0; i < 5; i++) {
             await manager.get("fakeplatform", `actor-${i}`, "session-a");
@@ -114,7 +120,7 @@ describe("ProcessManager", () => {
         expect(platformInstances.size).toEqual(5);
     });
 
-    test("blocks a new actor once the cap is reached", async () => {
+    it("blocks a new actor once the cap is reached", async () => {
         maxPlatformInstances = 1;
         await manager.get("fakeplatform", "actor-a", "session-a");
         await expect(manager.get("fakeplatform", "actor-b", "session-a")).rejects.toThrow(
@@ -123,7 +129,7 @@ describe("ProcessManager", () => {
         expect(platformInstances.size).toEqual(1);
     });
 
-    test("always allows reusing a live instance regardless of the cap", async () => {
+    it("always allows reusing a live instance regardless of the cap", async () => {
         maxPlatformInstances = 1;
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, true);
@@ -132,7 +138,7 @@ describe("ProcessManager", () => {
         expect(platformInstances.size).toEqual(1);
     });
 
-    test("allows the same actor to replace its own dead instance at the cap", async () => {
+    it("allows the same actor to replace its own dead instance at the cap", async () => {
         maxPlatformInstances = 1;
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
@@ -140,7 +146,7 @@ describe("ProcessManager", () => {
         expect(platformInstances.size).toEqual(1);
     });
 
-    test("marks a dead instance as replaced before shutting it down", async () => {
+    it("marks a dead instance as replaced before shutting it down", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         const markReplaced = sandbox.spy(first, "markReplaced");
@@ -152,7 +158,7 @@ describe("ProcessManager", () => {
         expect(markReplaced.calledBefore(shutdown)).toEqual(true);
     });
 
-    test("the dead instance's teardown does not evict the replacement from the map", async () => {
+    it("the dead instance's teardown does not evict the replacement from the map", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         const second = await manager.get("fakeplatform", "actor-a", "session-a");
@@ -160,7 +166,7 @@ describe("ProcessManager", () => {
         expect(platformInstances.get(second.id)).toBe(second);
     });
 
-    test("replacement inherits the dead instance queue id", async () => {
+    it("replacement inherits the dead instance queue id", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         const queueId = first.queueId;
         setAlive(first, false);
@@ -169,7 +175,7 @@ describe("ProcessManager", () => {
         expect(second.queueId).toEqual(queueId);
     });
 
-    test("does not shut down a live instance when reusing it", async () => {
+    it("does not shut down a live instance when reusing it", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, true);
         const markReplaced = sandbox.spy(first, "markReplaced");
@@ -180,7 +186,7 @@ describe("ProcessManager", () => {
         sinon.assert.notCalled(shutdown);
     });
 
-    test("waits for the dead instance's in-flight teardown before creating the replacement", async () => {
+    it("waits for the dead instance's in-flight teardown before creating the replacement", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         let releaseTeardown: () => void;
@@ -205,7 +211,7 @@ describe("ProcessManager", () => {
         expect(platformInstances.get(replacement.id)).toBe(replacement);
     });
 
-    test("concurrent requests for the same dead instance produce a single replacement", async () => {
+    it("concurrent requests for the same dead instance produce a single replacement", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);
         const [a, b] = await Promise.all([
@@ -216,13 +222,89 @@ describe("ProcessManager", () => {
         expect(platformInstances.size).toEqual(1);
     });
 
+    it("rechecks capacity after a dead worker finishes teardown", async () => {
+        maxPlatformInstances = 1;
+        const first = await manager.get("fakeplatform", "a", "a");
+        setAlive(first, false);
+        let release: () => void = () => {};
+        const teardown = new Promise<void>((resolve) => { release = resolve; });
+        sandbox.stub(first, "shutdown").callsFake(async () => {
+            platformInstances.delete(first.id);
+            await teardown;
+        });
+        const replacement = manager.get("fakeplatform", "a", "a");
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await manager.get("fakeplatform", "b", "b");
+        release();
+        await expect(replacement).rejects.toThrow("platform instance limit reached");
+        expect(platformInstances.size).toBe(1);
+    });
+
+    it("bounds concurrent actor churn per session while admitting another client", async () => {
+        maxPlatformInstances = 3;
+        maxInstancesPerSession = 1;
+        const results = await Promise.allSettled([
+            manager.get("fakeplatform", "a", "attacker"),
+            manager.get("fakeplatform", "b", "attacker"),
+        ]);
+        expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+        expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
+        await manager.get("fakeplatform", "c", "victim");
+        expect(platformInstances.size).toBe(2);
+    });
+
+    it("bounds multiple sockets and HTTP sessions at one IP", async () => {
+        maxInstancesPerIp = 1;
+        const first = await manager.get("fakeplatform", "a", undefined, "10.0.0.1", "http-a");
+        await expect(manager.get("fakeplatform", "b", "socket-b", "10.0.0.1")).rejects.toThrow("per-address");
+        await expect(manager.get("fakeplatform", "c", undefined, "10.0.0.1", "http-c")).rejects.toThrow("per-address");
+        await manager.get("fakeplatform", "d", "socket-d", "10.0.0.2");
+        await first.shutdown();
+        await manager.get("fakeplatform", "e", "socket-e", "10.0.0.1");
+    });
+
+    it("charges shared instances to each attached session and IP", async () => {
+        maxInstancesPerSession = 1;
+        maxInstancesPerIp = 1;
+        for (const session of ["a", "b"]) {
+            submitCredentials(session, "shared", { password: "shared" });
+        }
+        const shared = await manager.get("fakeplatform", "shared", "a", "10.0.0.1");
+        await manager.get("fakeplatform", "shared", "b", "10.0.0.2");
+        await expect(manager.get("fakeplatform", "other", "b", "10.0.0.2")).rejects.toThrow("per-session");
+        await expect(manager.get("fakeplatform", "other", "c", "10.0.0.2")).rejects.toThrow("per-address");
+        expect(await manager.get("fakeplatform", "shared", "b", "10.0.0.2")).toBe(shared);
+    });
+
+    it("checks owner limits before joining an existing shared instance", async () => {
+        maxInstancesPerSession = 1;
+        await manager.get("fakeplatform", "own", "b");
+        for (const session of ["a", "b"]) submitCredentials(session, "shared", { password: "shared" });
+        const shared = await manager.get("fakeplatform", "shared", "a");
+        await expect(manager.get("fakeplatform", "shared", "b")).rejects.toThrow("per-session");
+        expect(shared.sessions.has("b")).toBe(false);
+    });
+
+    it("starts and restarts stateless workers at the persistent cap", async () => {
+        maxPlatformInstances = 1;
+        const stateless = new ProcessManager("parent", "secret1", "secret2", {
+            version: "0.0.0", platforms: fakePlatforms(false),
+        });
+        const first = await stateless.get("fakeplatform", "feed");
+        await manager.get("fakeplatform", "a", "a");
+        setAlive(first, false);
+        const second = await stateless.get("fakeplatform", "feed");
+        expect(second).not.toBe(first);
+        expect(platformInstances.size).toBe(2);
+    });
+
     describe("connection scope", () => {
         const originalIo = (listener as unknown as { io: unknown }).io;
         afterEach(() => {
             (listener as unknown as { io: unknown }).io = originalIo;
         });
 
-        test("a different session with different credentials gets its own instance", async () => {
+        it("a different session with different credentials gets its own instance", async () => {
             submitCredentials("session-a", "actor-a", { password: "correct" });
             submitCredentials("session-b", "actor-a", { password: "guessed" });
 
@@ -241,7 +323,7 @@ describe("ProcessManager", () => {
             expect(platformInstances.size).toEqual(2);
         });
 
-        test("a session with matching credentials shares the instance", async () => {
+        it("a session with matching credentials shares the instance", async () => {
             submitCredentials("session-a", "actor-a", { password: "shared" });
             submitCredentials("session-b", "actor-a", { password: "shared" });
 
@@ -260,7 +342,7 @@ describe("ProcessManager", () => {
             expect(platformInstances.size).toEqual(1);
         });
 
-        test("knowing the actor id alone reaches nothing", async () => {
+        it("knowing the actor id alone reaches nothing", async () => {
             submitCredentials("session-a", "actor-a", { password: "correct" });
             const mine = await manager.get(
                 "fakeplatform",
@@ -278,7 +360,7 @@ describe("ProcessManager", () => {
             expect(probe).not.toBe(mine);
         });
 
-        test("two anonymous sessions on one actor stay separate", async () => {
+        it("two anonymous sessions on one actor stay separate", async () => {
             const first = await manager.get(
                 "fakeplatform",
                 "actor-a",
@@ -295,7 +377,7 @@ describe("ProcessManager", () => {
             expect(second).not.toBe(first);
         });
 
-        test("an anonymous refresh from the same ip reuses the instance", async () => {
+        it("an anonymous refresh from the same ip reuses the instance", async () => {
             // socket-1 is connected for the first call, then goes away.
             (listener as unknown as { io: unknown }).io = {
                 sockets: { sockets: new Map([["socket-1", {}]]) },
@@ -320,7 +402,7 @@ describe("ProcessManager", () => {
             expect(platformInstances.size).toEqual(1);
         });
 
-        test("a credentials failure fails the action", async () => {
+        it("a credentials failure fails the action", async () => {
             const handle = beginCredentialScope(
                 "session-a",
                 "fakeplatform",

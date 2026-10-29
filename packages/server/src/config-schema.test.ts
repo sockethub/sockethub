@@ -58,6 +58,9 @@ describe("config-schema", () => {
             expect(conf.get("sockethub.cors.origin")).toBe("*");
             expect(conf.get("redis.url")).toBe("redis://127.0.0.1:6379");
             expect(conf.get("redis.maxRetriesPerRequest")).toBeNull();
+            expect(conf.get("limits.maxPlatformInstances")).toBe(100);
+            expect(conf.get("limits.maxInstancesPerSession")).toBe(10);
+            expect(conf.get("limits.maxInstancesPerIp")).toBe(20);
             expect(conf.get("credentials.ttlMs")).toBe(604800000);
             expect(conf.get("logging.level")).toBe("info");
             expect(conf.get("sentry.enableLogs")).toBe(false);
