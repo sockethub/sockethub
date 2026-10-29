@@ -140,6 +140,12 @@ describe("Utils", () => {
             expect(withServer("xmpp://[2001:db8::1]:5222")).toBe("xmpp://[2001:db8::1]:5222");
         });
 
+        test("converts internationalized host names to their ASCII form", () => {
+            expect(withServer("bücher.example")).toBe("xn--bcher-kva.example");
+            expect(withServer("bücher.example", 5222)).toBe("xmpp://xn--bcher-kva.example:5222");
+            expect(withServer("xmpps://bücher.example:5223")).toBe("xmpps://xn--bcher-kva.example:5223");
+        });
+
         test("the port field overrides the URI port and pins a bare host", () => {
             expect(withServer("xmpp://chat.example.org:5222", 5269)).toBe("xmpp://chat.example.org:5269");
             expect(withServer("chat.example.org", 5223)).toBe("xmpp://chat.example.org:5223");
@@ -156,6 +162,9 @@ describe("Utils", () => {
             "example.org/path",
             "::1",
             "not a host",
+            "xmpp://example.org%2Fpath",
+            "xmpp://example.org%00",
+            "example.org%2Fpath",
         ])("rejects server value %p", (server) => {
             expect(() => withServer(server)).toThrow("credentials.object.server");
         });

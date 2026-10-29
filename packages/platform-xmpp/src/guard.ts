@@ -1,26 +1,28 @@
 import { promises as dns, type SrvRecord } from "node:dns";
 import { isIP } from "node:net";
+import { toError } from "@sockethub/util/error";
 import { createGuardedLookup, isBlockedAddress } from "@sockethub/util/net";
 import type { XmppClientInstance } from "@xmpp/client";
 
 export type ResolveSrv = (name: string) => Promise<SrvRecord[]>;
 
 /**
- * Turn a bare host into an explicit `xmpp://` / `xmpps://` service URI using
- * the RFC 6120 / XEP-0368 SRV records, falling back to `xmpp://host:5222`.
- * Already-explicit URIs are returned unchanged.
+ * Turn a bare host into an ordered list of explicit `xmpp://` / `xmpps://`
+ * service URIs using the RFC 6120 / XEP-0368 SRV records, falling back to
+ * `xmpp://host:5222` when neither SRV name exists. Already-explicit URIs are
+ * returned as the only candidate.
  *
  * Doing this here, instead of handing xmpp.js a bare host, keeps
  * `@xmpp/resolve` from running its HTTP host-meta discovery (an unguarded
  * global `fetch` to the client-chosen host) and from following host-meta
  * links onto the WebSocket transport.
  */
-export async function discoverService(
+export async function discoverServices(
     service: string,
     resolveSrv: ResolveSrv = dns.resolveSrv,
-): Promise<string> {
+): Promise<string[]> {
     if (service.includes("://")) {
-        return service;
+        return [service];
     }
     const lookups = (["xmpps", "xmpp"] as const).map(async (scheme) => {
         try {
@@ -33,17 +35,26 @@ export async function discoverService(
             return [];
         }
     });
-    const records = (await Promise.all(lookups))
+    const answers = await Promise.all(lookups);
+    // RFC 2782: a lone "." target means the service is decidedly not
+    // available, so it must not trigger the host fallback.
+    const unavailable = answers.some(
+        (records) => records.length === 1 && records[0].name === ".",
+    );
+    const records = answers
         .flat()
-        // A target of "." means the service is decidedly not available.
         .filter((record) => record.name && record.name !== ".")
         .sort((a, b) => a.priority - b.priority || b.weight - a.weight);
-    const best = records[0];
-    if (!best) {
-        return `xmpp://${service}:5222`;
+    if (records.length === 0) {
+        if (unavailable) {
+            throw new Error(`XMPP service is not available at ${service}`);
+        }
+        return [`xmpp://${service}:5222`];
     }
-    const host = isIP(best.name) === 6 ? `[${best.name}]` : best.name;
-    return `${best.scheme}://${host}:${best.port}`;
+    return records.map((record) => {
+        const host = isIP(record.name) === 6 ? `[${record.name}]` : record.name;
+        return `${record.scheme}://${host}:${record.port}`;
+    });
 }
 
 type SocketParams = { host?: unknown; lookup?: unknown };
@@ -58,8 +69,8 @@ interface GuardedTransportPrototype {
  * Refuse XMPP connections to loopback, private, link-local, and cloud
  * metadata addresses, matching the outbound guard used by the HTTP platforms.
  *
- * - Each (re)connect first runs {@link discoverService}, so xmpp.js only ever
- *   sees explicit `xmpp://` / `xmpps://` URIs.
+ * - Each (re)connect first runs {@link discoverServices} and tries the
+ *   resulting `xmpp://` / `xmpps://` candidates in order.
  * - Every socket gets the shared guarded DNS lookup, which checks the address
  *   actually connected to. IP-literal hosts skip DNS, so they are checked
  *   directly. Transports that do not use a host/port socket (WebSocket) are
@@ -110,24 +121,99 @@ export function guardXmppConnections(
         proto.__sockethubAllowPrivateAddresses = allowPrivateAddresses;
     }
 
-    const instance = client as XmppClientInstance & {
-        connect?: (service: string) => Promise<unknown>;
-    };
-    const connect = instance.connect;
-    if (typeof connect === "function") {
-        instance.connect = async function (service: string) {
-            const uri = await discoverService(service, resolveSrv);
-            // Fail with a clear error here; the transport wrapper's refusal
-            // surfaces from xmpp.js as "No compatible connection method".
-            const host = new URL(uri).hostname.replace(/^\[|\]$/g, "");
-            if (
-                !allowPrivateAddresses &&
-                isIP(host) !== 0 &&
-                isBlockedAddress(host)
-            ) {
-                throw new Error(`blocked non-public address ${host}`);
-            }
-            return connect.call(this, uri);
-        };
+    const entity = client as GuardedEntity;
+    if (typeof entity.connect !== "function") {
+        return;
     }
+    // Replaces the `@xmpp/resolve` connect wrapper. Like its fallback, each
+    // candidate socket is only attached to the client once it connects, so a
+    // failed candidate does not surface as a client error before the next one
+    // is tried.
+    entity.connect = async function (this: GuardedEntity, service: string) {
+        let lastError: unknown;
+        let uris: string[] = [];
+        try {
+            uris = await discoverServices(service, resolveSrv);
+        } catch (err) {
+            lastError = err;
+        }
+        for (const uri of uris) {
+            try {
+                await connectCandidate(this, uri, allowPrivateAddresses);
+                return;
+            } catch (err) {
+                lastError = err;
+            }
+        }
+        const error = toError(
+            lastError ?? new Error(`could not connect to ${service}`),
+        );
+        // Report through the client like a socket failure would. The
+        // reconnect plugin discards the rejection, so without this a failed
+        // automatic reconnect would go unnoticed and never be retried.
+        this._reset();
+        this._status("disconnect");
+        this.emit("error", error);
+        throw error;
+    };
+}
+
+type Transport = {
+    prototype: {
+        socketParameters(service: string): unknown;
+        Socket: new () => NodeJS.EventEmitter & {
+            connect(params: unknown): void;
+        };
+        Parser: unknown;
+    };
+};
+
+/** The xmpp.js client internals `@xmpp/resolve` itself uses to connect. */
+type GuardedEntity = XmppClientInstance & {
+    connect?: (service: string) => Promise<void>;
+    emit(event: string, ...args: unknown[]): boolean;
+    _findTransport(service: string): Transport | undefined;
+    _attachSocket(socket: unknown): void;
+    _status(status: string, ...args: unknown[]): void;
+    _reset(): void;
+    Transport?: Transport;
+    Socket?: unknown;
+    Parser?: unknown;
+};
+
+async function connectCandidate(
+    entity: GuardedEntity,
+    uri: string,
+    allowPrivateAddresses: boolean,
+): Promise<void> {
+    // Fail with a clear error here; the transport wrapper's refusal surfaces
+    // from `_findTransport` as "no transport".
+    const host = new URL(uri).hostname.replace(/^\[|\]$/g, "");
+    if (!allowPrivateAddresses && isIP(host) !== 0 && isBlockedAddress(host)) {
+        throw new Error(`blocked non-public address ${host}`);
+    }
+    const Transport = entity._findTransport(uri);
+    if (!Transport) {
+        throw new Error(`no XMPP transport for ${uri}`);
+    }
+    entity._status("connecting", uri);
+    const socket = new Transport.prototype.Socket();
+    await new Promise<void>((resolve, reject) => {
+        const onConnect = () => {
+            socket.removeListener("error", onError);
+            resolve();
+        };
+        const onError = (err: unknown) => {
+            socket.removeListener("connect", onConnect);
+            reject(err);
+        };
+        socket.once("connect", onConnect);
+        socket.once("error", onError);
+        socket.connect(Transport.prototype.socketParameters(uri));
+    });
+    entity._attachSocket(socket);
+    socket.emit("connect");
+    entity.Transport = Transport;
+    entity.Socket = Transport.prototype.Socket;
+    entity.Parser = Transport.prototype.Parser;
 }

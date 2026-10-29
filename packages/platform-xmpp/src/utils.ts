@@ -1,4 +1,5 @@
 import { isIP } from "node:net";
+import { domainToASCII } from "node:url";
 import type { XmppElement } from "@xmpp/client";
 
 import type { XmppBuiltCredentials, XmppCredentialsObject } from "./types.js";
@@ -25,7 +26,23 @@ function isPlainHost(host: string): boolean {
     if (host.startsWith("[") && host.endsWith("]")) {
         return isIP(host.slice(1, -1)) === 6;
     }
-    return host.length > 0 && !/[\s/?#@:[\]\\]/.test(host);
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: rejecting them
+    return host.length > 0 && !/[\s\x00-\x1f\x7f/?#@:[\]\\%]/.test(host);
+}
+
+const INVALID_SERVER =
+    "xmpp credentials.object.server must be a host name, or an xmpp:// or xmpps:// URI without a path";
+
+/**
+ * Convert a validated host to the form DNS and sockets expect: IP literals
+ * are kept, and internationalized names become their IDNA ASCII form.
+ * Returns "" when the name is not a valid host.
+ */
+function toConnectHost(host: string): string {
+    if (host.startsWith("[") || isIP(host) !== 0) {
+        return host;
+    }
+    return domainToASCII(host);
 }
 
 /**
@@ -34,12 +51,11 @@ function isPlainHost(host: string): boolean {
  */
 function buildService(server: string, port: number | undefined): string {
     if (!server.includes("://")) {
-        if (!isPlainHost(server)) {
-            throw new Error(
-                "xmpp credentials.object.server must be a host name, or an xmpp:// or xmpps:// URI without a path",
-            );
+        const host = isPlainHost(server) ? toConnectHost(server) : "";
+        if (!host) {
+            throw new Error(INVALID_SERVER);
         }
-        return port ? `xmpp://${server}:${port}` : server;
+        return port ? `xmpp://${host}:${port}` : host;
     }
     let url: URL;
     try {
@@ -50,21 +66,31 @@ function buildService(server: string, port: number | undefined): string {
     if (
         !ALLOWED_SCHEMES.has(url.protocol) ||
         !url.hostname ||
-        !isPlainHost(url.hostname) ||
         url.username ||
         url.password ||
         (url.pathname !== "" && url.pathname !== "/") ||
         url.search ||
         url.hash
     ) {
-        throw new Error(
-            "xmpp credentials.object.server must be a host name, or an xmpp:// or xmpps:// URI without a path",
-        );
+        throw new Error(INVALID_SERVER);
+    }
+    // xmpp: is not a special URL scheme, so a non-ASCII host comes back
+    // percent-encoded rather than IDNA-encoded.
+    let decoded = "";
+    try {
+        decoded = decodeURIComponent(url.hostname);
+    } catch {
+        // Malformed percent-encoding: rejected below.
+    }
+    // Check before IDNA conversion, which silently truncates at "/".
+    const host = isPlainHost(decoded) ? toConnectHost(decoded) : "";
+    if (!host) {
+        throw new Error(INVALID_SERVER);
     }
     const effectivePort = port ?? (url.port ? Number(url.port) : undefined);
     return effectivePort
-        ? `${url.protocol}//${url.hostname}:${effectivePort}`
-        : `${url.protocol}//${url.hostname}`;
+        ? `${url.protocol}//${host}:${effectivePort}`
+        : `${url.protocol}//${host}`;
 }
 
 export const utils = {
