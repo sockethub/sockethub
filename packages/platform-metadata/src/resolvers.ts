@@ -302,7 +302,7 @@ export function stripFacebookEngagement(
     // Test the first segment on its own: a single regex spanning it with
     // chained `[^|]*` backtracks cubically on long untrusted og:title text.
     const segment = title.slice(0, bar);
-    const dot = segment.indexOf("·");
+    const dot = segment.lastIndexOf("·");
     const isStats =
         (dot !== -1 && /\p{Nd}/u.test(segment.slice(0, dot))) ||
         /^\s*(?:\p{Nd}+[.,]\p{Nd}+(?:[.,\s]\p{Nd}+)*\p{L}{0,2}|\p{Nd}{1,3}\p{L}{1,2}|\p{Nd}{4,})(?:\s+\p{L}+\.)?\s+\p{L}+\s*$/u.test(

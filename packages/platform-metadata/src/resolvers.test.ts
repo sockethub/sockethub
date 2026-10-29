@@ -534,6 +534,10 @@ describe("stripFacebookEngagement", () => {
                 "٢٫٢ مليون مشاهدة · ٢١ ألف تفاعل | فيديو | Author",
             ),
         ).toEqual("فيديو | Author");
+        // A digit anywhere before the last separator counts.
+        expect(
+            stripFacebookEngagement("Reactions · 2 views · 3 shares | Title"),
+        ).toEqual("Title");
     });
 
     it("strips a lone view count from share-page titles", () => {
