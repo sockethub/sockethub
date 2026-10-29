@@ -88,6 +88,29 @@ describe("PlatformInstance", () => {
         });
     });
 
+    it("forwards additional trusted CAs to platform workers", async () => {
+        const original = process.env.NODE_EXTRA_CA_CERTS;
+        process.env.NODE_EXTRA_CA_CERTS = "/test/fixture-ca.crt";
+        try {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            const instance = new TestPlatformInstance({
+                identifier: "id",
+                platform: "name",
+                parentId: "parentId",
+            });
+            expect(forkFake.lastCall.args[2].NODE_EXTRA_CA_CERTS).toBe(
+                "/test/fixture-ca.crt",
+            );
+            await instance.shutdown();
+        } finally {
+            if (original === undefined) {
+                delete process.env.NODE_EXTRA_CA_CERTS;
+            } else {
+                process.env.NODE_EXTRA_CA_CERTS = original;
+            }
+        }
+    });
+
     describe("sentry settings forwarded to the worker", () => {
         const SENTRY = {
             dsn: "https://key@o1.ingest.sentry.io/1",

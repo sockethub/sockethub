@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { randomUUID } from "node:crypto";
 import {
     CredentialsStore,
     type JobDataDecrypted,
@@ -167,10 +168,12 @@ describe("JobQueue", () => {
     let worker: JobWorker;
 
     beforeEach(() => {
-        queue = new JobQueue("testid", "sessionid", testSecret, {
+        // Isolate BullMQ event streams so previous tests cannot replay completions.
+        const instanceId = randomUUID();
+        queue = new JobQueue("testid", instanceId, testSecret, {
             url: REDIS_URL,
         });
-        worker = new JobWorker("testid", "sessionid", testSecret, {
+        worker = new JobWorker("testid", instanceId, testSecret, {
             url: REDIS_URL,
         });
     });

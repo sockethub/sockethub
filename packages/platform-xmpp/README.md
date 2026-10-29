@@ -26,6 +26,11 @@ updates through ActivityStreams messages.
 Credentials are sent to Sockethub via a `credentials` message before the
 `connect` verb. The XMPP platform accepts a single `password` field.
 
+Authentication requires an encrypted connection: direct TLS (`xmpps://`),
+a successful STARTTLS upgrade, or a secure WebSocket (`wss://`). If the server
+does not offer encryption, the connection fails before credentials are sent.
+This requirement also applies to automatic reconnections.
+
 ### Credentials object
 
 | Field | Type | Required | Description |

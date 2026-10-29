@@ -18,6 +18,7 @@
 
 import { randomUUID } from "node:crypto";
 import { isIP } from "node:net";
+import { TLSSocket } from "node:tls";
 import type {
     ActivityStream,
     Logger,
@@ -178,6 +179,7 @@ export default class XMPP implements PersistentPlatformInterface {
             "ENOTFOUND",
             "EHOSTUNREACH",
             "ENETUNREACH",
+            "XMPP_AUTHENTICATION_INTERRUPTED",
         ];
 
         if (
@@ -278,11 +280,68 @@ export default class XMPP implements PersistentPlatformInterface {
         this.log.debug(`creating XMPP client for ${job.actor.id}`);
 
         try {
-            this.__client = this.__clientConstructor({
-                ...xmppCreds,
+            const { username, password, ...options } = xmppCreds;
+            const xmppClient = this.__clientConstructor({
+                ...options,
                 timeout: this.config.connectTimeoutMs,
-                tls: false,
+                credentials: async (authenticate) => {
+                    // Check this client's transport even if a later connect replaces it.
+                    const socket = xmppClient.socket;
+                    if (
+                        !(socket instanceof TLSSocket) &&
+                        !(socket?.socket instanceof TLSSocket) &&
+                        !socket?.url?.startsWith("wss:")
+                    ) {
+                        throw new Error(
+                            "refusing to authenticate over an unencrypted XMPP stream",
+                        );
+                    }
+                    const previousListeners = new Set(
+                        xmppClient.listeners("nonza"),
+                    );
+                    const authentication = authenticate({ username, password });
+                    // xmpp.js leaves its SASL listener attached if the stream disconnects.
+                    const saslListeners = xmppClient
+                        .listeners("nonza")
+                        .filter((listener) => !previousListeners.has(listener));
+                    const detachSasl = () => {
+                        for (const listener of saslListeners) {
+                            xmppClient.removeListener("nonza", listener);
+                        }
+                    };
+                    let onDisconnect: (() => void) | undefined;
+                    try {
+                        await Promise.race([
+                            authentication,
+                            new Promise<never>((_resolve, reject) => {
+                                onDisconnect = () => {
+                                    detachSasl();
+                                    reject(
+                                        Object.assign(
+                                            new Error(
+                                                "XMPP authentication interrupted by disconnect",
+                                            ),
+                                            {
+                                                code: "XMPP_AUTHENTICATION_INTERRUPTED",
+                                            },
+                                        ),
+                                    );
+                                };
+                                xmppClient.on("disconnect", onDisconnect);
+                            }),
+                        ]);
+                    } finally {
+                        if (onDisconnect) {
+                            xmppClient.removeListener(
+                                "disconnect",
+                                onDisconnect,
+                            );
+                        }
+                        detachSasl();
+                    }
+                },
             });
+            this.__client = xmppClient;
             setTlsServername(this.__client, xmppCreds.domain);
             this.log.debug(
                 `XMPP client created successfully for ${job.actor.id}`,

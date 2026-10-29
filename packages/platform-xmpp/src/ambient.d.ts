@@ -25,6 +25,8 @@ declare module "@xmpp/client" {
 
     export interface XmppSocket {
         writable: boolean;
+        socket?: unknown;
+        url?: string;
     }
 
     export interface XmppTransport {
@@ -38,6 +40,11 @@ declare module "@xmpp/client" {
         transports: XmppTransport[];
         status: string;
         on(event: string, handler: (...args: unknown[]) => void): void;
+        listeners(event: string): Array<(...args: unknown[]) => void>;
+        removeListener(
+            event: string,
+            handler: (...args: unknown[]) => void,
+        ): void;
         removeAllListeners(): void;
         start(): Promise<void>;
         stop(): Promise<void>;
@@ -47,11 +54,14 @@ declare module "@xmpp/client" {
     export interface XmppClientOptions {
         service: string;
         domain?: string;
-        username: string;
-        password: string;
+        credentials: (
+            authenticate: (credentials: {
+                username: string;
+                password: string;
+            }) => Promise<unknown>,
+        ) => Promise<void>;
         resource?: string;
         timeout?: number;
-        tls?: boolean;
     }
 
     export function client(options: XmppClientOptions): XmppClientInstance;

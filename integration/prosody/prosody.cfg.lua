@@ -98,7 +98,7 @@ allow_registration = false
 -- Force clients to use encrypted connections? This option will
 -- prevent clients from authenticating unless they are using encryption.
 
-c2s_require_encryption = false
+c2s_require_encryption = true
 
 -- Force servers to use encrypted connections? This option will
 -- prevent servers from authenticating unless they are using encryption.
@@ -183,6 +183,10 @@ log = {
 
 -- Location of directory to find certificates in (relative to main config file):
 certificates = "certs"
+ssl = {
+    key = "/etc/prosody/certs/test.key";
+    certificate = "/etc/prosody/certs/test.crt";
+}
 
 -- HTTPS currently only supports a single certificate, specify it here:
 --https_certificate = "/etc/prosody/certs/localhost.crt"
