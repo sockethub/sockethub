@@ -170,6 +170,7 @@ export const SockethubConfigSchema = {
                     additionalProperties: false,
                     properties: {
                         connectTimeoutMs: { type: "number" },
+                        allowPrivateAddresses: { type: "boolean" },
                     },
                 },
                 "@sockethub/platform-metadata": {

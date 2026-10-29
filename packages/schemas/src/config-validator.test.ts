@@ -70,6 +70,19 @@ describe("validateSockethubConfig", () => {
         ).toEqual("");
     });
 
+    it("accepts the xmpp allowPrivateAddresses boolean", () => {
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-xmpp": {
+                        allowPrivateAddresses: true,
+                    },
+                },
+            }),
+        ).toEqual("");
+    });
+
     it("rejects an unknown key in the metadata packageConfig entry", () => {
         expect(
             validateSockethubConfig({

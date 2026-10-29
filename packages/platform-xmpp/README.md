@@ -26,9 +26,9 @@ updates through ActivityStreams messages.
 Credentials are sent to Sockethub via a `credentials` message before the
 `connect` verb. The XMPP platform accepts a single `password` field.
 
-Authentication requires an encrypted connection: direct TLS (`xmpps://`),
-a successful STARTTLS upgrade, or a secure WebSocket (`wss://`). If the server
-does not offer encryption, the connection fails before credentials are sent.
+Authentication requires an encrypted connection: direct TLS (`xmpps://`) or
+a successful STARTTLS upgrade. If the server does not offer encryption, the
+connection fails before credentials are sent.
 This requirement also applies to automatic reconnections.
 
 ### Credentials object
@@ -39,8 +39,40 @@ This requirement also applies to automatic reconnections.
 | `userAddress` | string | yes | Bare JID, e.g. `user@jabber.net`. |
 | `resource` | string | yes | XMPP resource identifier (e.g. `"phone"`). |
 | `password` | string | yes | SASL password. Use this field for PLAIN-slot tokens too. |
-| `server` | string | no | Overrides the hostname from `userAddress`. |
-| `port` | number | no | Overrides the default port. |
+| `server` | string | no | Overrides the host from `userAddress`. Host name or `xmpp(s)://` URI. |
+| `port` | integer | no | Overrides the default port (1-65535). |
+
+Without a `port`, a bare host is looked up through its `_xmpps-client` and
+`_xmpp-client` SRV records, and its own addresses on ports 5223 (direct TLS)
+and 5222. A bare host with a `port` skips SRV lookup and connects with
+`xmpp://` (STARTTLS) on that port. For direct TLS, set `server` to an
+`xmpps://` URI. The platform does not use HTTP host-meta discovery or the
+WebSocket transport.
+
+An internationalized host name (such as `bücher.example`) works only as a bare
+host without a `port`. With a `port`, or inside an `xmpp(s)://` URI, it is
+refused; use its ASCII form (`xn--bcher-kva.example`) instead.
+
+### Private addresses
+
+The platform refuses to connect to loopback, private, link-local, and cloud
+metadata addresses, using the same address rules as the
+[outbound URL guard](../../docs/configuration.md#outbound-url-guard). To reach
+an XMPP server on a private network, set `allowPrivateAddresses` in this
+platform's `packageConfig` entry:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-xmpp": {
+      "allowPrivateAddresses": true
+    }
+  }
+}
+```
+
+Do not enable it on a server that accepts untrusted clients. Any client could
+then make Sockethub connect to internal services.
 
 ### Password authentication
 

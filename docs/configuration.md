@@ -214,7 +214,8 @@ passed through to the platform unvalidated.
 #### Outbound URL guard
 
 Feeds, metadata, CalDAV, and CardDAV fetch client-supplied URLs through the
-shared guarded dispatcher in `@sockethub/util`. The check runs when the socket
+shared guarded dispatcher in `@sockethub/util`. XMPP applies the same address
+check to the server it connects to. The check runs when the socket
 connects, including every redirect hop. An address that does not parse is
 refused. A connection is refused when the resolved address is any of:
 
@@ -234,7 +235,8 @@ refused. A connection is refused when the resolved address is any of:
 `packageConfig.<platform>.allowPrivateAddresses: true` disables only this
 address check. Scheme limits stay in effect. Feeds accept only `http:` and
 `https:` URLs. Metadata rejects any other scheme. CalDAV and CardDAV require
-`https:` unless `allowInsecureHttp` is set. Do not enable
+`https:` unless `allowInsecureHttp` is set. XMPP accepts only a host name or
+an `xmpp:` or `xmpps:` server URI. Do not enable
 `allowPrivateAddresses` on a server that accepts untrusted clients.
 
 ### Rate Limiting

@@ -452,6 +452,19 @@ describe("XMPP", () => {
             });
         });
 
+        test("rejects a non-XMPP server override before creating a client", (done) => {
+            const wsCredentials = {
+                ...credentials,
+                object: { ...credentials.object, server: "ws://127.0.0.1:8080/v-verifier/path?x=1" },
+            };
+            xp.connect(job.connect, wsCredentials as never, (err) => {
+                expect(String(err)).toContain("credentials.object.server");
+                sinon.assert.notCalled(clientFake);
+                expect(xp.__client).toBeUndefined();
+                done();
+            });
+        });
+
         test("deletes the __client property on failed connect", (done) => {
             clientObjectFake.start = sinon.fake.rejects("foo");
             xp.connect(job.connect, credentials as never, () => {
