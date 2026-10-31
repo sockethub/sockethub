@@ -335,7 +335,11 @@ Configure how reconnect IP is read:
   through `sockethub.trustProxy` when enabled, matching HTTP instance quota
   accounting.
 - `reconnectIpSource: "proxy"` uses the header named by `proxyHeader`.
-- `proxyHeader`: defaults to `x-forwarded-for`; only the first IP is used.
+- `proxyHeader`: defaults to `x-forwarded-for`. That header is a chain and is
+  read with the same hop count as `sockethub.trustProxy` (one hop when trust
+  proxy is left unset). The address the nearest proxy added is the client;
+  an address the client wrote ahead of it is ignored. Any other header is a
+  single value, and its first address is used.
 
 Use `proxy` only when Sockethub is behind a trusted reverse proxy that sets and
 sanitizes forwarding headers.
@@ -371,8 +375,10 @@ custom `proxyHeader` has vouched for that header alone — its proxy may leave
 `x-forwarded-for` client-settable — so `trustProxy` stays `false` and must be
 set explicitly.
 
-Enable it only behind a proxy that overwrites `x-forwarded-for`; otherwise
-clients can spoof the header and evade rate limiting.
+Enable it only behind a proxy that records the connecting client. A hop count
+trusts that many proxies closest to Sockethub and ignores addresses further
+left, which is what an appending proxy produces. Trusting every hop (`true`)
+lets a client put its own address in the header and spoof it.
 
 [trust-proxy]: https://expressjs.com/en/guide/behind-proxies.html
 

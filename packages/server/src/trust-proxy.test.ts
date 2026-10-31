@@ -3,7 +3,11 @@ import { describe, expect, it } from "bun:test";
 import type { IncomingMessage } from "node:http";
 import express from "express";
 
-import { getRequestClientIp, resolveTrustProxy } from "./trust-proxy.js";
+import {
+    getRequestClientIp,
+    resolveSocketClientIp,
+    resolveTrustProxy,
+} from "./trust-proxy.js";
 
 describe("resolveTrustProxy", () => {
     it("trusts nothing by default", () => {
@@ -96,5 +100,81 @@ describe("socket admission IP", () => {
             expect(socketIp).toBe(httpIp);
             expect(socketIp).toBe(trust === false ? "127.0.0.1" : trust === 1 || trust === "loopback" ? "198.51.100.2" : "192.0.2.1");
         }
+    });
+});
+
+describe("resolveSocketClientIp", () => {
+    const forwarded = {
+        socket: { remoteAddress: "127.0.0.1" },
+        headers: { "x-forwarded-for": "203.0.113.50, 198.51.100.2" },
+    } as IncomingMessage;
+
+    it("ignores a client-supplied prefix when proxy mode trusts one hop", () => {
+        const app = express();
+        // The setting operators get by leaving trustProxy unset under
+        // reconnectIpSource=proxy. The nearest proxy appended 198.51.100.2;
+        // 203.0.113.50 was already in the header the client sent.
+        app.set(
+            "trust proxy",
+            resolveTrustProxy(false, "proxy", "x-forwarded-for"),
+        );
+        expect(
+            resolveSocketClientIp(
+                forwarded,
+                app,
+                "proxy",
+                "x-forwarded-for",
+                "127.0.0.1",
+            ),
+        ).toBe("198.51.100.2");
+    });
+
+    it("matches socket mode to the same hop-aware address", () => {
+        const app = express();
+        app.set("trust proxy", resolveTrustProxy(1, "socket"));
+        expect(
+            resolveSocketClientIp(
+                forwarded,
+                app,
+                "socket",
+                undefined,
+                "127.0.0.1",
+            ),
+        ).toBe("198.51.100.2");
+    });
+
+    it("reads a custom proxy header instead of x-forwarded-for", () => {
+        const app = express();
+        app.set("trust proxy", false);
+        const request = {
+            socket: { remoteAddress: "127.0.0.1" },
+            headers: {
+                "x-forwarded-for": "203.0.113.50, 198.51.100.2",
+                "cf-connecting-ip": "192.0.2.10",
+            },
+        } as IncomingMessage;
+        expect(
+            resolveSocketClientIp(
+                request,
+                app,
+                "proxy",
+                "cf-connecting-ip",
+                "127.0.0.1",
+            ),
+        ).toBe("192.0.2.10");
+    });
+
+    it("falls back to the socket peer when a custom proxy header is absent", () => {
+        const app = express();
+        app.set("trust proxy", 1);
+        expect(
+            resolveSocketClientIp(
+                forwarded,
+                app,
+                "proxy",
+                "cf-connecting-ip",
+                "::ffff:127.0.0.1",
+            ),
+        ).toBe("127.0.0.1");
     });
 });
