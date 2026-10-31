@@ -19,7 +19,7 @@ import { buildPlatformRegistryPayload } from "./api-info.js";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
-import { clearSessionScopes, normalizeIp } from "./connection-scope.js";
+import { clearSessionScopes } from "./connection-scope.js";
 import { registerHealthRoute } from "./health.js";
 import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
@@ -33,7 +33,7 @@ import {
     stopCleanup,
 } from "./rate-limiter.js";
 import { registerServerInfoRoute } from "./server-info.js";
-import { getRequestClientIp } from "./trust-proxy.js";
+import { resolveSocketClientIp } from "./trust-proxy.js";
 
 const log = createLogger("server:core");
 
@@ -51,31 +51,13 @@ function getProxyHeaderName(): string {
 }
 
 function getClientIp(socket: Socket): string {
-    const ipSource =
-        config.get("credentialCheck:reconnectIpSource") === "proxy"
-            ? "proxy"
-            : "socket";
-
-    if (ipSource === "proxy") {
-        const proxyHeader = getProxyHeaderName();
-        const headerValue = socket.handshake.headers[proxyHeader];
-        if (typeof headerValue === "string") {
-            const normalized = normalizeIp(headerValue);
-            if (normalized) {
-                return normalized;
-            }
-        } else if (Array.isArray(headerValue) && headerValue.length > 0) {
-            const normalized = normalizeIp(headerValue[0]);
-            if (normalized) {
-                return normalized;
-            }
-        }
-    }
-
-    if (ipSource === "socket" && listener.app) {
-        return getRequestClientIp(socket.request, listener.app);
-    }
-    return normalizeIp(socket.handshake.address);
+    return resolveSocketClientIp(
+        socket.request,
+        listener.app,
+        config.get("credentialCheck:reconnectIpSource"),
+        config.get("credentialCheck:proxyHeader"),
+        socket.handshake.address,
+    );
 }
 
 /**
@@ -167,7 +149,7 @@ class Sockethub {
         if (config.get("credentialCheck:reconnectIpSource") === "proxy") {
             const proxyHeader = getProxyHeaderName();
             log.warn(
-                `credentialCheck.reconnectIpSource=proxy enabled; only use this behind a trusted reverse proxy that overwrites '${proxyHeader}'`,
+                `credentialCheck.reconnectIpSource=proxy enabled; only use this behind a trusted reverse proxy that sets '${proxyHeader}' to the connecting client`,
             );
         }
 
