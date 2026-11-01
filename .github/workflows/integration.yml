@@ -22,7 +22,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
@@ -47,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
@@ -92,7 +92,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
@@ -246,7 +246,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: latest
       - name: Use Node ${{ matrix.node-version }}
@@ -288,7 +288,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
       - run: bun install
