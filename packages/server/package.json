@@ -52,7 +52,7 @@
   "homepage": "https://sockethub.org",
   "dependencies": {
     "@sentry/node": "^10.36.0",
-    "@sentry/profiling-node": "10.36.0",
+    "@sentry/profiling-node": "10.76.2",
     "@sockethub/client": "^5.0.0-beta.0",
     "@sockethub/data-layer": "^1.0.0-beta.0",
     "@sockethub/logger": "^1.0.0-beta.0",
