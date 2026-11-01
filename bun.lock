@@ -38,7 +38,7 @@
       "name": "@sockethub/client",
       "version": "5.0.0-beta.0",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
         "eventemitter3": "^5.0.4",
       },
       "devDependencies": {
@@ -60,9 +60,9 @@
       "name": "@sockethub/data-layer",
       "version": "1.0.0-beta.0",
       "dependencies": {
-        "@sockethub/logger": "^1.0.0-alpha.25",
-        "@sockethub/schemas": "^3.0.0-alpha.25",
-        "@sockethub/util": "^1.0.0-alpha.13",
+        "@sockethub/logger": "^1.0.0-beta.0",
+        "@sockethub/schemas": "^3.0.0-beta.0",
+        "@sockethub/util": "^1.0.0-beta.0",
         "bullmq": "^5.66.5",
         "ioredis": "^5.9.2",
         "secure-store-redis": "^4.2.0",
@@ -81,7 +81,7 @@
       "name": "@sockethub/dav",
       "version": "1.0.0-beta.0",
       "dependencies": {
-        "@sockethub/util": "^1.0.0-alpha.13",
+        "@sockethub/util": "^1.0.0-beta.0",
         "fast-xml-parser": "^5.10.1",
         "undici": "^7.30.0",
       },
@@ -93,11 +93,11 @@
       "name": "@sockethub/examples",
       "version": "1.0.0-beta.0",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
       },
       "devDependencies": {
         "@playwright/test": "^1.57.0",
-        "@sockethub/client": "^5.0.0-alpha.25",
+        "@sockethub/client": "^5.0.0-beta.0",
         "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.50.0",
         "@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -124,7 +124,7 @@
         "fast-deep-equal": "^3.1.3",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
       },
     },
     "packages/logger": {
@@ -141,16 +141,16 @@
       "name": "@sockethub/platform-caldav",
       "version": "1.0.0-beta.0",
       "dependencies": {
-        "@sockethub/dav": "^1.0.0-alpha.6",
-        "@sockethub/schemas": "^3.0.0-alpha.25",
-        "@sockethub/util": "^1.0.0-alpha.13",
+        "@sockethub/dav": "^1.0.0-beta.0",
+        "@sockethub/schemas": "^3.0.0-beta.0",
+        "@sockethub/util": "^1.0.0-beta.0",
         "undici": "^7.30.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.25",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -160,14 +160,14 @@
       "name": "@sockethub/platform-carddav",
       "version": "1.0.0-beta.0",
       "dependencies": {
-        "@sockethub/dav": "^1.0.0-alpha.6",
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/dav": "^1.0.0-beta.0",
+        "@sockethub/schemas": "^3.0.0-beta.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.25",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -177,11 +177,11 @@
       "name": "@sockethub/platform-dummy",
       "version": "3.0.0-beta.0",
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.25",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -211,16 +211,16 @@
       "name": "@sockethub/platform-irc",
       "version": "4.0.0-beta.0",
       "dependencies": {
-        "@sockethub/irc2as": "^4.0.0-alpha.25",
+        "@sockethub/irc2as": "^4.0.0-beta.0",
         "irc-socket-sasl": "^4.1.2",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
         "@types/bun": "latest",
         "typedoc": "^0.28.14",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.25",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -230,27 +230,27 @@
       "name": "@sockethub/platform-metadata",
       "version": "1.0.1-beta.0",
       "dependencies": {
-        "@sockethub/util": "^1.0.0-alpha.13",
+        "@sockethub/util": "^1.0.0-beta.0",
         "open-graph-scraper": "^6.11.0",
         "undici": "^7.30.0",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.25",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
     },
     "packages/platform-xmpp": {
       "name": "@sockethub/platform-xmpp",
       "version": "5.0.0-beta.0",
       "dependencies": {
-        "@sockethub/util": "^1.0.0-alpha.13",
+        "@sockethub/util": "^1.0.0-beta.0",
         "@xmpp/client": "^0.13.6",
         "@xmpp/resolve": "^0.13.3",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.25",
+        "@sockethub/schemas": "^3.0.0-beta.0",
         "@types/bun": "latest",
         "@xmpp/xml": "^0.13.2",
         "ajv": "^8.17.1",
@@ -258,7 +258,7 @@
         "typedoc": "^0.28.14",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.25",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -283,11 +283,11 @@
       "dependencies": {
         "@sentry/node": "^10.36.0",
         "@sentry/profiling-node": "10.36.0",
-        "@sockethub/client": "^5.0.0-alpha.25",
-        "@sockethub/data-layer": "^1.0.0-alpha.25",
-        "@sockethub/logger": "^1.0.0-alpha.25",
-        "@sockethub/schemas": "^3.0.0-alpha.25",
-        "@sockethub/util": "^1.0.0-alpha.13",
+        "@sockethub/client": "^5.0.0-beta.0",
+        "@sockethub/data-layer": "^1.0.0-beta.0",
+        "@sockethub/logger": "^1.0.0-beta.0",
+        "@sockethub/schemas": "^3.0.0-beta.0",
+        "@sockethub/util": "^1.0.0-beta.0",
         "chalk": "^5.6.2",
         "convict": "^6.2.5",
         "debug": "^4.4.3",
@@ -303,23 +303,23 @@
         "@types/bun": "latest",
         "@types/convict": "^6.1.6",
         "@types/debug": "^4.1.12",
-        "@types/proxy-addr": "^2.0.3",
         "@types/express": "^5.0.0",
         "@types/jquery": "^3.5.33",
+        "@types/proxy-addr": "^2.0.3",
         "@types/sinon": "^17.0.4",
         "jaribu": "^2.2.3",
         "sinon": "^17.0.2",
         "web-streams-polyfill": "^3.3.3",
       },
       "optionalDependencies": {
-        "@sockethub/examples": "^1.0.0-alpha.25",
-        "@sockethub/platform-caldav": "^1.0.0-alpha.9",
-        "@sockethub/platform-carddav": "^1.0.0-alpha.6",
-        "@sockethub/platform-dummy": "^3.0.0-alpha.25",
-        "@sockethub/platform-feeds": "^4.0.0-alpha.25",
-        "@sockethub/platform-irc": "^4.0.0-alpha.25",
-        "@sockethub/platform-metadata": "^1.0.1-alpha.20",
-        "@sockethub/platform-xmpp": "^5.0.0-alpha.25",
+        "@sockethub/examples": "^1.0.0-beta.0",
+        "@sockethub/platform-caldav": "^1.0.0-beta.0",
+        "@sockethub/platform-carddav": "^1.0.0-beta.0",
+        "@sockethub/platform-dummy": "^3.0.0-beta.0",
+        "@sockethub/platform-feeds": "^4.0.0-beta.0",
+        "@sockethub/platform-irc": "^4.0.0-beta.0",
+        "@sockethub/platform-metadata": "^1.0.1-beta.0",
+        "@sockethub/platform-xmpp": "^5.0.0-beta.0",
       },
     },
     "packages/sockethub": {
@@ -327,13 +327,13 @@
       "version": "5.0.0-beta.0",
       "bin": "bin/sockethub",
       "dependencies": {
-        "@sockethub/platform-caldav": "^1.0.0-alpha.3",
-        "@sockethub/platform-carddav": "^1.0.0-alpha.0",
-        "@sockethub/platform-dummy": "^3.0.0-alpha.19",
-        "@sockethub/platform-feeds": "^4.0.0-alpha.19",
-        "@sockethub/platform-irc": "^4.0.0-alpha.19",
-        "@sockethub/platform-xmpp": "^5.0.0-alpha.19",
-        "@sockethub/server": "^5.0.0-alpha.19",
+        "@sockethub/platform-caldav": "^1.0.0-beta.0",
+        "@sockethub/platform-carddav": "^1.0.0-beta.0",
+        "@sockethub/platform-dummy": "^3.0.0-beta.0",
+        "@sockethub/platform-feeds": "^4.0.0-beta.0",
+        "@sockethub/platform-irc": "^4.0.0-beta.0",
+        "@sockethub/platform-xmpp": "^5.0.0-beta.0",
+        "@sockethub/server": "^5.0.0-beta.0",
       },
     },
     "packages/util": {
@@ -353,7 +353,7 @@
     },
   },
   "overrides": {
-    "engine.io": "6.6.8",
+    "engine.io": "6.6.11",
     "node-fetch": "3.3.2",
     "socket.io": "4.8.3",
   },
@@ -2062,7 +2062,7 @@
 
     "end-of-stream": ["end-of-stream@1.4.4", "", { "dependencies": { "once": "^1.4.0" } }, "sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q=="],
 
-    "engine.io": ["engine.io@6.6.8", "", { "dependencies": { "@types/cors": "^2.8.12", "@types/node": ">=10.0.0", "@types/ws": "^8.5.12", "accepts": "~1.3.4", "base64id": "2.0.0", "cookie": "~0.7.2", "cors": "~2.8.5", "debug": "~4.4.1", "engine.io-parser": "~5.2.1", "ws": "~8.20.1" } }, "sha512-2agL3ueZhqxoVrfmntO8yuVj+uNSlIOnhykYHk3Cq0ShYPdUjjUiSJrQvXjq01I9jAuI0Zl2YO8Evv5Mqytm5g=="],
+    "engine.io": ["engine.io@6.6.11", "", { "dependencies": { "@types/cors": "^2.8.12", "@types/node": ">=10.0.0", "@types/ws": "^8.5.12", "accepts": "~1.3.4", "cookie": "~0.7.2", "cors": "~2.8.5", "debug": "~4.4.1", "engine.io-parser": "~5.2.1", "ws": "~8.21.0" } }, "sha512-z34mGpLoY/82ZbkX1LqGMIaf3wjVMPL6gVC681QDqnmzJ26synI8qAE32P+a7UazmpJZ8UGrFIeAavgRfXzYrg=="],
 
     "engine.io-client": ["engine.io-client@6.6.3", "", { "dependencies": { "@socket.io/component-emitter": "~3.1.0", "debug": "~4.3.1", "engine.io-parser": "~5.2.1", "ws": "~8.17.1", "xmlhttprequest-ssl": "~2.1.1" } }, "sha512-T0iLjnyNWahNyv/lcjS2y4oE358tVS/SYQNxYXGAJ9/GLgH4VCvOQ/mhTjqU88mLZCQgiG8RIegFHYCdVC+j5w=="],
 
@@ -4382,7 +4382,7 @@
 
     "engine.io/cookie": ["cookie@0.7.2", "", {}, "sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w=="],
 
-    "engine.io/ws": ["ws@8.20.1", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w=="],
+    "engine.io/ws": ["ws@8.21.3", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="],
 
     "engine.io-client/debug": ["debug@4.3.4", "", { "dependencies": { "ms": "2.1.2" } }, "sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ=="],
 
