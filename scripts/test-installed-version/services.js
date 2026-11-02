@@ -11,6 +11,9 @@ import { CONFIG } from "./config.js";
 const CI_CONFIG_PATH = fileURLToPath(
     new URL("../../integration/sockethub.ci.config.json", import.meta.url),
 );
+const XMPP_CERT_PATH = fileURLToPath(
+    new URL("../../integration/prosody/certs/test.crt", import.meta.url),
+);
 
 export class ServiceManager {
     constructor(logger) {
@@ -80,6 +83,16 @@ export class ServiceManager {
      */
     async startXmpp() {
         await this.logger.info("Starting Prosody XMPP container...");
+
+        const tlsResult = await this.logger.exec(
+            "bash",
+            ["scripts/setup-xmpp-test-tls.sh"],
+            {},
+            "xmpp-tls.log",
+        );
+        if (tlsResult.exitCode !== 0) {
+            throw new Error(`Failed to set up XMPP TLS: ${tlsResult.stderr}`);
+        }
 
         const result = await this.logger.exec(
             "docker",
@@ -185,6 +198,7 @@ export class ServiceManager {
                     PORT: "10550",
                     LOG_LEVEL: "debug",
                     SOCKETHUB_CONFIG: CI_CONFIG_PATH,
+                    NODE_EXTRA_CA_CERTS: XMPP_CERT_PATH,
                 },
             },
             "sockethub.log",
