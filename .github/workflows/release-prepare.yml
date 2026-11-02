@@ -87,7 +87,9 @@ jobs:
           bun install --frozen-lockfile
 
       - name: Format code after version bumps
-        run: bun run lint:fix
+        run: |
+          bunx biome check --write
+          bunx markdownlint --fix '**/*.md'
 
       - name: Setup NPM authentication (for dry-run)
         run: |
@@ -133,9 +135,6 @@ jobs:
       - name: Create release branch
         run: |
           git checkout -b ${{ steps.extract_version.outputs.branch }}
-
-      - name: Format code
-        run: bun run lint:fix
 
       - name: Commit version changes
         run: |
