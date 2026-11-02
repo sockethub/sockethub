@@ -162,6 +162,37 @@ success/failure.
 The `actor` object must have an `id` and `type` field, and if `name` does not exist,
 the `id` will be used for display purposes.
 
+### Message limits
+
+Socket.IO messages are also capped by `sockethub.maxPayloadBytes` (256 KiB by
+default). See [Configuration](configuration.md#server-settings). Separately,
+the server accepts an object or array at most 64 levels below the message
+root. Strings, numbers, booleans, and null do not add a level. The check runs
+before schema validation on both `message` and `credentials`, and on each HTTP
+actions message. A deeper payload is rejected with:
+
+```json
+{ "error": "activity stream nesting too deep." }
+```
+
+A failure caught before the job is queued does not include the activity you
+sent. On Socket.IO, and for an HTTP actions message, the result keeps
+`@context` only when it is an array of at most 8 strings of at most 256
+characters, keeps `type` only when it is a string of at most 64 characters,
+and sets `error` to at most 256 characters. Actor, object, target, and
+credential fields are left out. Correlate the failure from the emit
+callback, or from the HTTP request that carried the activity.
+
+That summary covers a non-object payload, a missing `@context`, `type`, or
+`actor`, schema validation, and a refused persistent platform instance. The
+instance-limit strings are listed under
+[Rate limiting](configuration.md#rate-limiting).
+
+A job the platform ran still comes back as the original activity plus `error`
+when it fails. HTTP credential results use `credentials-ack` instead of this
+summary; see [Configuration](configuration.md#http-actions). HTTP actions
+report either form as a streamed line and keep HTTP status 200.
+
 For IRC, room targets use `#channel@server` in `target.id` (for example
 `#sockethub@irc.libera.chat`). Put the channel name as it appears on IRC in
 `target.name` (for example `#sockethub`). Keeping the channel sigil in
@@ -467,9 +498,12 @@ while (true) {
 }
 ```
 
-Each line is an ActivityStreams object. Errors arrive as a line with
-`type: 'error'` and an `error` string rather than as an HTTP error status, so
-a `200` means the request was accepted, not that every message succeeded.
+Each line is an ActivityStreams object. A transport failure, such as a request
+or idle timeout, is a line with `type: 'error'` and an `error` string. A
+message rejected before it is queued keeps the `type` you sent and carries
+`error` on that line. In both cases the HTTP status stays 200 when the
+request was accepted, so a `200` does not mean every message succeeded. See
+[Message limits](#message-limits).
 
 ### Replaying results
 

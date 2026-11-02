@@ -141,6 +141,12 @@ set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
 Socket.IO message before it enters validation or the Redis-backed job queue.
 It can be overridden with `SOCKETHUB_MAX_PAYLOAD_BYTES`.
 
+Nesting depth is a separate fixed limit and is not configurable. An object or
+array more than 64 levels below the message root is rejected before validation
+with `activity stream nesting too deep.` The same check applies to each HTTP
+actions message. The result is a short summary and leaves out the submitted
+activity. See [Message limits](client-guide.md#message-limits).
+
 ### Public Settings
 
 For client connections and reverse proxy setups:
@@ -281,6 +287,22 @@ Setting `maxConnectionsPerIp` to `0` removes the per-IP socket connection limit.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
+
+A new persistent instance that would exceed a cap fails in the message
+acknowledgement, before a worker starts. `error` is one of these, with the
+configured number and the platform id filled in:
+
+- `platform instance limit reached (100); cannot start new irc instance`
+- `per-session platform instance limit reached (10)`
+- `per-address platform instance limit reached (20)`
+
+The acknowledgement is the short summary described in
+[Message limits](client-guide.md#message-limits).
+
+`maxConnectionsPerIp` counts open sockets from one address. At that cap the
+server emits a socket `error` event whose `summary` is
+`too many concurrent connections from this address`, then disconnects the
+socket. The reason is in `summary`.
 
 ### Credential Sharing and Anonymous Reconnects
 
@@ -435,6 +457,10 @@ Configuration behavior:
 - HTTP actions reuse the top-level `rateLimiter` settings (keyed by client IP).
   The limiter is backed by Redis, so a client's request budget is shared across
   all Sockethub instances behind a load balancer rather than counted per process.
+- Nesting depth matches Socket.IO. An object or array more than 64 levels
+  below a message root fails that message with
+  `activity stream nesting too deep.` The HTTP status stays 200; the error is
+  one streamed line. See [Message limits](client-guide.md#message-limits).
 
 ### CORS
 
