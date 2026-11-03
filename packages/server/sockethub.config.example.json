@@ -17,6 +17,8 @@
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
+    "@sockethub/platform-messenger",
+    "@sockethub/platform-instagram",
     "@sockethub/platform-xmpp",
     "@sockethub/platform-email"
   ],

@@ -110,6 +110,8 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-email",
                 "@sockethub/platform-irc",
                 "@sockethub/platform-metadata",
+                "@sockethub/platform-messenger",
+                "@sockethub/platform-instagram",
                 "@sockethub/platform-xmpp",
             ],
         },

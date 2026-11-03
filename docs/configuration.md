@@ -55,6 +55,8 @@ add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc", 
     "@sockethub/platform-metadata",
+    "@sockethub/platform-messenger",
+    "@sockethub/platform-instagram",
     "@sockethub/platform-xmpp"
   ],
   "public": {
@@ -178,6 +180,8 @@ them. They cannot be supplied by browser clients.
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",
+    "@sockethub/platform-messenger",
+    "@sockethub/platform-instagram",
     "@sockethub/platform-xmpp"
   ]
 }
@@ -1001,6 +1005,8 @@ export SENTRY_RELEASE=sockethub@5.0.0   # optional; defaults to the running vers
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",
+    "@sockethub/platform-messenger",
+    "@sockethub/platform-instagram",
     "@sockethub/platform-xmpp"
   ]
 }

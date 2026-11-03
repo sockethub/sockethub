@@ -21,6 +21,8 @@ about using, deploying, and extending Sockethub.
   * **[Email](../packages/platform-email/README.md)** - IMAP fetch/watch and SMTP send
   * **[CalDAV](../packages/platform-caldav/README.md)** - calendars and iCalendar feeds
   * **[CardDAV](../packages/platform-carddav/README.md)** - address books
+  * **[Messenger](../packages/platform-messenger/README.md)** - outgoing Facebook Page messages
+  * **[Instagram](../packages/platform-instagram/README.md)** - outgoing professional-account messages
   * **[Dummy](../packages/platform-dummy/README.md)** - echo platform for tests
 
 ### For Platform Developers
