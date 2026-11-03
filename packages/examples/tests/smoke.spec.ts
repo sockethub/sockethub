@@ -22,6 +22,73 @@ test.describe("examples smoke against sockethub --examples", () => {
         );
     });
 
+    for (const platform of ["messenger", "instagram"] as const) {
+        test(`${platform} credentials and reply controls`, async ({ page }) => {
+            await page.goto(`/examples/${platform}`);
+            await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+                `${platform === "messenger" ? "Messenger" : "Instagram"} Platform Example`,
+            );
+            const send = page.getByRole("button", { name: "Send Message" });
+            const setCredentials = page.getByRole("button", {
+                name: "Set Credentials",
+            });
+            await expect(send).toBeDisabled();
+            await page
+                .getByLabel(
+                    platform === "messenger"
+                        ? "Facebook Page ID"
+                        : "Instagram account ID",
+                )
+                .fill("123");
+            await page
+                .getByLabel("Access token")
+                .fill("test-token-not-sent-to-meta");
+            await expect(page.getByLabel("Access token")).toHaveAttribute(
+                "type",
+                "password",
+            );
+            await page.getByLabel("Graph API version").fill("invalid");
+            await expect(setCredentials).toBeDisabled();
+            await page.getByLabel("Graph API version").fill("v22.0");
+            await expect(setCredentials).toBeEnabled();
+            await setCredentials.click();
+            await expect(page.getByRole("status")).toContainText(
+                "Credentials set for this session",
+            );
+            await page
+                .getByLabel(
+                    platform === "messenger"
+                        ? "Recipient Page-scoped ID (PSID)"
+                        : "Recipient Instagram-scoped ID (IGSID)",
+                )
+                .fill("456");
+            await page.getByLabel("Message", { exact: true }).fill("Hello");
+            await expect(send).toBeEnabled();
+            await page
+                .getByLabel("Message", { exact: true })
+                .fill("x".repeat(platform === "messenger" ? 2001 : 1001));
+            await expect(send).toBeDisabled();
+            await page.getByLabel("Message", { exact: true }).fill("Hello");
+            const humanAgent = page.getByRole("checkbox", {
+                name: "Human Agent reply",
+            });
+            await expect(humanAgent).not.toBeChecked();
+            await humanAgent.check();
+            await page.getByLabel("Access token").fill("changed-token");
+            await expect(send).toBeDisabled();
+            await expect(humanAgent).not.toBeChecked();
+            await expect(setCredentials).toBeEnabled();
+            await page
+                .getByRole("button", { name: "Clear Credentials" })
+                .click();
+            await expect(page.getByLabel("Access token")).toHaveValue("");
+            await expect(
+                page.getByLabel("Message", { exact: true }),
+            ).toHaveValue("");
+            await expect(setCredentials).toBeDisabled();
+        });
+    }
+
     test("feeds page fetches local feed.xml without runtime errors", async ({
         page,
     }) => {

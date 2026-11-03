@@ -22,6 +22,12 @@ and use app-role/tester accounts for a private development-mode proof of concept
 Public use and Human Agent access depend on Meta permissions and review; owning
 the account does not remove those requirements. Obtain tokens outside Sockethub.
 
+## Examples app
+
+Run `bun run dev` and open `/examples/messenger` on the Sockethub server.
+Enter your account ID, access token, Graph API version, and scoped recipient ID
+to send a text reply. Human Agent tagging is optional and off by default.
+
 ## Usage
 
 This server-side JavaScript example uses runtime environment variables. In a

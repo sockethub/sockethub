@@ -100,6 +100,16 @@ import Intro from "../components/Intro.svelte";
                     </a>
                 </div>
                 <div class="grid md:grid-cols-2 gap-3">
+                    <a href="{base}/instagram" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                        <div class="font-semibold text-purple-800">📷 Instagram</div>
+                        <div class="text-purple-600">Send text replies from a professional account</div>
+                    </a>
+                    <a href="{base}/messenger" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                        <div class="font-semibold text-purple-800">✉️ Messenger</div>
+                        <div class="text-purple-600">Send text replies from a Facebook Page</div>
+                    </a>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
                     <a href="{base}/metadata" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
                         <div class="font-semibold text-purple-800">🔍 Metadata</div>
                         <div class="text-purple-600">Extract metadata from web pages</div>

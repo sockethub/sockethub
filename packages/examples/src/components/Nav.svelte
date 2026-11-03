@@ -13,7 +13,21 @@ const navItems = [
     ["👤", "CardDAV", "/carddav", "Address books and contacts", "carddav"],
     ["✉️", "Email", "/email", "IMAP receiving and SMTP sending", "email"],
     ["📰", "Feeds", "/feeds", "RSS/ATOM feed parsing", "feeds"],
+    [
+        "📷",
+        "Instagram",
+        "/instagram",
+        "Outgoing Instagram replies",
+        "instagram",
+    ],
     ["💬", "IRC", "/irc", "Internet Relay Chat • Advanced", "irc"],
+    [
+        "✉️",
+        "Messenger",
+        "/messenger",
+        "Outgoing Facebook Page replies",
+        "messenger",
+    ],
     ["🔍", "Metadata", "/metadata", "Web page metadata extraction", "metadata"],
     ["📨", "XMPP", "/xmpp", "Extensible messaging • Advanced", "xmpp"],
 ] as const;
