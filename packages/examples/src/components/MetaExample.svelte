@@ -2,6 +2,7 @@
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
+import { setCredentials as acceptCredentials } from "$lib/set-credentials";
 import { contextFor, ensureClientReady, sc, send } from "$lib/sockethub";
 
 let { platform }: { platform: "messenger" | "instagram" } = $props();
@@ -14,6 +15,7 @@ let recipientId = $state("");
 let content = $state("");
 let humanAgent = $state(false);
 let credentialsSet = $state(false);
+let credentialAccount: { platform: string; actorId: string } | undefined;
 let busy = $state(false);
 let error = $state("");
 let status = $state("");
@@ -34,8 +36,14 @@ function invalidateCredentials(): void {
     status = "";
     error = "";
     humanAgent = false;
-    // Clear replayed credentials before an account or token change.
-    sc?.clearCredentials();
+    forgetCredentials();
+}
+
+function forgetCredentials(): void {
+    if (credentialAccount) {
+        sc?.clearCredentials(credentialAccount);
+        credentialAccount = undefined;
+    }
 }
 
 async function setCredentials(): Promise<void> {
@@ -45,29 +53,18 @@ async function setCredentials(): Promise<void> {
     try {
         await ensureClientReady();
         const context = await contextFor(platform);
-        await new Promise<void>((resolve, reject) => {
-            sc.socket.emit(
-                "credentials",
-                {
-                    "@context": context,
-                    type: "credentials",
-                    actor: { id: accountId, type: "person" },
-                    object: { type: "credentials", token, apiVersion },
-                },
-                (response?: { error?: string }) => {
-                    if (response?.error) {
-                        reject(new Error(response.error));
-                        return;
-                    }
-                    resolve();
-                },
-            );
+        credentialAccount = { platform, actorId: accountId };
+        await acceptCredentials(sc.socket, {
+            "@context": context,
+            type: "credentials",
+            actor: { id: accountId, type: "person" },
+            object: { type: "credentials", token, apiVersion },
         });
         credentialsSet = true;
         status =
             "Credentials set for this session. Meta checks the token when you send.";
     } catch (err) {
-        sc?.clearCredentials();
+        forgetCredentials();
         error = err instanceof Error ? err.message : String(err);
     } finally {
         busy = false;

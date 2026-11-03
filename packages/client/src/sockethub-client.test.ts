@@ -1161,6 +1161,29 @@ describe("SockethubClient", () => {
             sandbox.stub(sc, "validateActivity").returns("");
         });
 
+        it("clears only the selected platform and actor, preserving reconnect replay", () => {
+            const entries = [
+                ["dummy", "alice"],
+                ["dummy", "bob"],
+                ["test-xmpp", "alice"],
+            ];
+            for (const [platform, id] of entries) {
+                sc.socket.emit("credentials", {
+                    "@context": sc.contextFor(platform),
+                    actor: { id, type: "person" },
+                    object: { type: "credentials", token: "test-token" },
+                });
+            }
+            sc.clearCredentials({ platform: "dummy", actorId: "alice" });
+            expect(sc.replayStore.events.credentials.size).to.equal(2);
+            const replayed: string[] = [];
+            socket.on("credentials", (entry: { actor: { id: string } }) => replayed.push(entry.actor.id));
+            socket.emit("disconnect");
+            socket.emit("connect");
+            socket.emit("schemas", TEST_REGISTRY);
+            expect(replayed).to.deep.equal(["bob", "alice"]);
+        });
+
         it("clears stored credentials", () => {
             // Store some credentials
             sc.socket.emit("credentials", {
