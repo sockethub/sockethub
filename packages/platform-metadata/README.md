@@ -67,7 +67,15 @@ The platform returns an ActivityStream object with extracted metadata:
     ],
     "url": "https://example.com/canonical-url",
     "favicon": "https://example.com/favicon.ico",
-    "charset": "utf-8"
+    "charset": "utf-8",
+    "event": {
+      "name": "Tech Talks",
+      "startDate": "2026-11-09T18:00:00-06:00",
+      "endDate": "2026-11-09T20:00:00-06:00",
+      "location": "Civic Center, 1218 West Ave, Austin, TX",
+      "url": "https://example.com/canonical-url",
+      "status": "scheduled"
+    }
   }
 }
 ```
@@ -83,6 +91,13 @@ The platform extracts the following metadata when available:
 * **Canonical URLs**: Resolved and canonical page URLs
 * **Media**: Images with dimensions and type information; for X/Twitter posts,
   a `video` object (direct media URL, poster `thumbnail`, dimensions, duration)
+* **Events**: When the page embeds a schema.org `Event` (or subtype) as
+  JSON-LD — Luma, Meetup, Eventbrite and most ticketing sites — an `event`
+  object carries `name`, `startDate` (ISO 8601 as published, possibly
+  date-only), and optionally `endDate`, `location` (place name and address
+  flattened to one string, or the virtual location URL), `url`, and `status`
+  (`scheduled`, `cancelled`, `postponed`, `rescheduled`). Only present when
+  both a name and a start date are declared.
 
 ## Site-Specific Handling
 

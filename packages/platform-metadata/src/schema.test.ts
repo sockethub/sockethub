@@ -72,6 +72,27 @@ describe("metadata responses schema", () => {
         expect(validateActivityStreamResponse(produced as any)).toEqual("");
     });
 
+    test("real fetch() output with a schema.org Event passes validation", async () => {
+        const produced = (await runFetch({
+            ogTitle: "Event page",
+            jsonLD: [
+                {
+                    "@type": "Event",
+                    name: "Tech Talks",
+                    startDate: "2026-11-09T18:00:00-06:00",
+                    location: { "@type": "Place", name: "Austin" },
+                },
+            ],
+            // biome-ignore lint/suspicious/noExplicitAny: assertion
+        })) as any;
+        expect(produced.object.event).toEqual({
+            name: "Tech Talks",
+            startDate: "2026-11-09T18:00:00-06:00",
+            location: "Austin",
+        });
+        expect(validateActivityStreamResponse(produced)).toEqual("");
+    });
+
     test("real fetch() output (sparse scrape) passes validation", async () => {
         const produced = await runFetch({ ogTitle: "Only a title" });
         // biome-ignore lint/suspicious/noExplicitAny: assertion

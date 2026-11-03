@@ -32,6 +32,7 @@ import {
     resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
+    schemaOrgEvent,
     stripFacebookEngagement,
     tweetToPageObject,
     type YouTubeOEmbed,
@@ -816,6 +817,9 @@ export default class Metadata implements PlatformInterface {
                     // page URL, and a 404 just means no decoration.
                     favicon: result.favicon || "/favicon.ico",
                     charset: result.charset,
+                    // Event pages (Luma, Meetup, Eventbrite) state when and
+                    // where only in their schema.org JSON-LD, never in OG.
+                    event: schemaOrgEvent(result.jsonLD),
                 };
                 cb(null, job);
             })
