@@ -179,7 +179,10 @@ class ProcessManager {
                 )
                     continue;
                 previous.deregisterSession(sessionId);
-                if (!previous.sessions.size) await previous.shutdown();
+                if (!previous.sessions.size)
+                    await previous.shutdown(
+                        "credentials replaced; pending operation interrupted; message submission may already have succeeded; do not automatically retry sends",
+                    );
             }
         }
         const existing = platformInstances.get(identifier);

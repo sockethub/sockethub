@@ -288,6 +288,39 @@ describe("PlatformInstance", () => {
             expect(platformInstances.has("platform identifier")).toBeFalse();
         });
 
+        it("acknowledges interrupted jobs and late registrations when retiring a worker", async () => {
+            pi.initQueue("a secret");
+            const first = sandbox.spy();
+            const second = sandbox.spy();
+            pi.registerCompletedJobHandler("queued", first);
+            pi.registerCompletedJobHandler("running", second);
+            await pi.shutdown("submission may already have succeeded; do not automatically retry sends");
+            sandbox.assert.calledOnce(first);
+            sandbox.assert.calledOnce(second);
+            expect(first.firstCall.args[0].error).toContain("may already have succeeded");
+            expect(pi.completedJobHandlers.size).toBe(0);
+            const late = sandbox.spy();
+            pi.registerCompletedJobHandler("enqueue-finished-late", late);
+            sandbox.assert.calledOnce(late);
+            expect(late.firstCall.args[0].error).toContain("do not automatically retry");
+            expect(pi.completedJobHandlers.size).toBe(0);
+            pi.sendToClient = sandbox.spy();
+            pi.broadcastToSharedPeers = sandbox.spy();
+            await pi.handleJobResult("completed", { title: "running", sessionId: "old", msg: { type: "send" } }, undefined);
+            sandbox.assert.notCalled(pi.sendToClient);
+            sandbox.assert.notCalled(pi.broadcastToSharedPeers);
+            sandbox.assert.calledOnce(second);
+        });
+
+        it("settles remaining interrupted jobs even when a callback throws", async () => {
+            const next = sandbox.spy();
+            pi.registerCompletedJobHandler("throws", () => { throw new Error("callback failed"); });
+            pi.registerCompletedJobHandler("next", next);
+            await pi.shutdown("worker retired");
+            sandbox.assert.calledOnce(next);
+            expect(pi.completedJobHandlers.size).toBe(0);
+        });
+
         test("shutdown is single-flight: repeated calls share one teardown", async () => {
             pi.initQueue("a secret");
             const queue = pi.queue;

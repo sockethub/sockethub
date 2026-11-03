@@ -137,8 +137,13 @@ describe("ProcessManager", () => {
         const previous = await privateManager.get("fakeplatform", "actor", "session-a");
         const peer = await privateManager.get("fakeplatform", "actor", "session-b");
         const otherActor = await privateManager.get("fakeplatform", "other", "session-a");
+        const pending = sandbox.spy();
+        previous.registerCompletedJobHandler("pending-send", pending);
         submitCredentials("session-a", "actor", { imap: { token: "new-token" } });
         const replacement = await privateManager.get("fakeplatform", "actor", "session-a");
+        sinon.assert.calledOnce(pending);
+        expect(pending.firstCall.args[0].error).toContain("submission may already have succeeded");
+        expect(previous.completedJobHandlers.size).toBe(0);
         expect(replacement).not.toBe(previous);
         expect(previous.sessions.has("session-a")).toBeFalse();
         expect(platformInstances.has(previous.id)).toBeFalse();

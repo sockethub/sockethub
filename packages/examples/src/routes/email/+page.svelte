@@ -55,6 +55,8 @@ let servers = $state([
         auth: "password",
     },
 ]);
+let disposed = false;
+let listening = false;
 let connected = $state(false);
 let watching = $state(false);
 let busy = $state(false);
@@ -135,6 +137,12 @@ async function perform(operation: () => Promise<void>) {
 async function connect() {
     await perform(async () => {
         await ensureClientReady();
+        if (disposed) return;
+        if (!listening) {
+            sc.socket.on("message", receive);
+            sc.socket.on("disconnect", connectionLost);
+            listening = true;
+        }
         const settings: Record<string, unknown> = {
             type: "credentials",
             from: address,
@@ -164,7 +172,16 @@ async function connect() {
                 },
             );
         });
+        if (disposed) {
+            sc.clearCredentials();
+            return;
+        }
         await request("connect");
+        if (disposed) {
+            await request("disconnect");
+            sc.clearCredentials();
+            return;
+        }
         connected = true;
         status = "Connected. Fetch messages or start watching a folder.";
     });
@@ -219,27 +236,15 @@ async function sendMail() {
         status = `Accepted by server: ${result.object?.accepted?.join(", ") || "none"}. Rejected: ${result.object?.rejected?.join(", ") || "none"}.`;
     });
 }
+function connectionLost() {
+    connected = false;
+    watching = false;
+    status =
+        "Sockethub connection lost. Reconnect before fetching or watching again.";
+}
 onMount(() => {
-    let active = true;
-    const connectionLost = () => {
-        connected = false;
-        watching = false;
-        status =
-            "Sockethub connection lost. Reconnect before fetching or watching again.";
-    };
-    void ensureClientReady().then(
-        () => {
-            if (active) {
-                sc.socket.on("message", receive);
-                sc.socket.on("disconnect", connectionLost);
-            }
-        },
-        (failure) => {
-            if (active) error = String(failure);
-        },
-    );
     return () => {
-        active = false;
+        disposed = true;
         sc?.socket.off("message", receive);
         sc?.socket.off("disconnect", connectionLost);
         sc?.clearCredentials();
