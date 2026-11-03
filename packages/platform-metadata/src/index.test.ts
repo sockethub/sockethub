@@ -1167,3 +1167,74 @@ describe("twitter status resolution", () => {
         expect(ogsOptions?.url).toEqual("https://x.com/someperson");
     });
 });
+
+describe("schema.org event", () => {
+    beforeEach(() => {
+        ogsOptions = undefined;
+    });
+
+    const event = {
+        "@type": "Event",
+        name: "ACM/IEEE Austin Tech Talks",
+        startDate: "2026-11-09T18:00:00-06:00",
+        endDate: "2026-11-09T20:00:00-06:00",
+        location: {
+            "@type": "Place",
+            name: "CGCS, ACC Rio Campus Build #3000",
+            address: {
+                "@type": "PostalAddress",
+                addressLocality: "Austin",
+                addressRegion: "TX",
+                addressCountry: "us",
+                streetAddress: "1218 West Ave Bldg #3000, Austin, TX",
+            },
+        },
+        url: "https://www.meetup.com/acm-austin/events/316315179/",
+        eventStatus: "https://schema.org/EventScheduled",
+    };
+    const expected = {
+        name: "ACM/IEEE Austin Tech Talks",
+        startDate: "2026-11-09T18:00:00-06:00",
+        endDate: "2026-11-09T20:00:00-06:00",
+        location:
+            "CGCS, ACC Rio Campus Build #3000, 1218 West Ave Bldg #3000, Austin, TX",
+        url: "https://www.meetup.com/acm-austin/events/316315179/",
+        status: "scheduled",
+    };
+
+    it("attaches the Event from a single JSON-LD block (Luma)", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({ result: { ogTitle: "Luma", jsonLD: [event] } });
+        const { result } = await runFetch(makePlatform(), "https://luma.com/x");
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.event).toEqual(expected);
+    });
+
+    it("finds the Event among sibling JSON-LD blocks (Meetup)", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle: "Meetup",
+                    jsonLD: [
+                        { "@type": "Organization", name: "ACM Austin" },
+                        { "@type": "BreadcrumbList" },
+                        event,
+                        { "@type": "RsvpAction" },
+                    ],
+                },
+            });
+        const { result } = await runFetch(
+            makePlatform(),
+            "https://www.meetup.com/acm-austin/events/316315179/",
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.event).toEqual(expected);
+    });
+
+    it("omits event when the page has no JSON-LD", async () => {
+        ogsBehavior = () => Promise.resolve({ result: { ogTitle: "Plain" } });
+        const { result } = await runFetch(makePlatform());
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.event).toBeUndefined();
+    });
+});

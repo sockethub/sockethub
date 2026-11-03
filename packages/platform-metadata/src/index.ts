@@ -12,6 +12,7 @@ import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
 import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
+import { schemaOrgEvent } from "./event";
 import {
     extractFacebookEmbedImage,
     extractYouTubeDescription,
@@ -32,7 +33,6 @@ import {
     resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
-    schemaOrgEvent,
     stripFacebookEngagement,
     tweetToPageObject,
     type YouTubeOEmbed,
