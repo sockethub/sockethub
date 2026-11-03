@@ -24,6 +24,17 @@ test.describe("examples smoke against sockethub --examples", () => {
 
     for (const platform of ["messenger", "instagram"] as const) {
         test(`${platform} credentials and reply controls`, async ({ page }) => {
+            let closeTransport: (() => void) | undefined;
+            await page.routeWebSocket(
+                /\/sockethub\/.*transport=websocket/,
+                (socket) => {
+                    const server = socket.connectToServer();
+                    closeTransport = () => {
+                        socket.close();
+                        server.close();
+                    };
+                },
+            );
             await page.goto(`/examples/${platform}`);
             await expect(page.getByRole("heading", { level: 1 })).toHaveText(
                 `${platform === "messenger" ? "Messenger" : "Instagram"} Platform Example`,
@@ -78,6 +89,17 @@ test.describe("examples smoke against sockethub --examples", () => {
             await expect(send).toBeDisabled();
             await expect(humanAgent).not.toBeChecked();
             await expect(setCredentials).toBeEnabled();
+            await expect.poll(() => Boolean(closeTransport)).toBe(true);
+            await page.context().setOffline(true);
+            closeTransport?.();
+            await expect(
+                page
+                    .getByRole("button", { name: "Not Connected", exact: true })
+                    .first(),
+            ).toBeVisible();
+            await expect(
+                page.getByRole("button", { name: "Clear Credentials" }),
+            ).toBeEnabled();
             await page
                 .getByRole("button", { name: "Clear Credentials" })
                 .click();
@@ -85,6 +107,7 @@ test.describe("examples smoke against sockethub --examples", () => {
             await expect(
                 page.getByLabel("Message", { exact: true }),
             ).toHaveValue("");
+            await page.context().setOffline(false);
             await expect(setCredentials).toBeDisabled();
         });
     }

@@ -119,7 +119,7 @@ async function clearCredentials(): Promise<void> {
             <SockethubButton buttonAction={setCredentials} disabled={!canSetCredentials || busy || credentialsSet}>
                 {credentialsSet ? "Credentials Set" : "Set Credentials"}
             </SockethubButton>
-            <SockethubButton buttonAction={clearCredentials} disabled={busy || (!token && !credentialsSet)}>Clear Credentials</SockethubButton>
+            <button type="button" onclick={clearCredentials} disabled={busy || (!token && !credentialsSet)} class="px-6 py-3 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">Clear Credentials</button>
         </div>
     </fieldset>
     <fieldset disabled={busy} class="space-y-4">

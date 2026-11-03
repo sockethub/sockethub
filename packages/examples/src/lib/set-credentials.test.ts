@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import type SockethubClient from "@sockethub/client";
 import type { CredentialsObject } from "@sockethub/schemas";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { emitWithAck } from "./emit-with-ack";
 import { setCredentials } from "./set-credentials";
 
 const credentials: CredentialsObject = {
@@ -76,5 +77,47 @@ describe("credential acknowledgement", () => {
         const { socket } = fixture();
         socket.connected = false;
         await expect(setCredentials(socket, credentials)).rejects.toThrow("Sockethub is disconnected");
+    });
+});
+
+
+describe("message acknowledgement", () => {
+    it("returns the response and clears its listener", async () => {
+        const { events, socket } = fixture();
+        const response = { ...credentials, type: "send", object: { type: "message", id: "mid.1" } };
+        events.on("message", (_activity, ack) => ack(response));
+        expect(await emitWithAck(socket, "message", {})).toEqual(response);
+        expect(events.listenerCount("disconnect")).toBe(0);
+    });
+
+    it("reports unknown delivery on disconnect and ignores late acknowledgements without retrying", async () => {
+        const { events, socket } = fixture();
+        let acknowledge = (_response?: unknown) => {};
+        let sends = 0;
+        events.on("message", (_activity, ack) => { sends++; acknowledge = ack; });
+        const result = emitWithAck(socket, "message", {});
+        events.emit("disconnect");
+        await expect(result).rejects.toThrow("delivery is unknown");
+        acknowledge({ type: "send" });
+        expect(events.listenerCount("disconnect")).toBe(0);
+        expect(sends).toBe(1);
+    });
+
+    it("bounds message waits to 30 seconds and cleans up after timeout", async () => {
+        let deadline = () => {};
+        let delay = 0;
+        vi.spyOn(globalThis, "setTimeout").mockImplementation(((callback: () => void, ms: number) => {
+            deadline = callback;
+            delay = ms;
+            return 123;
+        }) as unknown as typeof setTimeout);
+        const clear = vi.spyOn(globalThis, "clearTimeout").mockImplementation(() => {});
+        const { events, socket } = fixture();
+        const result = emitWithAck(socket, "message", {});
+        expect(delay).toBe(30_000);
+        deadline();
+        await expect(result).rejects.toThrow("delivery is unknown");
+        expect(events.listenerCount("disconnect")).toBe(0);
+        expect(clear).toHaveBeenCalledWith(123);
     });
 });
