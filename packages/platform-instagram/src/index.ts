@@ -58,7 +58,7 @@ export default class Instagram implements PlatformInterface {
                         recipient: { id: job.target.id },
                         message: { text: job.object.content },
 
-                        ...(humanAgent ? { tag: "HUMAN_AGENT" } : {}),
+                        ...(humanAgent ? { tag: "human_agent" } : {}),
                     }),
                     signal: AbortSignal.timeout(15_000),
                 },

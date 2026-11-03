@@ -86,7 +86,7 @@ sc.socket.emit('credentials', {
 - Standard replies use Meta's normal messaging window. Sockethub does not track
   incoming messages or calculate eligibility; Meta enforces its policies.
 - Set `object.humanAgent: true` only for an eligible manual support reply when
-  your Meta app has Human Agent access. This explicitly adds `HUMAN_AGENT`;
+  your Meta app has Human Agent access. This explicitly adds `human_agent`;
   ordinary replies have no tag.
   It does not grant access, verify human authorship, or restart the window.
 - Meta failures return the HTTP status, error code/subcode, and error message.

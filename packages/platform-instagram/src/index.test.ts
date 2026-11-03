@@ -91,7 +91,7 @@ describe("instagram outgoing platform", () => {
         activity.object.humanAgent = true;
         await new Instagram(session).send(activity, credentials, mock());
         expect(JSON.parse(String(fetchMock.mock.calls[0][1]!.body))).toEqual({
-            recipient: { id: "456" }, message: { text: "Hello" }, tag: "HUMAN_AGENT",
+            recipient: { id: "456" }, message: { text: "Hello" }, tag: "human_agent",
         });
     });
 
