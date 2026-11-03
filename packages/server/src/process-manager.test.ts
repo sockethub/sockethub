@@ -112,6 +112,22 @@ describe("ProcessManager", () => {
         } as never);
     }
 
+    it("keeps session-owned platform connections separate", async () => {
+        const platforms = fakePlatforms(true);
+        platforms.get("fakeplatform").config.shareConnections = false;
+        const privateManager = new ProcessManager("parent", "secret1", "secret2", {
+            version: "0.0.0", platforms,
+        });
+        submitCredentials("session-a", "actor", { password: "same-secret" });
+        submitCredentials("session-b", "actor", { password: "same-secret" });
+        const first = await privateManager.get("fakeplatform", "actor", "session-a");
+        const second = await privateManager.get("fakeplatform", "actor", "session-b");
+        const again = await privateManager.get("fakeplatform", "actor", "session-a");
+        expect(first).not.toBe(second);
+        expect(first).toBe(again);
+        expect(platformInstances.size).toBe(2);
+    });
+
     it("disabled cap (0) allows unbounded instance creation", async () => {
         maxPlatformInstances = 0;
         for (let i = 0; i < 5; i++) {

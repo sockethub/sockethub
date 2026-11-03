@@ -70,6 +70,10 @@ import Intro from "../components/Intro.svelte";
                         <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Start Here</span>
                     </div>
                 </a>
+                <a href="{base}/email" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
+                    <div class="font-semibold text-purple-800">✉️ Email</div>
+                    <div class="text-purple-600">Fetch and watch filtered mail with IMAP, and send with SMTP</div>
+                </a>
                 <div class="grid md:grid-cols-2 gap-3">
                     <a href="{base}/caldav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
                         <div class="font-semibold text-purple-800">📅 CalDAV Calendars</div>

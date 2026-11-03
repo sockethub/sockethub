@@ -111,11 +111,16 @@ function fingerprint(credentials: CredentialsObject): string | null {
     if (!object) {
         return null;
     }
-    const password = object.password;
-    const token = object.token;
-    const hasSecret =
-        (typeof password === "string" && password.length > 0) ||
-        (typeof token === "string" && token.length > 0);
+    // Email has independent incoming/outgoing credentials; include their secrets
+    // so replacing an expired token also selects a fresh session-owned worker.
+    const hasSecret = [object, object.imap, object.smtp].some((candidate) => {
+        if (!candidate || typeof candidate !== "object") return false;
+        const { password, token } = candidate as Record<string, unknown>;
+        return (
+            (typeof password === "string" && password.length > 0) ||
+            (typeof token === "string" && token.length > 0)
+        );
+    });
     if (!hasSecret) {
         return null;
     }
@@ -178,6 +183,7 @@ function socketIsLive(sessionId: string): boolean {
 }
 
 export interface ScopeRequest {
+    shareConnections?: boolean;
     /**
      * Session the credentials were submitted under. Over a socket this is the
      * socket id; over HTTP it is the request's single-use session, which is
@@ -209,9 +215,24 @@ export async function resolveConnectionScope(
         if (pending) {
             const resolved = await pending;
             if (resolved) {
-                return { scope: resolved };
+                return {
+                    scope:
+                        request.shareConnections === false
+                            ? crypto.objectHash({
+                                  credentials: resolved,
+                                  session:
+                                      socketSessionId ?? credentialSessionId,
+                              })
+                            : resolved,
+                };
             }
         }
+    }
+    if (request.shareConnections === false) {
+        const session = socketSessionId ?? credentialSessionId;
+        if (!session)
+            throw new Error("session required for private connection");
+        return { scope: crypto.objectHash({ session }) };
     }
     return anonymousScope(platform, actorId, {
         credentialSessionId,

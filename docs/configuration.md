@@ -50,6 +50,7 @@ add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
   "platforms": [
     "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
+    "@sockethub/platform-email",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc", 
@@ -169,6 +170,7 @@ them. They cannot be supplied by browser clients.
   "platforms": [
     "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
+    "@sockethub/platform-email",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
@@ -975,6 +977,7 @@ export SENTRY_RELEASE=sockethub@5.0.0   # optional; defaults to the running vers
   "platforms": [
     "@sockethub/platform-carddav",
     "@sockethub/platform-caldav",
+    "@sockethub/platform-email",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",

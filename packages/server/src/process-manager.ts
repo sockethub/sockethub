@@ -55,6 +55,7 @@ class ProcessManager {
                   credentialSessionId: credentialSessionId ?? sessionId,
                   socketSessionId: sessionId,
                   sessionIp,
+                  shareConnections: platformDetails.config.shareConnections,
               })
             : undefined;
         const pi = platformDetails.config.persist

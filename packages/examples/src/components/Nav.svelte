@@ -11,6 +11,7 @@ const navItems = [
     ["🔧", "Dummy", "/dummy", "Basic examples • Start here", "dummy"],
     ["📅", "CalDAV", "/caldav", "Calendars and tasks", "caldav"],
     ["👤", "CardDAV", "/carddav", "Address books and contacts", "carddav"],
+    ["✉️", "Email", "/email", "IMAP receiving and SMTP sending", "email"],
     ["📰", "Feeds", "/feeds", "RSS/ATOM feed parsing", "feeds"],
     ["💬", "IRC", "/irc", "Internet Relay Chat • Advanced", "irc"],
     ["🔍", "Metadata", "/metadata", "Web page metadata extraction", "metadata"],
@@ -37,7 +38,7 @@ function tooltip(description: string, enabled: boolean): string {
 </script>
 
 <nav class="flex justify-center flex-wrap gap-2 p-2">
-    {#each navItems as [icon, title, path, description, platform]}
+    {#each navItems as [icon, title, path, description, platform] (path)}
         {@const enabled = isEnabled(platform)}
         {@const classes = `group relative rounded-lg px-3 py-2 font-medium transition-all duration-200 no-underline ${
             !enabled

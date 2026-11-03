@@ -98,7 +98,8 @@
     "@sockethub/platform-feeds": "^4.0.0-beta.1",
     "@sockethub/platform-irc": "^4.0.0-beta.1",
     "@sockethub/platform-metadata": "^1.0.1-beta.1",
-    "@sockethub/platform-xmpp": "^5.0.0-beta.1"
+    "@sockethub/platform-xmpp": "^5.0.0-beta.1",
+    "@sockethub/platform-email": "^1.0.0-beta.1"
   },
   "gitHead": "06c9062f1cb5f0c0599fd979e6e91da79f08eda0",
   "types": "./dist/index.d.ts"
