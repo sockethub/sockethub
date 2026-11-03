@@ -242,6 +242,7 @@ onMount(() => {
         active = false;
         sc?.socket.off("message", receive);
         sc?.socket.off("disconnect", connectionLost);
+        sc?.clearCredentials();
         if (connected) {
             sc.socket.emit(
                 "message",
@@ -255,7 +256,6 @@ onMount(() => {
                         console.warn("Email disconnect failed", response.error);
                 },
             );
-            sc.clearCredentials();
         }
     };
 });

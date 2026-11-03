@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { validatePlatformSchema } from "@sockethub/schemas";
+import { addPlatformContext, addPlatformSchema, buildCanonicalContext, validateActivityStream, validatePlatformSchema } from "@sockethub/schemas";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { PlatformEmailSchema } from "./schema.js";
@@ -7,7 +7,13 @@ import { PlatformEmailSchema } from "./schema.js";
 const ajv = new Ajv({ strict: false, allErrors: true });
 addFormats(ajv);
 const credentials = ajv.compile(PlatformEmailSchema.credentials);
-const message = ajv.compile({ allOf: [{ type: "object", ...PlatformEmailSchema.messages }, PlatformEmailSchema.messageConstraints] });
+addPlatformContext("email", PlatformEmailSchema.contextUrl);
+addPlatformSchema(PlatformEmailSchema.messages, "email/messages");
+const message = (value: Record<string, unknown>) => validateActivityStream({
+    "@context": buildCanonicalContext(PlatformEmailSchema.contextUrl),
+    actor: { id: "me@example.com", type: "person" },
+    ...value,
+} as Parameters<typeof validateActivityStream>[0]) === "";
 const server = { host: "mail.example.com", username: "me@example.com", password: "test-password" };
 
 describe("email schema", () => {

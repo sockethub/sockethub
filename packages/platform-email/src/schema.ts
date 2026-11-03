@@ -91,8 +91,6 @@ export const PlatformEmailSchema = {
             },
             object: { type: "object" },
         },
-    },
-    messageConstraints: {
         allOf: [
             {
                 if: { properties: { type: { const: "fetch" } } },
