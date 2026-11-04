@@ -75,6 +75,47 @@ describe("connection scope", () => {
             expect(first.scope).toEqual(second.scope);
         });
 
+        it("isolates session-owned state even with identical credentials", async () => {
+            const object = { password: "same-secret" };
+            for (const session of ["s1", "s2"]) {
+                beginCredentialScope(session, PLATFORM, ACTOR).resolve(credentials(object));
+            }
+            const first = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1", socketSessionId: "s1", shareConnections: false,
+            });
+            const second = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s2", socketSessionId: "s2", shareConnections: false,
+            });
+            const again = await resolveConnectionScope(PLATFORM, ACTOR, {
+                credentialSessionId: "s1", socketSessionId: "s1", shareConnections: false,
+            });
+            expect(first.scope).not.toEqual(second.scope);
+            expect(first.scope).toEqual(again.scope);
+            expect(first.resumption).toBeUndefined();
+        });
+
+        it("keeps nested email credentials session-private", async () => {
+            for (const session of ["s1", "s2"]) {
+                beginCredentialScope(session, "email", ACTOR).resolve(credentials({
+                    imap: { username: ACTOR, password: "same-secret" },
+                }));
+            }
+            const first = await resolveConnectionScope("email", ACTOR, {
+                credentialSessionId: "s1", socketSessionId: "s1", shareConnections: false,
+            });
+            const second = await resolveConnectionScope("email", ACTOR, {
+                credentialSessionId: "s2", socketSessionId: "s2", shareConnections: false,
+            });
+            expect(first.scope).not.toEqual(second.scope);
+            beginCredentialScope("s1", "email", ACTOR).resolve(credentials({
+                imap: { username: ACTOR, token: "replacement-token" },
+            }));
+            const refreshed = await resolveConnectionScope("email", ACTOR, {
+                credentialSessionId: "s1", socketSessionId: "s1", shareConnections: false,
+            });
+            expect(refreshed.scope).not.toEqual(first.scope);
+        });
+
         it("gives different credentials different scopes for the same actor", async () => {
             beginCredentialScope("s1", PLATFORM, ACTOR).resolve(
                 credentials({ nick: "alice", password: "hunter2" }),

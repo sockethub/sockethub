@@ -107,6 +107,7 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-caldav",
                 "@sockethub/platform-dummy",
                 "@sockethub/platform-feeds",
+                "@sockethub/platform-email",
                 "@sockethub/platform-irc",
                 "@sockethub/platform-metadata",
                 "@sockethub/platform-xmpp",
@@ -140,6 +141,18 @@ export const SockethubConfigSchema = {
                         allowPrivateAddresses: { type: "boolean" },
                         allowInsecureHttp: { type: "boolean" },
                         concurrency: { type: "integer", minimum: 1 },
+                    },
+                },
+                "@sockethub/platform-email": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        connectTimeoutMs: {
+                            type: "integer",
+                            minimum: 5000,
+                            maximum: 120000,
+                        },
+                        allowPrivateAddresses: { type: "boolean" },
                     },
                 },
                 "@sockethub/platform-dummy": {

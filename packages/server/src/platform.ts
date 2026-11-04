@@ -829,7 +829,14 @@ async function startPlatformProcess() {
             queueInstanceId,
             parentSecret1 + parentSecret2,
             { url: redisUrl },
-            { concurrency },
+            {
+                concurrency,
+                maxStalledCount:
+                    platform.config.persist &&
+                    platform.config.retryStalledJobs === false
+                        ? 0
+                        : 3,
+            },
         );
         logger.info(
             `listening on the queue for incoming jobs (concurrency: ${concurrency})`,

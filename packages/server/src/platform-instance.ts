@@ -121,12 +121,17 @@ export default class PlatformInstance {
     private heartbeatFailureHandled = false;
     private replaced = false;
     private shutdownResult?: Promise<void>;
+    private retirementError?: string;
     /**
      * Actor this instance was opened for. Updated when the platform re-keys
      * (IRC nick change) so a later rename moves the credential scope off the
      * actor the client is using now, not the one from process start.
      */
     private actor?: string;
+
+    get actorId(): string | undefined {
+        return this.actor;
+    }
 
     constructor(params: PlatformInstanceParams) {
         this.id = params.identifier;
@@ -256,7 +261,14 @@ export default class PlatformInstance {
      * independent run would resolve while the first is still obliterating
      * the queue name the replacement is about to reuse.
      */
-    public shutdown(): Promise<void> {
+    public shutdown(pendingJobError?: string): Promise<void> {
+        if (pendingJobError && !this.retirementError) {
+            this.retirementError = pendingJobError;
+            const pending = [...this.completedJobHandlers.values()];
+            this.completedJobHandlers.clear();
+            this.completedJobHandlerTimestamps.clear();
+            for (const handler of pending) this.failRetiredJob(handler);
+        }
         if (!this.shutdownResult) {
             this.shutdownResult = this.teardown();
         }
@@ -357,9 +369,30 @@ export default class PlatformInstance {
         title: string,
         handler: CompletedJobHandler,
     ) {
+        if (this.retirementError) {
+            this.failRetiredJob(handler);
+            return;
+        }
         this.pruneExpiredJobHandlers();
         this.completedJobHandlers.set(title, handler);
         this.completedJobHandlerTimestamps.set(title, Date.now());
+    }
+
+    private failRetiredJob(handler: CompletedJobHandler): void {
+        try {
+            handler({
+                "@context": buildCanonicalContext(
+                    this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
+                ),
+                type: "error",
+                actor: { id: this.actor ?? this.name, type: "service" },
+                error: this.retirementError,
+            });
+        } catch (error) {
+            this.log.error(
+                `failed to acknowledge retired job: ${errorMessage(error)}`,
+            );
+        }
     }
 
     private takeCompletedJobHandler(
@@ -506,6 +539,7 @@ export default class PlatformInstance {
         job: JobDataDecrypted,
         result: ActivityStream | undefined,
     ) {
+        if (this.retirementError) return;
         let payload = result; // some platforms return new AS objects as result
         if (state === "failed") {
             payload = job.msg; // failures always use original AS job object

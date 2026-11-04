@@ -32,6 +32,7 @@ export interface JobWorkerOptions {
      * job handlers are independent of one another (e.g. feeds, metadata).
      */
     concurrency?: number;
+    maxStalledCount?: number;
 }
 
 export class JobWorker extends JobBase {
@@ -42,6 +43,7 @@ export class JobWorker extends JobBase {
     private readonly redisConfig: RedisConfig;
     protected readonly queueId: string;
     private readonly concurrency: number;
+    private readonly maxStalledCount: number;
     private initialized = false;
 
     /**
@@ -67,6 +69,7 @@ export class JobWorker extends JobBase {
             );
         }
         this.concurrency = concurrency;
+        this.maxStalledCount = options.maxStalledCount ?? 3;
         // Create logger with full namespace (context will be prepended automatically)
         this.log = createLogger(`data-layer:worker:${parentId}:${instanceId}`);
 
@@ -99,7 +102,7 @@ export class JobWorker extends JobBase {
             // Prevent infinite retry loops when platform child process crashes mid-job.
             // If worker disappears (crash/disconnect), job becomes "stalled" and retries
             // up to maxStalledCount times (with default 30s interval) before failing permanently.
-            maxStalledCount: 3,
+            maxStalledCount: this.maxStalledCount,
         });
 
         // Handle Redis contention errors (e.g., BUSY from Lua scripts)

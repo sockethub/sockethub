@@ -28,6 +28,7 @@ import {
     hasActorId,
     isActorRename,
     isErrorResult,
+    matchesAccount,
     ReplayStore,
 } from "./replay-store";
 
@@ -269,6 +270,12 @@ export default class SockethubClient {
     private readyWaiters: Array<PendingReadyWaiter> = [];
     private outboundQueue: Array<QueuedOutboundEvent> = [];
     private outboundSequence = 0;
+    // Scoped clears issued before the registry loads: noncanonical context
+    // URLs cannot be matched to a platform until then, so re-apply at flush.
+    private pendingScopedClears: Array<{
+        scope: { platform: string; actorId: string };
+        before: number;
+    }> = [];
     private registryFingerprint?: string;
     private latestReadyInfo?: ClientReadyInfo;
 
@@ -358,7 +365,10 @@ export default class SockethubClient {
     /**
      * Clear stored credentials to prevent automatic replay on reconnection.
      *
-     * This method removes all stored credentials from memory. Useful for
+     * Without a scope this removes all stored credentials from memory. Pass
+     * `{ platform, actorId }` to clear one account and its saved connection/join
+     * replay on a shared client. Matching queued credentials are cancelled too.
+     * Useful for
      * security-sensitive applications that want to prevent automatic credential
      * replay when the socket reconnects.
      *
@@ -370,8 +380,39 @@ export default class SockethubClient {
      * });
      * ```
      */
-    public clearCredentials(): void {
-        this.replayStore.events.credentials.clear();
+    public clearCredentials(scope?: {
+        platform: string;
+        actorId: string;
+    }): void {
+        const cancelled: QueuedOutboundEvent[] = [];
+        this.outboundQueue = this.outboundQueue.filter((entry) => {
+            if (
+                entry.event === "credentials" &&
+                (!scope || matchesAccount(entry.content, scope))
+            ) {
+                cancelled.push(entry);
+                return false;
+            }
+            return true;
+        });
+        this.replayStore.clearCredentials(scope);
+        if (scope && !this.isReady()) {
+            this.pendingScopedClears.push({
+                scope,
+                before: this.outboundSequence,
+            });
+        }
+        this.emitCancelled(cancelled);
+    }
+
+    private emitCancelled(cancelled: QueuedOutboundEvent[]) {
+        for (const entry of cancelled) {
+            this.emitClientError(
+                entry.event,
+                entry.callback,
+                "SockethubClient queued credentials cancelled by clearCredentials",
+            );
+        }
     }
 
     /**
@@ -888,11 +929,24 @@ export default class SockethubClient {
             return;
         }
         const now = Date.now();
-        const queued = this.outboundQueue.sort(
-            (a, b) => a.sequence - b.sequence,
-        );
-        this.outboundQueue = [];
-        for (const entry of queued) {
+        this.outboundQueue.sort((a, b) => a.sequence - b.sequence);
+        const clears = this.pendingScopedClears;
+        this.pendingScopedClears = [];
+        // Drain in place so clearCredentials() called from a callback during
+        // the flush still sees, and can cancel, the entries not yet sent.
+        while (this.outboundQueue.length > 0) {
+            const entry = this.outboundQueue.shift() as QueuedOutboundEvent;
+            if (
+                entry.event === "credentials" &&
+                clears.some(
+                    (clear) =>
+                        entry.sequence < clear.before &&
+                        matchesAccount(entry.content, clear.scope),
+                )
+            ) {
+                this.emitCancelled([entry]);
+                continue;
+            }
             if (now - entry.enqueuedAt > this.options.maxQueuedAgeMs) {
                 this.emitClientError(
                     entry.event,

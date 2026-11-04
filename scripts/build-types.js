@@ -13,6 +13,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const packages = [
+    { dir: "packages/platform-email", entries: ["src/index.ts"] },
     {
         dir: "packages/client",
         entries: ["src/sockethub-client.ts"],

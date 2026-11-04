@@ -1,0 +1,59 @@
+{
+  "name": "@sockethub/platform-email",
+  "description": "IMAP receiving and SMTP sending for Sockethub",
+  "version": "1.0.0-beta.1",
+  "type": "module",
+  "private": false,
+  "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/platform-email"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-email",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
+    "test": "bun run --cwd ../.. build:foundations && bun test src/",
+    "test:integration": "node ../../integration/email-node.integration.mjs"
+  },
+  "dependencies": {
+    "@sockethub/schemas": "^3.0.0-beta.1",
+    "@sockethub/util": "^1.0.0-beta.1",
+    "imapflow": "^1.7.8",
+    "mailparser": "^3.14.1",
+    "nodemailer": "^10.3.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/mailparser": "^3.4.0",
+    "@types/nodemailer": "^7.0.0"
+  },
+  "peerDependencies": {
+    "@sockethub/server": "^5.0.0-beta.1"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
+  },
+  "types": "./dist/index.d.ts"
+}

@@ -55,6 +55,7 @@ class ProcessManager {
                   credentialSessionId: credentialSessionId ?? sessionId,
                   socketSessionId: sessionId,
                   sessionIp,
+                  shareConnections: platformDetails.config.shareConnections,
               })
             : undefined;
         const pi = platformDetails.config.persist
@@ -121,7 +122,15 @@ class ProcessManager {
             actor,
             connectionScope?.scope,
         );
-        const prior = this.ensureChains.get(identifier) ?? Promise.resolve();
+        const platformConfig = this.init.platforms.get(platform).config;
+        const privateSession =
+            platformConfig.persist &&
+            platformConfig.shareConnections === false &&
+            sessionId;
+        const chainKey = privateSession
+            ? JSON.stringify([platform, actor, sessionId])
+            : identifier;
+        const prior = this.ensureChains.get(chainKey) ?? Promise.resolve();
         const run = prior.then(() =>
             this.ensureProcessNow(
                 identifier,
@@ -138,10 +147,10 @@ class ProcessManager {
             (): undefined => undefined,
             (): undefined => undefined,
         );
-        this.ensureChains.set(identifier, settled);
+        this.ensureChains.set(chainKey, settled);
         settled.then(() => {
-            if (this.ensureChains.get(identifier) === settled) {
-                this.ensureChains.delete(identifier);
+            if (this.ensureChains.get(chainKey) === settled) {
+                this.ensureChains.delete(chainKey);
             }
         });
         return run;
@@ -155,6 +164,27 @@ class ProcessManager {
         sessionIp?: string,
         connectionScope?: ConnectionScope,
     ): Promise<PlatformInstance> {
+        const platformConfig = this.init.platforms.get(platform).config;
+        if (
+            platformConfig.persist &&
+            platformConfig.shareConnections === false &&
+            sessionId
+        ) {
+            for (const previous of platformInstances.values()) {
+                if (
+                    previous.id === identifier ||
+                    previous.name !== platform ||
+                    previous.actorId !== actor ||
+                    !previous.sessions.has(sessionId)
+                )
+                    continue;
+                previous.deregisterSession(sessionId);
+                if (!previous.sessions.size)
+                    await previous.shutdown(
+                        "credentials replaced; pending operation interrupted; message submission may already have succeeded; do not automatically retry sends",
+                    );
+            }
+        }
         const existing = platformInstances.get(identifier);
         const reusable = existing && this.isProcessAlive(existing);
         this.assertInstanceCapacity(

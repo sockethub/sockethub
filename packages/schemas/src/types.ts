@@ -140,6 +140,10 @@ export interface StatelessPlatformConfig extends BasePlatformConfig {
  * These always require credentials because persistent state is actor-specific.
  */
 export interface PersistentPlatformConfig extends BasePlatformConfig {
+    /** Disable connection sharing when state belongs to a single client session. */
+    shareConnections?: boolean;
+    /** Disable replay after a worker crash for actions such as SMTP submission. */
+    retryStalledJobs?: boolean;
     persist: true;
     /** Message types requiring credentials (must be non-empty for persistent platforms) */
     requireCredentials: string[];

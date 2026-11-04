@@ -17,7 +17,8 @@
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
-    "@sockethub/platform-xmpp"
+    "@sockethub/platform-xmpp",
+    "@sockethub/platform-email"
   ],
   "packageConfig": {
     "@sockethub/platform-feeds": {

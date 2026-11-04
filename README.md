@@ -102,6 +102,7 @@ example, an XMPP friend request can be modeled as `request-friend`,
 
 ### Included Platforms
 
+* **[Email](packages/platform-email)** - Filtered IMAP receiving and SMTP sending
 * **[CardDAV](packages/platform-carddav)** - Address-book and contact synchronization
 * **[CalDAV](packages/platform-caldav)** - Calendar and task synchronization
 * **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
@@ -121,7 +122,7 @@ Enable or disable platforms in `config.json`.
 
 ### Requirements
 
-* **Node.js** v20+ (Sockethub runs on Node.js)
+* **Node.js** v20.19+ (Sockethub runs on Node.js)
 * **Redis** (data layer and job queue)
 
 ### Install & Run
@@ -176,6 +177,7 @@ For debugging and configuration options, see the [Server package documentation](
 ### Platform Implementations
 
 * **[@sockethub/platform-dummy](packages/platform-dummy)** - Example platform for development reference
+* **[@sockethub/platform-email](packages/platform-email)** - IMAP receiving and SMTP sending
 * **[@sockethub/platform-carddav](packages/platform-carddav)** - Address-book and contact synchronization
 * **[@sockethub/platform-caldav](packages/platform-caldav)** - Calendar and task synchronization
 * **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing

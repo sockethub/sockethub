@@ -112,6 +112,66 @@ describe("ProcessManager", () => {
         } as never);
     }
 
+    it("keeps session-owned platform connections separate", async () => {
+        const platforms = fakePlatforms(true);
+        platforms.get("fakeplatform").config.shareConnections = false;
+        const privateManager = new ProcessManager("parent", "secret1", "secret2", {
+            version: "0.0.0", platforms,
+        });
+        submitCredentials("session-a", "actor", { password: "same-secret" });
+        submitCredentials("session-b", "actor", { password: "same-secret" });
+        const first = await privateManager.get("fakeplatform", "actor", "session-a");
+        const second = await privateManager.get("fakeplatform", "actor", "session-b");
+        const again = await privateManager.get("fakeplatform", "actor", "session-a");
+        expect(first).not.toBe(second);
+        expect(first).toBe(again);
+        expect(platformInstances.size).toBe(2);
+    });
+
+    it("retires a previous private worker when its session replaces credentials", async () => {
+        const platforms = fakePlatforms(true);
+        platforms.get("fakeplatform").config.shareConnections = false;
+        const privateManager = new ProcessManager("parent", "secret1", "secret2", { version: "0.0.0", platforms });
+        submitCredentials("session-a", "actor", { imap: { token: "old-token" } });
+        submitCredentials("session-b", "actor", { imap: { token: "old-token" } });
+        const previous = await privateManager.get("fakeplatform", "actor", "session-a");
+        const peer = await privateManager.get("fakeplatform", "actor", "session-b");
+        const otherActor = await privateManager.get("fakeplatform", "other", "session-a");
+        const pending = sandbox.spy();
+        previous.registerCompletedJobHandler("pending-send", pending);
+        submitCredentials("session-a", "actor", { imap: { token: "new-token" } });
+        const replacement = await privateManager.get("fakeplatform", "actor", "session-a");
+        sinon.assert.calledOnce(pending);
+        expect(pending.firstCall.args[0].error).toContain("submission may already have succeeded");
+        expect(previous.completedJobHandlers.size).toBe(0);
+        expect(replacement).not.toBe(previous);
+        expect(previous.sessions.has("session-a")).toBeFalse();
+        expect(platformInstances.has(previous.id)).toBeFalse();
+        sinon.assert.calledOnce(previous.process.kill);
+        expect(peer.sessions.has("session-b")).toBeTrue();
+        expect(otherActor.sessions.has("session-a")).toBeTrue();
+        expect(platformInstances.size).toBe(3);
+    });
+
+    it("serializes private scope replacements and frees capacity before starting a new worker", async () => {
+        maxPlatformInstances = 1;
+        maxInstancesPerSession = 1;
+        const platforms = fakePlatforms(true);
+        platforms.get("fakeplatform").config.shareConnections = false;
+        const privateManager = new ProcessManager("parent", "secret1", "secret2", { version: "0.0.0", platforms });
+        submitCredentials("session-a", "actor", { token: "old-token" });
+        const previous = await privateManager.get("fakeplatform", "actor", "session-a");
+        submitCredentials("session-a", "actor", { token: "new-token" });
+        const [first, second] = await Promise.all([
+            privateManager.get("fakeplatform", "actor", "session-a"),
+            privateManager.get("fakeplatform", "actor", "session-a"),
+        ]);
+        expect(first).not.toBe(previous);
+        expect(first).toBe(second);
+        expect(platformInstances.size).toBe(1);
+        sinon.assert.calledOnce(previous.process.kill);
+    });
+
     it("disabled cap (0) allows unbounded instance creation", async () => {
         maxPlatformInstances = 0;
         for (let i = 0; i < 5; i++) {

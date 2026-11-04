@@ -27,10 +27,11 @@
     "socket.io-client": "4.8.1",
     "typescript": "5.9.2",
     "winston": "^3.19.0",
-    "verdaccio": "^6.7.2"
+    "verdaccio": "^6.7.2",
+    "@sockethub/platform-email": "workspace:*"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "private": true,
   "resolutions": {
@@ -94,7 +95,8 @@
     "stress:baseline": "bun run stress-tests/bun/baseline-generator.ts",
     "stress:report": "bun run stress-tests/reporter.ts --latest",
     "test:npm-version": "bun run scripts/test-installed-version.js",
-    "build:types": "bun scripts/build-types.js"
+    "build:types": "bun scripts/build-types.js",
+    "integration:email": "node integration/email-node.integration.mjs"
   },
   "workspaces": [
     "packages/*"

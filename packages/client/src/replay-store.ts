@@ -1,5 +1,6 @@
 import type { ActivityStream } from "@sockethub/schemas";
-import { resolvePlatformId } from "@sockethub/schemas";
+import { normalizeActivityStream, resolvePlatformId } from "@sockethub/schemas";
+import { platformIdFromContext } from "@sockethub/schemas/context";
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
@@ -66,6 +67,20 @@ function getKey(content: ActivityStream) {
     return `${platform}:${actor}-${target}`;
 }
 
+/** Match normalized or queued account credentials without requiring initialization. */
+export function matchesAccount(
+    content: unknown,
+    scope: { platform: string; actorId: string },
+): boolean {
+    if (!content || typeof content !== "object") return false;
+    const activity = normalizeActivityStream(content as ActivityStream);
+    return (
+        activity.actor?.id === scope.actorId &&
+        (resolvePlatformId(activity) ??
+            platformIdFromContext(activity["@context"])) === scope.platform
+    );
+}
+
 /**
  * In-memory storage for client state that should be replayed on reconnection.
  *
@@ -78,6 +93,18 @@ export class ReplayStore {
         connect: new Map(),
         join: new Map(),
     };
+
+    clearCredentials(scope?: { platform: string; actorId: string }): void {
+        if (!scope) {
+            this.events.credentials.clear();
+            return;
+        }
+        for (const events of Object.values(this.events)) {
+            for (const [key, entry] of events) {
+                if (matchesAccount(entry, scope)) events.delete(key);
+            }
+        }
+    }
 
     recordCredentials(content: ActivityStream): void {
         if (content.object && content.object.type === "credentials") {
