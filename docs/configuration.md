@@ -141,6 +141,9 @@ set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
 Socket.IO message before it enters validation or the Redis-backed job queue.
 It can be overridden with `SOCKETHUB_MAX_PAYLOAD_BYTES`.
 
+Nesting depth is a separate fixed limit of 64 levels and is not configurable.
+See [Message limits](client-guide.md#message-limits).
+
 ### Public Settings
 
 For client connections and reverse proxy setups:
@@ -281,6 +284,22 @@ Setting `maxConnectionsPerIp` to `0` removes the per-IP socket connection limit.
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
+
+A new persistent instance that would exceed a cap fails in the message
+acknowledgement, before a worker starts. `error` is one of these, with the
+configured limit filled in:
+
+- `platform instance limit reached (100); cannot start new irc instance`
+- `per-session platform instance limit reached (10)`
+- `per-address platform instance limit reached (20)`
+
+The acknowledgement is the short summary described in
+[Message limits](client-guide.md#message-limits).
+
+`maxConnectionsPerIp` counts open sockets from one address. At that cap the
+server emits a socket `error` event with `type: "Error"` and the `summary`
+`too many concurrent connections from this address`, then disconnects the
+socket.
 
 ### Credential Sharing and Anonymous Reconnects
 
@@ -553,16 +572,17 @@ JSON
 Response format: NDJSON (newline-delimited JSON). The endpoint streams one
 complete JSON object per line. If you send an array of actions, you receive one
 line per action result. Successful credential submissions return a minimal
-`credentials-ack` containing the submitted actor ID for correlation. The
-credential object is never included in the response or cached idempotency
-results.
+`credentials-ack` containing the submitted actor ID for correlation. A rejected
+credentials message uses the same shape and adds `error`. The credential object
+is never included in the response or cached idempotency results.
 
 Example streamed response (`@context` arrays abbreviated):
 
 ```ndjson
 {"@context":["https://www.w3.org/ns/activitystreams","https://sockethub.org/ns/context/v1.jsonld","https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld"],"type":"credentials-ack","actor":{"id":"me@jabber.net","type":"person"}}
 {"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
-{"type":"error","@context":["..."],"error":"invalid credentials"}
+{"@context":["..."],"type":"credentials-ack","actor":{"id":"me","type":"person"},"error":"bad token"}
+{"type":"error","@context":["..."],"actor":{"name":"sockethub-server"},"error":"request timeout"}
 ```
 
 Replay results after an interrupted request:

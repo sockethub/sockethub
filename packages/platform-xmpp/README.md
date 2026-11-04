@@ -34,7 +34,7 @@ This requirement also applies to automatic reconnections.
 ### Credentials object
 
 | Field | Type | Required | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `type` | string | yes | Must be `"credentials"`. |
 | `userAddress` | string | yes | Bare JID, e.g. `user@jabber.net`. |
 | `resource` | string | yes | XMPP resource identifier (e.g. `"phone"`). |
@@ -316,6 +316,32 @@ non-recoverable connection error.
   }
 }
 ```
+
+## Incoming presence and roster
+
+Live presence arrives as an `update` with `object.type` `presence`. `actor.id`
+is the sender's full JID, with `actor.type` `room` for a joined room and
+`person` otherwise; when the stanza has no `to`, `actor.name` is the resource
+part. `object.presence` is the `<show>` value, `offline` for an `unavailable`
+stanza, and `online` otherwise. A `<status>` element is copied to
+`object.content`. The responses schema accepts only `away`, `chat`, `dnd`,
+`xa`, `offline`, `online`, and `notauthorized`; a stanza with any other
+`<show>` value is dropped and the server logs
+`dropping malformed outbound message`.
+
+Roster data (`jabber:iq:roster`) is trusted only from the server (a stanza
+with no `from`) or from this account's own bare JID, per
+[RFC 6121 section 2.1.6](https://www.rfc-editor.org/rfc/rfc6121#section-2.1.6).
+Any other sender, including this account's full JID, is ignored and produces
+no client event. Roster items with subscription `none`, `to`, or `from`
+without a pending request are delivered as `request-friend`, with the contact
+JID and roster name in `actor`.
+
+Known limitations: roster items with a mutual (`both`) or pending (`from`
+with `ask="subscribe"`) subscription are currently dropped before reaching
+the client ([#1358](https://github.com/sockethub/sockethub/issues/1358)), and
+`target.id` on roster activities is an empty string
+([#1359](https://github.com/sockethub/sockethub/issues/1359)).
 
 ## Features
 

@@ -299,6 +299,33 @@ A collision with credentials already stored for the new actor is refused
 before `NICK` is sent. Details and the numeric replies that fail the command
 are in the [IRC platform README](../packages/platform-irc/README.md#nick-changes).
 
+### Message limits
+
+Each Socket.IO message is capped by `sockethub:maxPayloadBytes` (256 KiB by
+default, see [Configuration](configuration.md#server-settings)). Nesting is
+capped separately: an object or array may sit at most 64 levels below the
+message root. Strings, numbers, booleans, and null do not add a level. This
+limit is fixed and applies to `message`, `credentials`, and each HTTP actions
+message. A deeper payload is rejected with:
+
+```json
+{ "error": "activity stream nesting too deep." }
+```
+
+Any failure before a job is queued, such as a malformed payload, a schema
+validation error, a refused persistent platform instance, or a platform that
+is shutting down, comes back as a short acknowledgement rather than your
+activity plus `error`. It carries `error` (at most 256 characters) and keeps
+your `@context` and `type` only when they are short and well-formed (an array
+of at most 8 strings of 256 characters, and a string of at most 64
+characters). Actor, object, target, and credential fields are never echoed.
+Correlate the failure with the emit callback, or with the HTTP request that
+carried the activity. The instance-limit messages are listed under
+[Rate limiting](configuration.md#rate-limiting).
+
+A job that a platform ran and failed still comes back as the original
+activity plus `error`.
+
 ## Platform Examples
 
 ### Dummy (Testing)
@@ -442,8 +469,9 @@ const res = await fetch('http://localhost:10550/sockethub-http', {
 
 Messages that need credentials send them the same way as over Socket.IO: put a
 `credentials` message first in the array, then the messages that use them. The
-response acknowledges the credentials with a minimal `credentials-ack`; the
-credential object itself is never echoed back or cached.
+response acknowledges the credentials with a minimal `credentials-ack` carrying
+`actor.id`; a rejected `credentials` message uses the same shape plus `error`.
+The credential object itself is never echoed back or cached.
 
 ### Reading the response
 
@@ -467,9 +495,13 @@ while (true) {
 }
 ```
 
-Each line is an ActivityStreams object. Errors arrive as a line with
-`type: 'error'` and an `error` string rather than as an HTTP error status, so
-a `200` means the request was accepted, not that every message succeeded.
+Each line is an ActivityStreams object. Errors raised by the server itself,
+such as a request or idle timeout or a payload it cannot route to a handler,
+arrive as a line with `type: 'error'` and an `error` string. A message rejected
+before it is queued keeps the `type` you sent and adds `error`; see
+[Message limits](#message-limits). A job that ran and failed is the original
+activity plus `error`. In every case the HTTP status stays 200 once the request
+was accepted, so a `200` does not mean every line succeeded.
 
 ### Replaying results
 

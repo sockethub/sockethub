@@ -176,6 +176,10 @@ sc.socket.emit("message", {
 });
 ```
 
+Before a job is queued, a failure result contains `error` and omits the
+activity you submitted. The shape is described in the
+[client guide](../../docs/client-guide.md#message-limits).
+
 Also listen for ongoing platform events:
 
 ```javascript

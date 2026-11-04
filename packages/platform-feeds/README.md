@@ -150,6 +150,13 @@ Returns an ActivityStreams Collection with feed entries:
 }
 ```
 
+## Entry fields
+
+`object.content` is the entry description in full. `object.type` is `note`
+when the description is 256 characters or shorter and `article` when it is
+longer. `contentType` is `html` when HTML tags appear in the first 1000
+characters of the description, otherwise `text`.
+
 ## Request Hardening (SSRF Guard)
 
 Because the server fetches whatever URL a client supplies as `actor.id`, feed

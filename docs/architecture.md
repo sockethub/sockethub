@@ -350,9 +350,14 @@ The per-session middleware chain runs on each inbound event; the validated job i
 then handed to the job-queue layer, which encrypts the payload as it enqueues:
 
 ```
-middleware:  normalize → schema validation → credential handling
+middleware:  normalize (shape and nesting) → schema validation → credential handling
 job queue:   queue.add() → encrypt payload → enqueue (Redis/BullMQ)
 ```
+
+Normalization rejects a message that is not an object, or that nests objects
+more than 64 levels deep, before schema validation runs. Failures anywhere in
+this chain return a short acknowledgement that omits the submitted activity;
+see [Message limits](client-guide.md#message-limits) in the client guide.
 
 Encryption is not a middleware step — it happens inside `@sockethub/data-layer`
 (`JobQueue.createJob` → `encryptActivityStream`) when `platformInstance.queue.add()`
