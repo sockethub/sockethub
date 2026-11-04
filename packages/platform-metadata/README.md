@@ -116,22 +116,20 @@ so those URLs are resolved through preview services built for this purpose:
   self-text, and direct `i.redd.it` image are mapped into the preview; text posts
   intentionally have no image. oEmbed remains a title-only failure fallback.
   See `compatUserAgent` below.
-* **Facebook** remains best-effort: post text usually comes through. Video
-  titles and image alt text often start with an engagement segment in the
-  language of the scraping server's region, such as
-  `2.2M views · 21K reactions | …` or a lone count such as `347K views | …`.
-  That leading segment is removed from `object.title` and from each image
-  `alt` when a digit appears before a `·`, or when the segment is one count
-  plus one word. The count is matched by its shape: grouping, a magnitude
-  suffix, or at least four digits. The words around it follow the scraping
-  server's language. A title that only starts with a small number and no
-  magnitude suffix, such as `10 Goals | Author`, is kept. The video or photo
-  thumbnail is taken from the post's Open Graph image, then
+* **Facebook** remains best-effort: post text usually comes through. The
+  video or photo thumbnail is taken from the post's Open Graph image, then
   its Twitter card image, and finally the image rendered by Facebook's public
   embed plugin (`/plugins/video.php` or `/plugins/post.php`), which Facebook
   serves to third parties when it withholds Open Graph media from a
-  datacenter address. Full media still requires authentication. When the page
-  omits a site name, `actor.name` and `object.name` are `Facebook`.
+  datacenter address. Full media still requires authentication. Facebook
+  publishes no site name, so `actor.name` and `object.name` fall back to
+  `Facebook`.
+* **Facebook engagement prefixes**: video titles and image alt text often
+  start with a localized view or reaction count, such as
+  `2.2M views · 21K reactions | …` or `347K views | …`. When the prefix is
+  recognized it is stripped from `object.title` and from each image `alt`. A
+  title that merely starts with a small plain number, such as
+  `10 Goals | Author`, is kept.
 
 ### `userAgent`
 

@@ -141,11 +141,8 @@ set with the `SOCKETHUB_CORS_ORIGIN` environment variable or the
 Socket.IO message before it enters validation or the Redis-backed job queue.
 It can be overridden with `SOCKETHUB_MAX_PAYLOAD_BYTES`.
 
-Nesting depth is a separate fixed limit and is not configurable. An object or
-array more than 64 levels below the message root is rejected before validation
-with `activity stream nesting too deep.` The same check applies to each HTTP
-actions message. The result is a short summary and leaves out the submitted
-activity. See [Message limits](client-guide.md#message-limits).
+Nesting depth is a separate fixed limit of 64 levels and is not configurable.
+See [Message limits](client-guide.md#message-limits).
 
 ### Public Settings
 
@@ -290,7 +287,7 @@ thresholds. Blocked clients are automatically unblocked after the `blockDuration
 
 A new persistent instance that would exceed a cap fails in the message
 acknowledgement, before a worker starts. `error` is one of these, with the
-configured number and the platform id filled in:
+configured limit filled in:
 
 - `platform instance limit reached (100); cannot start new irc instance`
 - `per-session platform instance limit reached (10)`
@@ -300,9 +297,9 @@ The acknowledgement is the short summary described in
 [Message limits](client-guide.md#message-limits).
 
 `maxConnectionsPerIp` counts open sockets from one address. At that cap the
-server emits a socket `error` event whose `summary` is
+server emits a socket `error` event with `type: "Error"` and the `summary`
 `too many concurrent connections from this address`, then disconnects the
-socket. The reason is in `summary`.
+socket.
 
 ### Credential Sharing and Anonymous Reconnects
 
@@ -457,10 +454,6 @@ Configuration behavior:
 - HTTP actions reuse the top-level `rateLimiter` settings (keyed by client IP).
   The limiter is backed by Redis, so a client's request budget is shared across
   all Sockethub instances behind a load balancer rather than counted per process.
-- Nesting depth matches Socket.IO. An object or array more than 64 levels
-  below a message root fails that message with
-  `activity stream nesting too deep.` The HTTP status stays 200; the error is
-  one streamed line. See [Message limits](client-guide.md#message-limits).
 
 ### CORS
 
@@ -579,18 +572,17 @@ JSON
 Response format: NDJSON (newline-delimited JSON). The endpoint streams one
 complete JSON object per line. If you send an array of actions, you receive one
 line per action result. Successful credential submissions return a minimal
-`credentials-ack` containing the submitted actor ID for correlation. Credential
-rejections with a usable `actor.id` use the same shape and add `error`; see
-[Message limits](client-guide.md#message-limits). The credential object is
-never included in the response or cached idempotency results.
+`credentials-ack` containing the submitted actor ID for correlation. A rejected
+credentials message uses the same shape and adds `error`. The credential object
+is never included in the response or cached idempotency results.
 
 Example streamed response (`@context` arrays abbreviated):
 
 ```ndjson
 {"@context":["https://www.w3.org/ns/activitystreams","https://sockethub.org/ns/context/v1.jsonld","https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld"],"type":"credentials-ack","actor":{"id":"me@jabber.net","type":"person"}}
 {"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
-{"@context":["..."],"type":"credentials-ack","actor":{"id":"me"},"error":"invalid credentials"}
-{"type":"error","@context":["..."],"actor":{"name":"server"},"error":"unsupported payload type"}
+{"@context":["..."],"type":"credentials-ack","actor":{"id":"me","type":"person"},"error":"bad token"}
+{"type":"error","@context":["..."],"actor":{"name":"sockethub-server"},"error":"request timeout"}
 ```
 
 Replay results after an interrupted request:

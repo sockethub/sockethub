@@ -162,45 +162,6 @@ success/failure.
 The `actor` object must have an `id` and `type` field, and if `name` does not exist,
 the `id` will be used for display purposes.
 
-### Message limits
-
-Socket.IO messages are also capped by `sockethub.maxPayloadBytes` (256 KiB by
-default). See [Configuration](configuration.md#server-settings). Separately,
-the server accepts an object or array at most 64 levels below the message
-root. Strings, numbers, booleans, and null do not add a level. The check runs
-before schema validation on both `message` and `credentials`, and on each HTTP
-actions message. A deeper payload is rejected with:
-
-```json
-{ "error": "activity stream nesting too deep." }
-```
-
-A failure caught before the job is queued does not include the activity you
-sent. On Socket.IO, and for an HTTP actions message, the result keeps
-`@context` only when it is an array of at most 8 strings of at most 256
-characters, keeps `type` only when it is a string of at most 64 characters,
-and sets `error` to at most 256 characters. Actor, object, target, and
-credential fields are left out. Correlate the failure from the emit
-callback, or from the HTTP request that carried the activity.
-
-That summary covers a non-object payload, a missing `@context`, `type`, or
-`actor`, schema validation, and a refused persistent platform instance. The
-instance-limit strings are listed under
-[Rate limiting](configuration.md#rate-limiting).
-
-A job the platform ran still comes back as the original activity plus `error`
-when it fails. On HTTP, a stored credential line is normally a minimal
-`credentials-ack` with the submitted `actor.id`; rejections that still have a
-usable `actor.id` (a string of at most 256 characters on `actor`) use that
-same shape and add `error` rather than echoing the credential object. Without
-a usable `actor.id`, or when `actor.id` is longer than 256 characters together
-with an `error`, the line is `type: 'error'` with the server `actor` instead.
-A credential payload nested deeper than the limit is classified as a message,
-so its line follows the short summary rules above and may keep
-`type: 'credentials'`. See [Configuration](configuration.md#http-actions). Other
-HTTP lines use the short summary, a platform result, or `type: 'error'`, and
-keep HTTP status 200 when the request was accepted.
-
 For IRC, room targets use `#channel@server` in `target.id` (for example
 `#sockethub@irc.libera.chat`). Put the channel name as it appears on IRC in
 `target.name` (for example `#sockethub`). Keeping the channel sigil in
@@ -337,6 +298,33 @@ The IRC server's reason text is the `error` string when it rejects the nick.
 A collision with credentials already stored for the new actor is refused
 before `NICK` is sent. Details and the numeric replies that fail the command
 are in the [IRC platform README](../packages/platform-irc/README.md#nick-changes).
+
+### Message limits
+
+Each Socket.IO message is capped by `sockethub:maxPayloadBytes` (256 KiB by
+default, see [Configuration](configuration.md#server-settings)). Nesting is
+capped separately: an object or array may sit at most 64 levels below the
+message root. Strings, numbers, booleans, and null do not add a level. This
+limit is fixed and applies to `message`, `credentials`, and each HTTP actions
+message. A deeper payload is rejected with:
+
+```json
+{ "error": "activity stream nesting too deep." }
+```
+
+Any failure before a job is queued, such as a malformed payload, a schema
+validation error, a refused persistent platform instance, or a platform that
+is shutting down, comes back as a short acknowledgement rather than your
+activity plus `error`. It carries `error` (at most 256 characters) and keeps
+your `@context` and `type` only when they are short and well-formed (an array
+of at most 8 strings of 256 characters, and a string of at most 64
+characters). Actor, object, target, and credential fields are never echoed.
+Correlate the failure with the emit callback, or with the HTTP request that
+carried the activity. The instance-limit messages are listed under
+[Rate limiting](configuration.md#rate-limiting).
+
+A job that a platform ran and failed still comes back as the original
+activity plus `error`.
 
 ## Platform Examples
 
@@ -480,10 +468,10 @@ const res = await fetch('http://localhost:10550/sockethub-http', {
 ```
 
 Messages that need credentials send them the same way as over Socket.IO: put a
-`credentials` message first in the array, then the messages that use them. A
-successful storage line is a minimal `credentials-ack`; rejections follow the
-rules in [Message limits](#message-limits). The credential object itself is
-never echoed back or cached.
+`credentials` message first in the array, then the messages that use them. The
+response acknowledges the credentials with a minimal `credentials-ack` carrying
+`actor.id`; a rejected `credentials` message uses the same shape plus `error`.
+The credential object itself is never echoed back or cached.
 
 ### Reading the response
 
@@ -507,17 +495,13 @@ while (true) {
 }
 ```
 
-Each line is an ActivityStreams object. Request and idle timeouts are a line
-with `type: 'error'`, the server `actor`, and an `error` string. A payload the
-HTTP layer cannot route to a handler — for example a non-object, or an object
-without both `type` and `actor` such as `{"type":"fetch"}` — is also
-`type: 'error'` with the server `actor` (for example `unsupported payload
-type`). A message that reaches the shared handler but is rejected before it is
-queued keeps a bounded `@context` and `type` when those fields qualify, sets
-`error`, and omits the rest of what you sent; see
-[Message limits](#message-limits). In all of these cases the HTTP status stays
-200 when the request was accepted, so a `200` does not mean every line
-succeeded.
+Each line is an ActivityStreams object. Errors raised by the server itself,
+such as a request or idle timeout or a payload it cannot route to a handler,
+arrive as a line with `type: 'error'` and an `error` string. A message rejected
+before it is queued keeps the `type` you sent and adds `error`; see
+[Message limits](#message-limits). A job that ran and failed is the original
+activity plus `error`. In every case the HTTP status stays 200 once the request
+was accepted, so a `200` does not mean every line succeeded.
 
 ### Replaying results
 
