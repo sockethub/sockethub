@@ -929,13 +929,13 @@ export default class SockethubClient {
             return;
         }
         const now = Date.now();
-        const queued = this.outboundQueue.sort(
-            (a, b) => a.sequence - b.sequence,
-        );
-        this.outboundQueue = [];
+        this.outboundQueue.sort((a, b) => a.sequence - b.sequence);
         const clears = this.pendingScopedClears;
         this.pendingScopedClears = [];
-        for (const entry of queued) {
+        // Drain in place so clearCredentials() called from a callback during
+        // the flush still sees, and can cancel, the entries not yet sent.
+        while (this.outboundQueue.length > 0) {
+            const entry = this.outboundQueue.shift() as QueuedOutboundEvent;
             if (
                 entry.event === "credentials" &&
                 clears.some(

@@ -1267,6 +1267,41 @@ describe("SockethubClient", () => {
             ]);
         });
 
+        it("honours clearCredentials called from a cancellation callback during flush", () => {
+            // First credential uses a context only registered by this test's
+            // schemas event, so its scoped clear is deferred to the flush.
+            const dummyUrl = "https://example.com/context/platform/dummy/v3.jsonld";
+            const registry = {
+                ...TEST_REGISTRY,
+                platforms: TEST_REGISTRY.platforms.map((p) =>
+                    p.id === "dummy" ? { ...p, contextUrl: dummyUrl, contextVersion: "3" } : p,
+                ),
+            };
+            const wire = Object.assign(new EventEmitter(), { connected: false });
+            const client = new SockethubClient(wire as never);
+            sandbox.stub(client, "validateActivity").returns("");
+            const sent = sandbox.spy();
+            wire.on("credentials", sent);
+            const creds = (url: string, actor: string) => ({
+                "@context": buildCanonicalContext(url),
+                type: "credentials",
+                actor,
+                object: { type: "credentials", password: "p" },
+            });
+            const secondCancelled = sandbox.spy();
+            client.socket.emit("credentials", creds(dummyUrl, "first@example.com"), () => {
+                client.clearCredentials({ platform: "dummy", actorId: "second@example.com" });
+            });
+            client.socket.emit("credentials", creds(dummyUrl, "second@example.com"), secondCancelled);
+            client.socket.emit("credentials", creds(dummyUrl, "third@example.com"));
+            client.clearCredentials({ platform: "dummy", actorId: "first@example.com" });
+            wire.connected = true;
+            wire.emit("schemas", registry);
+            expect(secondCancelled.callCount).to.equal(1);
+            expect(sent.callCount).to.equal(1);
+            expect(sent.firstCall.args[0].actor.id).to.equal("third@example.com");
+        });
+
         it("cancels all queued credentials without a scope and reports client_error without an ack", () => {
             const wire = Object.assign(new EventEmitter(), { connected: false });
             const client = new SockethubClient(wire as never);
