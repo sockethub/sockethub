@@ -34,7 +34,7 @@ This requirement also applies to automatic reconnections.
 ### Credentials object
 
 | Field | Type | Required | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `type` | string | yes | Must be `"credentials"`. |
 | `userAddress` | string | yes | Bare JID, e.g. `user@jabber.net`. |
 | `resource` | string | yes | XMPP resource identifier (e.g. `"phone"`). |

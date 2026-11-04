@@ -589,8 +589,8 @@ Example streamed response (`@context` arrays abbreviated):
 ```ndjson
 {"@context":["https://www.w3.org/ns/activitystreams","https://sockethub.org/ns/context/v1.jsonld","https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld"],"type":"credentials-ack","actor":{"id":"me@jabber.net","type":"person"}}
 {"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
-{"@context":["..."],"type":"credentials-ack","actor":{"id":"me@jabber.net","type":"person"},"error":"invalid credentials"}
-{"type":"error","@context":["..."],"actor":{"type":"Application","name":"sockethub-server"},"error":"unsupported payload type"}
+{"@context":["..."],"type":"credentials-ack","actor":{"id":"me"},"error":"invalid credentials"}
+{"type":"error","@context":["..."],"actor":{"name":"server"},"error":"unsupported payload type"}
 ```
 
 Replay results after an interrupted request:
