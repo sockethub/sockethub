@@ -308,16 +308,25 @@ export default class Email implements PersistentPlatformInterface {
     ) {
         const client = this.imap();
         if (!client.mailbox) throw new Error("email:mailbox-not-selected");
-        const validity = String(client.mailbox.uidValidity);
+        // EXISTS updates message counts, but does not refresh ImapFlow's cached UIDNEXT.
+        const mailbox = await client.status(folder, {
+            uidNext: true,
+            uidValidity: true,
+        });
+        if (
+            !mailbox ||
+            mailbox.uidNext === undefined ||
+            mailbox.uidValidity === undefined
+        ) {
+            throw new Error("email:mailbox-status-unavailable");
+        }
+        const validity = String(mailbox.uidValidity);
         if (previous && previous.uidValidity !== validity)
             throw new Error(
                 "email:cursor-invalid; fetch again without this folder's cursor",
             );
         const cursor = { uidValidity: validity, uid: previous?.uid ?? 0 };
-        const end = Math.min(
-            client.mailbox.uidNext - 1,
-            cursor.uid + SCAN_WINDOW,
-        );
+        const end = Math.min(mailbox.uidNext - 1, cursor.uid + SCAN_WINDOW);
         const items: ActivityStream[] = [];
         let bytes = 0;
         if (end <= cursor.uid || limit <= 0)
@@ -405,7 +414,7 @@ export default class Email implements PersistentPlatformInterface {
             items,
             cursor,
             bytes,
-            hasMore: cursor.uid < client.mailbox.uidNext - 1,
+            hasMore: cursor.uid < mailbox.uidNext - 1,
         };
     }
     watch(job: EmailJob<WatchOptions>, done: PlatformCallback): void {

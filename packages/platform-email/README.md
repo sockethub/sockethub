@@ -135,8 +135,10 @@ of source message data across the batch. A page can therefore be empty while
 `hasMore` remains true; continue using its cursors. Messages larger than 256 KiB
 are returned as metadata with `bodyOmitted: true`. Attachments are not returned.
 
-The cursor combines UIDVALIDITY and the last scanned UID, scoped to its folder
-and account. If the server resets UIDVALIDITY, Sockethub rejects the cursor;
+The cursor combines UIDVALIDITY and the last scanned UID. Keep it tied to the
+same mail server, account, and folder: UIDVALIDITY values can overlap across
+accounts. The examples page resets pagination on connection changes.
+If the server resets UIDVALIDITY, Sockethub rejects the cursor;
 discard that folder's cursor and fetch again. The application owns any durable
 cursor storage and duplicate handling. Reset cursors when changing filters.
 

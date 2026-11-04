@@ -43,6 +43,7 @@ function setup() {
             return [...messages.keys()].filter(uid => uid >= start && uid <= end);
         }),
         fetchOne: mock(async (uid: number) => messages.get(uid) ?? false),
+        status: mock(async (folder: string) => ({ ...mailboxes.get(folder) })),
     });
     const sendMail = mock(async (_options: unknown) => ({ messageId: "<sent@example.com>", accepted: ["friend@example.com"], rejected: ["bad@example.com"] }));
     const transport = { sendMail, close: mock(() => {}) };
@@ -134,6 +135,23 @@ describe("email platform", () => {
         expect(cursors.constructor).toEqual({ uidValidity: "12", uid: 0 });
         const next = await call(done => s.platform.fetch(job("fetch", { folders: ["__proto__", "constructor"], cursors }), done));
         expect(next.type).toBe("collection");
+    });
+    it("fetches arrivals even when the selected mailbox has a stale UIDNEXT", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.add(1);
+        s.client.mailbox = { uidValidity: 7n, uidNext: 1 };
+        s.client.getMailboxLock.mockImplementation(async () => ({ release: mock(() => {}) }));
+        const result = await call(done => s.platform.fetch(job("fetch"), done)) as ActivityStream & { items: ActivityStream[] };
+        expect(result.items.map(item => item.object?.uid)).toEqual([1]);
+        expect(s.client.status).toHaveBeenCalledWith("INBOX", { uidNext: true, uidValidity: true });
+    });
+    it("rejects changed UIDVALIDITY even when the selected mailbox cache is unchanged", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.mailboxes.set("INBOX", { uidValidity: 9n, uidNext: 1 });
+        s.client.getMailboxLock.mockImplementation(async () => ({ release: mock(() => {}) }));
+        await expect(call(done => s.platform.fetch(job("fetch", { cursors: { INBOX: { uidValidity: "7", uid: 0 } } }), done))).rejects.toThrow("email:cursor-invalid");
     });
     it("returns oversized messages as metadata without transferring their body", async () => {
         const s = setup(); await call(done => s.platform.connect(job("connect"), credentials, done));

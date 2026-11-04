@@ -100,10 +100,8 @@ function receive(message: EmailResponse) {
         error = message.error;
         if (message.type === "watch") watching = false;
     }
-    if (message.type === "disconnect" || message.type === "error") {
-        connected = false;
-        watching = false;
-    }
+    if (message.type === "disconnect" || message.type === "error")
+        connectionLost();
     if (message.type === "post" && message.object) {
         const mail = message.object as Mail;
         messages = [
@@ -139,6 +137,8 @@ async function connect() {
     await perform(async () => {
         await ensureClientReady();
         if (disposed) return;
+        resetCursor();
+        messages = [];
         if (!listening) {
             sc.socket.on("message", receive);
             sc.socket.on("disconnect", connectionLost);
@@ -245,6 +245,7 @@ function clearAccount() {
 }
 function connectionLost() {
     clearAccount();
+    resetCursor();
     connected = false;
     watching = false;
     status =

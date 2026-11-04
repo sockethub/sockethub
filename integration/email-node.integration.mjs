@@ -93,6 +93,12 @@ const imap = serve(
             socket.write(
                 `* FLAGS (\\Seen)\r\n* ${sources.length} EXISTS\r\n* OK [UIDVALIDITY 7]\r\n* OK [UIDNEXT ${sources.length + 1}]\r\n`,
             );
+            socket.write(`${tag} OK [READ-ONLY] selected\r\n`);
+            return;
+        } else if (command === "STATUS") {
+            socket.write(
+                `* STATUS "INBOX" (UIDNEXT ${sources.length + 1} UIDVALIDITY 7)\r\n`,
+            );
         } else if (command === "UID" && rest.startsWith("SEARCH")) {
             const range = /UID (\d+)(?::(\d+))?/.exec(rest);
             const start = Number(range?.[1] ?? 1);
