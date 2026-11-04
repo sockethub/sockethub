@@ -12,6 +12,8 @@ import {
     serverBaseUrl,
 } from "./api-discovery";
 
+import { emitWithAck } from "./emit-with-ack";
+
 export let sc: SockethubClient;
 export const connected = writable(false);
 
@@ -104,24 +106,31 @@ export async function send(obj: AnyActivityStream) {
     await ensureClientReady();
     console.log("sending ->", obj);
 
-    return new Promise<AnyActivityStream>((resolve, reject) => {
-        const request = addObject("SEND", obj);
-        sc.socket.emit("message", request, (resp: AnyActivityStream) => {
-            console.log("received <-", resp);
-            addObject("RESP", resp);
-            if (resp.totalItems && resp.items) {
-                for (const item of resp.items.reverse()) {
-                    addObject("RESP", item, true, request.id);
-                }
-            }
-            displayMessage(resp, true);
-            if (resp.error) {
-                reject(resp.error);
-            } else {
-                resolve(resp);
-            }
+    const request = addObject("SEND", obj);
+    let resp: AnyActivityStream | undefined;
+    try {
+        resp = await emitWithAck(sc.socket, "message", request);
+        if (!resp)
+            throw new Error(
+                "Missing message acknowledgement; delivery is unknown.",
+            );
+    } catch (error) {
+        addObject("RESP", {
+            ...request,
+            error: error instanceof Error ? error.message : String(error),
         });
-    });
+        throw error;
+    }
+    console.log("received <-", resp);
+    addObject("RESP", resp);
+    if (resp.totalItems && resp.items) {
+        for (const item of resp.items.reverse()) {
+            addObject("RESP", item, true, request.id);
+        }
+    }
+    displayMessage(resp, true);
+    if (resp.error) throw new Error(resp.error);
+    return resp;
 }
 
 function stateChange(state: string) {

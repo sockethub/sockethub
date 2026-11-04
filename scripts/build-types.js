@@ -56,6 +56,14 @@ const packages = [
         entries: ["src/index.ts"],
     },
     {
+        dir: "packages/platform-messenger",
+        entries: ["src/index.ts"],
+    },
+    {
+        dir: "packages/platform-instagram",
+        entries: ["src/index.ts"],
+    },
+    {
         dir: "packages/platform-metadata",
         entries: ["src/index.ts"],
     },

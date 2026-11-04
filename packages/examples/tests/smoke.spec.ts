@@ -22,6 +22,111 @@ test.describe("examples smoke against sockethub --examples", () => {
         );
     });
 
+    for (const platform of ["messenger", "instagram"] as const) {
+        test(`${platform} credentials and reply controls`, async ({ page }) => {
+            let closeTransport: (() => void) | undefined;
+            await page.routeWebSocket(
+                /\/sockethub\/.*transport=websocket/,
+                (socket) => {
+                    const server = socket.connectToServer();
+                    closeTransport = () => {
+                        socket.close();
+                        server.close();
+                    };
+                },
+            );
+            await page.goto(`/examples/${platform}`);
+            await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+                `${platform === "messenger" ? "Messenger" : "Instagram"} Platform Example`,
+            );
+            const send = page.getByRole("button", { name: "Send Message" });
+            const setCredentials = page.getByRole("button", {
+                name: "Set Credentials",
+            });
+            await expect(send).toBeDisabled();
+            await page
+                .getByLabel(
+                    platform === "messenger"
+                        ? "Facebook Page ID"
+                        : "Instagram account ID",
+                )
+                .fill("123");
+            await page
+                .getByLabel("Access token")
+                .fill("test-token-not-sent-to-meta");
+            await expect(page.getByLabel("Access token")).toHaveAttribute(
+                "type",
+                "password",
+            );
+            await page.getByLabel("Graph API version").fill("invalid");
+            await expect(setCredentials).toBeDisabled();
+            await page.getByLabel("Graph API version").fill("v22.0");
+            await expect(setCredentials).toBeEnabled();
+            if (platform === "instagram") {
+                await page.getByLabel("Login method").selectOption("facebook");
+                await expect(setCredentials).toBeDisabled();
+                await page.getByLabel("Linked Facebook Page ID").fill("789");
+                await expect(setCredentials).toBeEnabled();
+            }
+            await setCredentials.click();
+            await expect(page.getByRole("status")).toContainText(
+                "Credentials set for this session",
+            );
+            await page
+                .getByLabel(
+                    platform === "messenger"
+                        ? "Recipient Page-scoped ID (PSID)"
+                        : "Recipient Instagram-scoped ID (IGSID)",
+                )
+                .fill("456");
+            await page.getByLabel("Message", { exact: true }).fill("Hello");
+            await expect(send).toBeEnabled();
+            await page
+                .getByLabel("Message", { exact: true })
+                .fill("x".repeat(platform === "messenger" ? 2001 : 1001));
+            await expect(send).toBeDisabled();
+            if (platform === "instagram") {
+                // Instagram's limit is 1000 UTF-8 bytes: 600 two-byte characters
+                // pass a character count but exceed the byte limit.
+                await page
+                    .getByLabel("Message", { exact: true })
+                    .fill("\u0436".repeat(600));
+                await expect(page.getByText("1200 / 1000 bytes")).toBeVisible();
+                await expect(send).toBeDisabled();
+            }
+            await page.getByLabel("Message", { exact: true }).fill("Hello");
+            const humanAgent = page.getByRole("checkbox", {
+                name: "Human Agent reply",
+            });
+            await expect(humanAgent).not.toBeChecked();
+            await humanAgent.check();
+            await page.getByLabel("Access token").fill("changed-token");
+            await expect(send).toBeDisabled();
+            await expect(humanAgent).not.toBeChecked();
+            await expect(setCredentials).toBeEnabled();
+            await expect.poll(() => Boolean(closeTransport)).toBe(true);
+            await page.context().setOffline(true);
+            closeTransport?.();
+            await expect(
+                page
+                    .getByRole("button", { name: "Not Connected", exact: true })
+                    .first(),
+            ).toBeVisible();
+            await expect(
+                page.getByRole("button", { name: "Clear Credentials" }),
+            ).toBeEnabled();
+            await page
+                .getByRole("button", { name: "Clear Credentials" })
+                .click();
+            await expect(page.getByLabel("Access token")).toHaveValue("");
+            await expect(
+                page.getByLabel("Message", { exact: true }),
+            ).toHaveValue("");
+            await page.context().setOffline(false);
+            await expect(setCredentials).toBeDisabled();
+        });
+    }
+
     test("feeds page fetches local feed.xml without runtime errors", async ({
         page,
     }) => {

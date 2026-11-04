@@ -38,7 +38,7 @@ async function sendFetch(): Promise<void> {
             preview = resp.object;
         }
     } catch (err) {
-        previewError = String(err);
+        previewError = err instanceof Error ? err.message : String(err);
         throw err;
     }
 }
