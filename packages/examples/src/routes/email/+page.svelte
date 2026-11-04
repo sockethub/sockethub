@@ -55,6 +55,7 @@ let servers = $state([
         auth: "password",
     },
 ]);
+let submittedActorId: string | undefined;
 let disposed = false;
 let listening = false;
 let connected = $state(false);
@@ -80,7 +81,7 @@ const list = (value: string) =>
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean);
-const actor = () => ({ id: address, type: "person" });
+const actor = () => ({ id: submittedActorId ?? address, type: "person" });
 
 function filters() {
     return {
@@ -143,6 +144,8 @@ async function connect() {
             sc.socket.on("disconnect", connectionLost);
             listening = true;
         }
+        if (submittedActorId && submittedActorId !== address) clearAccount();
+        submittedActorId = address;
         const settings: Record<string, unknown> = {
             type: "credentials",
             from: address,
@@ -173,13 +176,13 @@ async function connect() {
             );
         });
         if (disposed) {
-            sc.clearCredentials({ platform: "email", actorId: address });
+            clearAccount();
             return;
         }
         await request("connect");
         if (disposed) {
             await request("disconnect");
-            sc.clearCredentials({ platform: "email", actorId: address });
+            clearAccount();
             return;
         }
         connected = true;
@@ -191,7 +194,7 @@ async function disconnect() {
         await request("disconnect");
         connected = false;
         watching = false;
-        sc.clearCredentials({ platform: "email", actorId: address });
+        clearAccount();
         resetCursor();
         status = "Disconnected.";
     });
@@ -236,7 +239,12 @@ async function sendMail() {
         status = `Accepted by server: ${result.object?.accepted?.join(", ") || "none"}. Rejected: ${result.object?.rejected?.join(", ") || "none"}.`;
     });
 }
+function clearAccount() {
+    if (submittedActorId)
+        sc?.clearCredentials({ platform: "email", actorId: submittedActorId });
+}
 function connectionLost() {
+    clearAccount();
     connected = false;
     watching = false;
     status =
@@ -247,7 +255,7 @@ onMount(() => {
         disposed = true;
         sc?.socket.off("message", receive);
         sc?.socket.off("disconnect", connectionLost);
-        sc?.clearCredentials({ platform: "email", actorId: address });
+        clearAccount();
         if (connected) {
             sc.socket.emit(
                 "message",

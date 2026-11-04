@@ -150,7 +150,8 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 - **`sc.validateActivity(activity)`** - Validate against registered schemas
 - **`sc.socket.emit(event, data, callback)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
-- **`sc.clearCredentials()`** - Clear stored credentials; pass `{ platform, actorId }` to clear one account
+- **`sc.clearCredentials()`** - Clear stored and queued credentials. Pass
+  `{ platform, actorId }` to clear one account and its connection/join replay.
 
 Send a full `actor` object on each `credentials` and `message` event.
 

@@ -1,5 +1,7 @@
 import { expect } from "chai";
 import EventEmitter from "eventemitter3";
+import { resolvePlatformId, type ActivityStream } from "@sockethub/schemas";
+import { buildCanonicalContext, platformIdFromContext } from "@sockethub/schemas/context";
 import { createSandbox, restore } from "sinon";
 
 import SockethubClient, {
@@ -1183,15 +1185,68 @@ describe("SockethubClient", () => {
                     actor: { id: actorId, type: "person" },
                     object: { type: "credentials", password: "test-password" },
                 });
+                sc.replayStore.recordMessage({ "@context": sc.contextFor(platform), type: "connect", actor: { id: actorId, type: "person" } });
+                sc.replayStore.recordMessage({ "@context": sc.contextFor(platform), type: "join", actor: { id: actorId, type: "person" }, target: { id: "room", type: "room" } });
             }
             sc.clearCredentials({ platform: "dummy", actorId: "same@example.com" });
             const remaining = [...sc.replayStore.events.credentials.values()];
             expect(remaining).to.have.length(2);
-            expect(remaining.map(entry => entry.actor.id)).to.deep.equal(["same@example.com", "other@example.com"]);
+            expect(remaining.map(entry => [resolvePlatformId(entry), entry.actor.id])).to.deep.equal([["test-xmpp", "same@example.com"], ["dummy", "other@example.com"]]);
+            for (const kind of ["connect", "join"]) {
+                expect([...sc.replayStore.events[kind].values()].map(entry => [resolvePlatformId(entry), entry.actor.id])).to.deep.equal([["test-xmpp", "same@example.com"], ["dummy", "other@example.com"]]);
+            }
             sc.clearCredentials({ platform: "dummy", actorId: "not-connected@example.com" });
             expect(sc.replayStore.events.credentials.size).to.equal(2);
             sc.clearCredentials();
             expect(sc.replayStore.events.credentials.size).to.equal(0);
+        });
+
+        it("cancels only matching queued credentials before initialization", () => {
+            const wire = Object.assign(new EventEmitter(), { connected: false });
+            const client = new SockethubClient(wire as never);
+            sandbox.stub(client, "validateActivity").returns("");
+            const credentials: ActivityStream[] = [];
+            const messages: ActivityStream[] = [];
+            wire.on("credentials", entry => credentials.push(entry));
+            wire.on("message", entry => messages.push(entry));
+            const cancelled = sandbox.spy();
+            for (const [platform, actorId] of [["dummy", "same@example.com"], ["test-xmpp", "same@example.com"], ["dummy", "other@example.com"]]) {
+                client.socket.emit("credentials", {
+                    "@context": buildCanonicalContext(`https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`),
+                    type: "credentials", actor: actorId,
+                    object: { type: "credentials", password: "test-password" },
+                }, platform === "dummy" && actorId === "same@example.com" ? cancelled : undefined);
+            }
+            client.socket.emit("message", { "@context": buildCanonicalContext("https://sockethub.org/ns/context/platform/dummy/v1.jsonld"), type: "echo", actor: { id: "other@example.com", type: "person" } });
+            client.clearCredentials({ platform: "dummy", actorId: "same@example.com" });
+            expect(cancelled.callCount).to.equal(1);
+            expect(cancelled.firstCall.args[0].error).to.contain("cancelled");
+            wire.connected = true;
+            wire.emit("schemas", TEST_REGISTRY);
+            expect(credentials.map(entry => [platformIdFromContext(entry["@context"]), entry.actor.id])).to.deep.equal([["test-xmpp", "same@example.com"], ["dummy", "other@example.com"]]);
+            expect(messages).to.have.length(1);
+            wire.emit("connect"); wire.emit("schemas", TEST_REGISTRY);
+            expect(credentials.every(entry => platformIdFromContext(entry["@context"]) !== "dummy" || entry.actor.id !== "same@example.com")).to.equal(true);
+            expect(cancelled.callCount).to.equal(1);
+        });
+
+        it("cancels all queued credentials without a scope and reports client_error without an ack", () => {
+            const wire = Object.assign(new EventEmitter(), { connected: false });
+            const client = new SockethubClient(wire as never);
+            sandbox.stub(client, "validateActivity").returns("");
+            const cancelled = sandbox.spy();
+            const errorEvent = sandbox.spy();
+            const sent = sandbox.spy();
+            client.socket.on("client_error", errorEvent);
+            wire.on("credentials", sent);
+            client.socket.emit("credentials", { actor: { id: "first" }, object: { type: "credentials" } }, cancelled);
+            client.socket.emit("credentials", { actor: { id: "second" }, object: { type: "credentials" } });
+            client.clearCredentials();
+            expect(cancelled.callCount).to.equal(1);
+            expect(errorEvent.callCount).to.equal(1);
+            expect(errorEvent.firstCall.args[0].error).to.contain("cancelled");
+            wire.connected = true; wire.emit("schemas", TEST_REGISTRY);
+            expect(sent.callCount).to.equal(0);
         });
 
         it("prevents credential replay after clearing", (done) => {

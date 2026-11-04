@@ -28,6 +28,7 @@ import {
     hasActorId,
     isActorRename,
     isErrorResult,
+    matchesAccount,
     ReplayStore,
 } from "./replay-store";
 
@@ -359,7 +360,8 @@ export default class SockethubClient {
      * Clear stored credentials to prevent automatic replay on reconnection.
      *
      * Without a scope this removes all stored credentials from memory. Pass
-     * `{ platform, actorId }` to clear only one account on a shared client.
+     * `{ platform, actorId }` to clear one account and its saved connection/join
+     * replay on a shared client. Matching queued credentials are cancelled too.
      * Useful for
      * security-sensitive applications that want to prevent automatic credential
      * replay when the socket reconnects.
@@ -376,7 +378,25 @@ export default class SockethubClient {
         platform: string;
         actorId: string;
     }): void {
+        const cancelled: QueuedOutboundEvent[] = [];
+        this.outboundQueue = this.outboundQueue.filter((entry) => {
+            if (
+                entry.event === "credentials" &&
+                (!scope || matchesAccount(entry.content, scope))
+            ) {
+                cancelled.push(entry);
+                return false;
+            }
+            return true;
+        });
         this.replayStore.clearCredentials(scope);
+        for (const entry of cancelled) {
+            this.emitClientError(
+                entry.event,
+                entry.callback,
+                "SockethubClient queued credentials cancelled by clearCredentials",
+            );
+        }
     }
 
     /**
