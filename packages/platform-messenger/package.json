@@ -21,7 +21,7 @@
     "dist/"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",

@@ -8,7 +8,7 @@ endpoint is needed. Incoming messages and recipient discovery are external.
 
 The Sockethub CLI bundles this platform. For a custom server installation, install
 `@sockethub/platform-instagram` and include it in your config's `platforms` list
-alongside the other platforms you use. Node.js >= 20 and Redis >= 6 are required.
+alongside the other platforms you use. Node.js >= 20.19 and Redis >= 6 are required.
 
 Use an Instagram Login access token with `instagram_business_manage_messages`. The actor ID is your
 Instagram professional account ID; the target ID is the recipient's Instagram-scoped ID (IGSID),

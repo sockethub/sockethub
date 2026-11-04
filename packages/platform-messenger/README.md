@@ -8,7 +8,7 @@ endpoint is needed. Incoming messages and recipient discovery are external.
 
 The Sockethub CLI bundles this platform. For a custom server installation, install
 `@sockethub/platform-messenger` and include it in your config's `platforms` list
-alongside the other platforms you use. Node.js >= 20 and Redis >= 6 are required.
+alongside the other platforms you use. Node.js >= 20.19 and Redis >= 6 are required.
 
 Use a Page access token with `pages_messaging`. The actor ID is your
 Facebook Page ID; the target ID is the recipient's Page-scoped ID (PSID),
