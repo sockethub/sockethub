@@ -129,6 +129,10 @@ export default class PlatformInstance {
      */
     private actor?: string;
 
+    get actorId(): string | undefined {
+        return this.actor;
+    }
+
     constructor(params: PlatformInstanceParams) {
         this.id = params.identifier;
         this.queueId = params.queueId ?? crypto.randId(16);

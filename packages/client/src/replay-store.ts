@@ -79,6 +79,21 @@ export class ReplayStore {
         join: new Map(),
     };
 
+    clearCredentials(scope?: { platform: string; actorId: string }): void {
+        if (!scope) {
+            this.events.credentials.clear();
+            return;
+        }
+        for (const [key, entry] of this.events.credentials) {
+            if (
+                entry.actor?.id === scope.actorId &&
+                resolvePlatformId(entry) === scope.platform
+            ) {
+                this.events.credentials.delete(key);
+            }
+        }
+    }
+
     recordCredentials(content: ActivityStream): void {
         if (content.object && content.object.type === "credentials") {
             this.events.credentials.set(getKey(content), content);

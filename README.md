@@ -122,7 +122,7 @@ Enable or disable platforms in `config.json`.
 
 ### Requirements
 
-* **Node.js** v20+ (Sockethub runs on Node.js)
+* **Node.js** v20.19+ (Sockethub runs on Node.js)
 * **Redis** (data layer and job queue)
 
 ### Install & Run

@@ -79,6 +79,9 @@ describe("PlatformInstance", () => {
                 actor: "actor string",
             });
             expect(pi.global).toEqual(false);
+            expect(pi.actorId).toEqual("actor string");
+            pi.updateIdentifier("renamed-id", "renamed-actor");
+            expect(pi.actorId).toEqual("renamed-actor");
             sandbox.assert.calledWith(forkFake, FORK_PATH, [
                 "parentId",
                 "name",

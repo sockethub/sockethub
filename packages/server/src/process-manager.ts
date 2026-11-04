@@ -174,7 +174,7 @@ class ProcessManager {
                 if (
                     previous.id === identifier ||
                     previous.name !== platform ||
-                    previous.actor !== actor ||
+                    previous.actorId !== actor ||
                     !previous.sessions.has(sessionId)
                 )
                     continue;

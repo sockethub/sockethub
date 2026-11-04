@@ -122,6 +122,19 @@ describe("email platform", () => {
         expect(s.client.mailboxOpen.mock.calls.map(call => call[0])).toEqual(["INBOX", "Orders"]);
         await expect(call(done => s.platform.fetch(job("fetch", { cursors: { INBOX: { uidValidity: "6", uid: 1 } } }), done))).rejects.toThrow("email:cursor-invalid");
     });
+    it("paginates mailbox names that collide with Object prototype properties", async () => {
+        const s = setup();
+        s.mailboxes.set("__proto__", { uidValidity: 11n, uidNext: 1 });
+        s.mailboxes.set("constructor", { uidValidity: 12n, uidNext: 1 });
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        const result = await call(done => s.platform.fetch(job("fetch", { folders: ["__proto__", "constructor"], cursors: {} }), done)) as ActivityStream & { cursors: unknown };
+        const cursors = JSON.parse(JSON.stringify(result.cursors));
+        expect(Object.keys(cursors)).toEqual(["__proto__", "constructor"]);
+        expect(cursors.__proto__).toEqual({ uidValidity: "11", uid: 0 });
+        expect(cursors.constructor).toEqual({ uidValidity: "12", uid: 0 });
+        const next = await call(done => s.platform.fetch(job("fetch", { folders: ["__proto__", "constructor"], cursors }), done));
+        expect(next.type).toBe("collection");
+    });
     it("returns oversized messages as metadata without transferring their body", async () => {
         const s = setup(); await call(done => s.platform.connect(job("connect"), credentials, done));
         s.add(1); s.messages.get(1)!.size = 300000;

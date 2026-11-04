@@ -209,7 +209,7 @@ On logout, disconnect and clear the client's replayed credentials:
 
 ```javascript
 await emit('message', { '@context': context, type: 'disconnect', actor });
-sc.clearCredentials();
+sc.clearCredentials({ platform: 'email', actorId: actor.id });
 ```
 
 POP, folder mutations, flags, drafts, attachment transfers, provider OAuth

@@ -1176,6 +1176,24 @@ describe("SockethubClient", () => {
             expect(sc.replayStore.events.credentials.size).to.equal(0);
         });
 
+        it("clears only the selected platform and actor on a shared client", () => {
+            for (const [platform, actorId] of [["dummy", "same@example.com"], ["test-xmpp", "same@example.com"], ["dummy", "other@example.com"]]) {
+                sc.replayStore.recordCredentials({
+                    "@context": sc.contextFor(platform), type: "credentials",
+                    actor: { id: actorId, type: "person" },
+                    object: { type: "credentials", password: "test-password" },
+                });
+            }
+            sc.clearCredentials({ platform: "dummy", actorId: "same@example.com" });
+            const remaining = [...sc.replayStore.events.credentials.values()];
+            expect(remaining).to.have.length(2);
+            expect(remaining.map(entry => entry.actor.id)).to.deep.equal(["same@example.com", "other@example.com"]);
+            sc.clearCredentials({ platform: "dummy", actorId: "not-connected@example.com" });
+            expect(sc.replayStore.events.credentials.size).to.equal(2);
+            sc.clearCredentials();
+            expect(sc.replayStore.events.credentials.size).to.equal(0);
+        });
+
         it("prevents credential replay after clearing", (done) => {
             // Store credentials
             sc.socket.emit("credentials", {

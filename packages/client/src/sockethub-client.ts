@@ -358,7 +358,9 @@ export default class SockethubClient {
     /**
      * Clear stored credentials to prevent automatic replay on reconnection.
      *
-     * This method removes all stored credentials from memory. Useful for
+     * Without a scope this removes all stored credentials from memory. Pass
+     * `{ platform, actorId }` to clear only one account on a shared client.
+     * Useful for
      * security-sensitive applications that want to prevent automatic credential
      * replay when the socket reconnects.
      *
@@ -370,8 +372,11 @@ export default class SockethubClient {
      * });
      * ```
      */
-    public clearCredentials(): void {
-        this.replayStore.events.credentials.clear();
+    public clearCredentials(scope?: {
+        platform: string;
+        actorId: string;
+    }): void {
+        this.replayStore.clearCredentials(scope);
     }
 
     /**

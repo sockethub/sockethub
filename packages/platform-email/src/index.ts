@@ -239,7 +239,7 @@ export default class Email implements PersistentPlatformInterface {
             const client = this.imap();
             const options: FetchOptions = job.object ?? {};
             const items: ActivityStream[] = [];
-            const cursors: Record<string, Cursor> = {};
+            const cursors: Record<string, Cursor> = Object.create(null);
             let hasMore = false;
             let bytes = 0;
             try {
@@ -250,7 +250,10 @@ export default class Email implements PersistentPlatformInterface {
                     try {
                         const batch = await this.batch(
                             folder,
-                            options.cursors?.[folder],
+                            options.cursors &&
+                                Object.hasOwn(options.cursors, folder)
+                                ? options.cursors[folder]
+                                : undefined,
                             options,
                             job.actor,
                             (options.limit ?? 20) - items.length,

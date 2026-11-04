@@ -99,7 +99,7 @@ function receive(message: EmailResponse) {
         error = message.error;
         if (message.type === "watch") watching = false;
     }
-    if (message.type === "disconnect") {
+    if (message.type === "disconnect" || message.type === "error") {
         connected = false;
         watching = false;
     }
@@ -173,13 +173,13 @@ async function connect() {
             );
         });
         if (disposed) {
-            sc.clearCredentials();
+            sc.clearCredentials({ platform: "email", actorId: address });
             return;
         }
         await request("connect");
         if (disposed) {
             await request("disconnect");
-            sc.clearCredentials();
+            sc.clearCredentials({ platform: "email", actorId: address });
             return;
         }
         connected = true;
@@ -191,7 +191,7 @@ async function disconnect() {
         await request("disconnect");
         connected = false;
         watching = false;
-        sc.clearCredentials();
+        sc.clearCredentials({ platform: "email", actorId: address });
         resetCursor();
         status = "Disconnected.";
     });
@@ -247,7 +247,7 @@ onMount(() => {
         disposed = true;
         sc?.socket.off("message", receive);
         sc?.socket.off("disconnect", connectionLost);
-        sc?.clearCredentials();
+        sc?.clearCredentials({ platform: "email", actorId: address });
         if (connected) {
             sc.socket.emit(
                 "message",
