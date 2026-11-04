@@ -678,7 +678,7 @@ export default class XMPP implements PersistentPlatformInterface {
         this.__client
             .send(
                 this.__xml("presence", {
-                    type: "subscribe",
+                    type: "subscribed",
                     to: job.target?.id,
                 }),
             )

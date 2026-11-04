@@ -828,7 +828,7 @@ describe("XMPP", () => {
                     expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {
-                            type: "subscribe",
+                            type: "subscribed",
                             to: job["make-friend"].target["id"],
                         },
                     ]);

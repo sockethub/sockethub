@@ -217,16 +217,20 @@ export const stanzas: Array<[string, string, Record<string, unknown>]> = [
             },
         },
     ],
-    // [
-    //   'subscribe',
-    //   `<presence from=’user1@example.com’ to=’user2@example.com’ type=’subscribe’></presence>`,
-    //   {}
-    // ],
-    // [
-    //   'subscribed',
-    //   `<presence from=’user2@example.com’ to=’user1@example.com’ type=’subscribed’></presence>`,
-    //   {}
-    // ],
+    [
+        "subscribe",
+        `<presence from="contact@example.org/phone" to="user@example.org" type="subscribe"></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "request-friend",
+            actor: { id: "contact@example.org", type: "person" },
+            target: { id: "user@example.org", type: "person" },
+        },
+    ],
     // [
     //   'status',
     //   `<presence><show>away</show><status>feeding the chickens</status></presence>`,

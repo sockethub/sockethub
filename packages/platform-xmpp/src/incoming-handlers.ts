@@ -420,6 +420,21 @@ export class IncomingHandlers {
             this.notifyError(stanza);
         } else if (stanza.is("message")) {
             this.notifyChatMessage(stanza);
+        } else if (stanza.is("presence") && stanza.attrs.type === "subscribe") {
+            this.subscribe(
+                { id: this.session?.__bareJid ?? "", type: "person" },
+                (stanza.attrs.from ?? "").split("/")[0],
+            );
+        } else if (
+            stanza.is("presence") &&
+            ["subscribed", "unsubscribe", "unsubscribed"].includes(
+                stanza.attrs.type ?? "",
+            )
+        ) {
+            // RFC 6121 3: not availability; the server's roster push carries the new state
+            this.session?.log.debug(
+                `ignoring ${stanza.attrs.type} presence from ${stanza.attrs.from}`,
+            );
         } else if (stanza.is("presence")) {
             this.presence(stanza);
         } else if (stanza.is("iq")) {

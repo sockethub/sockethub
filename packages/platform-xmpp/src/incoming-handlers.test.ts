@@ -66,6 +66,17 @@ describe("Incoming handlers", () => {
                 ).toEqual("");
             });
         });
+
+        for (const type of ["subscribed", "unsubscribe", "unsubscribed"]) {
+            test(`${type} presence is not reported as availability`, () => {
+                ih.stanza(
+                    parse(
+                        `<presence from="contact@example.org" to="user@example.org" type="${type}"/>`,
+                    ),
+                );
+                sinon.assert.notCalled(sendToClient);
+            });
+        }
     });
 
     describe("Room info edge cases", () => {
