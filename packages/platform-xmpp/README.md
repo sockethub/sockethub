@@ -336,9 +336,10 @@ Any other sender, including this account's full JID, is ignored and produces
 no client event. Roster items with subscription `none`, `to`, or `from`
 without a pending request are delivered as `request-friend`, with the contact
 JID and roster name in `actor`. Items with a mutual (`both`) subscription are
-delivered as a presence `update` with `object.presence` `online`; items with
-a pending inbound request (`from` with `ask="subscribe"`) are delivered as a
-presence `update` with `object.presence` `notauthorized`. Every roster
+delivered as a presence `update` with `object.presence` `online`; items where
+this account's own subscription request is still pending (`from` with
+`ask="subscribe"`) are delivered as a presence `update` with
+`object.presence` `notauthorized`. Every roster
 activity carries this account's bare JID in `target.id`.
 
 ## Features
