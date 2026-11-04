@@ -12,6 +12,7 @@ import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
 import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
+import { schemaOrgEvent } from "./event";
 import {
     extractFacebookEmbedImage,
     extractYouTubeDescription,
@@ -816,6 +817,9 @@ export default class Metadata implements PlatformInterface {
                     // page URL, and a 404 just means no decoration.
                     favicon: result.favicon || "/favicon.ico",
                     charset: result.charset,
+                    // Event pages (Luma, Meetup, Eventbrite) state when and
+                    // where only in their schema.org JSON-LD, never in OG.
+                    event: schemaOrgEvent(result.jsonLD),
                 };
                 cb(null, job);
             })

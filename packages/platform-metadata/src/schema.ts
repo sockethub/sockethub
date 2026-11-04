@@ -76,6 +76,28 @@ export const PlatformMetadataSchema = {
                         url: { type: "string" },
                         favicon: { type: "string" },
                         charset: { type: "string" },
+                        // Scheduling facts from the page's schema.org Event
+                        // JSON-LD (event pages carry no OG date/location).
+                        event: {
+                            type: "object",
+                            required: ["name", "startDate"],
+                            additionalProperties: false,
+                            properties: {
+                                name: { type: "string" },
+                                startDate: { type: "string" },
+                                endDate: { type: "string" },
+                                location: { type: "string" },
+                                url: { type: "string" },
+                                status: {
+                                    enum: [
+                                        "scheduled",
+                                        "cancelled",
+                                        "postponed",
+                                        "rescheduled",
+                                    ],
+                                },
+                            },
+                        },
                     },
                 },
                 // open-graph-scraper returns ogImage as an array of image

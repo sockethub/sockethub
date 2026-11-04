@@ -1,3 +1,5 @@
+import type { PageEvent } from "./event";
+
 /**
  * Site-specific URL resolution for pages that don't serve useful Open Graph
  * data to scrapers.
@@ -710,6 +712,7 @@ export interface PageObject {
     url?: string;
     favicon?: string;
     charset?: string;
+    event?: PageEvent;
 }
 
 /**
