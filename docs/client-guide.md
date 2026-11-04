@@ -189,9 +189,17 @@ instance-limit strings are listed under
 [Rate limiting](configuration.md#rate-limiting).
 
 A job the platform ran still comes back as the original activity plus `error`
-when it fails. HTTP credential results use `credentials-ack` instead of this
-summary; see [Configuration](configuration.md#http-actions). HTTP actions
-report either form as a streamed line and keep HTTP status 200.
+when it fails. On HTTP, a stored credential line is normally a minimal
+`credentials-ack` with the submitted `actor.id`; rejections that still have a
+usable `actor.id` (a string of at most 256 characters on `actor`) use that
+same shape and add `error` rather than echoing the credential object. Without
+a usable `actor.id`, or when `actor.id` is longer than 256 characters together
+with an `error`, the line is `type: 'error'` with the server `actor` instead.
+A credential payload nested deeper than the limit is classified as a message,
+so its line follows the short summary rules above and may keep
+`type: 'credentials'`. See [Configuration](configuration.md#http-actions). Other
+HTTP lines use the short summary, a platform result, or `type: 'error'`, and
+keep HTTP status 200 when the request was accepted.
 
 For IRC, room targets use `#channel@server` in `target.id` (for example
 `#sockethub@irc.libera.chat`). Put the channel name as it appears on IRC in
@@ -472,9 +480,10 @@ const res = await fetch('http://localhost:10550/sockethub-http', {
 ```
 
 Messages that need credentials send them the same way as over Socket.IO: put a
-`credentials` message first in the array, then the messages that use them. The
-response acknowledges the credentials with a minimal `credentials-ack`; the
-credential object itself is never echoed back or cached.
+`credentials` message first in the array, then the messages that use them. A
+successful storage line is a minimal `credentials-ack`; rejections follow the
+rules in [Message limits](#message-limits). The credential object itself is
+never echoed back or cached.
 
 ### Reading the response
 
@@ -498,12 +507,17 @@ while (true) {
 }
 ```
 
-Each line is an ActivityStreams object. A transport failure, such as a request
-or idle timeout, is a line with `type: 'error'` and an `error` string. A
-message rejected before it is queued keeps the `type` you sent and carries
-`error` on that line. In both cases the HTTP status stays 200 when the
-request was accepted, so a `200` does not mean every message succeeded. See
-[Message limits](#message-limits).
+Each line is an ActivityStreams object. Request and idle timeouts are a line
+with `type: 'error'`, the server `actor`, and an `error` string. A payload the
+HTTP layer cannot route to a handler — for example a non-object, or an object
+without both `type` and `actor` such as `{"type":"fetch"}` — is also
+`type: 'error'` with the server `actor` (for example `unsupported payload
+type`). A message that reaches the shared handler but is rejected before it is
+queued keeps a bounded `@context` and `type` when those fields qualify, sets
+`error`, and omits the rest of what you sent; see
+[Message limits](#message-limits). In all of these cases the HTTP status stays
+200 when the request was accepted, so a `200` does not mean every line
+succeeded.
 
 ### Replaying results
 
