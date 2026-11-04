@@ -467,7 +467,6 @@ export class IncomingHandlers {
                             },
                             object: {
                                 type: "presence",
-                                status: "",
                                 presence: getPresence(entries[e]),
                             },
                         });
@@ -490,7 +489,6 @@ export class IncomingHandlers {
                             },
                             object: {
                                 type: "presence",
-                                statusText: "",
                                 presence: "notauthorized",
                             },
                         });

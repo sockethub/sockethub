@@ -335,12 +335,12 @@ with no `from`) or from this account's own bare JID, per
 Any other sender, including this account's full JID, is ignored and produces
 no client event. Roster items with subscription `none`, `to`, or `from`
 without a pending request are delivered as `request-friend`, with the contact
-JID and roster name in `actor`.
+JID and roster name in `actor`. Items with a mutual (`both`) subscription are
+delivered as a presence `update` with `object.presence` `online`; items with
+a pending inbound request (`from` with `ask="subscribe"`) are delivered as a
+presence `update` with `object.presence` `notauthorized`.
 
-Known limitations: roster items with a mutual (`both`) or pending (`from`
-with `ask="subscribe"`) subscription are currently dropped before reaching
-the client ([#1358](https://github.com/sockethub/sockethub/issues/1358)), and
-`target.id` on roster activities is an empty string
+Known limitation: `target.id` on roster activities is an empty string
 ([#1359](https://github.com/sockethub/sockethub/issues/1359)).
 
 ## Features
