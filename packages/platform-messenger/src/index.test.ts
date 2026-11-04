@@ -105,6 +105,18 @@ describe("messenger outgoing platform", () => {
         expect(JSON.stringify(log.warn.mock.calls)).not.toContain("test-secret");
     });
 
+    it("normalizes documented messaging-window errors without misclassifying permissions", async () => {
+        for (const [code, subcode, windowClosed] of [[10, 2018278, true], [10, 2534022, true], [10, 1404170, false], [190, 2018278, false]]) {
+            stubFetch(async () => Response.json({ error: { code, error_subcode: subcode, message: "Meta detail" } }, { status: 400 }));
+            const done = mock();
+            await new Messenger(session).send(job(), credentials, done);
+            const message = done.mock.calls[0][0].message;
+            expect(message.startsWith("meta:messaging-window-closed")).toBe(windowClosed);
+            expect(message).toContain(`code ${code}, subcode ${subcode}`);
+            expect(message).toContain("Meta detail");
+        }
+    });
+
     it("handles HTTP failures, malformed responses, network errors and timeouts once", async () => {
         for (const implementation of [
             async () => new Response("bad gateway", { status: 502 }),

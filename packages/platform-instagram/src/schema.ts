@@ -41,7 +41,23 @@ export const PlatformInstagramSchema = {
                 type: "object",
                 required: ["type", "token", "apiVersion"],
                 additionalProperties: false,
+                oneOf: [
+                    {
+                        required: ["login", "pageId"],
+                        properties: { login: { const: "facebook" } },
+                    },
+                    {
+                        properties: { login: { const: "instagram" } },
+                        not: { required: ["pageId"] },
+                    },
+                ],
                 properties: {
+                    login: { enum: ["instagram", "facebook"] },
+                    pageId: {
+                        type: "string",
+                        pattern: "^[0-9]+$",
+                        maxLength: 128,
+                    },
                     type: { const: "credentials" },
                     token: {
                         type: "string",

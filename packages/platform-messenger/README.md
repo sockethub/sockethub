@@ -89,6 +89,10 @@ sc.socket.emit('credentials', {
   your Meta app has Human Agent access. This explicitly adds `HUMAN_AGENT`;
   Messenger also sets `messaging_type: MESSAGE_TAG`.
   It does not grant access, verify human authorship, or restart the window.
+- Meta error code `10` with subcode `2018278` or `2534022` returns the stable
+  marker `meta:messaging-window-closed` followed by the original diagnostic details.
+  Clients can recognise this marker in the acknowledgement's `error` string;
+  permission failures are not classified as window failures.
 - Meta failures return the HTTP status, error code/subcode, and error message.
   Requests time out after 15 seconds. There are no platform-level retries:
   after a network timeout, delivery is unknown, so retrying may duplicate a send.
@@ -97,3 +101,7 @@ sc.socket.emit('credentials', {
 
 See [Meta's Messenger API collection](https://www.postman.com/meta/messenger-platform-api/documentation/iyp204x/messenger-platform-api)
 for access requirements and the underlying API.
+
+API contract references:
+
+- [Meta error codes](https://developers.facebook.com/docs/messenger-platform/error-codes/)

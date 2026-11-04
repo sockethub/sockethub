@@ -95,6 +95,39 @@ describe("instagram outgoing platform", () => {
         });
     });
 
+    it("routes Facebook Login tokens through the linked Page and tags only human replies", async () => {
+        for (const humanAgent of [false, true]) {
+            const fetchMock = stubFetch(async () => Response.json({ message_id: "mid.facebook" }));
+            const activity = job();
+            activity.object.humanAgent = humanAgent;
+            const done = mock();
+            await new Instagram(session).send(activity, {
+                ...credentials,
+                object: { ...credentials.object, login: "facebook", pageId: "789" },
+            }, done);
+            expect(fetchMock.mock.calls[0][0]).toBe("https://graph.facebook.com/v22.0/789/messages");
+            expect(JSON.parse(String(fetchMock.mock.calls[0][1]!.body))).toEqual({
+                recipient: { id: "456" }, message: { text: "Hello" },
+                messaging_type: humanAgent ? "MESSAGE_TAG" : "RESPONSE",
+                ...(humanAgent ? { tag: "HUMAN_AGENT" } : {}),
+            });
+            expect(done.mock.calls[0][0]).toBeNull();
+        }
+    });
+
+    it("requires a numeric Page ID only for Facebook Login", () => {
+        const validate = new Ajv({ strict: false }).compile(PlatformInstagramSchema.credentials);
+        expect(validate({ ...credentials, object: { ...credentials.object, login: "facebook", pageId: "789" } })).toBeTrue();
+        expect(validate({ ...credentials, object: { ...credentials.object, login: "instagram" } })).toBeTrue();
+        for (const fields of [
+            { login: "facebook" },
+            { login: "facebook", pageId: "../me" },
+            { login: "instagram", pageId: "789" },
+            { pageId: "789" },
+            { login: "other" },
+        ]) expect(validate({ ...credentials, object: { ...credentials.object, ...fields } })).toBeFalse();
+    });
+
     it("propagates Meta errors with codes and redacts credentials", async () => {
         stubFetch(async () => Response.json({ error: { message: "Window closed test-secret", code: 10, error_subcode: 2018278 } }, { status: 400 }));
         const done = mock();
@@ -103,6 +136,18 @@ describe("instagram outgoing platform", () => {
         expect(done.mock.calls[0][0].message).toContain("code 10, subcode 2018278");
         expect(done.mock.calls[0][0].message).toContain("Window closed [redacted]");
         expect(JSON.stringify(log.warn.mock.calls)).not.toContain("test-secret");
+    });
+
+    it("normalizes documented messaging-window errors without misclassifying permissions", async () => {
+        for (const [code, subcode, windowClosed] of [[10, 2018278, true], [10, 2534022, true], [10, 1404170, false], [190, 2018278, false]]) {
+            stubFetch(async () => Response.json({ error: { code, error_subcode: subcode, message: "Meta detail" } }, { status: 400 }));
+            const done = mock();
+            await new Instagram(session).send(job(), credentials, done);
+            const message = done.mock.calls[0][0].message;
+            expect(message.startsWith("meta:messaging-window-closed")).toBe(windowClosed);
+            expect(message).toContain(`code ${code}, subcode ${subcode}`);
+            expect(message).toContain("Meta detail");
+        }
     });
 
     it("handles HTTP failures, malformed responses, network errors and timeouts once", async () => {

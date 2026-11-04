@@ -62,6 +62,12 @@ test.describe("examples smoke against sockethub --examples", () => {
             await expect(setCredentials).toBeDisabled();
             await page.getByLabel("Graph API version").fill("v22.0");
             await expect(setCredentials).toBeEnabled();
+            if (platform === "instagram") {
+                await page.getByLabel("Login method").selectOption("facebook");
+                await expect(setCredentials).toBeDisabled();
+                await page.getByLabel("Linked Facebook Page ID").fill("789");
+                await expect(setCredentials).toBeEnabled();
+            }
             await setCredentials.click();
             await expect(page.getByRole("status")).toContainText(
                 "Credentials set for this session",

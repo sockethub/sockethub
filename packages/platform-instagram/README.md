@@ -10,12 +10,20 @@ The Sockethub CLI bundles this platform. For a custom server installation, insta
 `@sockethub/platform-instagram` and include it in your config's `platforms` list
 alongside the other platforms you use. Node.js >= 20 and Redis >= 6 are required.
 
-Use a Instagram Login access token with `instagram_business_manage_messages`. The actor ID is your
+Use an Instagram Login access token with `instagram_business_manage_messages`. The actor ID is your
 Instagram professional account ID; the target ID is the recipient's Instagram-scoped ID (IGSID),
 obtained through your external incoming-message integration. A username, phone
 number, or ID scoped to a different app/account is not a substitute.
 
-This implementation uses Instagram Login (`graph.instagram.com`), not the Facebook Login API route.
+Instagram Login is the default: omit `login` or set `login: 'instagram'` and
+use the professional account ID as `actor.id`.
+
+For Facebook Login, supply a Page access token with `instagram_manage_messages`,
+set `login: 'facebook'` and `pageId: '<LINKED_PAGE_ID>'` in the credential object.
+Keep the Instagram professional account ID as `actor.id`. Sends then use
+`graph.facebook.com/{apiVersion}/{pageId}/messages`; Instagram Login sends use
+`graph.instagram.com/{apiVersion}/{actor.id}/messages`.
+The login method is explicit: tokens are never inspected or guessed.
 
 Create a Meta developer app, add the messaging use case, connect your account,
 and use app-role/tester accounts for a private development-mode proof of concept.
@@ -86,9 +94,14 @@ sc.socket.emit('credentials', {
 - Standard replies use Meta's normal messaging window. Sockethub does not track
   incoming messages or calculate eligibility; Meta enforces its policies.
 - Set `object.humanAgent: true` only for an eligible manual support reply when
-  your Meta app has Human Agent access. This explicitly adds `human_agent`;
-  ordinary replies have no tag.
+  your Meta app has Human Agent access. Instagram Login uses `human_agent`;
+  Facebook Login uses `HUMAN_AGENT` with `messaging_type: MESSAGE_TAG`.
+  Standard Facebook Login replies use `messaging_type: RESPONSE`, without a tag.
   It does not grant access, verify human authorship, or restart the window.
+- Meta error code `10` with subcode `2018278` or `2534022` returns the stable
+  marker `meta:messaging-window-closed` followed by the original diagnostic details.
+  Clients can recognise this marker in the acknowledgement's `error` string;
+  permission failures are not classified as window failures.
 - Meta failures return the HTTP status, error code/subcode, and error message.
   Requests time out after 15 seconds. There are no platform-level retries:
   after a network timeout, delivery is unknown, so retrying may duplicate a send.
@@ -97,3 +110,25 @@ sc.socket.emit('credentials', {
 
 See [Meta's Instagram API collection](https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api?entity=request-23987686-1ff01566-3509-48bd-a0f4-8571a91ccfdf)
 for access requirements and the underlying API.
+
+API contract references:
+
+- [Meta error codes](https://developers.facebook.com/docs/messenger-platform/error-codes/)
+- [Instagram Login sends](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/messaging-api)
+- [Facebook Login Instagram sends](https://developers.facebook.com/docs/messenger-platform/instagram/features/send-message/)
+- [Meta Human Agent feature](https://developers.facebook.com/docs/features-reference/human-agent)
+
+Automated tests validate request construction and error mapping, not account
+permissions or delivery. Meta's send guides do not provide a complete Human Agent
+wire example for both login routes; tag acceptance remains a deployment check.
+
+To check Gigger's actual adapter against these schemas and platform handlers,
+run from the Sockethub repository root:
+
+```sh
+GIGGER_ROOT=/path/to/gigger bun run integration:gigger
+```
+
+This starts a local Socket.IO test server, validates the real adapter's activities,
+and intercepts outbound Meta requests. It needs the corresponding Gigger adapter
+changes; it never sends messages to Meta or requires account credentials.

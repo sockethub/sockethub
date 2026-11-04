@@ -11,6 +11,8 @@ const limit = $derived(platform === "messenger" ? 2000 : 1000);
 let accountId = $state("");
 let token = $state("");
 let apiVersion = $state("");
+let login = $state<"instagram" | "facebook">("instagram");
+let pageId = $state("");
 let recipientId = $state("");
 let content = $state("");
 let humanAgent = $state(false);
@@ -22,7 +24,10 @@ let status = $state("");
 const canSetCredentials = $derived(
     /^[0-9]+$/.test(accountId) &&
         token.length > 0 &&
-        /^v[0-9]{1,3}\.[0-9]{1,2}$/.test(apiVersion),
+        /^v[0-9]{1,3}\.[0-9]{1,2}$/.test(apiVersion) &&
+        (platform !== "instagram" ||
+            login !== "facebook" ||
+            /^[0-9]+$/.test(pageId)),
 );
 const canSend = $derived(
     credentialsSet &&
@@ -58,7 +63,14 @@ async function setCredentials(): Promise<void> {
             "@context": context,
             type: "credentials",
             actor: { id: accountId, type: "person" },
-            object: { type: "credentials", token, apiVersion },
+            object: {
+                type: "credentials",
+                token,
+                apiVersion,
+                ...(platform === "instagram"
+                    ? { login, ...(login === "facebook" ? { pageId } : {}) }
+                    : {}),
+            },
         });
         credentialsSet = true;
         status =
@@ -107,11 +119,21 @@ async function clearCredentials(): Promise<void> {
 
 <BaseExample title="{title} Platform Example" description="Send a text reply using your own Meta business account.">
     <p class="text-gray-600 text-sm">
-        {platform === "messenger" ? "Use a Facebook Page access token with pages_messaging." : "Use an Instagram Login token with instagram_business_manage_messages for a Business or Creator account."}
+        {platform === "messenger" ? "Use a Facebook Page access token with pages_messaging." : login === "facebook" ? "Use a Page access token with instagram_manage_messages for the linked professional Instagram account." : "Use an Instagram Login token with instagram_business_manage_messages for a Business or Creator account."}
         Incoming messages are handled elsewhere. Get the recipient's scoped ID from that integration.
     </p>
     <fieldset disabled={busy} class="space-y-4">
         <legend class="text-lg font-semibold mb-4">Account credentials</legend>
+        {#if platform === "instagram"}
+            <label for="meta-login" class="block text-sm font-semibold text-gray-700">Login method</label>
+            <select id="meta-login" bind:value={login} onchange={invalidateCredentials} class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900">
+                <option value="instagram">Instagram Login</option>
+                <option value="facebook">Facebook Login (Page token)</option>
+            </select>
+            {#if login === "facebook"}
+                <FormField label="Linked Facebook Page ID" id="meta-page" bind:value={pageId} onInput={invalidateCredentials} />
+            {/if}
+        {/if}
         <FormField label={platform === "messenger" ? "Facebook Page ID" : "Instagram account ID"} id="meta-account" bind:value={accountId} onInput={invalidateCredentials} />
         <FormField label="Access token" id="meta-token" type="password" bind:value={token} onInput={invalidateCredentials} />
         <FormField label="Graph API version" id="meta-version" placeholder="e.g. v22.0 — use a version supported by your app" bind:value={apiVersion} onInput={invalidateCredentials} />

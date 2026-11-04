@@ -10,7 +10,13 @@ import type {
 import { PlatformInstagramSchema } from "./schema.js";
 
 export interface InstagramCredentials extends CredentialsObject {
-    object: { type: "credentials"; token: string; apiVersion: string };
+    object: {
+        type: "credentials";
+        token: string;
+        apiVersion: string;
+        login?: "instagram" | "facebook";
+        pageId?: string;
+    };
 }
 
 export default class Instagram implements PlatformInterface {
@@ -41,12 +47,17 @@ export default class Instagram implements PlatformInterface {
         credentials: InstagramCredentials,
         done: PlatformCallback,
     ): Promise<void> {
-        const { token, apiVersion } = credentials.object;
+        const { token, apiVersion, login, pageId } = credentials.object;
+        const facebookLogin = login === "facebook";
+        const host = facebookLogin
+            ? "graph.facebook.com"
+            : "graph.instagram.com";
+        const accountId = facebookLogin ? pageId : job.actor.id;
         const humanAgent = job.object.humanAgent === true;
         let result: ActivityStream;
         try {
             const response = await fetch(
-                `https://graph.instagram.com/${apiVersion}/${encodeURIComponent(job.actor.id)}/messages`,
+                `https://${host}/${apiVersion}/${encodeURIComponent(accountId)}/messages`,
                 {
                     method: "POST",
                     redirect: "error",
@@ -58,7 +69,20 @@ export default class Instagram implements PlatformInterface {
                         recipient: { id: job.target.id },
                         message: { text: job.object.content },
 
-                        ...(humanAgent ? { tag: "human_agent" } : {}),
+                        ...(facebookLogin
+                            ? {
+                                  messaging_type: humanAgent
+                                      ? "MESSAGE_TAG"
+                                      : "RESPONSE",
+                              }
+                            : {}),
+                        ...(humanAgent
+                            ? {
+                                  tag: facebookLogin
+                                      ? "HUMAN_AGENT"
+                                      : "human_agent",
+                              }
+                            : {}),
                     }),
                     signal: AbortSignal.timeout(15_000),
                 },
@@ -87,7 +111,18 @@ export default class Instagram implements PlatformInterface {
                         detail += `: ${error.message.split(token).join("[redacted]")}`;
                     }
                 }
-                throw new Error(`instagram: send rejected (${detail})`);
+                const windowClosed =
+                    error &&
+                    typeof error === "object" &&
+                    "code" in error &&
+                    error.code === 10 &&
+                    "error_subcode" in error &&
+                    (error.error_subcode === 2018278 ||
+                        error.error_subcode === 2534022);
+                const reason = windowClosed
+                    ? "meta:messaging-window-closed"
+                    : "instagram: send rejected";
+                throw new Error(`${reason} (${detail})`);
             }
             if (
                 !("message_id" in data) ||
@@ -103,7 +138,9 @@ export default class Instagram implements PlatformInterface {
         } catch (error) {
             // Network errors may contain request details; never expose tokens.
             const failure =
-                error instanceof Error && error.message.startsWith("instagram:")
+                error instanceof Error &&
+                (error.message.startsWith("instagram:") ||
+                    error.message.startsWith("meta:messaging-window-closed"))
                     ? new Error(error.message.split(token).join("[redacted]"))
                     : new Error(
                           "instagram: send failed (network error, timeout, or invalid JSON); delivery is unknown",

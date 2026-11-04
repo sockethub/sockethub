@@ -87,7 +87,18 @@ export default class Messenger implements PlatformInterface {
                         detail += `: ${error.message.split(token).join("[redacted]")}`;
                     }
                 }
-                throw new Error(`messenger: send rejected (${detail})`);
+                const windowClosed =
+                    error &&
+                    typeof error === "object" &&
+                    "code" in error &&
+                    error.code === 10 &&
+                    "error_subcode" in error &&
+                    (error.error_subcode === 2018278 ||
+                        error.error_subcode === 2534022);
+                const reason = windowClosed
+                    ? "meta:messaging-window-closed"
+                    : "messenger: send rejected";
+                throw new Error(`${reason} (${detail})`);
             }
             if (
                 !("message_id" in data) ||
@@ -103,7 +114,9 @@ export default class Messenger implements PlatformInterface {
         } catch (error) {
             // Network errors may contain request details; never expose tokens.
             const failure =
-                error instanceof Error && error.message.startsWith("messenger:")
+                error instanceof Error &&
+                (error.message.startsWith("messenger:") ||
+                    error.message.startsWith("meta:messaging-window-closed"))
                     ? new Error(error.message.split(token).join("[redacted]"))
                     : new Error(
                           "messenger: send failed (network error, timeout, or invalid JSON); delivery is unknown",
