@@ -57,12 +57,14 @@ function splitEscaped(value: string, separator: string): string[] {
     return result;
 }
 
-const unescapeText = (value: string) =>
-    value
-        .replace(/\\n/gi, "\n")
-        .replace(/\\,/g, ",")
-        .replace(/\\;/g, ";")
-        .replace(/\\\\/g, "\\");
+// One left-to-right pass. Replacing `\n` before `\\` turns a literal
+// backslash followed by n (`\\n` in the card, as in `C:\notes`) into a
+// newline, and an update then writes that corruption back to the server.
+function unescapeText(value: string): string {
+    return value.replaceAll(/\\([nN,;\\])/g, (_match, character: string) =>
+        character === "n" || character === "N" ? "\n" : character,
+    );
+}
 const escapeText = (value: string) =>
     value
         .replace(/\r\n?/g, "\n")

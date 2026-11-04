@@ -85,6 +85,24 @@ describe("vCard", () => {
         expect(parsed.honorificSuffixes).toEqual(["Jr.", "PhD"]);
     });
 
+    it("decodes an escaped backslash before n as a backslash, and \\n as a newline", () => {
+        const parsed = parseVCard(
+            "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nN:;Alice;;;\r\nNOTE:See C:\\\\notes\\\\file.txt\\nnext\r\nEND:VCARD\r\n",
+            "https://dav.example/alice.vcf",
+        );
+        expect(parsed.note).toBe("See C:\\notes\\file.txt\nnext");
+        const note = "See C:\\notes";
+        const built = buildVCard({
+            type: "person",
+            uid: "alice-1",
+            name: "Alice",
+            note,
+        });
+        expect(parseVCard(built.body, "https://dav.example/alice.vcf").note).toBe(
+            note,
+        );
+    });
+
     it("keeps an escaped comma inside a single N list item", () => {
         const parsed = parseVCard(
             "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nN:;Alice;Mary\\, Ann;;\r\nEND:VCARD\r\n",
