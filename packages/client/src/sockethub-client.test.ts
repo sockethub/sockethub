@@ -1184,6 +1184,54 @@ describe("SockethubClient", () => {
             expect(replayed).to.deep.equal(["bob", "alice"]);
         });
 
+        for (const scoped of [true, false]) {
+            it(`cancels ${scoped ? "matching" : "all"} queued credentials without dropping unrelated events`, () => {
+                socket.emit("disconnect");
+                const cancelled = sandbox.spy();
+                const otherActor = sandbox.spy();
+                const otherPlatform = sandbox.spy();
+                const message = sandbox.spy();
+                const activity = (platform: string, actor: string | { id: string }) => ({
+                    "@context": sc.contextFor(platform), actor,
+                    object: { type: "credentials", token: "queued-secret" },
+                });
+                sc.socket.emit("credentials", activity("dummy", "alice"), cancelled);
+                sc.socket.emit("credentials", activity("dummy", { id: "bob" }), otherActor);
+                sc.socket.emit("credentials", activity("test-xmpp", { id: "alice" }), otherPlatform);
+                sc.socket.emit("message", { "@context": sc.contextFor("dummy"), type: "echo", actor: { id: "bob" } }, message);
+                sc.clearCredentials(scoped ? { platform: "dummy", actorId: "alice" } : undefined);
+                expect(cancelled.calledOnce).to.equal(true);
+                expect(cancelled.firstCall.args[0].error).to.contain("credentials cleared");
+                expect(otherActor.called).to.equal(!scoped);
+                expect(otherPlatform.called).to.equal(!scoped);
+                expect(message.called).to.equal(false);
+                const submitted: string[] = [];
+                socket.on("credentials", (entry: { actor: { id: string } }) => submitted.push(entry.actor.id));
+                socket.connected = true;
+                socket.emit("connect");
+                socket.emit("schemas", TEST_REGISTRY);
+                expect(submitted).to.deep.equal(scoped ? ["bob", "alice"] : []);
+                expect(sc.replayStore.events.credentials.size).to.equal(scoped ? 2 : 0);
+                expect(cancelled.calledOnce).to.equal(true);
+                expect(sc.outboundQueue.length).to.equal(0);
+            });
+        }
+
+        it("clears canonical queued credentials before their platform is registered", () => {
+            const pendingSocket = new EventEmitter() as unknown as ConstructorParameters<typeof SockethubClient>[0];
+            pendingSocket.connected = false;
+            const pendingClient = new SockethubClient(pendingSocket);
+            const cancelled = sandbox.spy();
+            pendingClient.socket.emit("credentials", {
+                "@context": ["https://sockethub.org/ns/context/platform/unregistered-test/v1.jsonld"],
+                actor: { id: "alice", type: "person" },
+                object: { type: "credentials", token: "queued-secret" },
+            }, cancelled);
+            pendingClient.clearCredentials({ platform: "unregistered-test", actorId: "alice" });
+            expect(cancelled.calledOnce).to.equal(true);
+            expect(cancelled.firstCall.args[0].error).to.contain("credentials cleared");
+        });
+
         it("clears stored credentials", () => {
             // Store some credentials
             sc.socket.emit("credentials", {
