@@ -270,6 +270,12 @@ export default class SockethubClient {
     private readyWaiters: Array<PendingReadyWaiter> = [];
     private outboundQueue: Array<QueuedOutboundEvent> = [];
     private outboundSequence = 0;
+    // Scoped clears issued before the registry loads: noncanonical context
+    // URLs cannot be matched to a platform until then, so re-apply at flush.
+    private pendingScopedClears: Array<{
+        scope: { platform: string; actorId: string };
+        before: number;
+    }> = [];
     private registryFingerprint?: string;
     private latestReadyInfo?: ClientReadyInfo;
 
@@ -390,6 +396,16 @@ export default class SockethubClient {
             return true;
         });
         this.replayStore.clearCredentials(scope);
+        if (scope && !this.isReady()) {
+            this.pendingScopedClears.push({
+                scope,
+                before: this.outboundSequence,
+            });
+        }
+        this.emitCancelled(cancelled);
+    }
+
+    private emitCancelled(cancelled: QueuedOutboundEvent[]) {
         for (const entry of cancelled) {
             this.emitClientError(
                 entry.event,
@@ -917,7 +933,20 @@ export default class SockethubClient {
             (a, b) => a.sequence - b.sequence,
         );
         this.outboundQueue = [];
+        const clears = this.pendingScopedClears;
+        this.pendingScopedClears = [];
         for (const entry of queued) {
+            if (
+                entry.event === "credentials" &&
+                clears.some(
+                    (clear) =>
+                        entry.sequence < clear.before &&
+                        matchesAccount(entry.content, clear.scope),
+                )
+            ) {
+                this.emitCancelled([entry]);
+                continue;
+            }
             if (now - entry.enqueuedAt > this.options.maxQueuedAgeMs) {
                 this.emitClientError(
                     entry.event,

@@ -1230,6 +1230,43 @@ describe("SockethubClient", () => {
             expect(cancelled.callCount).to.equal(1);
         });
 
+        it("cancels queued credentials with a registered noncanonical context cleared before schemas arrive", () => {
+            // Context URL unseen by the shared registry until this test's schemas event.
+            const dummyUrl = "https://example.com/context/platform/dummy/v2.jsonld";
+            const registry = {
+                ...TEST_REGISTRY,
+                platforms: TEST_REGISTRY.platforms.map((p) =>
+                    p.id === "dummy" ? { ...p, contextUrl: dummyUrl, contextVersion: "2" } : p,
+                ),
+            };
+            const wire = Object.assign(new EventEmitter(), { connected: false });
+            const client = new SockethubClient(wire as never);
+            sandbox.stub(client, "validateActivity").returns("");
+            const sent: ActivityStream[] = [];
+            wire.on("credentials", (entry) => sent.push(entry));
+            const cancelled = sandbox.spy();
+            const creds = (url: string) => ({
+                "@context": buildCanonicalContext(url),
+                type: "credentials",
+                actor: "same@example.com",
+                object: { type: "credentials", password: "p" },
+            });
+            client.socket.emit("credentials", creds(dummyUrl), cancelled);
+            client.socket.emit("credentials", creds(TEST_REGISTRY.platforms[0].contextUrl));
+            client.clearCredentials({ platform: "dummy", actorId: "same@example.com" });
+            // re-queued after the clear: must survive
+            client.socket.emit("credentials", creds(dummyUrl));
+            expect(cancelled.callCount).to.equal(0);
+            wire.connected = true;
+            wire.emit("schemas", registry);
+            expect(cancelled.callCount).to.equal(1);
+            expect(cancelled.firstCall.args[0].error).to.contain("cancelled");
+            expect(sent.map((entry) => [resolvePlatformId(entry), entry.actor.id])).to.deep.equal([
+                ["test-xmpp", "same@example.com"],
+                ["dummy", "same@example.com"],
+            ]);
+        });
+
         it("cancels all queued credentials without a scope and reports client_error without an ack", () => {
             const wire = Object.assign(new EventEmitter(), { connected: false });
             const client = new SockethubClient(wire as never);
