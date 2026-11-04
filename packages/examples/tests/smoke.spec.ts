@@ -85,6 +85,15 @@ test.describe("examples smoke against sockethub --examples", () => {
                 .getByLabel("Message", { exact: true })
                 .fill("x".repeat(platform === "messenger" ? 2001 : 1001));
             await expect(send).toBeDisabled();
+            if (platform === "instagram") {
+                // Instagram's limit is 1000 UTF-8 bytes: 600 two-byte characters
+                // pass a character count but exceed the byte limit.
+                await page
+                    .getByLabel("Message", { exact: true })
+                    .fill("\u0436".repeat(600));
+                await expect(page.getByText("1200 / 1000 bytes")).toBeVisible();
+                await expect(send).toBeDisabled();
+            }
             await page.getByLabel("Message", { exact: true }).fill("Hello");
             const humanAgent = page.getByRole("checkbox", {
                 name: "Human Agent reply",

@@ -128,6 +128,17 @@ describe("instagram outgoing platform", () => {
         ]) expect(validate({ ...credentials, object: { ...credentials.object, ...fields } })).toBeFalse();
     });
 
+    it("rejects text over 1000 UTF-8 bytes before contacting Meta", async () => {
+        const fetchMock = stubFetch(async () => Response.json({ message_id: "mid.bytes" }));
+        const activity = job();
+        activity.object.content = "ж".repeat(600); // 600 code points, 1200 bytes
+        expect(validateActivityStream(activity)).toBe("");
+        const done = mock();
+        await new Instagram(session).send(activity, credentials, done);
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(done.mock.calls[0][0].message).toBe("instagram: message text is 1200 UTF-8 bytes; Meta allows at most 1000");
+    });
+
     it("propagates Meta errors with codes and redacts credentials", async () => {
         stubFetch(async () => Response.json({ error: { message: "Window closed test-secret", code: 10, error_subcode: 2018278 } }, { status: 400 }));
         const done = mock();

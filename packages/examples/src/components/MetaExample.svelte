@@ -16,6 +16,13 @@ let pageId = $state("");
 let recipientId = $state("");
 let content = $state("");
 let humanAgent = $state(false);
+// Messenger limits characters; Instagram limits UTF-8 bytes.
+const unit = $derived(platform === "messenger" ? "characters" : "bytes");
+const contentLength = $derived(
+    platform === "messenger"
+        ? Array.from(content).length
+        : new TextEncoder().encode(content).length,
+);
 let credentialsSet = $state(false);
 let credentialAccount: { platform: string; actorId: string } | undefined;
 let busy = $state(false);
@@ -33,7 +40,7 @@ const canSend = $derived(
     credentialsSet &&
         /^[0-9]+$/.test(recipientId) &&
         content.trim().length > 0 &&
-        Array.from(content).length <= limit,
+        contentLength <= limit,
 );
 
 function invalidateCredentials(): void {
@@ -150,7 +157,7 @@ async function clearCredentials(): Promise<void> {
         <div class="space-y-2">
             <label for="meta-message" class="block text-sm font-semibold text-gray-700">Message</label>
             <textarea id="meta-message" bind:value={content} rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900"></textarea>
-            <p class="text-sm text-gray-600">{Array.from(content).length} / {limit} characters</p>
+            <p class="text-sm text-gray-600">{contentLength} / {limit} {unit}</p>
         </div>
         <label class="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" bind:checked={humanAgent} />

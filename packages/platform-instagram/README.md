@@ -49,12 +49,6 @@ const sc = await SockethubClient.connect('http://localhost:10550');
 await sc.ready();
 const actor = { id: process.env.META_ACCOUNT_ID, type: 'person' };
 
-sc.socket.on('message', (activity) => {
-  // A successful send returns the original activity with object.id set to
-  // Meta's message ID. This confirms API acceptance, not delivery or reading.
-  console.log(activity.object?.id);
-});
-
 sc.socket.emit('credentials', {
   '@context': sc.contextFor('instagram'),
   type: 'credentials',
@@ -80,17 +74,25 @@ sc.socket.emit('credentials', {
       console.error(result.error);
       return;
     }
+    // A successful send returns the original activity with object.id set to
+    // Meta's message ID. This confirms API acceptance, not delivery or reading.
     console.log(result.object?.id);
   });
 });
 
-// On explicit logout or when switching users:
+// On explicit logout or when switching users, clear the client-side replay
+// state and disconnect. Credentials already stored for this server session
+// stay usable until the socket disconnects; a new connection starts a fresh
+// session that cannot reach them.
 // sc.clearCredentials();
+// sc.socket.disconnect();
 ```
 
 ## Limits and failures
 
-- Text only, up to 1000 characters per message.
+- Text only, up to 1000 bytes of UTF-8 per message (Meta's limit is in bytes,
+  so non-ASCII text allows fewer characters). Oversized text is rejected
+  before any request is made.
 - Standard replies use Meta's normal messaging window. Sockethub does not track
   incoming messages or calculate eligibility; Meta enforces its policies.
 - Set `object.humanAgent: true` only for an eligible manual support reply when

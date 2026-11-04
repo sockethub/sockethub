@@ -19,6 +19,8 @@ export interface InstagramCredentials extends CredentialsObject {
     };
 }
 
+const MAX_TEXT_BYTES = 1000;
+
 export default class Instagram implements PlatformInterface {
     private readonly log: Logger;
     config: StatelessPlatformConfig = {
@@ -56,6 +58,14 @@ export default class Instagram implements PlatformInterface {
         const humanAgent = job.object.humanAgent === true;
         let result: ActivityStream;
         try {
+            // Meta limits Instagram text to 1000 UTF-8 bytes; the schema's
+            // maxLength counts code points, so multi-byte text needs this check.
+            const bytes = new TextEncoder().encode(job.object.content).length;
+            if (bytes > MAX_TEXT_BYTES) {
+                throw new Error(
+                    `instagram: message text is ${bytes} UTF-8 bytes; Meta allows at most ${MAX_TEXT_BYTES}`,
+                );
+            }
             const response = await fetch(
                 `https://${host}/${apiVersion}/${encodeURIComponent(accountId)}/messages`,
                 {

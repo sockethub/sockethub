@@ -28,6 +28,7 @@ export const PlatformInstagramSchema = {
                 additionalProperties: false,
                 properties: {
                     type: { const: "message" },
+                    // Coarse bound; the handler enforces Meta's 1000 UTF-8 byte limit.
                     content: { type: "string", minLength: 1, maxLength: 1000 },
                     humanAgent: { type: "boolean" },
                 },

@@ -41,12 +41,6 @@ const sc = await SockethubClient.connect('http://localhost:10550');
 await sc.ready();
 const actor = { id: process.env.META_ACCOUNT_ID, type: 'person' };
 
-sc.socket.on('message', (activity) => {
-  // A successful send returns the original activity with object.id set to
-  // Meta's message ID. This confirms API acceptance, not delivery or reading.
-  console.log(activity.object?.id);
-});
-
 sc.socket.emit('credentials', {
   '@context': sc.contextFor('messenger'),
   type: 'credentials',
@@ -72,12 +66,18 @@ sc.socket.emit('credentials', {
       console.error(result.error);
       return;
     }
+    // A successful send returns the original activity with object.id set to
+    // Meta's message ID. This confirms API acceptance, not delivery or reading.
     console.log(result.object?.id);
   });
 });
 
-// On explicit logout or when switching users:
+// On explicit logout or when switching users, clear the client-side replay
+// state and disconnect. Credentials already stored for this server session
+// stay usable until the socket disconnects; a new connection starts a fresh
+// session that cannot reach them.
 // sc.clearCredentials();
+// sc.socket.disconnect();
 ```
 
 ## Limits and failures
