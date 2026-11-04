@@ -447,6 +447,10 @@ export class IncomingHandlers {
             const from = stanza.attrs.from;
             if (query && (!from || from === this.session?.__bareJid)) {
                 const entries = query.getChildren("item");
+                const self = {
+                    id: this.session?.__bareJid ?? "",
+                    type: "person",
+                };
                 for (const e in entries) {
                     if (!Object.hasOwn(entries, e)) {
                         continue;
@@ -461,13 +465,9 @@ export class IncomingHandlers {
                                 name: entries[e].attrs.name,
                                 type: "person",
                             },
-                            target: this.session?.actor ?? {
-                                id: "",
-                                type: "person",
-                            },
+                            target: self,
                             object: {
                                 type: "presence",
-                                status: "",
                                 presence: getPresence(entries[e]),
                             },
                         });
@@ -484,19 +484,15 @@ export class IncomingHandlers {
                                 name: entries[e].attrs.name,
                                 type: "person",
                             },
-                            target: this.session?.actor ?? {
-                                id: "",
-                                type: "person",
-                            },
+                            target: self,
                             object: {
                                 type: "presence",
-                                statusText: "",
                                 presence: "notauthorized",
                             },
                         });
                     } else {
                         this.subscribe(
-                            this.session?.actor ?? { id: "", type: "person" },
+                            self,
                             entries[e].attrs.jid ?? "",
                             entries[e].attrs.name,
                         );

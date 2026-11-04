@@ -162,6 +162,28 @@ describe("Incoming handlers", () => {
             expect(sendToClient.getCall(1).args[0].actor.id).toEqual("other@example.org");
         });
 
+        it("emits roster activities that pass the responses schema and target the account (#1358, #1359)", () => {
+            ih.stanza(
+                parse(
+                    `<iq type='result' id='r3'>
+                      <query xmlns='jabber:iq:roster'>
+                        <item jid='friend@example.org' name='Friend' subscription='both'/>
+                        <item jid='pending@example.org' subscription='from' ask='subscribe'/>
+                        <item jid='new@example.org' subscription='none'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
+            sinon.assert.calledThrice(sendToClient);
+            expect(sendToClient.getCall(0).args[0].object.presence).toEqual("online");
+            expect(sendToClient.getCall(1).args[0].object.presence).toEqual("notauthorized");
+            expect(sendToClient.getCall(2).args[0].type).toEqual("request-friend");
+            for (const call of sendToClient.getCalls()) {
+                expect(call.args[0].target).toEqual({ id: "user@example.org", type: "person" });
+                expect(schemas.validateActivityStreamResponse(call.args[0])).toEqual("");
+            }
+        });
+
         it("ignores roster-shaped IQs from any other sender", () => {
             ih.stanza(
                 parse(
