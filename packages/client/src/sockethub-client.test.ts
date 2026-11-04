@@ -1232,6 +1232,34 @@ describe("SockethubClient", () => {
             expect(cancelled.firstCall.args[0].error).to.contain("credentials cleared");
         });
 
+        it("cancels same-actor queued credentials with an unresolved custom context", () => {
+            const pendingSocket = Object.assign(new EventEmitter(), { connected: false });
+            const pendingClient = new SockethubClient(pendingSocket as unknown as ConstructorParameters<typeof SockethubClient>[0]);
+            sandbox.stub(pendingClient, "validateActivity").returns("");
+            const contextUrl = "https://example.test/custom/queued-clear-context";
+            const cancelled = sandbox.spy();
+            for (const id of ["alice", "bob"]) {
+                pendingClient.socket.emit("credentials", {
+                    "@context": [contextUrl],
+                    actor: { id, type: "person" },
+                    object: { type: "credentials", token: "queued-secret" },
+                }, id === "alice" ? cancelled : undefined);
+            }
+            pendingClient.clearCredentials({ platform: "dummy", actorId: "alice" });
+            expect(cancelled.calledOnce).to.equal(true);
+            expect(cancelled.firstCall.args[0].error).to.contain("credentials cleared");
+            const submitted: string[] = [];
+            pendingSocket.on("credentials", (entry: { actor: { id: string } }) => submitted.push(entry.actor.id));
+            pendingSocket.connected = true;
+            pendingSocket.emit("connect");
+            pendingSocket.emit("schemas", {
+                ...TEST_REGISTRY,
+                platforms: TEST_REGISTRY.platforms.map((platform) => platform.id === "dummy" ? { ...platform, contextUrl } : platform),
+            });
+            expect(submitted).to.deep.equal(["bob"]);
+            expect(cancelled.calledOnce).to.equal(true);
+        });
+
         it("clears stored credentials", () => {
             // Store some credentials
             sc.socket.emit("credentials", {
