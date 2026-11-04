@@ -11,6 +11,7 @@ import {
     ImapFlow,
     type ImapFlowOptions,
     type MessageEnvelopeObject,
+    type MessageStructureObject,
     type SearchObject,
 } from "imapflow";
 import { simpleParser } from "mailparser";
@@ -20,6 +21,7 @@ import { mailHost } from "./net.js";
 import { PlatformEmailSchema } from "./schema.js";
 import type {
     Cursor,
+    EmailAttachment,
     EmailCredentials,
     EmailJob,
     FetchOptions,
@@ -30,6 +32,7 @@ import type {
 
 export type {
     Cursor,
+    EmailAttachment,
     EmailCredentials,
     FetchOptions,
     Filter,
@@ -76,6 +79,28 @@ export function matchesAddresses(
         !checks.length ||
         (filter.match === "all" ? checks.every(Boolean) : checks.some(Boolean))
     );
+}
+
+/** List attachment metadata without fetching attachment body parts. */
+export function attachmentMetadata(
+    structure?: MessageStructureObject,
+): EmailAttachment[] {
+    const attachments: EmailAttachment[] = [];
+    const pending = structure ? [structure] : [];
+    while (pending.length) {
+        const part = pending.pop();
+        if (!part) continue;
+        const filename =
+            part.dispositionParameters?.filename || part.parameters?.name;
+        if (part.disposition === "attachment" || filename) {
+            attachments.push({
+                ...(filename ? { filename } : {}),
+                contentType: part.type,
+            });
+        }
+        if (part.childNodes) pending.push(...[...part.childNodes].reverse());
+    }
+    return attachments;
 }
 
 export default class Email implements PersistentPlatformInterface {
@@ -343,7 +368,12 @@ export default class Email implements PersistentPlatformInterface {
         for (const uid of uids || []) {
             const metadata = await client.fetchOne(
                 uid,
-                { envelope: true, size: true },
+                {
+                    envelope: true,
+                    size: true,
+                    bodyStructure: true,
+                    headers: ["references"],
+                },
                 { uid: true },
             );
             if (
@@ -357,8 +387,7 @@ export default class Email implements PersistentPlatformInterface {
             const oversized =
                 (metadata.size ?? MAX_MESSAGE_BYTES + 1) > MAX_MESSAGE_BYTES;
             if (!oversized && bytes + (metadata.size ?? 0) > byteLimit) break;
-            let content = "";
-            let html: string | undefined;
+            let source = metadata.headers;
             if (!oversized) {
                 const message = await client.fetchOne(
                     uid,
@@ -370,14 +399,16 @@ export default class Email implements PersistentPlatformInterface {
                 if (message.source.length > MAX_MESSAGE_BYTES)
                     throw new Error("email:message-too-large");
                 bytes += message.source.length;
-                const parsed = await simpleParser(message.source, {
-                    skipHtmlToText: true,
-                    skipTextToHtml: true,
-                    skipImageLinks: true,
-                });
-                content = parsed.text ?? "";
-                html = parsed.html || undefined;
+                source = message.source;
             }
+            const parsed = source
+                ? await simpleParser(source, {
+                      skipHtmlToText: true,
+                      skipTextToHtml: true,
+                      skipImageLinks: true,
+                  })
+                : undefined;
+            const references = parsed?.references;
             const envelope = metadata.envelope;
             items.push({
                 "@context": CONTEXT,
@@ -385,6 +416,9 @@ export default class Email implements PersistentPlatformInterface {
                 actor: {
                     id: envelope.from?.[0]?.address ?? "unknown",
                     type: "person",
+                    ...(envelope.from?.[0]?.name
+                        ? { name: envelope.from[0].name }
+                        : {}),
                 },
                 target: actor,
                 object: {
@@ -399,9 +433,14 @@ export default class Email implements PersistentPlatformInterface {
                     subject: envelope.subject ?? "",
                     messageId: envelope.messageId,
                     inReplyTo: envelope.inReplyTo,
+                    references:
+                        typeof references === "string"
+                            ? [references]
+                            : (references ?? []),
+                    attachments: attachmentMetadata(metadata.bodyStructure),
                     published: envelope.date?.toISOString(),
-                    content,
-                    html,
+                    content: oversized ? "" : (parsed?.text ?? ""),
+                    html: oversized ? undefined : parsed?.html || undefined,
                     bodyOmitted: oversized,
                 },
             });
@@ -566,7 +605,10 @@ export default class Email implements PersistentPlatformInterface {
             const message = job.object as SendOptions;
             try {
                 const result = await transport.sendMail({
-                    from: { address: credentials.object.from, name: "" },
+                    from: {
+                        address: credentials.object.from,
+                        name: job.actor.name ?? "",
+                    },
                     to: message.to.map((address) => ({ address, name: "" })),
                     cc: message.cc?.map((address) => ({ address, name: "" })),
                     bcc: message.bcc?.map((address) => ({ address, name: "" })),

@@ -4,7 +4,7 @@ import type { ActivityStream, PlatformCallback, PlatformSession } from "@socketh
 import type { FetchMessageObject, ImapFlow, ImapFlowOptions, SearchObject } from "imapflow";
 import type { Transporter } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport/index.js";
-import Email, { matchesAddresses } from "./index.js";
+import Email, { attachmentMetadata, matchesAddresses } from "./index.js";
 import { mailHost } from "./net.js";
 import type { EmailCredentials } from "./types.js";
 
@@ -75,6 +75,52 @@ describe("email platform", () => {
         expect(matchesAddresses(envelope, { from: ["end@example.com"] })).toBeFalse();
         expect(matchesAddresses(envelope, { from: ["other@example.com"], to: [actor.id] })).toBeTrue();
         expect(matchesAddresses(envelope, { from: ["other@example.com"], to: [actor.id], match: "all" })).toBeFalse();
+    });
+    it("lists nested and named inline attachments without exposing content", () => {
+        expect(attachmentMetadata({ type: "multipart/mixed", childNodes: [
+            { type: "text/plain" },
+            { type: "multipart/related", childNodes: [
+                { type: "image/png", disposition: "inline", parameters: { name: "logo.png" } },
+                { type: "application/pdf", disposition: "attachment", dispositionParameters: { filename: "résumé.pdf" } },
+                { type: "application/octet-stream", disposition: "attachment" },
+            ] },
+        ] })).toEqual([
+            { filename: "logo.png", contentType: "image/png" },
+            { filename: "résumé.pdf", contentType: "application/pdf" },
+            { contentType: "application/octet-stream" },
+        ]);
+        expect(attachmentMetadata()).toEqual([]);
+    });
+    it("preserves References and the sender name on received messages", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.add(1);
+        const message = s.messages.get(1)!;
+        message.envelope!.from![0].name = "Friend Example";
+        message.source = Buffer.concat([Buffer.from("References: <root@example.com>\r\n <parent@example.com>\r\n"), message.source!]);
+        message.size = message.source.length;
+        const result = await call(done => s.platform.fetch(job("fetch"), done)) as ActivityStream & { items: ActivityStream[] };
+        expect(result.items[0].object?.references).toEqual(["<root@example.com>", "<parent@example.com>"]);
+        expect(result.items[0].actor.name).toBe("Friend Example");
+    });
+    it("preserves reference and attachment metadata when the body is omitted", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.add(1);
+        const message = s.messages.get(1)!;
+        message.size = 300000;
+        message.headers = Buffer.from("References: <root@example.com>\r\n\r\n");
+        message.bodyStructure = { type: "application/pdf", disposition: "attachment", dispositionParameters: { filename: "report.pdf" } };
+        const result = await call(done => s.platform.fetch(job("fetch"), done)) as ActivityStream & { items: ActivityStream[] };
+        expect(result.items[0].object).toMatchObject({ bodyOmitted: true, content: "", references: ["<root@example.com>"], attachments: [{ filename: "report.pdf", contentType: "application/pdf" }] });
+        expect(s.client.fetchOne).toHaveBeenCalledTimes(1);
+        expect(s.client.fetchOne).toHaveBeenCalledWith(1, { envelope: true, size: true, bodyStructure: true, headers: ["references"] }, { uid: true });
+    });
+    it("uses the ActivityStreams actor name when sending", async () => {
+        const s = setup();
+        const request = { ...job("send", { to: ["friend@example.com"], content: "Hi" }), actor: { ...actor, name: "Doe, Jane" } };
+        await call(done => s.platform.send(request as never, credentials, done));
+        expect(s.transport.sendMail.mock.calls[0][0]).toMatchObject({ from: { address: actor.id, name: "Doe, Jane" } });
     });
     it("connects once, requires TLS, and closes resources", async () => {
         const s = setup();

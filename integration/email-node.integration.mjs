@@ -45,7 +45,7 @@ const sockets = new Set();
 const imapSockets = new Set();
 const sources = [
     Buffer.from(
-        "From: friend@example.com\r\nTo: me@example.com\r\nSubject: Real IMAP\r\nContent-Type: text/plain\r\n\r\nHello over TLS\r\n",
+        "From: Friend Example <friend@example.com>\r\nTo: me@example.com\r\nSubject: Real IMAP\r\nReferences: <root@example.com> <parent@example.com>\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=mailtest\r\n\r\n--mailtest\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nHello over TLS\r\n--mailtest\r\nContent-Type: application/pdf; name=report.pdf\r\nContent-Disposition: attachment; filename=report.pdf\r\nContent-Transfer-Encoding: base64\r\n\r\nJVBERi0xLjQ=\r\n--mailtest--\r\n",
     ),
 ];
 const submissions = [];
@@ -113,17 +113,25 @@ const imap = serve(
             const uid = Number(/^FETCH (\d+)/.exec(rest)?.[1]);
             const source = sources[uid - 1];
             if (source) {
-                if (rest.includes("BODY")) {
+                if (/BODY(?:\.PEEK)?\[\]/.test(rest)) {
                     socket.write(
                         `* ${uid} FETCH (UID ${uid} BODY[]<0> {${source.length}}\r\n`,
                     );
                     socket.write(source);
                     socket.write(")\r\n");
                 } else {
-                    const person = '((NIL NIL "friend" "example.com"))';
-                    socket.write(
-                        `* ${uid} FETCH (UID ${uid} RFC822.SIZE ${source.length} ENVELOPE ("Tue, 3 Nov 2026 12:00:00 +0000" "Real IMAP" ${person} ${person} ${person} ((NIL NIL "me" "example.com")) NIL NIL NIL "<${uid}@example.com>"))\r\n`,
+                    const person =
+                        '(("Friend Example" NIL "friend" "example.com"))';
+                    const headers = Buffer.from(
+                        "References: <root@example.com> <parent@example.com>\r\n\r\n",
                     );
+                    const structure =
+                        '(("TEXT" "PLAIN" ("CHARSET" "UTF-8") NIL NIL "7BIT" 16 1)("APPLICATION" "PDF" ("NAME" "report.pdf") NIL NIL "BASE64" 12 NIL ("ATTACHMENT" ("FILENAME" "report.pdf"))) "MIXED" ("BOUNDARY" "mailtest"))';
+                    socket.write(
+                        `* ${uid} FETCH (UID ${uid} RFC822.SIZE ${source.length} ENVELOPE ("Tue, 3 Nov 2026 12:00:00 +0000" "Real IMAP" ${person} ${person} ${person} ((NIL NIL "me" "example.com")) NIL NIL NIL "<${uid}@example.com>") BODYSTRUCTURE ${structure} BODY[HEADER.FIELDS (REFERENCES)] {${headers.length}}\r\n`,
+                    );
+                    socket.write(headers);
+                    socket.write(")\r\n");
                 }
             }
         } else if (command === "IDLE") {
@@ -163,7 +171,11 @@ const smtp = serve("220 localhost test SMTP\r\n", (socket, line) => {
         socket.write("250 OK\r\n");
     else throw new Error(`unexpected SMTP command ${command}`);
 });
-const actor = { id: "me@example.com", type: "person" };
+const actor = {
+    id: "me@example.com",
+    type: "person",
+    name: "Sockethub Sender",
+};
 const job = (type, object) => ({
     "@context": [],
     type,
@@ -229,6 +241,14 @@ try {
     assert.equal(fetched.items.length, 1);
     assert.match(fetched.items[0].object.content, /Hello over TLS/);
     assert.equal(fetched.cursors.INBOX.uidValidity, "7");
+    assert.deepEqual(fetched.items[0].object.references, [
+        "<root@example.com>",
+        "<parent@example.com>",
+    ]);
+    assert.deepEqual(fetched.items[0].object.attachments, [
+        { filename: "report.pdf", contentType: "application/pdf" },
+    ]);
+    assert.equal(fetched.items[0].actor.name, "Friend Example");
     await call((done) =>
         platform.watch(job("watch", { to: [actor.id] }), done),
     );
@@ -255,6 +275,7 @@ try {
     assert.deepEqual(sent.object.rejected, ["bad@example.com"]);
     assert.equal(submissions.length, 1);
     assert.match(submissions[0], /Hello over SMTP/);
+    assert.match(submissions[0], /From: .*Sockethub Sender.*<me@example\.com>/);
     await call((done) => platform.disconnect(job("disconnect"), done));
     console.log(`Email TLS fetch/watch/send: ok on ${process.version}`);
 } finally {

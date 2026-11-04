@@ -15,6 +15,10 @@ export interface EmailCredentials extends CredentialsObject {
         from: string;
     };
 }
+export interface EmailAttachment {
+    filename?: string;
+    contentType: string;
+}
 export interface Cursor {
     uidValidity: string;
     uid: number;

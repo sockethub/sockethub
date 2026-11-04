@@ -19,7 +19,8 @@ type Mail = {
     content?: string;
     folder?: string;
     bodyOmitted?: boolean;
-    from?: { address?: string }[];
+    from?: { address?: string; name?: string }[];
+    attachments?: { filename?: string; contentType: string }[];
     to?: { address?: string }[];
 };
 type EmailResponse = AnyActivityStream & {
@@ -33,6 +34,7 @@ type EmailResponse = AnyActivityStream & {
     };
 };
 let address = $state("");
+let displayName = $state("");
 let servers = $state([
     {
         kind: "imap",
@@ -81,7 +83,11 @@ const list = (value: string) =>
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean);
-const actor = () => ({ id: submittedActorId ?? address, type: "person" });
+const actor = () => ({
+    id: submittedActorId ?? address,
+    type: "person",
+    ...(displayName ? { name: displayName } : {}),
+});
 
 function filters() {
     return {
@@ -281,6 +287,7 @@ onMount(() => {
         <p class="text-sm text-gray-600">Configure receiving, sending, or both. Leave a server host blank to disable it. Use an app password or an OAuth access token.</p>
         <fieldset disabled={connected || busy} class="space-y-4">
             <FormField label="Your email address" id="email-address" type="email" bind:value={address} />
+            <FormField label="Sender name (optional)" id="email-sender-name" bind:value={displayName} />
             <div class="grid gap-6 md:grid-cols-2">
                 {#each servers as server (server.kind)}
                     <fieldset class="space-y-3 border rounded-lg p-4">
@@ -325,7 +332,14 @@ onMount(() => {
         {#each messages as message (message.id)}
             <article class="border rounded-lg p-4 space-y-2">
                 <h3 class="font-semibold">{message.subject || "(No subject)"}</h3>
-                <p class="text-sm text-gray-600">{message.from?.map(item => item.address).join(", ")} → {message.to?.map(item => item.address).join(", ")} · {message.folder}</p>
+                <p class="text-sm text-gray-600">{message.from?.map(item => item.name ? `${item.name} <${item.address}>` : item.address).join(", ")} → {message.to?.map(item => item.address).join(", ")} · {message.folder}</p>
+                {#if message.attachments?.length}
+                    <ul class="text-sm list-disc pl-5" aria-label="Attachments">
+                        {#each message.attachments as attachment, index (index)}
+                            <li>{attachment.filename || "Unnamed attachment"} ({attachment.contentType})</li>
+                        {/each}
+                    </ul>
+                {/if}
                 {#if message.bodyOmitted}<p class="text-sm">Body omitted because this message exceeds the size limit.</p>{:else}<pre class="whitespace-pre-wrap break-words text-sm">{message.content || "(No plain-text body)"}</pre>{/if}
             </article>
         {/each}

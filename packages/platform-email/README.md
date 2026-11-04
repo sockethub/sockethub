@@ -17,7 +17,7 @@ explicit configuration. The bundled default configuration includes it.
 
 ```javascript
 await sc.ready();
-const actor = { id: 'me@example.com', type: 'person' };
+const actor = { id: 'me@example.com', type: 'person', name: 'Example Sender' };
 const context = sc.contextFor('email');
 
 function emit(event, activity) {
@@ -127,13 +127,21 @@ matching From header does not establish sender authenticity.
 
 Every item is a `post` activity: its actor is the sender, target is your account,
 and object is a `message` containing `id`, `folder`, `uidValidity`, `uid`, `from`,
-`to`, `cc`, `subject`, `messageId`, `inReplyTo`, `published`, `content` (plain text),
-and optional `html`. Treat returned HTML as untrusted when rendering it.
+`to`, `cc`, `subject`, `messageId`, `inReplyTo`, `references` (an array of message
+IDs), `published`, `content` (plain text), and optional `html`. Sender display
+names are retained in `from` and the activity's `actor.name`. Treat returned HTML
+as untrusted when rendering it.
+
+`attachments` lists MIME part metadata as `{ filename?, contentType }`, including
+named inline parts and nested attachments. An attachment without a filename is
+still listed with its media type. Filenames and References are fetched separately
+from the body, so they remain available when `bodyOmitted` is true. Attachment
+contents are never returned.
 
 A request examines up to 500 UID positions per folder and transfers up to 512 KiB
 of source message data across the batch. A page can therefore be empty while
 `hasMore` remains true; continue using its cursors. Messages larger than 256 KiB
-are returned as metadata with `bodyOmitted: true`. Attachments are not returned.
+are returned as metadata with `bodyOmitted: true`. Attachment contents are not returned.
 
 The cursor combines UIDVALIDITY and the last scanned UID. Keep it tied to the
 same mail server, account, and folder: UIDVALIDITY values can overlap across
@@ -195,7 +203,8 @@ console.log(submission.object.accepted, submission.object.rejected);
 ```
 
 Send accepts `to`, optional `cc` and `bcc` arrays, `subject`, `content` (plain text),
-`html`, `inReplyTo`, and a `references` array. At least one body representation and
+`html`, `inReplyTo`, and a `references` array. The outgoing sender display name
+comes from `actor.name` when provided. At least one body representation and
 one To recipient are required. It returns a `send` activity with a `submission`
 object containing `messageId`, `accepted`, `rejected`, and
 `status: "accepted-by-server"`. Acceptance does not guarantee delivery; some
@@ -219,6 +228,11 @@ onboarding, and durable mailbox synchronization are outside this platform's scop
 
 ## Development checks
 
-Run `bun test packages/platform-email/src` for unit tests. After building, run
-`bun run integration:email` for real IMAP fetch/watch and SMTP send against local
-TLS test servers. That check requires `openssl` and no external mail account.
+After `bun install`, run `bun run --filter='@sockethub/platform-email' test` for
+unit tests, including on a clean checkout. This runs the repository's shared
+`build:foundations` preparation first; it does not build the whole monorepo.
+Direct `bun test` assumes those dependencies have already been built.
+
+After `bun run build`, run `bun run integration:email` for real IMAP fetch/watch
+and SMTP send against local TLS test servers. That check requires `openssl` and
+no external mail account.
