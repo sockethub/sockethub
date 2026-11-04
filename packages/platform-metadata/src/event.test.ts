@@ -91,4 +91,53 @@ describe("schemaOrgEvent", () => {
         expect(event?.location).toBe(undefined);
         expect(event?.url).toBe(undefined);
     });
+
+    it("keeps a physical place's website out of the location", () => {
+        const event = schemaOrgEvent({
+            "@type": "Event",
+            name: "x",
+            startDate: "2026-11-09",
+            location: {
+                "@type": "Place",
+                name: "Venue",
+                url: "https://venue.example",
+            },
+        });
+        expect(event?.location).toBe("Venue");
+    });
+
+    it("uses only the URL of a named VirtualLocation", () => {
+        const event = schemaOrgEvent({
+            "@type": "Event",
+            name: "x",
+            startDate: "2026-11-09",
+            location: {
+                "@type": "VirtualLocation",
+                name: "Online",
+                url: "https://zoom.example/j/1",
+            },
+        });
+        expect(event?.location).toBe("https://zoom.example/j/1");
+    });
+
+    it("omits status for unknown or prototype-key values", () => {
+        const at = (eventStatus: string) =>
+            schemaOrgEvent({
+                "@type": "Event",
+                name: "x",
+                startDate: "2026-11-09",
+                eventStatus,
+            })?.status;
+        expect(at("__proto__")).toBe(undefined);
+        expect(at("constructor")).toBe(undefined);
+        expect(at("https://schema.org/EventMovedOnline")).toBe(undefined);
+        expect(at("EventPostponed")).toBe("postponed");
+    });
+
+    it("survives a @graph with hundreds of thousands of nodes", () => {
+        const graph = new Array(300_000).fill({});
+        graph.push({ "@type": "Event", name: "x", startDate: "2026-11-09" });
+        expect(schemaOrgEvent([{ "@graph": graph }])?.name).toBe("x");
+        expect(schemaOrgEvent(new Array(300_000).fill(null))).toBe(undefined);
+    });
 });

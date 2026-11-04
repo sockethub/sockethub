@@ -10,12 +10,13 @@ export interface PageEvent {
 
 const EVENT_FIELD_MAX = 500;
 
-const EVENT_STATUS: Record<string, PageEvent["status"]> = {
-    EventScheduled: "scheduled",
-    EventCancelled: "cancelled",
-    EventPostponed: "postponed",
-    EventRescheduled: "rescheduled",
-};
+// A Map, not an object: page-controlled keys like "__proto__" must miss.
+const EVENT_STATUS = new Map<string, PageEvent["status"]>([
+    ["EventScheduled", "scheduled"],
+    ["EventCancelled", "cancelled"],
+    ["EventPostponed", "postponed"],
+    ["EventRescheduled", "rescheduled"],
+]);
 
 function eventString(value: unknown): string | undefined {
     if (typeof value !== "string") return undefined;
@@ -29,6 +30,7 @@ function eventLocation(value: unknown): string | undefined {
     if (typeof loc === "string") return eventString(loc);
     if (!loc || typeof loc !== "object") return undefined;
     const place = loc as Record<string, unknown>;
+    if (place["@type"] === "VirtualLocation") return eventString(place.url);
     const address = place.address;
     const addressParts =
         typeof address === "string"
@@ -41,7 +43,7 @@ function eventLocation(value: unknown): string | undefined {
     // Sites often repeat the city/region inside streetAddress (Meetup), so
     // skip any part the flattened text already contains.
     const parts: string[] = [];
-    for (const raw of [place.name, ...addressParts, place.url]) {
+    for (const raw of [place.name, ...addressParts]) {
         const part = eventString(raw);
         if (part && !parts.join(", ").includes(part)) parts.push(part);
     }
@@ -62,16 +64,19 @@ function isSchemaOrgEvent(node: Record<string, unknown>): boolean {
  * start date — a half-filled block is worth nothing to a calendar.
  */
 export function schemaOrgEvent(jsonLD: unknown): PageEvent | undefined {
-    const queue: unknown[] = Array.isArray(jsonLD) ? [...jsonLD] : [jsonLD];
-    while (queue.length) {
-        const node = queue.shift();
+    // Page-controlled arrays can be huge: never spread them into push().
+    const queue: unknown[] = [jsonLD];
+    for (let i = 0; i < queue.length; i++) {
+        const node = queue[i];
         if (Array.isArray(node)) {
-            queue.push(...node);
+            for (const child of node) queue.push(child);
             continue;
         }
         if (!node || typeof node !== "object") continue;
         const obj = node as Record<string, unknown>;
-        if (Array.isArray(obj["@graph"])) queue.push(...obj["@graph"]);
+        if (Array.isArray(obj["@graph"])) {
+            for (const child of obj["@graph"]) queue.push(child);
+        }
         if (!isSchemaOrgEvent(obj)) continue;
         const name = eventString(obj.name);
         const startDate = eventString(obj.startDate);
@@ -86,7 +91,7 @@ export function schemaOrgEvent(jsonLD: unknown): PageEvent | undefined {
             endDate: eventString(obj.endDate),
             location: eventLocation(obj.location),
             url: eventString(obj.url),
-            status: statusKey ? EVENT_STATUS[statusKey] : undefined,
+            status: statusKey ? EVENT_STATUS.get(statusKey) : undefined,
         };
     }
     return undefined;
