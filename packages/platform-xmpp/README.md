@@ -338,10 +338,8 @@ without a pending request are delivered as `request-friend`, with the contact
 JID and roster name in `actor`. Items with a mutual (`both`) subscription are
 delivered as a presence `update` with `object.presence` `online`; items with
 a pending inbound request (`from` with `ask="subscribe"`) are delivered as a
-presence `update` with `object.presence` `notauthorized`.
-
-Known limitation: `target.id` on roster activities is an empty string
-([#1359](https://github.com/sockethub/sockethub/issues/1359)).
+presence `update` with `object.presence` `notauthorized`. Every roster
+activity carries this account's bare JID in `target.id`.
 
 ## Features
 
