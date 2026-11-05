@@ -365,7 +365,14 @@ export default class Email implements PersistentPlatformInterface {
         if (terms.length === 1) Object.assign(query, terms[0]);
         else if (terms.length > 1) query.or = terms;
         const uids = await client.search(query, { uid: true });
-        for (const uid of uids || []) {
+        // imapflow returns false when SEARCH fails, including a NO/BAD response
+        // or a mailbox that is no longer selected. An empty array means the
+        // window has no matches; false does not. Treating false as empty
+        // advances the cursor across the scan window and drops those messages.
+        if (!Array.isArray(uids)) {
+            throw new Error("email:search-failed; retry fetch");
+        }
+        for (const uid of uids) {
             const metadata = await client.fetchOne(
                 uid,
                 {
@@ -447,7 +454,7 @@ export default class Email implements PersistentPlatformInterface {
             cursor.uid = uid;
             if (items.length >= limit) break;
         }
-        const last = (uids || []).at(-1);
+        const last = uids.at(-1);
         if (!last || cursor.uid >= last) cursor.uid = end;
         return {
             items,

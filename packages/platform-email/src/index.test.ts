@@ -246,6 +246,34 @@ describe("email platform", () => {
         expect(s.transport.sendMail).toHaveBeenCalledTimes(1);
         expect(s.transport.close).toHaveBeenCalledTimes(1);
     });
+    it("fails a fetch instead of skipping messages when IMAP search fails", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.add(1); s.add(2);
+        s.client.search.mockImplementation(async () => false);
+        await expect(call(done => s.platform.fetch(job("fetch"), done))).rejects.toThrow("email:search-failed");
+        s.client.search.mockImplementation(async (query: SearchObject) => {
+            const [start, end] = String(query.uid).split(":").map(Number);
+            return [...s.messages.keys()].filter(uid => uid >= start && uid <= end);
+        });
+        const result = await call(done => s.platform.fetch(job("fetch"), done)) as ActivityStream & { items: ActivityStream[] };
+        expect(result.items.map(item => item.object?.uid)).toEqual([1, 2]);
+    });
+    it("stops a watch instead of advancing past messages when IMAP search fails", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        await call(done => s.platform.watch(job("watch"), done));
+        const started = await once(s.output, "watch");
+        expect(started[0].error).toBeUndefined();
+        s.client.search.mockImplementation(async () => false);
+        const failed = once(s.output, "watch");
+        s.add(1);
+        s.client.emit("exists");
+        const message = (await failed)[0];
+        expect(message.error).toContain("email:search-failed");
+        expect(s.sent.filter(entry => entry.type === "post")).toHaveLength(0);
+        expect(message.object?.cursor).toBeUndefined();
+    });
     it("advances cursors through empty filtered windows", async () => {
         const s = setup();
         await call(done => s.platform.connect(job("connect"), credentials, done));
