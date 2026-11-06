@@ -427,6 +427,27 @@ distinction clear:
 }
 ```
 
+### Private addresses
+
+The platform refuses to connect to loopback, private, link-local, and cloud
+metadata addresses, using the same address rules as the
+[outbound URL guard](../../docs/configuration.md#outbound-url-guard). To reach
+an IRC server on a private network, set `allowPrivateAddresses` in this
+platform's `packageConfig` entry:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-irc": {
+      "allowPrivateAddresses": true
+    }
+  }
+}
+```
+
+Do not enable it on a server that accepts untrusted clients. Any client could
+then make Sockethub connect to internal services.
+
 ## Messages and CTCP
 
 A normal `send` is a channel or private `PRIVMSG`. The request schema only

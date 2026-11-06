@@ -14,7 +14,8 @@ import type { GetClientCallback } from "./index";
 
 let capturedIrcSocketOptions:
     | {
-          connectOptions?: { rejectUnauthorized: boolean };
+          // biome-ignore lint/suspicious/noExplicitAny: test captures the guarded lookup
+          connectOptions?: { rejectUnauthorized?: boolean; lookup?: any };
           nicknames?: string[];
           username?: string;
       }
@@ -144,6 +145,7 @@ describe("Initialize IRC Platform", () => {
     it("returns a config object", () => {
         expect(platform.config).toEqual({
             connectTimeoutMs: 30000,
+            allowPrivateAddresses: false,
             persist: true,
             requireCredentials: ["connect", "update"],
         });
@@ -1900,7 +1902,42 @@ describe("ircConnect TLS certificate validation", () => {
             },
         });
 
-        expect(capturedIrcSocketOptions?.connectOptions).toBeUndefined();
+        expect(
+            capturedIrcSocketOptions?.connectOptions?.rejectUnauthorized,
+        ).toBeUndefined();
+    });
+
+    it("refuses a private IP literal server before opening a socket", async () => {
+        capturedIrcSocketOptions = undefined;
+        await expect(
+            connect({
+                ...validCredentials,
+                object: { ...validCredentials.object, server: "127.0.0.1" },
+            }),
+        ).rejects.toThrow("blocked non-public address 127.0.0.1");
+        expect(capturedIrcSocketOptions).toBeUndefined();
+        expect(platform.clientConnecting).toBe(false);
+    });
+
+    it("resolves server host names through the guarded lookup", async () => {
+        await connect({
+            ...validCredentials,
+            object: { ...validCredentials.object, server: "localhost" },
+        });
+        const lookup = capturedIrcSocketOptions?.connectOptions?.lookup;
+        const err = await new Promise((resolve) =>
+            lookup("localhost", {}, (e) => resolve(e)),
+        );
+        expect(String(err)).toContain("blocked non-public address");
+    });
+
+    it("allows private servers when the operator opts in", async () => {
+        platform.config.allowPrivateAddresses = true;
+        await connect({
+            ...validCredentials,
+            object: { ...validCredentials.object, server: "127.0.0.1" },
+        });
+        expect(capturedIrcSocketOptions).toBeDefined();
     });
 
     it("registers the actor nick when a rename left the credential nick behind", async () => {

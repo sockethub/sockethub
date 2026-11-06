@@ -223,8 +223,8 @@ passed through to the platform unvalidated.
 #### Outbound URL guard
 
 Feeds, metadata, CalDAV, and CardDAV fetch client-supplied URLs through the
-shared guarded dispatcher in `@sockethub/util`. XMPP applies the same address
-check to the server it connects to. The check runs when the socket
+shared guarded dispatcher in `@sockethub/util`. XMPP and IRC apply the same address
+check to the server they connect to. The check runs when the socket
 connects, including every redirect hop. An address that does not parse is
 refused. A connection is refused when the resolved address is any of:
 
