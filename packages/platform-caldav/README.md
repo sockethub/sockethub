@@ -209,7 +209,8 @@ IANA timezone data.
 The optional `uid` field must not contain `%`, `/`, or `\`; omit it to let
 Sockethub generate a safe UID.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
-a `recipients` array. Tasks support `due`, `status`, `completedTime`, and
+a `recipients` array. Events support `status` (`tentative`, `confirmed`, or
+`cancelled`). Tasks support `due`, `status`, `completedTime`, and
 `percentComplete`.
 
 ### Update and delete

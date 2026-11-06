@@ -139,6 +139,7 @@ const eventObject = {
         startTime: { type: "string", minLength: 10, maxLength: 64 },
         endTime: { type: "string", minLength: 10, maxLength: 64 },
         allDay: { type: "boolean", default: false },
+        status: { enum: ["tentative", "confirmed", "cancelled"] },
     },
 };
 const taskObject = {
