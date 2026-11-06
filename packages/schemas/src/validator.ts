@@ -323,7 +323,8 @@ export function validatePlatformSchema(schema: Schema): string {
 
 /**
  * Register a platform's message or credentials schema with the validators, so
- * local validation uses the same canonical sources as the server. No-op when
+ * local validation uses the same canonical sources as the server. Replaces any
+ * schema already registered for the same platform type. No-op when
  * code generation is unavailable.
  */
 export function addPlatformSchema(schema: Schema, platform_type: string) {
@@ -332,9 +333,9 @@ export function addPlatformSchema(schema: Schema, platform_type: string) {
         return;
     }
     const schemaRef = `${schemaURL}/context/${platform_type}`;
-    if (!instance.getSchema(schemaRef)) {
-        instance.addSchema(schema, schemaRef);
-    }
+    // Replace, not skip: a server may send updated schemas mid-session.
+    instance.removeSchema(schemaRef);
+    instance.addSchema(schema, schemaRef);
 }
 
 /**

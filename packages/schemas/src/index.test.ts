@@ -253,6 +253,14 @@ describe("schemas/src/index.ts", () => {
     });
 
     describe("Adding a PlatformSchema", () => {
+        it("replaces a schema registered again under the same ref", () => {
+            addPlatformSchema({ properties: { a: { type: "string" } } }, "swap/messages");
+            addPlatformSchema({ properties: { a: { type: "number" } } }, "swap/messages");
+            const validate = getPlatformSchema("swap/messages");
+            expect(validate({ a: 1 })).toBe(true);
+            expect(validate({ a: "x" })).toBe(false);
+        });
+
         it("returns the same schema when fetched", () => {
             const platform_type = "test-platform/credentials";
             const compiledSchema = getPlatformSchema(platform_type);
