@@ -246,6 +246,30 @@ describe("email platform", () => {
         expect(s.transport.sendMail).toHaveBeenCalledTimes(1);
         expect(s.transport.close).toHaveBeenCalledTimes(1);
     });
+    it("keeps scanning when a message Date header is not a Date", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.add(1);
+        s.add(2);
+        // imapflow stores an unparseable Date header as the raw string.
+        (s.messages.get(1)!.envelope as { date?: unknown }).date = "not-a-date";
+        const result = await call(done => s.platform.fetch(job("fetch"), done)) as ActivityStream & { items: ActivityStream[]; cursors: { INBOX: { uid: number } } };
+        expect(result.items.map(item => item.object?.uid)).toEqual([1, 2]);
+        expect(result.items[0].object?.published).toBeUndefined();
+        expect(result.cursors.INBOX.uid).toBe(2);
+    });
+    it("omits an Invalid Date and still returns the following message", async () => {
+        const s = setup();
+        await call(done => s.platform.connect(job("connect"), credentials, done));
+        s.add(1);
+        s.add(2);
+        s.messages.get(1)!.envelope!.date = new Date(Number.NaN);
+        s.messages.get(2)!.envelope!.date = new Date("2026-11-06T11:04:25.000Z");
+        const result = await call(done => s.platform.fetch(job("fetch"), done)) as ActivityStream & { items: ActivityStream[] };
+        expect(result.items.map(item => item.object?.uid)).toEqual([1, 2]);
+        expect(result.items[0].object?.published).toBeUndefined();
+        expect(result.items[1].object?.published).toBe("2026-11-06T11:04:25.000Z");
+    });
     it("fails a fetch instead of skipping messages when IMAP search fails", async () => {
         const s = setup();
         await call(done => s.platform.connect(job("connect"), credentials, done));
