@@ -15,6 +15,7 @@ describe("ProcessManager", () => {
     let maxPlatformInstances: number;
     let maxInstancesPerSession: number;
     let maxInstancesPerIp: number;
+    let maxStartsPerIpPerMinute: number;
     let manager: ProcessManager;
 
     function fakePlatforms(persist: boolean) {
@@ -43,6 +44,7 @@ describe("ProcessManager", () => {
         maxPlatformInstances = 0;
         maxInstancesPerSession = 0;
         maxInstancesPerIp = 0;
+        maxStartsPerIpPerMinute = 0;
 
         sandbox
             .stub(PlatformInstance.prototype, "createQueue")
@@ -80,6 +82,7 @@ describe("ProcessManager", () => {
             }
             if (key === "limits:maxInstancesPerSession") return maxInstancesPerSession;
             if (key === "limits:maxInstancesPerIp") return maxInstancesPerIp;
+            if (key === "limits:maxStartsPerIpPerMinute") return maxStartsPerIpPerMinute;
             return realGet(key);
         });
 
@@ -321,6 +324,20 @@ describe("ProcessManager", () => {
         await manager.get("fakeplatform", "d", "socket-d", "10.0.0.2");
         await first.shutdown();
         await manager.get("fakeplatform", "e", "socket-e", "10.0.0.1");
+    });
+
+    it("bounds per-IP start churn even when nothing stays running", async () => {
+        maxStartsPerIpPerMinute = 2;
+        const a = await manager.get("fakeplatform", "a", "s1", "10.0.0.1");
+        expect(await manager.get("fakeplatform", "a", "s1", "10.0.0.1")).toBe(a);
+        await a.shutdown();
+        const b = await manager.get("fakeplatform", "b", "s2", "10.0.0.1");
+        await b.shutdown();
+        await expect(manager.get("fakeplatform", "c", "s3", "10.0.0.1")).rejects.toThrow("start rate");
+        await manager.get("fakeplatform", "c", "s4", "10.0.0.2");
+        const clock = sandbox.useFakeTimers({ now: Date.now() + 60_000, toFake: ["Date"] });
+        await manager.get("fakeplatform", "c", "s3", "10.0.0.1");
+        clock.restore();
     });
 
     it("charges shared instances to each attached session and IP", async () => {

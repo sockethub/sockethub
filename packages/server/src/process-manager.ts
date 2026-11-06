@@ -19,6 +19,9 @@ class ProcessManager {
     private init: IInitObject;
     // per-identifier serialization of ensureProcess runs; see ensureProcess()
     private readonly ensureChains = new Map<string, Promise<void>>();
+    // persistent instance starts per client IP in the current minute
+    private readonly startsPerIp = new Map<string, number>();
+    private startsWindowBegan = 0;
 
     constructor(
         parentId: string,
@@ -195,6 +198,7 @@ class ProcessManager {
             sessionIp,
             !!reusable,
         );
+        if (!reusable && actor !== undefined) this.assertStartRate(sessionIp);
         let inheritedQueueId: string | undefined;
         if (existing && !reusable) {
             // The replacement created below shares `identifier` and the Redis
@@ -291,6 +295,31 @@ class ProcessManager {
                 `per-address platform instance limit reached (${perIp})`,
             );
         }
+    }
+
+    /**
+     * Instance caps bound how many workers run at once, not how fast a client
+     * can churn them (e.g. replacing credentials forks a fresh worker each
+     * time). Budget new persistent starts per IP, the one key a client cannot
+     * rotate.
+     * shortcut: fixed one-minute window allows a 2x burst at the boundary;
+     * switch to a sliding window if that burst matters.
+     */
+    private assertStartRate(sessionIp?: string): void {
+        const max = Number(config.get("limits:maxStartsPerIpPerMinute") ?? 0);
+        if (!(max > 0) || !sessionIp) return;
+        const now = Date.now();
+        if (now - this.startsWindowBegan >= 60_000) {
+            this.startsPerIp.clear();
+            this.startsWindowBegan = now;
+        }
+        const starts = this.startsPerIp.get(sessionIp) ?? 0;
+        if (starts >= max) {
+            throw new Error(
+                `per-address platform start rate limit reached (${max} per minute)`,
+            );
+        }
+        this.startsPerIp.set(sessionIp, starts + 1);
     }
 
     private isProcessAlive(platformInstance: PlatformInstance): boolean {

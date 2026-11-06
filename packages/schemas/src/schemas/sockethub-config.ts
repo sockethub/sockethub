@@ -300,6 +300,16 @@ export const SockethubConfigSchema = {
                     description:
                         "Maximum persistent instances per client IP, including HTTP actions. 0 disables the cap.",
                 },
+                maxStartsPerIpPerMinute: {
+                    type: "integer",
+                    minimum: 0,
+                    default: 60,
+                    description:
+                        "Maximum new persistent instances a client IP may start per minute, " +
+                        "including HTTP actions. Bounds fork/teardown churn that the " +
+                        "concurrent caps allow. Reusing a running instance does not count. " +
+                        "0 disables the cap.",
+                },
                 maxPlatformInstances: {
                     type: "number",
                     minimum: 0,

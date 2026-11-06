@@ -71,6 +71,7 @@ const OVERLAY: Record<string, OverlayEntry> = {
     "rateLimiter.maxConnectionsPerIp": { format: "nat" },
     "limits.maxInstancesPerSession": { format: "nat" },
     "limits.maxInstancesPerIp": { format: "nat" },
+    "limits.maxStartsPerIpPerMinute": { format: "nat" },
     "limits.maxPlatformInstances": { format: "nat" },
     "credentials.ttlMs": {
         format: "nat",
