@@ -74,7 +74,8 @@ add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
   "limits": {
     "maxPlatformInstances": 100,
     "maxInstancesPerSession": 10,
-    "maxInstancesPerIp": 20
+    "maxInstancesPerIp": 20,
+    "maxStartsPerIpPerMinute": 60
   },
   "credentialCheck": {
     "reconnectIpSource": "socket",
@@ -263,20 +264,25 @@ Protect against event flooding from individual clients:
   "limits": {
     "maxPlatformInstances": 100,
     "maxInstancesPerSession": 10,
-    "maxInstancesPerIp": 20 // Persistent instances per IP
+    "maxInstancesPerIp": 20,       // Persistent instances per IP
+    "maxStartsPerIpPerMinute": 60  // New persistent instances per IP per minute
   }
 }
 ```
 
 **Default limits:** 100 events per second per client, a 5 second block, 20
 concurrent sockets per client IP, 100 persistent platform processes, 10 persistent
-instances per socket session, and 20 persistent instances per client IP.
+instances per socket session, 20 persistent instances per client IP, and 60
+new persistent instances started per client IP per minute.
 
 `maxPlatformInstances` limits persistent workers across the server. IRC and XMPP
 use one process per actor and credential scope. Shared instances count against
 every attached session and IP; reusing the same instance consumes no extra slot.
 An IP remains charged until the worker shuts down, including for HTTP actions
 that have no socket session. Clients behind a shared NAT share the IP quota.
+`maxStartsPerIpPerMinute` bounds how fast one IP can churn workers, for example
+by replacing credentials repeatedly. Reusing a running instance, such as after a
+page refresh, does not count against it.
 
 Stateless platforms (CalDAV, CardDAV, feeds, and metadata) use one shared worker
 per enabled platform and are excluded from these caps, so persistent connections

@@ -19,6 +19,9 @@ class ProcessManager {
     private init: IInitObject;
     // per-identifier serialization of ensureProcess runs; see ensureProcess()
     private readonly ensureChains = new Map<string, Promise<void>>();
+    // persistent instance starts per client IP in the current minute
+    private readonly startsPerIp = new Map<string, number>();
+    private startsWindowBegan = 0;
 
     constructor(
         parentId: string,
@@ -165,6 +168,11 @@ class ProcessManager {
         connectionScope?: ConnectionScope,
     ): Promise<PlatformInstance> {
         const platformConfig = this.init.platforms.get(platform).config;
+        const existing = platformInstances.get(identifier);
+        // Check (without charging) before replacing credentials tears down
+        // the old worker, so a rejected start leaves that connection in place.
+        if (actor !== undefined && !(existing && this.isProcessAlive(existing)))
+            this.assertStartRate(sessionIp, false);
         if (
             platformConfig.persist &&
             platformConfig.shareConnections === false &&
@@ -185,7 +193,6 @@ class ProcessManager {
                     );
             }
         }
-        const existing = platformInstances.get(identifier);
         const reusable = existing && this.isProcessAlive(existing);
         this.assertInstanceCapacity(
             platform,
@@ -217,6 +224,9 @@ class ProcessManager {
                 !!reusable,
             );
         }
+        // Charge only a start that is about to fork; synchronous from here.
+        if (!reusable && actor !== undefined)
+            this.assertStartRate(sessionIp, true);
         const platformInstance = reusable
             ? existing
             : this.createPlatformInstance(
@@ -291,6 +301,34 @@ class ProcessManager {
                 `per-address platform instance limit reached (${perIp})`,
             );
         }
+    }
+
+    /**
+     * Instance caps bound how many workers run at once, not how fast a client
+     * can churn them (e.g. replacing credentials forks a fresh worker each
+     * time). Budget new persistent starts per IP, the one key a client cannot
+     * rotate.
+     * shortcut: fixed one-minute window allows a 2x burst at the boundary;
+     * switch to a sliding window if that burst matters.
+     */
+    private assertStartRate(
+        sessionIp: string | undefined,
+        charge: boolean,
+    ): void {
+        const max = Number(config.get("limits:maxStartsPerIpPerMinute") ?? 0);
+        if (!(max > 0) || !sessionIp) return;
+        const now = Date.now();
+        if (now - this.startsWindowBegan >= 60_000) {
+            this.startsPerIp.clear();
+            this.startsWindowBegan = now;
+        }
+        const starts = this.startsPerIp.get(sessionIp) ?? 0;
+        if (starts >= max) {
+            throw new Error(
+                `per-address platform start rate limit reached (${max} per minute)`,
+            );
+        }
+        if (charge) this.startsPerIp.set(sessionIp, starts + 1);
     }
 
     private isProcessAlive(platformInstance: PlatformInstance): boolean {

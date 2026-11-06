@@ -6,7 +6,7 @@ describe("validateSockethubConfig", () => {
     const base = { platforms: ["@sockethub/platform-feeds"] };
 
     it("requires non-negative integer instance quotas", () => {
-        for (const field of ["maxInstancesPerSession", "maxInstancesPerIp"]) {
+        for (const field of ["maxInstancesPerSession", "maxInstancesPerIp", "maxStartsPerIpPerMinute"]) {
             for (const value of [0, 1, 20]) {
                 expect(validateSockethubConfig({ ...base, limits: { [field]: value } })).toBe("");
             }
