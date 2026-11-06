@@ -133,6 +133,7 @@ export const SockethubConfigSchema = {
                         allowPrivateAddresses: { type: "boolean" },
                         allowInsecureHttp: { type: "boolean" },
                         concurrency: { type: "integer", minimum: 1 },
+                        discoveryCacheTtlMs: { type: "integer", minimum: 0 },
                     },
                 },
                 "@sockethub/platform-caldav": {
@@ -143,6 +144,7 @@ export const SockethubConfigSchema = {
                         allowPrivateAddresses: { type: "boolean" },
                         allowInsecureHttp: { type: "boolean" },
                         concurrency: { type: "integer", minimum: 1 },
+                        discoveryCacheTtlMs: { type: "integer", minimum: 0 },
                     },
                 },
                 "@sockethub/platform-email": {

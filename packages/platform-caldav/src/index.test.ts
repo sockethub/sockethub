@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, spyOn } from "bun:test";
 import type { PlatformSession } from "@sockethub/schemas";
-import { CalDavFailure } from "./dav.js";
+import { CalDavClient, CalDavFailure } from "./dav.js";
 import CalDav, { assertCalendarResource } from "./index.js";
 
 describe("CalDAV resource membership", () => {
@@ -175,4 +175,55 @@ describe("CalDAV read", () => {
 
     // Node-runtime redirect + undici fetch regression: integration/dav-node.integration.mjs
     // (Node 22/24/26 matrix in .github/workflows/integration.yml).
+});
+
+describe("CalDAV discovery cache", () => {
+    const session = {
+        log: { error() {}, warn() {}, info() {}, debug() {} },
+    } as unknown as PlatformSession;
+    const calendar = "https://calendar.example/dav/alice/work/";
+    const credentials = {
+        object: { url: "https://calendar.example/", token: "secret" },
+    } as never;
+
+    function query(platform: CalDav) {
+        return new Promise<unknown>((resolve) =>
+            platform.query(
+                {
+                    type: "query",
+                    actor: { id: "caldav:alice", type: "person" },
+                    target: { id: calendar, type: "calendar" },
+                } as never,
+                credentials,
+                (error) => resolve(error),
+            ),
+        );
+    }
+
+    it("reuses discovery and rediscovers after an authorization failure", async () => {
+        const discover = spyOn(
+            CalDavClient.prototype,
+            "discoverCalendars",
+        ).mockResolvedValue([
+            { id: calendar, type: "calendar", name: "Work", components: [] },
+        ]);
+        const run = spyOn(CalDavClient.prototype, "query").mockResolvedValue(
+            [],
+        );
+        try {
+            const platform = new CalDav(session);
+            expect(await query(platform)).toBeNull();
+            expect(await query(platform)).toBeNull();
+            expect(discover).toHaveBeenCalledTimes(1);
+            run.mockRejectedValueOnce(
+                new CalDavFailure("caldav:authentication-failed"),
+            );
+            expect(await query(platform)).toBe("caldav:authentication-failed");
+            expect(await query(platform)).toBeNull();
+            expect(discover).toHaveBeenCalledTimes(2);
+        } finally {
+            discover.mockRestore();
+            run.mockRestore();
+        }
+    });
 });

@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import { XMLParser } from "fast-xml-parser";
 import { type Agent, fetch as undiciFetch } from "undici";
@@ -164,6 +164,104 @@ export function isDavCollectionChild(
         );
     } catch {
         return false;
+    }
+}
+
+/**
+ * In-process TTL cache for discovered DAV collections. Stateless DAV platforms
+ * run as one long-lived process shared by every session, so a per-process map
+ * is enough. Keys are an HMAC (with a per-process random secret) of the
+ * identity parts, so credentials never appear in keys and cannot be recovered
+ * from them. Concurrent misses for the same key share one pending discovery
+ * however long it takes; the TTL starts when discovery succeeds. A single
+ * unref'd timer removes expired entries, so they never outlive their TTL and
+ * the timer never keeps the process alive.
+ */
+export class DiscoveryCache<T> {
+    private readonly secret = randomBytes(32);
+    private readonly entries = new Map<string, { expires: number; value: T }>();
+    private readonly pending = new Map<string, Promise<T>>();
+    private timer?: ReturnType<typeof setTimeout>;
+    private timerAt = Number.POSITIVE_INFINITY;
+
+    constructor(private readonly maxEntries = 1000) {}
+
+    key(...identity: unknown[]): string {
+        return createHmac("sha256", this.secret)
+            .update(JSON.stringify(identity))
+            .digest("hex");
+    }
+
+    /** Return the cached value for `key`, or run `discover`. `ttlMs <= 0` disables caching. */
+    async get(
+        key: string,
+        ttlMs: number,
+        discover: () => Promise<T>,
+    ): Promise<T> {
+        if (!(ttlMs > 0)) return discover();
+        const hit = this.entries.get(key);
+        if (hit && hit.expires > Date.now()) return hit.value;
+        const inFlight = this.pending.get(key);
+        if (inFlight) return inFlight;
+        const promise = discover();
+        this.pending.set(key, promise);
+        try {
+            const value = await promise;
+            // Skip storing if the key was invalidated while discovery ran.
+            if (this.pending.get(key) === promise)
+                this.store(key, value, Date.now() + ttlMs);
+            return value;
+        } finally {
+            if (this.pending.get(key) === promise) this.pending.delete(key);
+        }
+    }
+
+    delete(key: string): void {
+        this.entries.delete(key);
+        this.pending.delete(key);
+    }
+
+    /** Number of stored (settled, unexpired or not yet swept) entries. */
+    get size(): number {
+        return this.entries.size;
+    }
+
+    private store(key: string, value: T, expires: number): void {
+        this.entries.delete(key);
+        if (this.entries.size >= this.maxEntries) {
+            this.sweep();
+            // Still full: evict the oldest insertion.
+            if (this.entries.size >= this.maxEntries)
+                this.entries.delete(this.entries.keys().next().value as string);
+        }
+        this.entries.set(key, { expires, value });
+        this.schedule(expires);
+    }
+
+    private sweep(): void {
+        const now = Date.now();
+        for (const [key, entry] of this.entries)
+            if (entry.expires <= now) this.entries.delete(key);
+    }
+
+    private schedule(at: number): void {
+        if (this.timer && at >= this.timerAt) return;
+        clearTimeout(this.timer);
+        this.timerAt = at;
+        this.timer = setTimeout(
+            () => {
+                this.timer = undefined;
+                this.timerAt = Number.POSITIVE_INFINITY;
+                this.sweep();
+                let next = Number.POSITIVE_INFINITY;
+                for (const entry of this.entries.values())
+                    next = Math.min(next, entry.expires);
+                if (next !== Number.POSITIVE_INFINITY) this.schedule(next);
+            },
+            // setTimeout treats delays over 2^31-1 ms as 1 ms; the callback reschedules.
+            Math.min(Math.max(0, at - Date.now()), 2_147_483_647),
+        );
+        this.timer.unref?.();
     }
 }
 

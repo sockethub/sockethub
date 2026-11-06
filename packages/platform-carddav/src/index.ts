@@ -1,4 +1,4 @@
-import { isDavCollectionChild } from "@sockethub/dav";
+import { DiscoveryCache, isDavCollectionChild } from "@sockethub/dav";
 import type {
     ActivityStream,
     Logger,
@@ -12,6 +12,7 @@ import { buildCanonicalContext } from "@sockethub/schemas";
 import { CardDavClient, CardDavFailure } from "./dav.js";
 import { PlatformCardDavSchema } from "./schema.js";
 import type {
+    AddressBookDescription,
     CardDavCredentials,
     ContactInput,
     ContactQuery,
@@ -22,13 +23,15 @@ const CONTEXT = buildCanonicalContext(PlatformCardDavSchema.contextUrl);
 
 export default class CardDav implements PlatformInterface {
     private readonly log: Logger;
-    config: StatelessPlatformConfig = {
+    private readonly discovery = new DiscoveryCache<AddressBookDescription[]>();
+    config: StatelessPlatformConfig & { discoveryCacheTtlMs: number } = {
         persist: false,
         requireCredentials: ["fetch", "query", "create", "update", "delete"],
         connectTimeoutMs: 15_000,
         allowPrivateAddresses: false,
         allowInsecureHttp: false,
         concurrency: 10,
+        discoveryCacheTtlMs: 300_000,
     };
 
     constructor(session: PlatformSession) {
@@ -62,7 +65,7 @@ export default class CardDav implements PlatformInterface {
                     items,
                 } as never),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -72,7 +75,7 @@ export default class CardDav implements PlatformInterface {
         done: PlatformCallback,
     ): void {
         const client = this.client(credentials);
-        this.book(client, job.target?.id ?? "")
+        this.book(client, credentials, job.target?.id ?? "")
             .then((book) =>
                 client.query(book, (job.object ?? {}) as ContactQuery),
             )
@@ -86,7 +89,7 @@ export default class CardDav implements PlatformInterface {
                     items,
                 } as never),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -96,10 +99,10 @@ export default class CardDav implements PlatformInterface {
         done: PlatformCallback,
     ): void {
         const client = this.client(credentials);
-        this.book(client, job.target?.id ?? "")
+        this.book(client, credentials, job.target?.id ?? "")
             .then((book) => client.create(book, job.object as ContactInput))
             .then((result) => done(null, this.mutation(job, "create", result)))
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -114,14 +117,14 @@ export default class CardDav implements PlatformInterface {
             uid: string;
             etag: string;
         };
-        this.book(client, job.target?.id ?? "")
+        this.book(client, credentials, job.target?.id ?? "")
             .then((book) => {
                 if (!isDavCollectionChild(book.id, input.id))
                     throw new CardDavFailure("carddav:invalid-resource");
                 return client.update(input);
             })
             .then((result) => done(null, this.mutation(job, "update", result)))
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -132,7 +135,7 @@ export default class CardDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as DeleteInput;
-        this.book(client, job.target?.id ?? "")
+        this.book(client, credentials, job.target?.id ?? "")
             .then((book) => {
                 if (!isDavCollectionChild(book.id, input.id))
                     throw new CardDavFailure("carddav:invalid-resource");
@@ -141,7 +144,7 @@ export default class CardDav implements PlatformInterface {
             .then(() =>
                 done(null, this.mutation(job, "delete", { id: input.id })),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -158,16 +161,27 @@ export default class CardDav implements PlatformInterface {
         );
     }
 
-    private async book(client: CardDavClient, id: string) {
+    private discoveryKey(credentials: CardDavCredentials): string {
+        return this.discovery.key("carddav", credentials.object);
+    }
+
+    private async book(
+        client: CardDavClient,
+        credentials: CardDavCredentials,
+        id: string,
+    ) {
         let normalized: string;
         try {
             normalized = new URL(id).href;
         } catch {
             throw new CardDavFailure("carddav:invalid-address-book");
         }
-        const book = (await client.discoverAddressBooks()).find(
-            (item) => item.id === normalized,
+        const books = await this.discovery.get(
+            this.discoveryKey(credentials),
+            this.config.discoveryCacheTtlMs,
+            () => client.discoverAddressBooks(),
         );
+        const book = books.find((item) => item.id === normalized);
         if (!book) throw new CardDavFailure("carddav:invalid-address-book");
         return book;
     }
@@ -196,7 +210,17 @@ export default class CardDav implements PlatformInterface {
         job: ActivityStream,
         error: unknown,
         done: PlatformCallback,
+        credentials?: CardDavCredentials,
     ): void {
+        // Permissions or collections may have changed: rediscover next time.
+        if (
+            credentials &&
+            error instanceof CardDavFailure &&
+            /:(authentication-failed|not-found|invalid-address-book)$/.test(
+                error.code,
+            )
+        )
+            this.discovery.delete(this.discoveryKey(credentials));
         const code =
             error instanceof CardDavFailure
                 ? error.code

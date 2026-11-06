@@ -12,6 +12,19 @@ including IPv6 embeddings of private ranges and the local-use NAT64 prefix
 Authentication supports Basic, Digest, or a caller-provided Bearer token
 through the standard Sockethub credentials flow.
 
+## Discovery cache
+
+Each `query`, `create`, `update`, and `delete` needs the account's address book list to
+check the target. The platform caches that discovery result in memory for
+`packageConfig.discoveryCacheTtlMs` (default `300000`, 5 minutes; `0`
+disables the cache). Entries are keyed by an HMAC of the protocol, service URL,
+and credentials. The HMAC uses a per-process random secret, and only
+collection metadata is stored. A `fetch` always discovers fresh. Within the TTL,
+an address book added on the server is not visible to targeted actions, and a removed
+one is still accepted as a target (the server then rejects the request). An
+authentication, not-found, or unknown-address-book error drops the entry, so the next
+request rediscovers. The cache is lost when the platform process restarts.
+
 ## Authentication
 
 Send credentials before performing CardDAV actions. Use either a username and
