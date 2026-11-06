@@ -340,6 +340,21 @@ describe("ProcessManager", () => {
         clock.restore();
     });
 
+    it("keeps the old worker when a credential replacement is over the start budget", async () => {
+        maxStartsPerIpPerMinute = 1;
+        const platforms = fakePlatforms(true);
+        platforms.get("fakeplatform").config.shareConnections = false;
+        const privateManager = new ProcessManager("parent", "secret1", "secret2", {
+            version: "0.0.0", platforms,
+        });
+        submitCredentials("s1", "a", { password: "one" });
+        const old = await privateManager.get("fakeplatform", "a", "s1", "10.0.0.1");
+        submitCredentials("s1", "a", { password: "two" });
+        await expect(privateManager.get("fakeplatform", "a", "s1", "10.0.0.1")).rejects.toThrow("start rate");
+        expect(platformInstances.get(old.id)).toBe(old);
+        expect(old.sessions.has("s1")).toBe(true);
+    });
+
     it("charges shared instances to each attached session and IP", async () => {
         maxInstancesPerSession = 1;
         maxInstancesPerIp = 1;

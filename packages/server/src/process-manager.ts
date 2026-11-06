@@ -168,6 +168,11 @@ class ProcessManager {
         connectionScope?: ConnectionScope,
     ): Promise<PlatformInstance> {
         const platformConfig = this.init.platforms.get(platform).config;
+        const existing = platformInstances.get(identifier);
+        // Before replacing credentials tears down the old worker, so a
+        // rejected start leaves that connection in place.
+        if (actor !== undefined && !(existing && this.isProcessAlive(existing)))
+            this.assertStartRate(sessionIp);
         if (
             platformConfig.persist &&
             platformConfig.shareConnections === false &&
@@ -188,7 +193,6 @@ class ProcessManager {
                     );
             }
         }
-        const existing = platformInstances.get(identifier);
         const reusable = existing && this.isProcessAlive(existing);
         this.assertInstanceCapacity(
             platform,
@@ -198,7 +202,6 @@ class ProcessManager {
             sessionIp,
             !!reusable,
         );
-        if (!reusable && actor !== undefined) this.assertStartRate(sessionIp);
         let inheritedQueueId: string | undefined;
         if (existing && !reusable) {
             // The replacement created below shares `identifier` and the Redis
