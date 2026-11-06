@@ -377,7 +377,8 @@ function fold(line: string): string {
     let octets = 0;
     for (const char of line) {
         const size = Buffer.byteLength(char, "utf8");
-        if (octets + size > 75) {
+        // Continuation lines start with a space, which counts toward the 75 octets.
+        if (octets + size > (chunks.length ? 74 : 75)) {
             chunks.push(line.slice(start, end));
             start = end;
             octets = 0;

@@ -72,8 +72,9 @@ describe("vCard", () => {
         ]);
         expect(performance.now() - started).toBeLessThan(500);
         const lines = built.body.split("\r\n");
-        const longest = Math.max(
-            ...lines.map((line) => Buffer.byteLength(line.replace(/^ /, ""))),
+        const longest = lines.reduce(
+            (max, line) => Math.max(max, Buffer.byteLength(line)),
+            0,
         );
         expect(longest).toBe(75);
         expect(
