@@ -35,7 +35,12 @@ describe("createGuardedLookup", () => {
     it("blocks a loopback IPv4 literal", async () => {
         const { err } = await runLookup(false, "127.0.0.1");
         expect(err).toBeInstanceOf(Error);
-        expect(err?.message).toMatch(/blocked non-public address 127\.0\.0\.1/);
+        expect(err?.message).toMatch(/blocked non-public address for 127\.0\.0\.1/);
+    });
+
+    it("does not reveal the resolved address of a blocked hostname", async () => {
+        const { err } = await runLookup(false, "localhost");
+        expect(err?.message).toBe("blocked non-public address for localhost");
     });
 
     it("blocks the cloud metadata address", async () => {
