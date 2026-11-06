@@ -343,8 +343,7 @@ export function buildICalendar(
         );
     if (input.type === "task" && input.due)
         lines.push(temporalLine("DUE", input.due, allDay, input.timeZone));
-    if (input.status)
-        lines.push(`STATUS:${input.status.toUpperCase()}`);
+    if (input.status) lines.push(`STATUS:${input.status.toUpperCase()}`);
     if (input.type === "task" && input.completedTime)
         lines.push(
             `COMPLETED:${utcDateTime(input.completedTime, "completedTime")}`,
