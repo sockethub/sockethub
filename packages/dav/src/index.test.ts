@@ -212,6 +212,54 @@ describe("DiscoveryCache", () => {
         expect(await cache.get("k", 60_000, source.discover)).toEqual([2]);
     });
 
+    it("removes expired entries without another lookup", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        await cache.get("k", 5, counter().discover);
+        expect(cache.size).toBe(1);
+        await Bun.sleep(30);
+        expect(cache.size).toBe(0);
+    });
+
+    it("shares a pending discovery that outlives the TTL", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        let calls = 0;
+        let finish: (value: number[]) => void = () => {};
+        const discover = () => {
+            calls += 1;
+            return new Promise<number[]>((resolve) => {
+                finish = resolve;
+            });
+        };
+        const first = cache.get("k", 1, discover);
+        await Bun.sleep(10);
+        const second = cache.get("k", 1, discover);
+        finish([1]);
+        expect(await Promise.all([first, second])).toEqual([[1], [1]]);
+        expect(calls).toBe(1);
+    });
+
+    it("starts the TTL when discovery succeeds", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        const source = counter();
+        await cache.get("k", 40, async () => {
+            await Bun.sleep(30);
+            return source.discover();
+        });
+        expect(await cache.get("k", 40, source.discover)).toEqual([1]);
+    });
+
+    it("does not store a discovery invalidated while pending", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        const source = counter();
+        const pending = cache.get("k", 60_000, async () => {
+            await Bun.sleep(5);
+            return source.discover();
+        });
+        cache.delete("k");
+        await pending;
+        expect(cache.size).toBe(0);
+    });
+
     it("bounds the number of entries", async () => {
         const cache = new DiscoveryCache<number[]>(2);
         const source = counter();
