@@ -44,6 +44,13 @@ const CONTEXT = buildCanonicalContext(PlatformEmailSchema.contextUrl);
 const MAX_MESSAGE_BYTES = 256 * 1024;
 const MAX_BATCH_BYTES = 512 * 1024;
 const SCAN_WINDOW = 500;
+
+function publishedAt(date: unknown): string | undefined {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime()))
+        return undefined;
+    return date.toISOString();
+}
+
 interface Watch {
     options: WatchOptions;
     folder: string;
@@ -445,7 +452,10 @@ export default class Email implements PersistentPlatformInterface {
                             ? [references]
                             : (references ?? []),
                     attachments: attachmentMetadata(metadata.bodyStructure),
-                    published: envelope.date?.toISOString(),
+                    // imapflow keeps an unparseable Date header as a string.
+                    // Calling toISOString() on it throws, and this runs before
+                    // the cursor moves, so one bad header stalled the mailbox.
+                    published: publishedAt(envelope.date),
                     content: oversized ? "" : (parsed?.text ?? ""),
                     html: oversized ? undefined : parsed?.html || undefined,
                     bodyOmitted: oversized,
