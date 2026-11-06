@@ -17,6 +17,9 @@
     },
     "@sockethub/platform-xmpp": {
       "allowPrivateAddresses": true
+    },
+    "@sockethub/platform-irc": {
+      "allowPrivateAddresses": true
     }
   }
 }

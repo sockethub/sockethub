@@ -16,7 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import net from "node:net";
+import net, { isIP } from "node:net";
 import tls from "node:tls";
 
 import { type IncomingCtcp, IrcToActivityStreams } from "@sockethub/irc2as";
@@ -33,8 +33,8 @@ import type {
     PlatformUpdateActor,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
+import { createGuardedLookup, isBlockedAddress } from "@sockethub/util/net";
 import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
-
 import { PlatformIrcSchema } from "./schema.js";
 import type { PlatformIrcCredentialsObject } from "./types.js";
 
@@ -166,7 +166,8 @@ interface IrcSocketConnectResponse {
 }
 
 interface IrcSocketOptionsConnect {
-    rejectUnauthorized: boolean;
+    rejectUnauthorized?: boolean;
+    lookup?: ReturnType<typeof createGuardedLookup>;
 }
 interface IrcSocketOptions {
     username: string;
@@ -191,6 +192,7 @@ export class IRC implements PersistentPlatformInterface {
         persist: true,
         requireCredentials: ["connect", "update"],
         connectTimeoutMs: 30000,
+        allowPrivateAddresses: false,
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly prepareActorUpdate?: PlatformPrepareActorUpdate;
@@ -772,6 +774,13 @@ export class IRC implements PersistentPlatformInterface {
         ]);
         if (lineBreakError) return cb(lineBreakError);
 
+        // Clients pick the server, so refuse internal hosts (SSRF / port probing).
+        // IP literals skip DNS lookup, so check them here; names go through the guarded lookup.
+        const allowPrivate = this.config.allowPrivateAddresses === true;
+        const host = (credentials.object.server || "").replace(/^\[|\]$/g, "");
+        if (!allowPrivate && isIP(host) !== 0 && isBlockedAddress(host))
+            return cb(`blocked non-public address ${host}`);
+
         this.clientConnecting = true;
         const is_secure =
             typeof credentials.object.secure === "boolean"
@@ -808,13 +817,15 @@ export class IRC implements PersistentPlatformInterface {
                   : 6667,
             debug: console.log,
         };
+        module_options.connectOptions = {
+            lookup: createGuardedLookup(allowPrivate),
+        };
         if (is_secure) {
             // Validate the server's TLS certificate by default. Only disable
             // validation when the caller explicitly opts in via
             // `allowInvalidCert` (e.g. for self-signed IRC networks). See #1056.
-            module_options.connectOptions = {
-                rejectUnauthorized: !credentials.object.allowInvalidCert,
-            };
+            module_options.connectOptions.rejectUnauthorized =
+                !credentials.object.allowInvalidCert;
         }
         if (is_sasl) {
             module_options.saslMechanism = sasl_mechanism;
