@@ -140,10 +140,11 @@ sockethub --help
 sockethub --host 0.0.0.0
 ```
 
-Or run the published Docker image, pointing it at your Redis:
+Or run the published Docker image, pointing it at your Redis (replace
+`redis.example.com`):
 
 ```bash
-docker run -p 10550:10550 -e REDIS_URL=redis://<redis-host>:6379 \
+docker run -p 10550:10550 -e REDIS_URL="redis://redis.example.com:6379" \
   ghcr.io/sockethub/sockethub:next
 ```
 
