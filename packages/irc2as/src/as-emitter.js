@@ -123,7 +123,7 @@ export class ASEmitter {
         this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
     }
 
-    notice(nick, content, from) {
+    notice(nick, content, from, fromUser) {
         // A CTCP frame in a NOTICE is the reply to a request we sent. It
         // is not a chat message, so never hand it to the client as one.
         const ctcp = parseCtcp(content);
@@ -134,16 +134,15 @@ export class ASEmitter {
         this.emitEvent(EVENT_INCOMING, {
             "@context": this.contexts,
             type: "send",
-            actor: {
-                type: "service",
-                id: this.server,
-            },
+            actor: fromUser
+                ? { type: "person", id: `${from}@${this.server}`, name: from }
+                : { type: "service", id: this.server },
             object: {
                 type: "message",
                 content: content,
             },
             target: {
-                type: "person",
+                type: nick.startsWith("#") ? "room" : "person",
                 id: `${nick}@${this.server}`,
                 name: nick,
             },

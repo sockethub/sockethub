@@ -436,6 +436,8 @@ export class IrcToActivityStreams {
                     pos1,
                     trailingParam(content, pos2),
                     getNickFromServer(server),
+                    // nick!user@host is a user; a bare prefix is the server.
+                    server.includes("!"),
                 );
                 break;
 
