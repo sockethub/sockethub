@@ -64,6 +64,23 @@ describe("vCard", () => {
         ).toBe(name);
     });
 
+    it("folds long preserved lines into 75-octet chunks in linear time", () => {
+        const raw = `X-BLOB:${"é😀a".repeat(1_000_000)}`;
+        const started = performance.now();
+        const built = buildVCard({ type: "person", uid: "u1", name: "Dummy" }, [
+            { raw },
+        ]);
+        expect(performance.now() - started).toBeLessThan(500);
+        const lines = built.body.split("\r\n");
+        const longest = Math.max(
+            ...lines.map((line) => Buffer.byteLength(line.replace(/^ /, ""))),
+        );
+        expect(longest).toBe(75);
+        expect(
+            parseVCard(built.body, "https://dav.example/u1.vcf").preservedProperties,
+        ).toContainEqual({ raw });
+    });
+
     it("writes N list components as comma-separated items and reads them back", () => {
         const built = buildVCard({
             type: "person",
