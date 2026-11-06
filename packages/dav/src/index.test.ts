@@ -4,6 +4,7 @@ import {
     DavClient,
     type DavFetch,
     DavFailure,
+    DiscoveryCache,
     isDavCollectionChild,
     parseDavXml,
 } from "./index.js";
@@ -138,5 +139,85 @@ describe("shared DAV helpers", () => {
             client.request(new URL("https://dav.example/"), { method: "GET" }),
         ).rejects.toEqual(new DavFailure("davtest:authentication-failed"));
         await client.close();
+    });
+});
+
+describe("DiscoveryCache", () => {
+    const counter = () => {
+        let calls = 0;
+        return {
+            discover: async () => [++calls],
+            get calls() {
+                return calls;
+            },
+        };
+    };
+
+    it("discovers once within the TTL and again after expiry", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        const source = counter();
+        const key = cache.key("caldav", { url: "https://a/", token: "t" });
+        expect(await cache.get(key, 60_000, source.discover)).toEqual([1]);
+        expect(await cache.get(key, 60_000, source.discover)).toEqual([1]);
+        expect(source.calls).toBe(1);
+        const short = cache.key("carddav", {});
+        expect(await cache.get(short, 1, source.discover)).toEqual([2]);
+        await Bun.sleep(5);
+        expect(await cache.get(short, 1, source.discover)).toEqual([3]);
+    });
+
+    it("does not cache when the TTL is 0", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        const source = counter();
+        await cache.get("k", 0, source.discover);
+        await cache.get("k", 0, source.discover);
+        expect(source.calls).toBe(2);
+    });
+
+    it("isolates protocols, endpoints and credentials, without plaintext keys", () => {
+        const cache = new DiscoveryCache<number[]>();
+        const credentials = { url: "https://a/", password: "hunter2" };
+        const keys = new Set([
+            cache.key("caldav", credentials),
+            cache.key("carddav", credentials),
+            cache.key("caldav", { ...credentials, url: "https://b/" }),
+            cache.key("caldav", { ...credentials, password: "other" }),
+        ]);
+        expect(keys.size).toBe(4);
+        for (const key of keys) expect(key).toMatch(/^[0-9a-f]{64}$/);
+        // Per-process secret: another cache never derives the same key.
+        expect(new DiscoveryCache().key("caldav", credentials)).not.toBe(
+            cache.key("caldav", credentials),
+        );
+    });
+
+    it("shares one discovery between concurrent misses", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        const source = counter();
+        await Promise.all([
+            cache.get("k", 60_000, source.discover),
+            cache.get("k", 60_000, source.discover),
+        ]);
+        expect(source.calls).toBe(1);
+    });
+
+    it("does not cache failures and supports invalidation", async () => {
+        const cache = new DiscoveryCache<number[]>();
+        const source = counter();
+        await expect(
+            cache.get("k", 60_000, () => Promise.reject(new Error("x"))),
+        ).rejects.toThrow("x");
+        expect(await cache.get("k", 60_000, source.discover)).toEqual([1]);
+        cache.delete("k");
+        expect(await cache.get("k", 60_000, source.discover)).toEqual([2]);
+    });
+
+    it("bounds the number of entries", async () => {
+        const cache = new DiscoveryCache<number[]>(2);
+        const source = counter();
+        for (const key of ["a", "b", "c"])
+            await cache.get(key, 60_000, source.discover);
+        await cache.get("a", 60_000, source.discover);
+        expect(source.calls).toBe(4);
     });
 });

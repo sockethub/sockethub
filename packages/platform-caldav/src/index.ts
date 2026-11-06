@@ -1,3 +1,4 @@
+import { DiscoveryCache } from "@sockethub/dav";
 import type {
     ActivityStream,
     Logger,
@@ -16,6 +17,7 @@ import { parseICalendarFeed } from "./ics.js";
 import { PlatformCalDavSchema } from "./schema.js";
 import type {
     CalDavCredentials,
+    CalendarDescription,
     CalendarObjectInput,
     DeleteInput,
     QueryInput,
@@ -89,13 +91,15 @@ export default class CalDav implements PlatformInterface {
     private readonly log: Logger;
     private readonly fetchImpl: FeedFetch;
     private feedDispatcher?: ReturnType<typeof createGuardedDispatcher>;
-    config: StatelessPlatformConfig = {
+    private readonly discovery = new DiscoveryCache<CalendarDescription[]>();
+    config: StatelessPlatformConfig & { discoveryCacheTtlMs: number } = {
         persist: false,
         requireCredentials: ["fetch", "query", "create", "update", "delete"],
         connectTimeoutMs: 15_000,
         allowPrivateAddresses: false,
         allowInsecureHttp: false,
         concurrency: 10,
+        discoveryCacheTtlMs: 300_000,
     };
 
     constructor(session: PlatformSession, fetchImpl?: FeedFetch) {
@@ -146,7 +150,7 @@ export default class CalDav implements PlatformInterface {
                     items: calendars,
                 } as never),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -189,7 +193,7 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as CalendarObjectInput;
-        this.calendar(client, job.target?.id ?? "")
+        this.calendar(client, credentials, job.target?.id ?? "")
             .then(async (target) => {
                 if (!target.components.includes(input.type)) {
                     throw new CalDavFailure("caldav:unsupported-component");
@@ -214,7 +218,7 @@ export default class CalDav implements PlatformInterface {
                     },
                 });
             })
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -224,7 +228,7 @@ export default class CalDav implements PlatformInterface {
         done: PlatformCallback,
     ): void {
         const client = this.client(credentials);
-        this.calendar(client, job.target?.id ?? "")
+        this.calendar(client, credentials, job.target?.id ?? "")
             .then((calendar) =>
                 client.query(calendar, (job.object ?? {}) as QueryInput),
             )
@@ -238,7 +242,7 @@ export default class CalDav implements PlatformInterface {
                     items,
                 } as never),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -249,7 +253,7 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as CalendarObjectInput;
-        this.calendar(client, job.target?.id ?? "")
+        this.calendar(client, credentials, job.target?.id ?? "")
             .then((calendar) => {
                 this.assertResource(calendar.id, input.id ?? "");
                 const generated = buildICalendar(input);
@@ -270,7 +274,7 @@ export default class CalDav implements PlatformInterface {
                     ),
                 ),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -281,7 +285,7 @@ export default class CalDav implements PlatformInterface {
     ): void {
         const client = this.client(credentials);
         const input = job.object as DeleteInput;
-        this.calendar(client, job.target?.id ?? "")
+        this.calendar(client, credentials, job.target?.id ?? "")
             .then((calendar) => {
                 this.assertResource(calendar.id, input.id);
                 return client.delete(input.id, input.etag);
@@ -292,7 +296,7 @@ export default class CalDav implements PlatformInterface {
                     this.mutationResponse(job, "delete", input.id, input.type),
                 ),
             )
-            .catch((error) => this.fail(job, error, done))
+            .catch((error) => this.fail(job, error, done, credentials))
             .finally(() => client.close().catch(() => {}));
     }
 
@@ -378,16 +382,27 @@ export default class CalDav implements PlatformInterface {
         return url;
     }
 
-    private async calendar(client: CalDavClient, id: string) {
+    private discoveryKey(credentials: CalDavCredentials): string {
+        return this.discovery.key("caldav", credentials.object);
+    }
+
+    private async calendar(
+        client: CalDavClient,
+        credentials: CalDavCredentials,
+        id: string,
+    ) {
         let normalized: string;
         try {
             normalized = new URL(id).href;
         } catch {
             throw new CalDavFailure("caldav:invalid-calendar");
         }
-        const calendar = (await client.discoverCalendars()).find(
-            (item) => item.id === normalized,
+        const calendars = await this.discovery.get(
+            this.discoveryKey(credentials),
+            this.config.discoveryCacheTtlMs,
+            () => client.discoverCalendars(),
         );
+        const calendar = calendars.find((item) => item.id === normalized);
         if (!calendar) throw new CalDavFailure("caldav:invalid-calendar");
         return calendar;
     }
@@ -423,7 +438,17 @@ export default class CalDav implements PlatformInterface {
         job: ActivityStream,
         error: unknown,
         done: PlatformCallback,
+        credentials?: CalDavCredentials,
     ): void {
+        // Permissions or collections may have changed: rediscover next time.
+        if (
+            credentials &&
+            error instanceof CalDavFailure &&
+            /:(authentication-failed|not-found|invalid-calendar)$/.test(
+                error.code,
+            )
+        )
+            this.discovery.delete(this.discoveryKey(credentials));
         const code =
             error instanceof CalDavFailure
                 ? error.code

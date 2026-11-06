@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import { XMLParser } from "fast-xml-parser";
 import { type Agent, fetch as undiciFetch } from "undici";
@@ -164,6 +164,56 @@ export function isDavCollectionChild(
         );
     } catch {
         return false;
+    }
+}
+
+/**
+ * In-process TTL cache for discovered DAV collections. Stateless DAV platforms
+ * run as one long-lived process shared by every session, so a per-process map
+ * is enough. Keys are an HMAC (with a per-process random secret) of the
+ * identity parts, so credentials never appear in keys and cannot be recovered
+ * from them. Concurrent misses for the same key share one discovery promise.
+ */
+export class DiscoveryCache<T> {
+    private readonly secret = randomBytes(32);
+    private readonly entries = new Map<
+        string,
+        { expires: number; value: Promise<T> }
+    >();
+
+    constructor(private readonly maxEntries = 1000) {}
+
+    key(...identity: unknown[]): string {
+        return createHmac("sha256", this.secret)
+            .update(JSON.stringify(identity))
+            .digest("hex");
+    }
+
+    /** Return the cached value for `key`, or run `discover`. `ttlMs <= 0` disables caching. */
+    get(key: string, ttlMs: number, discover: () => Promise<T>): Promise<T> {
+        if (!(ttlMs > 0)) return discover();
+        const now = Date.now();
+        const hit = this.entries.get(key);
+        if (hit && hit.expires > now) return hit.value;
+        this.entries.delete(key);
+        if (this.entries.size >= this.maxEntries) {
+            for (const [k, entry] of this.entries)
+                if (entry.expires <= now) this.entries.delete(k);
+            // Still full: evict the oldest insertion.
+            if (this.entries.size >= this.maxEntries)
+                this.entries.delete(this.entries.keys().next().value as string);
+        }
+        const entry = { expires: now + ttlMs, value: discover() };
+        this.entries.set(key, entry);
+        // Never cache a failure.
+        entry.value.catch(() => {
+            if (this.entries.get(key) === entry) this.entries.delete(key);
+        });
+        return entry.value;
+    }
+
+    delete(key: string): void {
+        this.entries.delete(key);
     }
 }
 

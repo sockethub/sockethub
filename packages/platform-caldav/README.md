@@ -16,6 +16,19 @@ Credentials and OAuth tokens are sent only to the configured origin. Every
 calendar and item target is checked against the authenticated account before
 it is used.
 
+## Discovery cache
+
+Each `query`, `create`, `update`, and `delete` needs the account's calendar list to
+check the target. The platform caches that discovery result in memory for
+`packageConfig.discoveryCacheTtlMs` (default `300000`, 5 minutes; `0`
+disables the cache). Entries are keyed by an HMAC of the protocol, service URL,
+and credentials. The HMAC uses a per-process random secret, and only
+collection metadata is stored. A `fetch` always discovers fresh. Within the TTL,
+a calendar added on the server is not visible to targeted actions, and a removed
+one is still accepted as a target (the server then rejects the request). An
+authentication, not-found, or unknown-calendar error drops the entry, so the next
+request rediscovers. The cache is lost when the platform process restarts.
+
 ## Authentication
 
 Send credentials using either a username and password (normally an app

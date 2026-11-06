@@ -205,7 +205,8 @@ the platform default):
     },
     "@sockethub/platform-caldav": {
       "connectTimeoutMs": 15000,
-      "concurrency": 10
+      "concurrency": 10,
+      "discoveryCacheTtlMs": 300000
     },
     "@sockethub/platform-feeds": {
       "connectTimeoutMs": 5000
