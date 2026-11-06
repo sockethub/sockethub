@@ -179,8 +179,23 @@ describe("iCalendar generation", () => {
             uid: "one",
             name: "One",
             startTime: "2026-08-03T13:00:00Z",
+            status: "confirmed",
             updateSupported: true,
         });
+    });
+
+    it("round-trips event STATUS and drops values invalid for the component", () => {
+        const { body } = buildICalendar({
+            type: "event",
+            name: "Cancelled",
+            startTime: "2026-08-03T15:00:00Z",
+            status: "cancelled",
+        });
+        expect(body).toContain("STATUS:CANCELLED\r\n");
+        expect(parseICalendar(body, "https://calendar.example/c.ics").status).toBe("cancelled");
+        expect(
+            parseICalendar(body.replace("STATUS:CANCELLED", "STATUS:COMPLETED"), "https://calendar.example/c.ics").status,
+        ).toBeUndefined();
     });
 
     it("round-trips literal text and parameter escape sequences", () => {

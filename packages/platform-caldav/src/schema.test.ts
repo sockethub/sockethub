@@ -95,6 +95,14 @@ describe("CalDAV schema", () => {
         ).toBeFalse();
     });
 
+    it("accepts event statuses and rejects task-only statuses on events", () => {
+        const event = { type: "event", name: "Meeting", startTime: "2026-08-03T15:00:00Z" };
+        for (const status of ["tentative", "confirmed", "cancelled"])
+            expect(validateObject({ ...event, status })).toBeTrue();
+        for (const status of ["completed", "needs-action", "in-process"])
+            expect(validateObject({ ...event, status })).toBeFalse();
+    });
+
     it("reads published iCalendar feeds without a calendar target", () => {
         expect(
             validateMessage({

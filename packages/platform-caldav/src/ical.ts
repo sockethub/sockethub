@@ -343,7 +343,7 @@ export function buildICalendar(
         );
     if (input.type === "task" && input.due)
         lines.push(temporalLine("DUE", input.due, allDay, input.timeZone));
-    if (input.type === "task" && input.status)
+    if (input.status)
         lines.push(`STATUS:${input.status.toUpperCase()}`);
     if (input.type === "task" && input.completedTime)
         lines.push(
@@ -373,6 +373,11 @@ function parseDate(value: string): string {
         return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}`;
     return value;
 }
+
+const STATUSES = {
+    event: ["tentative", "confirmed", "cancelled"],
+    task: ["needs-action", "in-process", "completed", "cancelled"],
+};
 
 /**
  * Separate VALARM blocks from the component's own content lines in one
@@ -474,10 +479,10 @@ export function parseICalendar(
     if (component === "task" && due) item.due = parseDate(due.value);
     if (start?.params.VALUE === "DATE") item.allDay = true;
     if (timeZone) item.timeZone = timeZone;
-    if (component === "task" && first("STATUS"))
-        item.status = first(
-            "STATUS",
-        )?.value.toLowerCase() as CalendarItem["status"];
+    const status = first("STATUS")?.value.toLowerCase();
+    // Keep only values valid for this component so a fetched item still passes update validation.
+    if (status && STATUSES[component].includes(status))
+        item.status = status as CalendarItem["status"];
     if (component === "task" && first("COMPLETED"))
         item.completedTime = parseDate(first("COMPLETED")?.value ?? "");
     const percentComplete = Number(first("PERCENT-COMPLETE")?.value);

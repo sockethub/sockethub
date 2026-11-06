@@ -73,7 +73,13 @@ export interface CalendarObjectInput {
     due?: string;
     allDay?: boolean;
     timeZone?: string;
-    status?: "needs-action" | "in-process" | "completed" | "cancelled";
+    status?:
+        | "tentative"
+        | "confirmed"
+        | "needs-action"
+        | "in-process"
+        | "completed"
+        | "cancelled";
     completedTime?: string;
     percentComplete?: number;
     sequence?: number;
