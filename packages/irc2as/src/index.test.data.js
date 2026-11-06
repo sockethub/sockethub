@@ -503,7 +503,7 @@ export const TestData = [
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
         type: "send",
-        actor: { type: "service", id: "localhost" },
+        actor: { type: "person", id: "NickServ@localhost", name: "NickServ" },
         object: {
             type: "message",
             content:
@@ -518,7 +518,7 @@ export const TestData = [
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
         type: "send",
-        actor: { type: "service", id: "localhost" },
+        actor: { type: "person", id: "NickServ@localhost", name: "NickServ" },
         object: {
             type: "message",
             content:
@@ -533,7 +533,7 @@ export const TestData = [
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
         type: "send",
-        actor: { type: "service", id: "localhost" },
+        actor: { type: "person", id: "NickServ@localhost", name: "NickServ" },
         object: {
             type: "message",
             content: "You failed to identify in time for the nickname boo",
@@ -569,7 +569,7 @@ export const TestData = [
             "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
         ],
         type: "send",
-        actor: { type: "service", id: "localhost" },
+        actor: { type: "person", id: "SaslServ@localhost", name: "SaslServ" },
         object: {
             type: "message",
             content:

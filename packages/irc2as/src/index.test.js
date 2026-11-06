@@ -219,6 +219,23 @@ describe("IrcToActivityStreams", () => {
         );
     });
 
+    it("attributes a user NOTICE to the sender, not the server", (done) => {
+        irc2as.events.on("incoming", (stream) => {
+            expect(stream.actor).toEqual({
+                type: "person",
+                id: "mallory@localhost",
+                name: "mallory",
+            });
+            expect(stream.target).toEqual({
+                type: "room",
+                id: "#room@localhost",
+                name: "#room",
+            });
+            done();
+        });
+        irc2as.input(":mallory!m@evil.host NOTICE #room :hello");
+    });
+
     it("leaves a plain message starting with + untouched", (done) => {
         irc2as.events.on("incoming", (stream) => {
             expect(stream.object).toEqual({
