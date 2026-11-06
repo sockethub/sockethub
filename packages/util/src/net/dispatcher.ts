@@ -65,9 +65,10 @@ export function createGuardedLookup(
             if (!allowPrivateAddresses) {
                 for (const { address } of addresses) {
                     if (isBlockedAddress(address)) {
+                        // Never echo the resolved IP: clients would learn internal DNS answers.
                         callback(
                             new Error(
-                                `blocked non-public address ${address} for ${hostname}`,
+                                `blocked non-public address for ${hostname}`,
                             ),
                         );
                         return;
