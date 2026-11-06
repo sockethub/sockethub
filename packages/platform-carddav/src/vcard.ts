@@ -370,18 +370,23 @@ function params(value: ContactValue | ContactAddress): string {
 }
 
 function fold(line: string): string {
+    // Single pass with a running octet count; re-measuring the remainder per chunk was quadratic.
     const chunks: string[] = [];
-    let rest = line;
-    while (Buffer.byteLength(rest, "utf8") > 75) {
-        let end = Math.min(75, rest.length);
-        while (Buffer.byteLength(rest.slice(0, end), "utf8") > 75) end -= 1;
-        const preceding = rest.charCodeAt(end - 1);
-        if (preceding >= 0xd800 && preceding <= 0xdbff) end -= 1;
-        if (end <= 0) throw new Error("unable to fold vCard content line");
-        chunks.push(rest.slice(0, end));
-        rest = rest.slice(end);
+    let start = 0;
+    let end = 0;
+    let octets = 0;
+    for (const char of line) {
+        const size = Buffer.byteLength(char, "utf8");
+        // Continuation lines start with a space, which counts toward the 75 octets.
+        if (octets + size > (chunks.length ? 74 : 75)) {
+            chunks.push(line.slice(start, end));
+            start = end;
+            octets = 0;
+        }
+        octets += size;
+        end += char.length;
     }
-    chunks.push(rest);
+    chunks.push(line.slice(start));
     return chunks.join("\r\n ");
 }
 
