@@ -340,6 +340,17 @@ describe("ProcessManager", () => {
         clock.restore();
     });
 
+    it("does not charge the start budget for requests rejected by instance caps", async () => {
+        maxStartsPerIpPerMinute = 2;
+        maxInstancesPerIp = 1;
+        const a = await manager.get("fakeplatform", "a", "s1", "10.0.0.1");
+        for (const actor of ["b", "c", "d"]) {
+            await expect(manager.get("fakeplatform", actor, "s1", "10.0.0.1")).rejects.toThrow("per-address");
+        }
+        await a.shutdown();
+        await manager.get("fakeplatform", "e", "s1", "10.0.0.1");
+    });
+
     it("keeps the old worker when a credential replacement is over the start budget", async () => {
         maxStartsPerIpPerMinute = 1;
         const platforms = fakePlatforms(true);

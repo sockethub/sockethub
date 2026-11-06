@@ -169,10 +169,10 @@ class ProcessManager {
     ): Promise<PlatformInstance> {
         const platformConfig = this.init.platforms.get(platform).config;
         const existing = platformInstances.get(identifier);
-        // Before replacing credentials tears down the old worker, so a
-        // rejected start leaves that connection in place.
+        // Check (without charging) before replacing credentials tears down
+        // the old worker, so a rejected start leaves that connection in place.
         if (actor !== undefined && !(existing && this.isProcessAlive(existing)))
-            this.assertStartRate(sessionIp);
+            this.assertStartRate(sessionIp, false);
         if (
             platformConfig.persist &&
             platformConfig.shareConnections === false &&
@@ -224,6 +224,9 @@ class ProcessManager {
                 !!reusable,
             );
         }
+        // Charge only a start that is about to fork; synchronous from here.
+        if (!reusable && actor !== undefined)
+            this.assertStartRate(sessionIp, true);
         const platformInstance = reusable
             ? existing
             : this.createPlatformInstance(
@@ -308,7 +311,10 @@ class ProcessManager {
      * shortcut: fixed one-minute window allows a 2x burst at the boundary;
      * switch to a sliding window if that burst matters.
      */
-    private assertStartRate(sessionIp?: string): void {
+    private assertStartRate(
+        sessionIp: string | undefined,
+        charge: boolean,
+    ): void {
         const max = Number(config.get("limits:maxStartsPerIpPerMinute") ?? 0);
         if (!(max > 0) || !sessionIp) return;
         const now = Date.now();
@@ -322,7 +328,7 @@ class ProcessManager {
                 `per-address platform start rate limit reached (${max} per minute)`,
             );
         }
-        this.startsPerIp.set(sessionIp, starts + 1);
+        if (charge) this.startsPerIp.set(sessionIp, starts + 1);
     }
 
     private isProcessAlive(platformInstance: PlatformInstance): boolean {
