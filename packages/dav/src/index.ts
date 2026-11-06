@@ -258,7 +258,8 @@ export class DiscoveryCache<T> {
                     next = Math.min(next, entry.expires);
                 if (next !== Number.POSITIVE_INFINITY) this.schedule(next);
             },
-            Math.max(0, at - Date.now()),
+            // setTimeout treats delays over 2^31-1 ms as 1 ms; the callback reschedules.
+            Math.min(Math.max(0, at - Date.now()), 2_147_483_647),
         );
         this.timer.unref?.();
     }

@@ -20,9 +20,9 @@ check the target. The platform caches that discovery result in memory for
 disables the cache). Entries are keyed by an HMAC of the protocol, service URL,
 and credentials. The HMAC uses a per-process random secret, and only
 collection metadata is stored. A `fetch` always discovers fresh. Within the TTL,
-a address book added on the server is not visible to targeted actions, and a removed
+an address book added on the server is not visible to targeted actions, and a removed
 one is still accepted as a target (the server then rejects the request). An
-authentication, not-found, or unknown-address book error drops the entry, so the next
+authentication, not-found, or unknown-address-book error drops the entry, so the next
 request rediscovers. The cache is lost when the platform process restarts.
 
 ## Authentication
