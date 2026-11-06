@@ -140,8 +140,15 @@ sockethub --help
 sockethub --host 0.0.0.0
 ```
 
-Or run with Docker (`docker compose up sockethub`), which builds and runs the
-server on Node.js.
+Or run the published Docker image, pointing it at your Redis:
+
+```bash
+docker run -p 10550:10550 -e REDIS_URL=redis://<redis-host>:6379 \
+  ghcr.io/sockethub/sockethub:next
+```
+
+`docker-compose.yml` is the dev/CI harness. Its config turns off the SSRF
+guard, so do not use it to deploy.
 
 ### Develop from source
 

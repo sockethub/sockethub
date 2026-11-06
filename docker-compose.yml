@@ -15,7 +15,8 @@ services:
             - ./integration/sockethub.ci.config.json:/app/sockethub.ci.config.json:ro
             - ./integration/prosody/certs/test.crt:/app/xmpp-test.crt:ro
         ports:
-            - "10550:10550"
+            # Loopback only: the CI config above disables the SSRF guard.
+            - "127.0.0.1:10550:10550"
         networks:
             - sockethub-net
         depends_on:
