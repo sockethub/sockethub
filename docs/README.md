@@ -23,6 +23,7 @@ about using, deploying, and extending Sockethub.
   * **[CardDAV](../packages/platform-carddav/README.md)** - address books
   * **[Messenger](../packages/platform-messenger/README.md)** - outgoing Facebook Page messages
   * **[Instagram](../packages/platform-instagram/README.md)** - outgoing professional-account messages
+  * **[WhatsApp](../packages/platform-whatsapp/README.md)** - outgoing WhatsApp Business messages
   * **[Dummy](../packages/platform-dummy/README.md)** - echo platform for tests
 
 ### For Platform Developers

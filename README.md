@@ -107,6 +107,7 @@ example, an XMPP friend request can be modeled as `request-friend`,
 * **[CalDAV](packages/platform-caldav)** - Calendar and task synchronization
 * **[Messenger](packages/platform-messenger)** - Outgoing Facebook Page text messages
 * **[Instagram](packages/platform-instagram)** - Outgoing professional-account text messages
+* **[WhatsApp](packages/platform-whatsapp)** - Outgoing WhatsApp Business text messages
 * **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[IRC](packages/platform-irc)** - Internet Relay Chat protocol support
 * **[XMPP](packages/platform-xmpp)** - Extensible Messaging and Presence Protocol
@@ -192,6 +193,7 @@ For debugging and configuration options, see the [Server package documentation](
 * **[@sockethub/platform-caldav](packages/platform-caldav)** - Calendar and task synchronization
 * **[@sockethub/platform-messenger](packages/platform-messenger)** - Outgoing Facebook Page messages
 * **[@sockethub/platform-instagram](packages/platform-instagram)** - Outgoing Instagram messages
+* **[@sockethub/platform-whatsapp](packages/platform-whatsapp)** - Outgoing WhatsApp Business messages
 * **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support
 * **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction

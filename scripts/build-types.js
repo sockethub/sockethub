@@ -64,6 +64,10 @@ const packages = [
         entries: ["src/index.ts"],
     },
     {
+        dir: "packages/platform-whatsapp",
+        entries: ["src/index.ts"],
+    },
+    {
         dir: "packages/platform-metadata",
         entries: ["src/index.ts"],
     },
