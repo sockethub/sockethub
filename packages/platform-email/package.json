@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-email",
   "description": "IMAP receiving and SMTP sending for Sockethub",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "type": "module",
   "private": false,
   "license": "LGPL-3.0+",
@@ -36,8 +36,8 @@
     "test:integration": "node ../../integration/email-node.integration.mjs"
   },
   "dependencies": {
-    "@sockethub/schemas": "^3.0.0-beta.2",
-    "@sockethub/util": "^1.0.0-beta.2",
+    "@sockethub/schemas": "^3.0.0-beta.3",
+    "@sockethub/util": "^1.0.0-beta.3",
     "imapflow": "^1.7.8",
     "mailparser": "^3.14.1",
     "nodemailer": "^10.3.1"
@@ -48,7 +48,7 @@
     "@types/nodemailer": "^7.0.0"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-beta.2"
+    "@sockethub/server": "^5.0.0-beta.3"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
@@ -56,5 +56,5 @@
     }
   },
   "types": "./dist/index.d.ts",
-  "gitHead": "1f74d4e07311496f0acc021855137bc197d79eab"
+  "gitHead": "bc04522d60d1e2fa1b3098b339897de62c3b0549"
 }

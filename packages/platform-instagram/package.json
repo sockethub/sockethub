@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-instagram",
   "description": "Outgoing text messages through the Meta Instagram API",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "type": "module",
   "private": false,
   "license": "LGPL-3.0+",
@@ -30,18 +30,18 @@
     "test": "bun test src/"
   },
   "dependencies": {
-    "@sockethub/schemas": "^3.0.0-beta.2"
+    "@sockethub/schemas": "^3.0.0-beta.3"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-beta.2"
+    "@sockethub/server": "^5.0.0-beta.3"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
   },
-  "gitHead": "1f74d4e07311496f0acc021855137bc197d79eab"
+  "gitHead": "bc04522d60d1e2fa1b3098b339897de62c3b0549"
 }
