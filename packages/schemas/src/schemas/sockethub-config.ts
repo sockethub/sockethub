@@ -112,6 +112,7 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-metadata",
                 "@sockethub/platform-messenger",
                 "@sockethub/platform-instagram",
+                "@sockethub/platform-whatsapp",
                 "@sockethub/platform-xmpp",
             ],
         },

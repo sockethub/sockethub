@@ -19,6 +19,7 @@
     "@sockethub/platform-irc",
     "@sockethub/platform-messenger",
     "@sockethub/platform-instagram",
+    "@sockethub/platform-whatsapp",
     "@sockethub/platform-xmpp",
     "@sockethub/platform-email"
   ],

@@ -101,6 +101,7 @@
     "@sockethub/platform-irc": "^4.0.0-beta.2",
     "@sockethub/platform-messenger": "^1.0.0-beta.2",
     "@sockethub/platform-metadata": "^1.0.1-beta.2",
+    "@sockethub/platform-whatsapp": "^1.0.0-beta.2",
     "@sockethub/platform-xmpp": "^5.0.0-beta.2"
   },
   "gitHead": "1f74d4e07311496f0acc021855137bc197d79eab",
