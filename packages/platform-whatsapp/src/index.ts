@@ -56,7 +56,12 @@ export default class WhatsApp implements PlatformInterface {
                     body: JSON.stringify({
                         messaging_product: "whatsapp",
                         recipient_type: "individual",
-                        to: job.target.id,
+                        // Digits-only E.164 is valid input, but Meta prepends the
+                        // business number's country calling code when `to` has no
+                        // leading "+", which misdelivers the message.
+                        to: job.target.id.startsWith("+")
+                            ? job.target.id
+                            : `+${job.target.id}`,
                         type: "text",
                         text: { body: job.object.content, preview_url: false },
                     }),

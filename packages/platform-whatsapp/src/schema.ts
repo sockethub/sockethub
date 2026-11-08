@@ -11,7 +11,9 @@ const actor = {
     },
 };
 
-// target: recipient phone number in international format (E.164 digits).
+// target: recipient phone number in international format (E.164).
+// A leading "+" is optional here; send() adds it. Meta treats a missing
+// "+" as a national number and prepends the business country code.
 const target = {
     type: "object",
     required: ["id", "type"],
