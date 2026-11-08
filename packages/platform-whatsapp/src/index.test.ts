@@ -85,11 +85,22 @@ describe("whatsapp outgoing platform", () => {
         expect(done).toHaveBeenCalledTimes(1);
         const result = done.mock.calls[0][1];
         expect(result.object.id).toBe("wamid.1");
+        expect(result.target.id).toBe("+15551234567");
         expect(result.object.content).toBe("Hello");
         expect(new Ajv({ strict: false }).compile(PlatformWhatsAppSchema.responses)(result)).toBeTrue();
         const cleanup = mock();
         platform.cleanup(cleanup);
         expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends digits-only recipients with a leading plus", async () => {
+        const fetchMock = stubFetch(async () => Response.json(accepted));
+        const done = mock();
+        const message = job();
+        message.target = { id: "15551234567", type: "person" };
+        await new WhatsApp(session).send(message, credentials, done);
+        expect(JSON.parse(String(fetchMock.mock.calls[0][1]!.body)).to).toBe("+15551234567");
+        expect(done.mock.calls[0][1].target.id).toBe("15551234567");
     });
 
     it("propagates Meta errors with codes and redacts credentials", async () => {
