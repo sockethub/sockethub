@@ -124,6 +124,10 @@ so those URLs are resolved through preview services built for this purpose:
   datacenter address. Full media still requires authentication. Facebook
   publishes no site name, so `actor.name` and `object.name` fall back to
   `Facebook`.
+* **Amazon product URLs** (storefronts such as `amazon.de` and `amazon.com`,
+  plus `amzn.to`/`a.co` short links) are scraped with WhatsApp's link-preview
+  user agent. Amazon answers other crawlers with a captcha or a generic
+  "Amazon" share card instead of the product's title and image.
 * **Facebook engagement prefixes**: video titles and image alt text often
   start with a localized view or reaction count, such as
   `2.2M views · 21K reactions | …` or `347K views | …`. When the prefix is

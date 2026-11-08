@@ -279,6 +279,52 @@ export function isFacebookUrl(url: string): boolean {
     return FACEBOOK_HOSTS.has(host) || host === "fb.watch";
 }
 
+/** Amazon storefront domains (suffix after `amazon.`) and short-link hosts. */
+const AMAZON_STORE_TLDS = new Set([
+    "com",
+    "ca",
+    "com.mx",
+    "com.br",
+    "co.uk",
+    "de",
+    "fr",
+    "it",
+    "es",
+    "nl",
+    "se",
+    "pl",
+    "com.be",
+    "com.tr",
+    "ie",
+    "ae",
+    "sa",
+    "eg",
+    "in",
+    "co.jp",
+    "sg",
+    "com.au",
+    "co.za",
+]);
+const AMAZON_SHORT_HOSTS = new Set(["amzn.to", "amzn.eu", "amzn.asia", "a.co"]);
+
+/**
+ * True for Amazon storefront URLs and their short links. Amazon answers
+ * unrecognized scrapers (our own UA, and the Discordbot compat UA) with a
+ * captcha page or a generic "Amazon" share card; it serves the product's
+ * Open Graph title and image to WhatsApp's link-preview crawler.
+ */
+export function isAmazonUrl(url: string): boolean {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return false;
+    }
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    if (AMAZON_SHORT_HOSTS.has(host)) return true;
+    return host.startsWith("amazon.") && AMAZON_STORE_TLDS.has(host.slice(7));
+}
+
 /**
  * Remove the engagement-stats segment Facebook prepends to video titles:
  * "2.2M views · 21K reactions | <video title> | <author>". The stats are
@@ -460,6 +506,12 @@ export interface RedditPost {
             };
         }>;
     };
+    /** Gallery posts carry no `preview`; their images live here instead. */
+    gallery_data?: { items?: Array<{ media_id?: string }> };
+    media_metadata?: Record<
+        string,
+        { s?: { u?: string; gif?: string; x?: number; y?: number } }
+    >;
 }
 
 /** Validate and extract the post object from Reddit's listing response. */
@@ -525,7 +577,31 @@ export function redditPostImage(post: RedditPost): PageObject["image"] {
             },
         ];
     }
-    return undefined;
+    return redditGalleryImages(post);
+}
+
+/** Gallery images in their posted order, limited to Reddit-hosted media. */
+function redditGalleryImages(post: RedditPost): PageObject["image"] {
+    const items = post.gallery_data?.items;
+    if (!Array.isArray(items)) return undefined;
+    const images: NonNullable<PageObject["image"]> = [];
+    for (const item of items) {
+        const id = item?.media_id;
+        const source =
+            typeof id === "string" ? post.media_metadata?.[id]?.s : undefined;
+        const url = redditMediaUrl(
+            source?.u ?? source?.gif,
+            new Set(["i.redd.it", "preview.redd.it"]),
+        );
+        if (url) {
+            images.push({
+                url,
+                width: finiteNonNegative(source?.x),
+                height: finiteNonNegative(source?.y),
+            });
+        }
+    }
+    return images.length ? images : undefined;
 }
 
 /** Map Reddit's hosted-video payload to the common page video shape. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
     extractFacebookEmbedImage,
     extractYouTubeDescription,
+    isAmazonUrl,
     isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
@@ -296,6 +297,50 @@ describe("Reddit JSON metadata", () => {
         });
     });
 
+    it("returns gallery images in posted order", () => {
+        const post = {
+            title: "Gallery",
+            url: "https://www.reddit.com/gallery/abc123",
+            gallery_data: {
+                items: [
+                    { media_id: "second" },
+                    { media_id: "unsafe" },
+                    { media_id: "missing" },
+                    { media_id: "first" },
+                ],
+            },
+            media_metadata: {
+                first: {
+                    s: {
+                        u: "https://preview.redd.it/first.png?width=1788&format=png",
+                        x: 1788,
+                        y: 2000,
+                    },
+                },
+                second: { s: { gif: "https://i.redd.it/second.gif" } },
+                unsafe: { s: { u: "https://example.com/evil.png" } },
+            },
+        };
+        expect(redditPostImage(post)).toEqual([
+            {
+                url: "https://i.redd.it/second.gif",
+                width: undefined,
+                height: undefined,
+            },
+            {
+                url: "https://preview.redd.it/first.png?width=1788&format=png",
+                width: 1788,
+                height: 2000,
+            },
+        ]);
+        expect(
+            redditPostImage({
+                title: "Empty",
+                gallery_data: { items: [{ media_id: "x" }] },
+            }),
+        ).toBeUndefined();
+    });
+
     it("rejects untrusted Reddit video and preview URLs", () => {
         const post = {
             title: "Unsafe",
@@ -510,6 +555,27 @@ describe("isFacebookUrl", () => {
         expect(isFacebookUrl("https://notfacebook.com/share")).toBeFalse();
         expect(isFacebookUrl("https://facebook.com.evil.com/x")).toBeFalse();
         expect(isFacebookUrl("not a url")).toBeFalse();
+    });
+});
+
+describe("isAmazonUrl", () => {
+    it("matches Amazon storefronts and short links", () => {
+        for (const url of [
+            "https://amazon.de/-/en/Real-Leather-Press-Jeans-Brown/dp/B00CDR09HW/",
+            "https://www.amazon.com/dp/B0BSHF7WHW",
+            "https://www.amazon.co.uk/dp/B00CDR09HW",
+            "https://amzn.to/3abcDEF",
+            "https://a.co/d/abc",
+        ]) {
+            expect(isAmazonUrl(url)).toBeTrue();
+        }
+    });
+
+    it("ignores lookalike hosts and invalid URLs", () => {
+        expect(isAmazonUrl("https://amazon.evil.com/dp/x")).toBeFalse();
+        expect(isAmazonUrl("https://notamazon.de/dp/x")).toBeFalse();
+        expect(isAmazonUrl("https://aws.amazon.com/s3/")).toBeFalse();
+        expect(isAmazonUrl("not a url")).toBeFalse();
     });
 });
 

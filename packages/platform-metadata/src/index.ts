@@ -17,6 +17,7 @@ import {
     extractFacebookEmbedImage,
     extractYouTubeDescription,
     type FxTwitterStatus,
+    isAmazonUrl,
     isFacebookUrl,
     isRedditUrl,
     normalizeDescription,
@@ -60,6 +61,14 @@ const COMPAT_USER_AGENT =
     "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)";
 
 /**
+ * Amazon serves product Open Graph data to WhatsApp's link-preview crawler
+ * but a captcha or generic share card to other bots, Discordbot included.
+ */
+const AMAZON_USER_AGENT = "WhatsApp/2.23.20.0 A";
+/** Amazon product pages are ~800KB and take 2-3s to arrive before parsing. */
+const AMAZON_SCRAPE_TIMEOUT_MS = 10_000;
+
+/**
  * Cap on the FxTwitter API round-trip. The guarded dispatcher bounds
  * response size but not time — without this, a stalled API request would
  * also stall the scrape fallback.
@@ -70,7 +79,9 @@ const REDDIT_OEMBED_TIMEOUT_MS = 4_000;
 const YOUTUBE_OEMBED_TIMEOUT_MS = 4_000;
 const FACEBOOK_EMBED_TIMEOUT_MS = 4_000;
 const SCRAPE_TIMEOUT_MS = 5_000;
-const REDDIT_JSON_TIMEOUT_MS = 2_500;
+// old.reddit.com routinely takes 1-2.5s; missing this deadline drops the
+// preview to the image-less oEmbed fallback.
+const REDDIT_JSON_TIMEOUT_MS = 5_000;
 const REDDIT_JSON_MAX_BYTES = 1_000_000;
 const DIRECT_IMAGE_PROBE_TIMEOUT_MS = 5_000;
 const FACEBOOK_TRACKING_PARAMS = ["_fb_noscript", "fbclid", "mibextid"];
@@ -607,9 +618,15 @@ export default class Metadata implements PlatformInterface {
             isRedditUrl(job.actor.id) ||
             isFacebookUrl(job.actor.id) ||
             youtubeVideo;
-        const userAgent = useCompatUserAgent
-            ? this.compatUserAgent()
-            : this.userAgent();
+        const amazon = isAmazonUrl(job.actor.id);
+        const scrapeTimeoutMs = amazon
+            ? AMAZON_SCRAPE_TIMEOUT_MS
+            : SCRAPE_TIMEOUT_MS;
+        const userAgent = amazon
+            ? AMAZON_USER_AGENT
+            : useCompatUserAgent
+              ? this.compatUserAgent()
+              : this.userAgent();
         // The server fetches whatever URL a client puts in actor.id, so guard
         // it against SSRF and oversized responses. open-graph-scraper forwards
         // `fetchOptions` to its undici fetch; the guarded dispatcher refuses to
@@ -626,7 +643,7 @@ export default class Metadata implements PlatformInterface {
             // Keep the complete Reddit oEmbed + scrape pipeline within the
             // HTTP action request deadline. OGS uses this for its Undici
             // request signal; spelling it out avoids relying on its default.
-            timeout: SCRAPE_TIMEOUT_MS / 1_000,
+            timeout: scrapeTimeoutMs / 1_000,
             // open-graph-scraper *replaces* (does not merge) the default URL
             // validator settings, so we restate the defaults and only relax
             // require_tld. This lets the scraper accept TLD-less hosts such as
@@ -679,7 +696,7 @@ export default class Metadata implements PlatformInterface {
                       return ogs({ html });
                   })
                 : ogs(options);
-        withDeadline(scrape, SCRAPE_TIMEOUT_MS)
+        withDeadline(scrape, scrapeTimeoutMs)
             .then(async (data) => {
                 let { result } = data;
                 this.log.debug(`scrape completed for ${job.actor.id}`);
