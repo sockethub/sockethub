@@ -139,6 +139,15 @@ describe("scrape user agent", () => {
         await runFetch(makePlatform({ userAgent: "MyDeployment/1.0" }));
         expect(sentUserAgent()).toEqual("MyDeployment/1.0");
     });
+
+    it("scrapes Amazon with WhatsApp's crawler UA and a longer timeout", async () => {
+        await runFetch(
+            makePlatform({ userAgent: "MyDeployment/1.0" }),
+            "https://amazon.de/-/en/Real-Leather-Press-Jeans-Brown/dp/B00CDR09HW/",
+        );
+        expect(sentUserAgent()).toMatch(/^WhatsApp\//);
+        expect(ogsOptions?.timeout).toEqual(10);
+    });
 });
 
 describe("direct image links", () => {
