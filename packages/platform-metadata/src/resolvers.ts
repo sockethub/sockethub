@@ -326,6 +326,56 @@ export function isAmazonUrl(url: string): boolean {
 }
 
 /**
+ * Amazon's mobile-app share links (`/gp/aw/d/<ASIN>`) get a generic "Amazon"
+ * card even for WhatsApp's crawler, while `/dp/<ASIN>` on the same host gets
+ * the product. Returns the `/dp/` URL, or null for any other URL.
+ */
+export function resolveAmazonAppLink(url: string): string | null {
+    if (!isAmazonUrl(url)) return null;
+    const parsed = new URL(url);
+    const asin = parsed.pathname.match(
+        /^\/gp\/aw\/d\/([A-Z0-9]{10})(?:\/|$)/i,
+    )?.[1];
+    return asin ? `${parsed.origin}/dp/${asin}` : null;
+}
+
+/**
+ * Product image from an Amazon desktop product page. Amazon randomly serves
+ * the crawler that page (no product Open Graph tags, only its logo) instead
+ * of the share-card one; the main image is still in `#landingImage`.
+ */
+export function extractAmazonImage(
+    html: string | undefined,
+): string | undefined {
+    const tag = html?.match(/<img[^>]*\bid="landingImage"[^>]*>/)?.[0];
+    return tag?.match(/\bdata-old-hires="(https:[^"]+)"/)?.[1];
+}
+
+/**
+ * Summary from schema.org JSON-LD for pages without a meta description: a
+ * `description`, else a `headline` that isn't just the page title (Wikipedia
+ * puts its short description there, e.g. "1979 studio album by Brian Eno").
+ */
+export function schemaOrgSummary(
+    jsonLD: unknown,
+    title = "",
+): string | undefined {
+    if (!Array.isArray(jsonLD)) return;
+    // Yoast and similar wrap every node in one `@graph` block.
+    const items = jsonLD.flatMap((item) => item?.["@graph"] ?? item);
+    const description = items.find(
+        (item) =>
+            typeof item?.description === "string" && item.description.trim(),
+    )?.description;
+    if (description) return description;
+    for (const item of items) {
+        const headline =
+            typeof item?.headline === "string" ? item.headline.trim() : "";
+        if (headline && !title.includes(headline)) return headline;
+    }
+}
+
+/**
  * Remove the engagement-stats segment Facebook prepends to video titles:
  * "2.2M views · 21K reactions | <video title> | <author>". The stats are
  * localized to the *scraping server's* geo-IP language, so match their
@@ -720,6 +770,22 @@ export function normalizeDescription(value: string): string {
         .replace(/\n{3,}/g, "\n\n");
 }
 
+/** Media attached to an FxTwitter status (or to the status it quotes). */
+interface FxTwitterMedia {
+    photos?: Array<{
+        url?: string;
+        width?: number;
+        height?: number;
+    }>;
+    videos?: Array<{
+        url?: string;
+        thumbnail_url?: string;
+        width?: number;
+        height?: number;
+        duration?: number;
+    }>;
+}
+
 /** Subset of the FxTwitter status API response the platform consumes. */
 export interface FxTwitterStatus {
     code: number;
@@ -730,21 +796,13 @@ export interface FxTwitterStatus {
         author?: {
             name?: string;
             screen_name?: string;
+            avatar_url?: string;
         };
-        media?: {
-            photos?: Array<{
-                url?: string;
-                width?: number;
-                height?: number;
-            }>;
-            videos?: Array<{
-                url?: string;
-                thumbnail_url?: string;
-                width?: number;
-                height?: number;
-                duration?: number;
-            }>;
+        card?: {
+            image?: { url?: string; width?: number; height?: number };
         };
+        quote?: { media?: FxTwitterMedia };
+        media?: FxTwitterMedia;
         article?: {
             title?: string;
             preview_text?: string;
@@ -820,11 +878,22 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
         (author.name && author.screen_name
             ? `${author.name} (@${author.screen_name}) on X`
             : (author.name ?? "Post on X"));
-    const photo = tweet.media?.photos?.[0];
-    const video = tweet.media?.videos?.[0];
+    // A quote post's own media is usually empty; the quoted post's is what
+    // X's own card shows. Link cards and the author avatar come last.
+    const media =
+        tweet.media?.photos?.length || tweet.media?.videos?.length
+            ? tweet.media
+            : tweet.quote?.media;
+    const photo = media?.photos?.[0];
+    const video = media?.videos?.[0];
     const articleImage = article?.cover_media?.media_info;
+    const card = tweet.card?.image;
     const imageUrl =
-        articleImage?.original_img_url ?? photo?.url ?? video?.thumbnail_url;
+        articleImage?.original_img_url ??
+        photo?.url ??
+        video?.thumbnail_url ??
+        card?.url ??
+        author.avatar_url;
     const page: PageObject = {
         type: "page",
         title,
@@ -850,11 +919,13 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
                 width:
                     articleImage?.original_img_width ??
                     photo?.width ??
-                    video?.width,
+                    video?.width ??
+                    card?.width,
                 height:
                     articleImage?.original_img_height ??
                     photo?.height ??
-                    video?.height,
+                    video?.height ??
+                    card?.height,
             },
         ];
     }

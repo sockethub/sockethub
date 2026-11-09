@@ -1177,6 +1177,56 @@ describe("twitter status resolution", () => {
     });
 });
 
+describe("non-HTML links", () => {
+    it("returns a filename card instead of an error for a PDF", async () => {
+        ogsBehavior = () =>
+            Promise.reject({ result: { error: "Must scrape an HTML page" } });
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "http://example.com/pdfs/czech%20prefixes.pdf",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual("czech prefixes.pdf");
+    });
+
+    it("keeps a malformed escape in the filename instead of throwing", async () => {
+        ogsBehavior = () =>
+            Promise.reject({ result: { error: "Must scrape an HTML page" } });
+        const { err, result } = await runFetch(
+            makePlatform(),
+            "http://example.com/100%zz.pdf",
+        );
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual("100%zz.pdf");
+    });
+
+    it("names the file for a scheme-less URL instead of hanging", async () => {
+        ogsBehavior = () =>
+            Promise.reject({ result: { error: "Must scrape an HTML page" } });
+        const { err, result } = await runFetch(makePlatform(), "example.com/a/b.pdf?x=1");
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual("b.pdf");
+    });
+});
+
+describe("JSON-LD description fallback", () => {
+    it("uses the JSON-LD headline when the page has no description", async () => {
+        ogsBehavior = () =>
+            Promise.resolve({
+                result: {
+                    ogTitle: "SWOT analysis - Wikipedia",
+                    jsonLD: [{ "@type": "Article", headline: "a planning technique" }],
+                },
+            });
+        const { result } = await runFetch(makePlatform());
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.description).toEqual("a planning technique");
+    });
+});
+
 describe("schema.org event", () => {
     beforeEach(() => {
         ogsOptions = undefined;

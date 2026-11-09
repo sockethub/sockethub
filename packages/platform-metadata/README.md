@@ -98,6 +98,11 @@ The platform extracts the following metadata when available:
   flattened to one string, or the virtual location URL), `url`, and `status`
   (`scheduled`, `cancelled`, `postponed`, `rescheduled`). Only present when
   both a name and a start date are declared.
+* **Description fallback**: pages with no meta description use a JSON-LD
+  `description`, else a `headline` not already in the title (Wikipedia's
+  short description, e.g. "1979 studio album by Brian Eno").
+* **Non-HTML links** (PDFs and other files) return a page titled with the
+  file name instead of an error.
 
 ## Site-Specific Handling
 
@@ -108,7 +113,9 @@ so those URLs are resolved through preview services built for this purpose:
   are fetched from the [FxTwitter API](https://github.com/FxEmbed/FxEmbed)
   instead of scraped — X serves only a generic site banner to scrapers. The
   response carries the post's text, its actual photo (or video + poster
-  thumbnail), and the canonical `x.com` URL. If the API is unavailable or the
+  thumbnail), and the canonical `x.com` URL. Posts without their own media
+  use the quoted post's media, then the link card image, then the author's
+  avatar. If the API is unavailable or the
   post can't be resolved, the platform falls back to the regular scrape
   (which still yields the post text).
 * **Reddit post URLs** use `old.reddit.com`'s structured JSON response, avoiding
@@ -127,7 +134,10 @@ so those URLs are resolved through preview services built for this purpose:
 * **Amazon product URLs** (storefronts such as `amazon.de` and `amazon.com`,
   plus `amzn.to`/`a.co` short links) are scraped with WhatsApp's link-preview
   user agent. Amazon answers other crawlers with a captcha or a generic
-  "Amazon" share card instead of the product's title and image.
+  "Amazon" share card instead of the product's title and image. Mobile-app
+  links (`/gp/aw/d/<ASIN>`) are scraped as `/dp/<ASIN>`, which is the only
+  form that gets the product card. When Amazon serves its full desktop page
+  instead, the image comes from the page's main product image.
 * **Facebook engagement prefixes**: video titles and image alt text often
   start with a localized view or reaction count, such as
   `2.2M views · 21K reactions | …` or `347K views | …`. When the prefix is

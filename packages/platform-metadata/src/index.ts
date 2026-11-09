@@ -14,6 +14,7 @@ import { fetch as undiciFetch } from "undici";
 import packageJson from "../package.json" with { type: "json" };
 import { schemaOrgEvent } from "./event";
 import {
+    extractAmazonImage,
     extractFacebookEmbedImage,
     extractYouTubeDescription,
     type FxTwitterStatus,
@@ -29,11 +30,13 @@ import {
     redditPostImage,
     redditPostImages,
     redditPostVideo,
+    resolveAmazonAppLink,
     resolveFacebookEmbed,
     resolveRedditJson,
     resolveRedditMedia,
     resolveTwitterStatus,
     resolveYouTubeOEmbed,
+    schemaOrgSummary,
     stripFacebookEngagement,
     tweetToPageObject,
     type YouTubeOEmbed,
@@ -258,7 +261,8 @@ export default class Metadata implements PlatformInterface {
             this.fetchDirectImage(job, image, cb);
             return;
         }
-        this.scrape(job, cb);
+        const amazonUrl = resolveAmazonAppLink(job.actor.id);
+        this.scrape(job, cb, undefined, amazonUrl ?? job.actor.id);
     }
 
     /**
@@ -783,6 +787,15 @@ export default class Metadata implements PlatformInterface {
                         }
                     }
                 }
+                // Amazon product images live under /images/I/; anything else
+                // (/images/G/) is its generic logo card.
+                const amazonImage =
+                    amazon &&
+                    !result.ogImage?.[0]?.url?.includes("/images/I/") &&
+                    extractAmazonImage(data.html);
+                if (amazonImage) {
+                    result = { ...result, ogImage: [{ url: amazonImage }] };
+                }
                 const embed = reddit ? await redditEmbed : undefined;
                 const youtube = await youtubeEmbed;
                 if (!reddit) job.actor.id = result.ogUrl || job.actor.id;
@@ -814,7 +827,10 @@ export default class Metadata implements PlatformInterface {
                         youtube?.provider_name ??
                         siteName,
                     description: normalizeDescription(
-                        youtubeDescription || result.ogDescription || "",
+                        youtubeDescription ||
+                            result.ogDescription ||
+                            schemaOrgSummary(result.jsonLD, result.ogTitle) ||
+                            "",
                     ),
                     // Reddit increasingly returns a generic site hero as its
                     // OG image. Its optional official oEmbed thumbnail is the
@@ -884,6 +900,35 @@ export default class Metadata implements PlatformInterface {
                     this.log.debug(
                         `using youtube oEmbed fallback for ${job.actor.id}`,
                     );
+                    cb(null, job);
+                    return;
+                }
+                // PDFs and other files: OGS only parses HTML, but the link
+                // still deserves a card naming the file rather than an error.
+                let filename = "";
+                if (/must scrape an html page/i.test(err.message)) {
+                    try {
+                        filename = decodeURIComponent(
+                            new URL(job.actor.id).pathname.split("/").at(-1) ||
+                                "",
+                        );
+                    } catch {
+                        // Scheme-less ID or malformed escape: fall back below.
+                        filename =
+                            job.actor.id
+                                .split(/[?#]/, 1)[0]
+                                .split("/")
+                                .at(-1) || "";
+                    }
+                }
+                if (filename) {
+                    job.object = {
+                        type: "page",
+                        title: filename,
+                        description: "",
+                        url: job.actor.id,
+                        favicon: "/favicon.ico",
+                    };
                     cb(null, job);
                     return;
                 }
