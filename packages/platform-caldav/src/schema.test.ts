@@ -152,6 +152,20 @@ describe("CalDAV schema", () => {
             validateMessage({ type: "sync", actor, target, object: { syncToken: "" } }),
         ).toBeFalse();
         expect(
+            validateMessage({ type: "sync", actor, target, object: { tokenOnly: true } }),
+        ).toBeTrue();
+        expect(
+            validateMessage({
+                type: "sync",
+                actor,
+                target,
+                object: { tokenOnly: true, syncToken: "t1" },
+            }),
+        ).toBeFalse();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { tokenOnly: false } }),
+        ).toBeFalse();
+        expect(
             validateMessage({ type: "sync", actor, target, object: { type: "task" } }),
         ).toBeFalse();
         expect(validateMessage({ type: "sync", actor })).toBeFalse();

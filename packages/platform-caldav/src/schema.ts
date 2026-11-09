@@ -127,7 +127,10 @@ const shared = {
     attendees: { type: "array", maxItems: 1000, items: person },
     reminders: { type: "array", maxItems: 100, items: reminder },
     attachments: { type: "array", maxItems: 100, items: attachment },
+    // Output only; accepted on input so a client can send back a fetched item.
     updateSupported: { type: "boolean" },
+    created: { type: "string", format: "date-time" },
+    lastModified: { type: "string", format: "date-time" },
 };
 const eventObject = {
     type: "object",
@@ -197,10 +200,12 @@ const queryObject = {
     },
 };
 const syncToken = { type: "string", minLength: 1, maxLength: 4096 };
+// `tokenOnly` asks for the current token without listing any items.
 const syncObject = {
     type: "object",
     additionalProperties: false,
-    properties: { syncToken },
+    properties: { syncToken, tokenOnly: { const: true } },
+    not: { required: ["syncToken", "tokenOnly"] },
 };
 const calendarItem = { oneOf: [eventObject, taskObject] };
 const mutationObject = {
@@ -246,6 +251,7 @@ export const PlatformCalDavSchema = {
                     queryObject,
                     // An empty sync object already matches queryObject.
                     { ...syncObject, required: ["syncToken"] },
+                    { ...syncObject, required: ["tokenOnly"] },
                 ],
             },
         },

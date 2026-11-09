@@ -127,6 +127,11 @@ await check("CardDavClient full lifecycle authenticates", async () => {
         // WebDAV Sync reports the delete, and its 403 for an unknown token
         // reaches the caller instead of being read as an auth failure.
         const before = await client.sync(book);
+        const tokenOnly = await client.currentSyncToken(new URL(book.id));
+        assert(
+            typeof tokenOnly === "string" && tokenOnly.length > 0,
+            `no token-only sync token: ${JSON.stringify(tokenOnly)}`,
+        );
         await client.delete(created.id, updated.etag);
         created = undefined;
         const synced = await client.sync(book, before.syncToken);

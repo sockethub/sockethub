@@ -133,7 +133,10 @@ The collection contains calendar objects such as:
 ```
 
 Each returned item contains its resource `id`, `uid`, `etag`, and
-`updateSupported`. Keep the ETag for later update or delete requests. Use date
+`updateSupported`, plus `created` and `lastModified` (UTC) when the resource
+records them; `lastModified` falls back to `DTSTAMP`. These two are output
+only and ignored on create and update. Keep the ETag for later update or
+delete requests. Use date
 ranges for large calendars; responses larger than 10 MiB are rejected.
 
 ### Sync changes
@@ -184,6 +187,15 @@ as `query` results replace the stored copy with the same `id`.
 When `truncated` is `true`, the server limited the result. The returned token
 covers exactly the changes delivered, so store it and sync again until
 `truncated` is `false`.
+
+To track changes without downloading a calendar's history, start from the
+current token instead of an initial sync. Send `"object": { "tokenOnly": true }`
+to get the calendar's current `syncToken` with empty `items` and `removed`,
+then `query` the date range you need, then `sync` with the token on later
+passes. Read the token before the `query`, so nothing changed in between is
+missed. Later syncs still report changes to any item in the calendar,
+including old ones. A server that exposes no token returns
+`caldav:sync-unsupported`.
 
 Calendar resources that hold neither an event nor a task, such as journals, are
 left out of `items`.

@@ -88,6 +88,10 @@ export interface CalendarObjectInput {
     attendees?: PersonInput[];
     reminders?: ReminderInput[];
     attachments?: AttachmentInput[];
+    /** Output only: when the item was created (`CREATED`), in UTC. Ignored on input. */
+    created?: string;
+    /** Output only: when the item last changed (`LAST-MODIFIED`, else `DTSTAMP`), in UTC. Ignored on input. */
+    lastModified?: string;
 }
 
 export interface CalendarItem extends CalendarObjectInput {
@@ -111,6 +115,7 @@ export interface DeleteInput {
 
 export interface SyncInput {
     syncToken?: string;
+    tokenOnly?: true;
 }
 
 export interface CalendarSyncResult {

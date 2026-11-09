@@ -117,4 +117,52 @@ describe("CardDAV sync action", () => {
             sync.mockRestore();
         }
     });
+
+    it("returns only the current token for tokenOnly", async () => {
+        const discover = spyOn(
+            CardDavClient.prototype,
+            "discoverAddressBooks",
+        ).mockResolvedValue([
+            { id: book, type: "addressBook", name: "Contacts" },
+        ]);
+        const sync = spyOn(CardDavClient.prototype, "sync");
+        const current = spyOn(
+            CardDavClient.prototype,
+            "currentSyncToken",
+        ).mockResolvedValue("t9");
+        try {
+            const [error, result] = await new Promise<[unknown, unknown]>(
+                (resolve) =>
+                    new CardDav(session).sync(
+                        {
+                            type: "sync",
+                            actor: { id: "carddav:alice", type: "person" },
+                            target: { id: book, type: "addressBook" },
+                            object: { tokenOnly: true },
+                        } as never,
+                        credentials,
+                        (err, res) => resolve([err, res]),
+                    ),
+            );
+            expect(error).toBeNull();
+            expect(sync).not.toHaveBeenCalled();
+            expect(String(current.mock.calls[0]?.[0])).toBe(book);
+            expect(result).toMatchObject({
+                type: "collection",
+                totalItems: 0,
+                items: [],
+                removed: [],
+                syncToken: "t9",
+                truncated: false,
+            });
+            const validate = new Ajv({ strict: false }).compile(
+                PlatformCardDavSchema.responses,
+            );
+            expect(validate(result)).toBeTrue();
+        } finally {
+            discover.mockRestore();
+            sync.mockRestore();
+            current.mockRestore();
+        }
+    });
 });

@@ -255,6 +255,8 @@ describe("CalDAV sync action", () => {
                     name: "A",
                     etag: '"1"',
                     updateSupported: true,
+                    created: "2024-01-02T03:04:05Z",
+                    lastModified: "2024-02-03T04:05:06Z",
                 },
             ],
             removed: [`${calendar}b.ics`],
@@ -291,6 +293,54 @@ describe("CalDAV sync action", () => {
         } finally {
             discover.mockRestore();
             sync.mockRestore();
+        }
+    });
+
+    it("returns only the current token for tokenOnly", async () => {
+        const discover = spyOn(
+            CalDavClient.prototype,
+            "discoverCalendars",
+        ).mockResolvedValue([
+            { id: calendar, type: "calendar", name: "Work", components: ["event"] },
+        ]);
+        const sync = spyOn(CalDavClient.prototype, "sync");
+        const current = spyOn(
+            CalDavClient.prototype,
+            "currentSyncToken",
+        ).mockResolvedValue("t9");
+        try {
+            const [error, result] = await new Promise<[unknown, unknown]>(
+                (resolve) =>
+                    new CalDav(session).sync(
+                        {
+                            type: "sync",
+                            actor: { id: "caldav:alice", type: "person" },
+                            target: { id: calendar, type: "calendar" },
+                            object: { tokenOnly: true },
+                        } as never,
+                        credentials,
+                        (err, res) => resolve([err, res]),
+                    ),
+            );
+            expect(error).toBeNull();
+            expect(sync).not.toHaveBeenCalled();
+            expect(String(current.mock.calls[0]?.[0])).toBe(calendar);
+            expect(result).toMatchObject({
+                type: "collection",
+                totalItems: 0,
+                items: [],
+                removed: [],
+                syncToken: "t9",
+                truncated: false,
+            });
+            const validate = new Ajv({ strict: false }).compile(
+                PlatformCalDavSchema.responses,
+            );
+            expect(validate(result)).toBeTrue();
+        } finally {
+            discover.mockRestore();
+            sync.mockRestore();
+            current.mockRestore();
         }
     });
 });

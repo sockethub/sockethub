@@ -118,5 +118,19 @@ describe("CardDAV schema", () => {
         expect(
             validateMessage({ type: "sync", actor, target, object: { text: "a" } }),
         ).toBeFalse();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { tokenOnly: true } }),
+        ).toBeTrue();
+        expect(
+            validateMessage({
+                type: "sync",
+                actor,
+                target,
+                object: { tokenOnly: true, syncToken: "t1" },
+            }),
+        ).toBeFalse();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { tokenOnly: false } }),
+        ).toBeFalse();
     });
 });

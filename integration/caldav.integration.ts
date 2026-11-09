@@ -162,13 +162,20 @@ async function exerciseSync(
             throw new Error(`${calendarName} calendar was not discovered`);
         const initial = await client.sync(calendar);
         expect(initial.syncToken).toBeTruthy();
+        // The token read on its own, without listing the calendar.
+        const current = await client.currentSyncToken(new URL(calendar.id));
+        expect(current).toBeTruthy();
 
-        const event = buildICalendar({
-            type: "event",
-            uid: `${runPrefix}-event`,
-            name: "Sync event",
-            startTime: "2026-08-03T15:00:00Z",
-        });
+        const event = buildICalendar(
+            {
+                type: "event",
+                uid: `${runPrefix}-event`,
+                name: "Sync event",
+                startTime: "2026-08-03T15:00:00Z",
+            },
+            new Date(),
+            { created: true },
+        );
         const task = buildICalendar({
             type: "task",
             uid: `${runPrefix}-task`,
@@ -192,6 +199,14 @@ async function exerciseSync(
         const storedEvent = added.items.find((item) => item.uid === event.uid);
         if (!storedTask?.etag || !storedEvent?.etag)
             throw new Error("synced items have no ETag");
+        expect(storedEvent.created).toBeTruthy();
+        expect(storedEvent.lastModified).toBeTruthy();
+
+        const sinceCurrent = await client.sync(calendar, current);
+        expect(sinceCurrent.items.map((item) => item.uid).sort()).toEqual(
+            [event.uid, task.uid].sort(),
+        );
+        expect(sinceCurrent.removed).toEqual([]);
 
         const updated = await client.update(
             storedTask.id,

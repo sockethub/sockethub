@@ -124,6 +124,7 @@ describe("CardDAV incremental sync", () => {
             );
             if (!book) throw new Error("address book was not discovered");
             const initial = await client.sync(book);
+            const tokenOnly = await client.currentSyncToken(new URL(book.id));
             const created = await client.create(book, {
                 type: "person",
                 uid,
@@ -132,6 +133,8 @@ describe("CardDAV incremental sync", () => {
             current = created;
             const added = await client.sync(book, initial.syncToken);
             expect(added.items.map((item) => item.uid)).toEqual([uid]);
+            const sinceTokenOnly = await client.sync(book, tokenOnly);
+            expect(sinceTokenOnly.items.map((item) => item.uid)).toEqual([uid]);
             const stored = added.items[0];
             if (!stored.etag) throw new Error("synced contact has no ETag");
             current = await client.update({
