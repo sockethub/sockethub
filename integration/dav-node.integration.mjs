@@ -124,8 +124,21 @@ await check("CardDavClient full lifecycle authenticates", async () => {
             "update did not rotate ETag",
         );
 
+        // WebDAV Sync reports the delete, and its 403 for an unknown token
+        // reaches the caller instead of being read as an auth failure.
+        const before = await client.sync(book);
         await client.delete(created.id, updated.etag);
         created = undefined;
+        const synced = await client.sync(book, before.syncToken);
+        assert(
+            synced.removed.includes(found.id),
+            `sync did not report the delete: ${JSON.stringify(synced)}`,
+        );
+        const invalid = await client.sync(book, "garbage").catch((e) => e);
+        assert(
+            invalid?.code === "carddav:sync-token-invalid",
+            `expected sync-token-invalid, got ${invalid?.code ?? invalid}`,
+        );
         const remaining = await client.query(book, { text: uid });
         assert(
             !remaining.some((item) => item.uid === uid),

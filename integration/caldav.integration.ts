@@ -1,5 +1,8 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { CalDavClient } from "../packages/platform-caldav/src/dav.js";
+import {
+    CalDavClient,
+    CalDavFailure,
+} from "../packages/platform-caldav/src/dav.js";
 import { buildICalendar } from "../packages/platform-caldav/src/ical.js";
 import type { CalendarDescription } from "../packages/platform-caldav/src/types.js";
 
@@ -135,5 +138,126 @@ describe("CalDAV server compatibility", () => {
             "Sockethub Digest",
             "baikal-digest",
         );
+    });
+});
+
+async function exerciseSync(
+    root: string,
+    calendarName: string,
+    uidPrefix: string,
+): Promise<void> {
+    const runPrefix = `${uidPrefix}-sync-${crypto.randomUUID()}`;
+    const client = new CalDavClient(
+        root,
+        { username: "alice", password: "calendar-test-password" },
+        15_000,
+        { allowPrivateAddresses: true, allowInsecureHttp: true },
+    );
+    const cleanup: Array<{ id: string; etag?: string }> = [];
+    try {
+        const calendar = (await client.discoverCalendars()).find(
+            (item) => item.name === calendarName,
+        );
+        if (!calendar)
+            throw new Error(`${calendarName} calendar was not discovered`);
+        const initial = await client.sync(calendar);
+        expect(initial.syncToken).toBeTruthy();
+
+        const event = buildICalendar({
+            type: "event",
+            uid: `${runPrefix}-event`,
+            name: "Sync event",
+            startTime: "2026-08-03T15:00:00Z",
+        });
+        const task = buildICalendar({
+            type: "task",
+            uid: `${runPrefix}-task`,
+            name: "Sync task",
+        });
+        const createdEvent = await client.create(
+            calendar,
+            event.uid,
+            event.body,
+        );
+        const createdTask = await client.create(calendar, task.uid, task.body);
+        cleanup.push(createdEvent, createdTask);
+
+        const added = await client.sync(calendar, initial.syncToken);
+        expect(added.items.map((item) => item.uid).sort()).toEqual(
+            [event.uid, task.uid].sort(),
+        );
+        expect(added.removed).toEqual([]);
+        expect(added.syncToken).not.toBe(initial.syncToken);
+        const storedTask = added.items.find((item) => item.uid === task.uid);
+        const storedEvent = added.items.find((item) => item.uid === event.uid);
+        if (!storedTask?.etag || !storedEvent?.etag)
+            throw new Error("synced items have no ETag");
+
+        const updated = await client.update(
+            storedTask.id,
+            storedTask.etag,
+            buildICalendar({ ...storedTask, name: "Synced task", sequence: 1 })
+                .body,
+        );
+        await client.delete(storedEvent.id, storedEvent.etag);
+        cleanup.splice(0, cleanup.length, {
+            id: storedTask.id,
+            etag: updated.etag,
+        });
+
+        const changed = await client.sync(calendar, added.syncToken);
+        expect(changed.items.map((item) => [item.uid, item.name])).toEqual([
+            [task.uid, "Synced task"],
+        ]);
+        expect(changed.removed).toEqual([storedEvent.id]);
+        const latest = changed.items[0];
+        cleanup.splice(0, cleanup.length, { id: latest.id, etag: latest.etag });
+
+        await expect(client.sync(calendar, "garbage")).rejects.toEqual(
+            new CalDavFailure("caldav:sync-token-invalid"),
+        );
+    } finally {
+        for (const item of cleanup)
+            if (item.etag)
+                await client.delete(item.id, item.etag).catch(() => {});
+        await client.close();
+    }
+}
+
+describe("CalDAV incremental sync", () => {
+    it("reports additions, changes, and removals against Radicale", async () => {
+        await exerciseSync(radicaleRoot, "Sockethub", "radicale");
+    });
+
+    it("reports additions, changes, and removals against Baikal", async () => {
+        await exerciseSync(baikalRoot, "Sockethub Digest", "baikal");
+    });
+
+    it("reports a server without WebDAV Sync as unsupported", async () => {
+        // Neither test server can turn RFC 6578 off, so stand in for one
+        // that rejects the REPORT the way servers without it commonly do.
+        const server = Bun.serve({
+            port: 0,
+            hostname: "127.0.0.1",
+            fetch: () => new Response("Not Implemented", { status: 501 }),
+        });
+        const base = `http://127.0.0.1:${server.port}/`;
+        const client = new CalDavClient(base, { token: "token" }, 15_000, {
+            allowPrivateAddresses: true,
+            allowInsecureHttp: true,
+        });
+        try {
+            await expect(
+                client.sync({
+                    id: `${base}calendars/alice/work/`,
+                    type: "calendar",
+                    name: "Work",
+                    components: ["event", "task"],
+                }),
+            ).rejects.toEqual(new CalDavFailure("caldav:sync-unsupported"));
+        } finally {
+            await client.close();
+            server.stop(true);
+        }
     });
 });

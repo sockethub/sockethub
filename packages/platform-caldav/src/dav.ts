@@ -5,13 +5,17 @@ import {
     DavFailure,
     type DavNetworkOptions,
     davHref,
-    parseDavXml,
     propertyHref,
     rejectDavResponse,
     successfulProps,
 } from "@sockethub/dav";
 import { isUpdateSupported, parseICalendar } from "./ical.js";
-import type { CalendarDescription, CalendarItem, QueryInput } from "./types.js";
+import type {
+    CalendarDescription,
+    CalendarItem,
+    CalendarSyncResult,
+    QueryInput,
+} from "./types.js";
 
 const DAV_PROPS = `<?xml version="1.0" encoding="utf-8"?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -37,7 +41,23 @@ const queryBody = (query: QueryInput) => `<?xml version="1.0" encoding="utf-8"?>
  <c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="${query.type === "task" ? "VTODO" : "VEVENT"}">${query.startTime || query.endTime ? `<c:time-range${query.startTime ? ` start="${calDavTime(query.startTime)}"` : ""}${query.endTime ? ` end="${calDavTime(query.endTime)}"` : ""}/>` : ""}</c:comp-filter></c:comp-filter></c:filter>
 </c:calendar-query>`;
 
+// Calendar collections may also hold journals or free-busy data; sync skips
+// them because the platform only models events and tasks.
+const HAS_EVENT_OR_TASK = /^BEGIN:(?:VEVENT|VTODO)\r?$/m;
+
 export const CalDavFailure = DavFailure;
+
+function calendarItem(data: string, id: string, etag: unknown): CalendarItem {
+    try {
+        return parseICalendar(
+            data,
+            id,
+            typeof etag === "string" ? etag : undefined,
+        );
+    } catch {
+        throw new CalDavFailure("caldav:invalid-response");
+    }
+}
 
 export class CalDavClient extends DavClient {
     constructor(
@@ -181,39 +201,48 @@ export class CalDavClient extends DavClient {
                 await response.body?.cancel().catch(() => {});
                 throw new CalDavFailure("caldav:query-failed");
             }
-            let parsed: Record<string, unknown>;
-            try {
-                parsed = parseDavXml(await response.text());
-            } catch {
-                throw new CalDavFailure("caldav:invalid-response");
-            }
-            const responses = asArray(
-                (parsed.multistatus as Record<string, unknown> | undefined)
-                    ?.response as
-                    | Record<string, unknown>
-                    | Record<string, unknown>[],
-            );
-            for (const item of responses) {
+            for (const item of await this.readMultistatus(response)) {
                 const props = successfulProps(item);
                 const itemHref = davHref(item.href);
                 const data = props["calendar-data"];
                 if (!itemHref || typeof data !== "string") continue;
-                try {
-                    items.push(
-                        parseICalendar(
-                            data,
-                            new URL(itemHref, calendar.id).href,
-                            typeof props.getetag === "string"
-                                ? props.getetag
-                                : undefined,
-                        ),
-                    );
-                } catch {
-                    throw new CalDavFailure("caldav:invalid-response");
-                }
+                items.push(
+                    calendarItem(
+                        data,
+                        new URL(itemHref, calendar.id).href,
+                        props.getetag,
+                    ),
+                );
             }
         }
         return items;
+    }
+
+    /**
+     * Incremental sync (RFC 6578). Without `syncToken`, lists every event and
+     * task in the calendar; with one, lists only what changed since then.
+     */
+    async sync(
+        calendar: CalendarDescription,
+        syncToken?: string,
+    ): Promise<CalendarSyncResult> {
+        const { resources, ...result } = await this.syncResources(
+            new URL(calendar.id),
+            {
+                namespaces: 'xmlns:c="urn:ietf:params:xml:ns:caldav"',
+                data: "c:calendar-data",
+                multiget: "c:calendar-multiget",
+            },
+            syncToken,
+        );
+        return {
+            ...result,
+            items: resources
+                .filter((resource) => HAS_EVENT_OR_TASK.test(resource.data))
+                .map((resource) =>
+                    calendarItem(resource.data, resource.id, resource.etag),
+                ),
+        };
     }
 
     async update(

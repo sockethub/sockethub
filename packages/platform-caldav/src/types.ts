@@ -108,3 +108,14 @@ export interface DeleteInput {
     type: CalendarComponent;
     etag: string;
 }
+
+export interface SyncInput {
+    syncToken?: string;
+}
+
+export interface CalendarSyncResult {
+    items: CalendarItem[];
+    removed: string[];
+    syncToken: string;
+    truncated: boolean;
+}

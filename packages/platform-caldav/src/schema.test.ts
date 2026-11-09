@@ -141,4 +141,19 @@ describe("CalDAV schema", () => {
             }),
         ).toBeFalse();
     });
+
+    it("accepts sync with or without a token", () => {
+        const target = { id: "https://calendar.example/dav/work/", type: "calendar" };
+        expect(validateMessage({ type: "sync", actor, target })).toBeTrue();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { syncToken: "t1" } }),
+        ).toBeTrue();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { syncToken: "" } }),
+        ).toBeFalse();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { type: "task" } }),
+        ).toBeFalse();
+        expect(validateMessage({ type: "sync", actor })).toBeFalse();
+    });
 });

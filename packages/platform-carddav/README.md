@@ -14,7 +14,7 @@ through the standard Sockethub credentials flow.
 
 ## Discovery cache
 
-Each `query`, `create`, `update`, and `delete` needs the account's address book list to
+Each `query`, `sync`, `create`, `update`, and `delete` needs the account's address book list to
 check the target. The platform caches that discovery result in memory for
 `packageConfig.discoveryCacheTtlMs` (default `300000`, 5 minutes; `0`
 disables the cache). Entries are keyed by an HMAC of the protocol, service URL,
@@ -52,6 +52,8 @@ that endpoint.
 
 - `fetch`: discover address books.
 - `query`: list or search contacts.
+- `sync`: report what changed in one address book since a sync token
+  (RFC 6578 WebDAV Sync).
 - `create`: create a vCard with collision protection.
 - `update`: update a vCard only when its ETag still matches.
 - `delete`: delete a vCard only when its ETag still matches.
@@ -96,6 +98,37 @@ Use `sc.contextFor("carddav")` as the request context.
 }
 ```
 
+### Sync changes
+
+`sync` reports changes without listing the whole address book each time. Send
+it without an `object` for the initial sync, which returns every contact and a
+`syncToken`:
+
+```json
+{
+  "type": "sync",
+  "actor": { "id": "carddav:alice", "type": "person" },
+  "target": {
+    "id": "https://contacts.example/addressbooks/alice/personal/",
+    "type": "addressBook"
+  }
+}
+```
+
+The response is a collection with `items` (contacts in the same shape as
+`query` results), `removed` (ids of contacts deleted since the token),
+`syncToken`, and `truncated`. Store the token as an opaque string per address
+book and send it back as `"object": { "syncToken": "..." }` to receive only
+what changed since then. When `truncated` is `true`, store the new token and
+sync again until it is `false`.
+
+On `carddav:sync-token-invalid`, drop the stored token and sync again without
+one. On `carddav:sync-unsupported`, the server does not offer WebDAV Sync; fall
+back to `query`. Other sync errors are `carddav:sync-failed`. A server that
+rejects a token without a `DAV:` precondition (a 400, 409, or 412) is
+reported as `carddav:sync-token-invalid`, so a retry without a token reports
+the real cause.
+
 ### Create a contact
 
 ```json
@@ -138,4 +171,5 @@ array removes them.
 The initial implementation reads vCard 3.0 and 4.0 and writes vCard 4.0. Stable
 errors use the `carddav:` prefix, including `authentication-failed`,
 `unsupported-authentication`, `invalid-address-book`, `invalid-resource`,
-`conflict`, `not-found`, and `unsupported-update`.
+`conflict`, `not-found`, `unsupported-update`, `sync-token-invalid`,
+`sync-unsupported`, and `sync-failed`.

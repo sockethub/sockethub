@@ -160,3 +160,35 @@ describe("CardDAV client", () => {
         expect(written).toContain("X-SERVER:keep\r\n");
     });
 });
+
+describe("CardDAV sync", () => {
+    it("parses changed contacts and keeps removals", async () => {
+        const card =
+            "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:alice-1\r\nFN:Alice\r\nEND:VCARD\r\n";
+        const bodies: string[] = [];
+        const fetch: DavFetch = async (_url, init) => {
+            bodies.push(String(init.body));
+            return new Response(
+                `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:carddav"><d:response><d:href>/books/alice/a.vcf</d:href><d:propstat><d:prop><d:getetag>"1"</d:getetag><c:address-data>${card}</c:address-data></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/books/alice/b.vcf</d:href><d:status>HTTP/1.1 404 Not Found</d:status></d:response><d:sync-token>t2</d:sync-token></d:multistatus>`,
+                { status: 207 },
+            );
+        };
+        const client = new CardDavClient(
+            "https://contacts.example/",
+            { token: "t" },
+            15_000,
+            { fetch },
+        );
+        const result = await client.sync(
+            { id: "https://contacts.example/books/alice/", type: "addressBook", name: "Contacts" },
+            "t1",
+        );
+        await client.close();
+        expect(bodies[0]).toContain("<c:address-data/>");
+        expect(result.items.map((item) => [item.id, item.uid, item.etag])).toEqual([
+            ["https://contacts.example/books/alice/a.vcf", "alice-1", '"1"'],
+        ]);
+        expect(result.removed).toEqual(["https://contacts.example/books/alice/b.vcf"]);
+        expect(result.syncToken).toBe("t2");
+    });
+});

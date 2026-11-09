@@ -269,3 +269,227 @@ describe("DiscoveryCache", () => {
         expect(source.calls).toBe(4);
     });
 });
+
+describe("DavClient.syncCollection", () => {
+    const collection = new URL("https://dav.example/cal/work/");
+    const multistatus = (inner: string, token = "https://dav.example/sync/2") =>
+        `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">${inner}<d:sync-token>${token}</d:sync-token></d:multistatus>`;
+
+    function client(respond: (body: string) => Response) {
+        const bodies: string[] = [];
+        const fetch: DavFetch = async (_url, init) => {
+            bodies.push(String(init.body));
+            return respond(String(init.body));
+        };
+        return {
+            bodies,
+            client: new DavClient(
+                "https://dav.example/",
+                { token: "token" },
+                "davtest",
+                15_000,
+                { fetch },
+            ),
+        };
+    }
+
+    it("returns changed and removed members with the new token", async () => {
+        const { client: dav, bodies } = client(
+            () =>
+                new Response(
+                    multistatus(`
+<d:response><d:href>/cal/work/</d:href><d:status>HTTP/1.1 507 Insufficient Storage</d:status></d:response>
+<d:response><d:href>/cal/work/a.ics</d:href><d:propstat><d:prop><d:getetag>"1"</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>
+<d:response><d:href>/cal/work/b.ics</d:href><d:status>HTTP/1.1 404 Not Found</d:status></d:response>`),
+                    { status: 207 },
+                ),
+        );
+        const result = await dav.syncCollection(
+            collection,
+            "<d:getetag/>",
+            "https://dav.example/sync/1?a&b",
+        );
+        expect(bodies[0]).toContain(
+            "<d:sync-token>https://dav.example/sync/1?a&amp;b</d:sync-token>",
+        );
+        expect(bodies[0]).toContain("<d:sync-level>1</d:sync-level>");
+        expect(result).toEqual({
+            changed: [
+                {
+                    id: "https://dav.example/cal/work/a.ics",
+                    props: { getetag: '"1"' },
+                },
+            ],
+            removed: ["https://dav.example/cal/work/b.ics"],
+            syncToken: "https://dav.example/sync/2",
+            truncated: true,
+        });
+        await dav.close();
+    });
+
+    it("sends an empty token for the initial sync and keeps tokens verbatim", async () => {
+        const { client: dav, bodies } = client(
+            () => new Response(multistatus("", "0012"), { status: 207 }),
+        );
+        const result = await dav.syncCollection(collection, "<d:getetag/>");
+        expect(bodies[0]).toContain("<d:sync-token/>");
+        expect(result.syncToken).toBe("0012");
+        expect(result.truncated).toBe(false);
+        await dav.close();
+    });
+
+    it("rejects members outside the collection and responses without a token", async () => {
+        const outside = client(
+            () =>
+                new Response(
+                    multistatus(
+                        "<d:response><d:href>/cal/other/a.ics</d:href><d:status>HTTP/1.1 404 Not Found</d:status></d:response>",
+                    ),
+                    { status: 207 },
+                ),
+        ).client;
+        await expect(
+            outside.syncCollection(collection, "<d:getetag/>"),
+        ).rejects.toEqual(new DavFailure("davtest:invalid-response"));
+        const tokenless = client(
+            () =>
+                new Response('<d:multistatus xmlns:d="DAV:"/>', {
+                    status: 207,
+                }),
+        ).client;
+        await expect(
+            tokenless.syncCollection(collection, "<d:getetag/>"),
+        ).rejects.toEqual(new DavFailure("davtest:invalid-response"));
+    });
+
+    it("distinguishes invalid tokens, unsupported reports, and other failures", async () => {
+        const error = (element: string) =>
+            `<?xml version="1.0"?><d:error xmlns:d="DAV:"><d:${element}/></d:error>`;
+        const cases: Array<[number, string, string | undefined, string]> = [
+            [403, error("valid-sync-token"), "t", "sync-token-invalid"],
+            [403, error("valid-sync-token"), undefined, "sync-token-invalid"],
+            [403, error("supported-report"), undefined, "sync-unsupported"],
+            [409, "", "t", "sync-token-invalid"],
+            [403, "", undefined, "authentication-failed"],
+            [403, "", "t", "authentication-failed"],
+            [501, "", undefined, "sync-unsupported"],
+            [400, "", undefined, "sync-unsupported"],
+            [404, "", "t", "not-found"],
+            [500, "", "t", "sync-failed"],
+        ];
+        for (const [status, body, token, code] of cases) {
+            const dav = client(
+                () => new Response(body || null, { status }),
+            ).client;
+            await expect(
+                dav.syncCollection(collection, "<d:getetag/>", token),
+            ).rejects.toEqual(new DavFailure(`davtest:${code}`));
+        }
+    });
+
+    it("still treats a plain 403 as an authentication failure", async () => {
+        const dav = client(
+            () => new Response(null, { status: 403 }),
+        ).client;
+        await expect(
+            dav.request(collection, { method: "PROPFIND" }),
+        ).rejects.toEqual(new DavFailure("davtest:authentication-failed"));
+    });
+});
+
+describe("DavClient.syncResources", () => {
+    const collection = new URL("https://dav.example/cal/work/");
+    const options = {
+        namespaces: 'xmlns:c="urn:ietf:params:xml:ns:caldav"',
+        data: "c:calendar-data",
+        multiget: "c:calendar-multiget",
+    };
+    const member = (name: string, props: string) =>
+        `<d:response><d:href>/cal/work/${name}</d:href><d:propstat><d:prop>${props}</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>`;
+    const multistatus = (inner: string, token = true) =>
+        `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">${inner}${token ? "<d:sync-token>t2</d:sync-token>" : ""}</d:multistatus>`;
+
+    function client(responses: string[]) {
+        const bodies: string[] = [];
+        const fetch: DavFetch = async (_url, init) => {
+            bodies.push(String(init.body));
+            return new Response(responses[bodies.length - 1], { status: 207 });
+        };
+        return {
+            bodies,
+            dav: new DavClient(
+                "https://dav.example/",
+                { token: "token" },
+                "davtest",
+                15_000,
+                { fetch },
+            ),
+        };
+    }
+
+    it("returns inline data without a second request", async () => {
+        const { dav, bodies } = client([
+            multistatus(
+                member("a.ics", '<d:getetag>"1"</d:getetag><c:calendar-data>A</c:calendar-data>'),
+            ),
+        ]);
+        expect(await dav.syncResources(collection, options, "t1")).toEqual({
+            resources: [
+                { id: "https://dav.example/cal/work/a.ics", etag: '"1"', data: "A" },
+            ],
+            removed: [],
+            syncToken: "t2",
+            truncated: false,
+        });
+        expect(bodies).toHaveLength(1);
+        expect(bodies[0]).toContain("<c:calendar-data/>");
+    });
+
+    it("fetches members listed without data through one multiget", async () => {
+        const { dav, bodies } = client([
+            multistatus(
+                member("a.ics", '<d:getetag>"1"</d:getetag>') +
+                    member("b c.ics", '<d:getetag>"2"</d:getetag>'),
+            ),
+            multistatus(
+                member("a.ics", '<d:getetag>"1"</d:getetag><c:calendar-data>A</c:calendar-data>') +
+                    '<d:response><d:href>/cal/work/b%20c.ics</d:href><d:status>HTTP/1.1 404 Not Found</d:status></d:response>',
+                false,
+            ),
+        ]);
+        const result = await dav.syncResources(collection, options);
+        expect(bodies[1]).toContain("<c:calendar-multiget");
+        expect(bodies[1]).toContain("<d:href>/cal/work/a.ics</d:href>");
+        expect(bodies[1]).toContain("<d:href>/cal/work/b%20c.ics</d:href>");
+        expect(result.resources).toEqual([
+            { id: "https://dav.example/cal/work/a.ics", etag: '"1"', data: "A" },
+        ]);
+        // Deleted between the two requests.
+        expect(result.removed).toEqual(["https://dav.example/cal/work/b%20c.ics"]);
+    });
+
+    it("reads data from an element that carries attributes", async () => {
+        const { dav } = client([
+            multistatus(
+                member(
+                    "a.ics",
+                    '<c:calendar-data content-type="text/calendar">A</c:calendar-data>',
+                ),
+            ),
+        ]);
+        const result = await dav.syncResources(collection, options);
+        expect(result.resources).toEqual([
+            { id: "https://dav.example/cal/work/a.ics", data: "A" },
+        ]);
+    });
+
+    it("fails rather than advance the token past a member it could not read", async () => {
+        const { dav } = client([
+            multistatus(member("a.ics", '<d:getetag>"1"</d:getetag>')),
+            multistatus("", false),
+        ]);
+        await expect(dav.syncResources(collection, options)).rejects.toEqual(
+            new DavFailure("davtest:invalid-response"),
+        );
+    });
+});
