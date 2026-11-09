@@ -112,16 +112,27 @@ so those URLs are resolved through preview services built for this purpose:
 * **X / Twitter status URLs** (`x.com`, `twitter.com`, incl. `/i/web/status/…`)
   are fetched from the [FxTwitter API](https://github.com/FxEmbed/FxEmbed)
   instead of scraped — X serves only a generic site banner to scrapers. The
-  response carries the post's text, its actual photo (or video + poster
-  thumbnail), and the canonical `x.com` URL. Posts without their own media
-  use the quoted post's media, then the link card image, then the author's
-  avatar. If the API is unavailable or the
+  response carries the canonical `x.com` URL, the post text, and the post's
+  own photo or video with a poster thumbnail. An X Article prefers the article
+  title and cover image. Its description is the article body (text blocks
+  other than `atomic`), then `preview_text`, then the tweet text. Posts
+  without their own media use the quoted post's media, then the link card
+  image, then the author's avatar. If the API is unavailable or the
   post can't be resolved, the platform falls back to the regular scrape
   (which still yields the post text).
 * **Reddit post URLs** use `old.reddit.com`'s structured JSON response, avoiding
-  Reddit's unreliable HTML and Open Graph crawler behavior. The post title,
-  self-text, and direct `i.redd.it` image are mapped into the preview; text posts
-  intentionally have no image. oEmbed remains a title-only failure fallback.
+  Reddit's unreliable HTML and Open Graph crawler behavior. The post title and
+  self-text are mapped into the preview. A single image comes from the post
+  URL when that host is `i.redd.it` or `preview.redd.it`, otherwise from the
+  first preview image on `preview.redd.it` or `external-preview.redd.it`.
+  Gallery posts store images
+  in `gallery_data` rather than `preview`; they are returned in posted order,
+  and only from `i.redd.it` or `preview.redd.it`. Text posts have no image.
+  Hosted video uses `v.redd.it`. A `reddit.com/media?url=` link is answered
+  from the embedded image, with no further request, when that host is
+  `i.redd.it`, `preview.redd.it`, or `external-preview.redd.it`. The JSON
+  fetch allows 5 seconds. If it fails, oEmbed supplies the title and its
+  thumbnail when one is returned.
   See `compatUserAgent` below.
 * **Facebook** remains best-effort: post text usually comes through. The
   video or photo thumbnail is taken from the post's Open Graph image, then
@@ -134,10 +145,11 @@ so those URLs are resolved through preview services built for this purpose:
 * **Amazon product URLs** (storefronts such as `amazon.de` and `amazon.com`,
   plus `amzn.to`/`a.co` short links) are scraped with WhatsApp's link-preview
   user agent. Amazon answers other crawlers with a captcha or a generic
-  "Amazon" share card instead of the product's title and image. Mobile-app
-  links (`/gp/aw/d/<ASIN>`) are scraped as `/dp/<ASIN>`, which is the only
-  form that gets the product card. When Amazon serves its full desktop page
-  instead, the image comes from the page's main product image.
+  "Amazon" share card instead of the product's title and image. The scrape
+  allows 10 seconds. Mobile-app links (`/gp/aw/d/<ASIN>`) are scraped as
+  `/dp/<ASIN>`, which is the only form that gets the product card. When Amazon
+  serves its full desktop page instead, the image comes from the page's main
+  product image.
 * **Facebook engagement prefixes**: video titles and image alt text often
   start with a localized view or reaction count, such as
   `2.2M views · 21K reactions | …` or `347K views | …`. When the prefix is

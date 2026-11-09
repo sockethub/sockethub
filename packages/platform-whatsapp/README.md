@@ -16,6 +16,10 @@ phone number. Use a system-user or temporary access token with
 `whatsapp_business_messaging`. The actor ID is the **phone number ID** shown in
 the app's WhatsApp API setup (not the phone number itself); the target ID is the
 recipient's phone number in international format, for example `+15551234567`.
+A leading `+` is optional (`+?[1-9][0-9]{6,14}`). Send adds a missing `+`
+before the Cloud API call. Meta treats a number without `+` as a national
+number and prepends the business account's country code, which misdelivers
+the message.
 
 This implementation sends as a WhatsApp Business number through Meta's Cloud
 API, not as a personal WhatsApp account. Obtain tokens outside Sockethub.

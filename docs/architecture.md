@@ -370,14 +370,17 @@ Platforms are configured to operate in two different modes based on their protoc
 
 ### Stateless Platforms
 
-These don't maintain persistent connections and start fresh for each job. Good for protocols
-like RSS feeds or HTTP APIs where you just fetch data when needed.
+These do not keep a connection between jobs. One shared worker serves every
+session. CalDAV, CardDAV, feeds, metadata, and the outgoing Messenger,
+Instagram, and WhatsApp platforms work this way, as does dummy.
 
-### Persistent Platforms  
+### Persistent Platforms
 
-These maintain long-running connections and require authentication. Examples include IRC (which
-requires login and maintains a connection to send/receive real-time messages) or XMPP (which
-keeps a connection open for instant messaging).
+These keep a long-running connection for an actor. IRC and XMPP share a worker
+across sockets that submitted the same credentials. Email is persistent too,
+but each client session has its own worker and IMAP connection, including when
+the credentials match. See
+[Credential sharing](configuration.md#credential-sharing-and-anonymous-reconnects).
 
 The platform configuration determines which mode a platform operates in, affecting how many
 processes are spawned and how credentials are handled.
