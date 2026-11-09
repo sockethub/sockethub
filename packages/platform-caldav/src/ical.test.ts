@@ -297,3 +297,14 @@ it("protects each unmodelled RRULE part without treating timezone rules as item 
     const zoned = "BEGIN:VCALENDAR\r\nBEGIN:VTIMEZONE\r\nBEGIN:STANDARD\r\nRRULE:FREQ=YEARLY;BYMONTH=10\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nRRULE:FREQ=WEEKLY;WKST=SU\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
     expect(isRecurrenceUpdateSupported(zoned, zoned.replace("WKST=SU", "WKST=MO"))).toBeTrue();
 });
+
+
+it("normalizes valid WKST and preserves invalid WKST without exposing it", () => {
+    for (const weekStart of ["su", "XX", "1MO", ""]) {
+        const stored = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:weeks\r\nSUMMARY:Weeks\r\nDTSTART:19970805T090000Z\r\nRRULE:FREQ=WEEKLY;WKST=${weekStart}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
+        const item = parseICalendar(stored, "");
+        expect(item.recurrence?.weekStart).toBe(weekStart === "su" ? "SU" : undefined);
+        expect(isRecurrenceUpdateSupported(stored, stored)).toBeTrue();
+        expect(isRecurrenceUpdateSupported(stored, stored.replace("FREQ=WEEKLY", "FREQ=DAILY"))).toBe(weekStart === "su");
+    }
+});

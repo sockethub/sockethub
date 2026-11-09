@@ -544,8 +544,11 @@ export function parseICalendar(
                 ...(parts.INTERVAL ? { interval: Number(parts.INTERVAL) } : {}),
                 ...(parts.COUNT ? { count: Number(parts.COUNT) } : {}),
                 ...(parts.UNTIL ? { until: parseDate(parts.UNTIL) } : {}),
-                ...(parts.WKST
-                    ? { weekStart: parts.WKST as RecurrenceInput["weekStart"] }
+                ...(parts.WKST && /^(?:MO|TU|WE|TH|FR|SA|SU)$/i.test(parts.WKST)
+                    ? {
+                          weekStart:
+                              parts.WKST.toUpperCase() as RecurrenceInput["weekStart"],
+                      }
                     : {}),
                 ...(parts.BYDAY ? { byDay: parts.BYDAY.split(",") } : {}),
                 ...(parts.BYMONTHDAY
@@ -677,11 +680,14 @@ export function isRecurrenceUpdateSupported(
     ]);
     if (
         original.every((rule) =>
-            rule
-                .split(";")
-                .every((part) =>
-                    modelled.has(part.split("=", 1)[0].toUpperCase()),
-                ),
+            rule.split(";").every((part) => {
+                const key = part.split("=", 1)[0].toUpperCase();
+                return (
+                    modelled.has(key) &&
+                    (key !== "WKST" ||
+                        /^WKST=(?:MO|TU|WE|TH|FR|SA|SU)$/i.test(part))
+                );
+            }),
         )
     )
         return true;
