@@ -259,5 +259,13 @@ describe("iCalendar generation", () => {
         const local = parseICalendar(body("CREATED:20240102T030405\r\nLAST-MODIFIED:garbage\r\n"), "https://c.example/t.ics");
         expect(local.created).toBeUndefined();
         expect(local.lastModified).toBe("2026-03-01T00:00:00Z");
+        const impossible = parseICalendar(body("CREATED:20260230T250000Z\r\n"), "https://c.example/t.ics");
+        expect(impossible.created).toBeUndefined();
+    });
+
+    it("does not treat a scheduling message's DTSTAMP as lastModified", () => {
+        const invite =
+            "BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:i\r\nSUMMARY:I\r\nDTSTAMP:20260301T000000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        expect(parseICalendar(invite, "https://c.example/i.ics").lastModified).toBeUndefined();
     });
 });

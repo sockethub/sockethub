@@ -385,7 +385,15 @@ function parseDate(value: string): string {
 
 /** An RFC 5545 UTC date-time as ISO 8601, or undefined for any other form. */
 function utcTimestamp(value: string | undefined): string | undefined {
-    return value && /^\d{8}T\d{6}Z$/.test(value) ? parseDate(value) : undefined;
+    if (!value || !/^\d{8}T\d{6}Z$/.test(value)) return undefined;
+    const iso = parseDate(value);
+    // Date rolls impossible values over (Feb 30 -> Mar 2), so a round trip
+    // that changes the text means the date or time does not exist.
+    const parsed = new Date(iso);
+    return !Number.isNaN(parsed.getTime()) &&
+        parsed.toISOString().replace(".000Z", "Z") === iso
+        ? iso
+        : undefined;
 }
 
 const STATUSES = {
@@ -484,10 +492,14 @@ export function parseICalendar(
         updateSupported: isUpdateSupported(body),
     };
     const created = utcTimestamp(first("CREATED")?.value);
-    // DTSTAMP is the last revision time when the resource carries no METHOD.
+    // DTSTAMP is the last revision time only when the resource carries no
+    // METHOD; in a scheduling message it is when the message was sent.
+    const hasMethod = lines
+        .slice(0, begin)
+        .some((line) => /^METHOD[;:]/i.test(line));
     const lastModified =
         utcTimestamp(first("LAST-MODIFIED")?.value) ??
-        utcTimestamp(first("DTSTAMP")?.value);
+        (hasMethod ? undefined : utcTimestamp(first("DTSTAMP")?.value));
     if (created) item.created = created;
     if (lastModified) item.lastModified = lastModified;
     if (first("DESCRIPTION"))
