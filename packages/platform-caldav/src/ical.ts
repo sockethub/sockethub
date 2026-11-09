@@ -192,6 +192,7 @@ function recurrenceLine(value: RecurrenceInput): string {
         parts.push(`BYDAY=${value.byDay.join(",").toUpperCase()}`);
     if (value.byMonthDay?.length)
         parts.push(`BYMONTHDAY=${value.byMonthDay.join(",")}`);
+    if (value.weekStart) parts.push(`WKST=${value.weekStart}`);
     if (value.count && value.until)
         throw new Error("recurrence cannot contain both count and until");
     return `RRULE:${parts.join(";")}`;
@@ -533,7 +534,7 @@ export function parseICalendar(
         const parts = Object.fromEntries(
             rule.split(";").map((part) => {
                 const [key, value] = part.split("=", 2);
-                return [key, value];
+                return [key.toUpperCase(), value];
             }),
         );
         if (parts.FREQ) {
@@ -543,6 +544,12 @@ export function parseICalendar(
                 ...(parts.INTERVAL ? { interval: Number(parts.INTERVAL) } : {}),
                 ...(parts.COUNT ? { count: Number(parts.COUNT) } : {}),
                 ...(parts.UNTIL ? { until: parseDate(parts.UNTIL) } : {}),
+                ...(parts.WKST && /^(?:MO|TU|WE|TH|FR|SA|SU)$/i.test(parts.WKST)
+                    ? {
+                          weekStart:
+                              parts.WKST.toUpperCase() as RecurrenceInput["weekStart"],
+                      }
+                    : {}),
                 ...(parts.BYDAY ? { byDay: parts.BYDAY.split(",") } : {}),
                 ...(parts.BYMONTHDAY
                     ? { byMonthDay: parts.BYMONTHDAY.split(",").map(Number) }
@@ -641,4 +648,48 @@ export function isUpdateSupported(body: string): boolean {
             open = line.slice("BEGIN:".length);
     }
     return components === 1 && supported;
+}
+
+/** Keep unmodelled RRULE parts intact when updating other item fields. */
+export function isRecurrenceUpdateSupported(
+    stored: string,
+    replacement: string,
+): boolean {
+    const rules = (body: string): string[] => {
+        const result: string[] = [];
+        let component: string | undefined;
+        for (const line of body.replace(/\r?\n[ \t]/g, "").split(/\r?\n/)) {
+            if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO")
+                component = line.slice("BEGIN:".length);
+            else if (component && line === `END:${component}`)
+                component = undefined;
+            else if (component && /^RRULE(?:;|:)/i.test(line))
+                result.push(line.slice(line.indexOf(":") + 1));
+        }
+        return result;
+    };
+    const original = rules(stored);
+    const modelled = new Set([
+        "FREQ",
+        "INTERVAL",
+        "COUNT",
+        "UNTIL",
+        "BYDAY",
+        "BYMONTHDAY",
+        "WKST",
+    ]);
+    if (
+        original.every((rule) =>
+            rule.split(";").every((part) => {
+                const key = part.split("=", 1)[0].toUpperCase();
+                return (
+                    modelled.has(key) &&
+                    (key !== "WKST" ||
+                        /^WKST=(?:MO|TU|WE|TH|FR|SA|SU)$/i.test(part))
+                );
+            }),
+        )
+    )
+        return true;
+    return JSON.stringify(original) === JSON.stringify(rules(replacement));
 }

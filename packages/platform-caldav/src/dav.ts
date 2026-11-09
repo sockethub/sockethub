@@ -9,7 +9,11 @@ import {
     rejectDavResponse,
     successfulProps,
 } from "@sockethub/dav";
-import { isUpdateSupported, parseICalendar } from "./ical.js";
+import {
+    isRecurrenceUpdateSupported,
+    isUpdateSupported,
+    parseICalendar,
+} from "./ical.js";
 import type {
     CalendarDescription,
     CalendarItem,
@@ -270,13 +274,16 @@ export class CalDavClient extends DavClient {
         const stored = await current.text();
         if (!isUpdateSupported(stored))
             throw new CalDavFailure("caldav:unsupported-update");
+        const replacement = typeof body === "function" ? body(stored) : body;
+        if (!isRecurrenceUpdateSupported(stored, replacement))
+            throw new CalDavFailure("caldav:unsupported-update");
         const response = await this.request(resource, {
             method: "PUT",
             headers: {
                 "content-type": "text/calendar; charset=utf-8",
                 "if-match": etag,
             },
-            body: typeof body === "function" ? body(stored) : body,
+            body: replacement,
         });
         if (response.status === 412)
             return rejectDavResponse(response, "caldav:conflict");

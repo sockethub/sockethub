@@ -300,6 +300,8 @@ Named time zones include a `VTIMEZONE` definition generated from the server's
 IANA timezone data.
 The optional `uid` field must not contain `%`, `/`, or `\`; omit it to let
 Sockethub generate a safe UID.
+Recurrence accepts optional `weekStart` (`MO`, `TU`, `WE`, `TH`, `FR`, `SA`, or `SU`),
+which maps to RRULE `WKST`. When omitted, RFC 5545 defaults to Monday.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
 a `recipients` array. Events support `status` (`tentative`, `confirmed`, or
 `cancelled`). Tasks support `due`, `status`, `completedTime`, and
@@ -317,6 +319,11 @@ including `CATEGORIES`, `X-` properties, `CREATED`, `VTIMEZONE` blocks, and
 parameters on unchanged attendees and alarms. A field left out of the update
 removes its property. A changed field is written from the item model, so
 parameters the model does not carry are dropped from that property.
+An RRULE containing parts outside `FREQ`, `INTERVAL`, `COUNT`, `UNTIL`, `BYDAY`,
+`BYMONTHDAY`, and `WKST` must remain unchanged: editing or removing such a rule
+fails with `caldav:unsupported-update` before PUT. Other fields can still be
+edited while the stored rule is preserved; `updateSupported: true` does not
+guarantee that recurrence itself can be edited.
 
 ```json
 {

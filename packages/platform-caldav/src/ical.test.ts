@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildICalendar, foldLine, isUpdateSupported, parseICalendar } from "./ical.js";
+import { buildICalendar, foldLine, isRecurrenceUpdateSupported, isUpdateSupported, parseICalendar } from "./ical.js";
 
 describe("iCalendar generation", () => {
     it("creates a UTC VEVENT with escaped text", () => {
@@ -268,4 +268,43 @@ describe("iCalendar generation", () => {
             "BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:i\r\nSUMMARY:I\r\nDTSTAMP:20260301T000000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         expect(parseICalendar(invite, "https://c.example/i.ics").lastModified).toBeUndefined();
     });
+});
+
+describe("recurrence week start", () => {
+    it("round trips WKST and leaves it absent for existing rules", () => {
+        const input = {
+            type: "event" as const, uid: "weeks", name: "Weeks",
+            startTime: "1997-08-05T09:00:00Z",
+            recurrence: { frequency: "weekly" as const, interval: 2, byDay: ["TU", "SU"] },
+        };
+        const plain = buildICalendar(input, new Date("2026-01-01T00:00:00Z")).body;
+        expect(plain).toContain("RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,SU\r\n");
+        expect(parseICalendar(plain, "").recurrence).not.toHaveProperty("weekStart");
+        const withWeekStart = buildICalendar({ ...input, recurrence: { ...input.recurrence, weekStart: "SU" } }, new Date("2026-01-01T00:00:00Z")).body;
+        expect(withWeekStart).toBe(plain.replace("BYDAY=TU,SU", "BYDAY=TU,SU;WKST=SU"));
+        expect(parseICalendar(withWeekStart, "").recurrence).toEqual({ ...input.recurrence, weekStart: "SU" });
+        expect(isUpdateSupported(withWeekStart)).toBeTrue();
+    });
+});
+
+it("protects each unmodelled RRULE part without treating timezone rules as item recurrence", () => {
+    for (const part of ["BYSETPOS=-1", "BYMONTH=1", "BYWEEKNO=2", "BYYEARDAY=3", "BYHOUR=9", "BYMINUTE=30", "BYSECOND=0"]) {
+        const stored = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nRRULE:FREQ=YEARLY;${part}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
+        expect(isRecurrenceUpdateSupported(stored, stored)).toBeTrue();
+        expect(isRecurrenceUpdateSupported(stored, stored.replace(`;${part}`, ""))).toBeFalse();
+        expect(isRecurrenceUpdateSupported(stored, stored.replace(`RRULE:FREQ=YEARLY;${part}\r\n`, ""))).toBeFalse();
+    }
+    const zoned = "BEGIN:VCALENDAR\r\nBEGIN:VTIMEZONE\r\nBEGIN:STANDARD\r\nRRULE:FREQ=YEARLY;BYMONTH=10\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nRRULE:FREQ=WEEKLY;WKST=SU\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+    expect(isRecurrenceUpdateSupported(zoned, zoned.replace("WKST=SU", "WKST=MO"))).toBeTrue();
+});
+
+
+it("normalizes valid WKST and preserves invalid WKST without exposing it", () => {
+    for (const weekStart of ["su", "XX", "1MO", ""]) {
+        const stored = `BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:weeks\r\nSUMMARY:Weeks\r\nDTSTART:19970805T090000Z\r\nRRULE:FREQ=WEEKLY;WKST=${weekStart}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
+        const item = parseICalendar(stored, "");
+        expect(item.recurrence?.weekStart).toBe(weekStart === "su" ? "SU" : undefined);
+        expect(isRecurrenceUpdateSupported(stored, stored)).toBeTrue();
+        expect(isRecurrenceUpdateSupported(stored, stored.replace("FREQ=WEEKLY", "FREQ=DAILY"))).toBe(weekStart === "su");
+    }
 });

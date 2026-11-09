@@ -30,6 +30,7 @@ export interface RecurrenceInput {
     until?: string;
     byDay?: string[];
     byMonthDay?: number[];
+    weekStart?: "MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU";
 }
 
 export interface PersonInput {
