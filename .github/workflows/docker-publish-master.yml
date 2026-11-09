@@ -1,4 +1,4 @@
-name: Publish Dev Docker Image
+name: Publish Master Docker Image
 
 on:
   workflow_dispatch:
@@ -8,11 +8,11 @@ permissions:
   packages: write
 
 concurrency:
-  group: docker-publish-dev
+  group: docker-publish-master
   cancel-in-progress: false
 
 jobs:
-  docker-publish-dev:
+  docker-publish-master:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout master
@@ -26,7 +26,7 @@ jobs:
         env:
           REPOSITORY: ${{ github.repository }}
         run: |
-          echo "tag=ghcr.io/${REPOSITORY,,}:dev" >> "$GITHUB_OUTPUT"
+          echo "tag=ghcr.io/${REPOSITORY,,}:master" >> "$GITHUB_OUTPUT"
           echo "version=master-$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
           echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
@@ -99,7 +99,7 @@ jobs:
           docker logs smoke-sockethub 2>&1 | grep -F "$EXPECTED_VERSION"
           echo "✅ Smoke test passed"
 
-      - name: Build and push multi-arch dev image
+      - name: Build and push multi-arch master image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
