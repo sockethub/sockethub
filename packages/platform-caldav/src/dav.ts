@@ -51,6 +51,14 @@ const HAS_EVENT_OR_TASK = /^BEGIN:(?:VEVENT|VTODO)\r?$/m;
 
 export const CalDavFailure = DavFailure;
 
+function isICloudCalDavUrl(url: URL): boolean {
+    return (
+        url.protocol === "https:" &&
+        url.port === "" &&
+        /^(?:p[0-9]+-)?caldav\.icloud\.com$/.test(url.hostname)
+    );
+}
+
 function calendarItem(data: string, id: string, etag: unknown): CalendarItem {
     try {
         return parseICalendar(
@@ -71,6 +79,13 @@ export class CalDavClient extends DavClient {
         networkOptions: DavNetworkOptions = {},
     ) {
         super(url, authentication, "caldav", timeoutMs, networkOptions);
+    }
+
+    override assertAllowed(url: URL): void {
+        // iCloud discovery uses both the service host and account partition hosts.
+        if (isICloudCalDavUrl(this.serviceUrl) && isICloudCalDavUrl(url))
+            return;
+        super.assertAllowed(url);
     }
 
     async discoverCalendars(): Promise<CalendarDescription[]> {

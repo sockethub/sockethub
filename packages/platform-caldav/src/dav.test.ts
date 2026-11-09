@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { createHash } from "node:crypto";
-import type { DavAuthentication } from "@sockethub/dav";
+import type { DavAuthentication, DavFetch } from "@sockethub/dav";
 import { CalDavClient as RealCalDavClient, CalDavFailure } from "./dav.js";
 import { buildICalendar, parseICalendar } from "./ical.js";
 import { patchICalendar } from "./patch.js";
@@ -535,4 +535,212 @@ it("keeps a lowercase WKST when editing a parsed recurrence", async () => {
     } finally {
         await client.close();
     }
+});
+
+
+describe("iCloud CalDAV host policy", () => {
+    const credentials = { username: "alice", password: "app-password" };
+    const service = "https://caldav.icloud.com";
+    const partition = "https://p49-caldav.icloud.com";
+
+    for (const redirected of [false, true]) {
+        it(`discovers through iCloud ${redirected ? "redirects and" : "absolute"} hrefs and writes to the partition`, async () => {
+            const requests: Array<{
+                url: string;
+                method: string;
+                auth: string | null;
+            }> = [];
+            const fetch: DavFetch = async (url, init) => {
+                const auth = new Headers(init.headers).get("authorization");
+                requests.push({
+                    url: url.href,
+                    method: init.method ?? "GET",
+                    auth,
+                });
+                if (!auth)
+                    return new Response(null, {
+                        status: 401,
+                        headers: { "www-authenticate": 'Basic realm="iCloud"' },
+                    });
+                if (init.method === "PUT")
+                    return new Response(null, { status: 201 });
+                if (url.href === `${service}/dav/`) {
+                    if (redirected)
+                        return new Response(null, {
+                            status: 307,
+                            headers: { location: `${partition}/dav/` },
+                        });
+                    return new Response(
+                        discovery.replace(
+                            "/principals/alice/",
+                            `${partition}/principals/alice/`,
+                        ),
+                        { status: 207 },
+                    );
+                }
+                if (url.pathname === "/dav/")
+                    return new Response(discovery, { status: 207 });
+                if (url.pathname.includes("principals"))
+                    return new Response(
+                        principal.replace(
+                            "/calendars/alice/",
+                            `${partition}/calendars/alice/`,
+                        ),
+                        { status: 207 },
+                    );
+                return new Response(calendars, { status: 207 });
+            };
+            const client = new RealCalDavClient(
+                `${service}/dav/`,
+                credentials,
+                15_000,
+                { fetch },
+            );
+            try {
+                const found = await client.discoverCalendars();
+                expect(found[0]?.id).toBe(`${partition}/calendars/alice/work/`);
+                // A fresh client also needs to accept cached partition calendar IDs.
+                const writer = new RealCalDavClient(
+                    `${service}/dav/`,
+                    credentials,
+                    15_000,
+                    { fetch },
+                );
+                try {
+                    expect(
+                        await writer.create(found[0], "one", "data"),
+                    ).toEqual({
+                        id: `${partition}/calendars/alice/work/one.ics`,
+                    });
+                } finally {
+                    await writer.close();
+                }
+                const basic = `Basic ${Buffer.from("alice:app-password").toString("base64")}`;
+                expect(
+                    requests.some(
+                        (r) => r.url.startsWith(partition) && r.auth === basic,
+                    ),
+                ).toBe(true);
+                expect(requests.at(-1)).toEqual({
+                    url: `${partition}/calendars/alice/work/one.ics`,
+                    method: "PUT",
+                    auth: basic,
+                });
+            } finally {
+                await client.close();
+            }
+        });
+    }
+
+    it("allows service and partition URLs in both directions on the default HTTPS port", async () => {
+        for (const origin of [service, partition]) {
+            const client = new RealCalDavClient(origin, credentials);
+            try {
+                for (const target of [
+                    service,
+                    partition,
+                    "https://p01-caldav.icloud.com:443",
+                ]) {
+                    expect(() =>
+                        client.assertAllowed(new URL(target)),
+                    ).not.toThrow();
+                }
+            } finally {
+                await client.close();
+            }
+        }
+    });
+
+    for (const target of [
+        "https://evil.example/",
+        "https://www.icloud.com/",
+        "https://carddav.icloud.com/",
+        "https://p49-caldav.icloud.com.evil.example/",
+        "https://evil-caldav.icloud.com/",
+        "https://p49.caldav.icloud.com/",
+        "https://p49-caldav.icloud.com:8443/",
+        "https://p49-caldav.icloud.com./",
+        "http://p49-caldav.icloud.com/",
+        "https://127.0.0.1/",
+    ]) {
+        it(`rejects redirects and discovery hrefs to ${target} before sending credentials`, async () => {
+            for (const redirected of [false, true]) {
+                let calls = 0;
+                const fetch: DavFetch = async () => {
+                    calls += 1;
+                    return redirected
+                        ? new Response(null, {
+                              status: 307,
+                              headers: { location: target },
+                          })
+                        : new Response(
+                              principal.replace("/calendars/alice/", target),
+                              { status: 207 },
+                          );
+                };
+                const client = new RealCalDavClient(
+                    service,
+                    { token: "secret" },
+                    15_000,
+                    { fetch },
+                );
+                try {
+                    await expect(client.discoverCalendars()).rejects.toEqual(
+                        new CalDavFailure(
+                            target.startsWith("http:")
+                                ? "caldav:https-required"
+                                : "caldav:unsafe-redirect",
+                        ),
+                    );
+                    expect(calls).toBe(1);
+                } finally {
+                    await client.close();
+                }
+            }
+        });
+    }
+
+    it("does not grant iCloud trust to other configured services or ports", async () => {
+        for (const origin of [
+            "https://calendar.example",
+            "https://www.icloud.com",
+            `${service}:8443`,
+            "http://caldav.icloud.com",
+        ]) {
+            const client = new RealCalDavClient(origin, credentials, 15_000, {
+                allowInsecureHttp: true,
+            });
+            try {
+                expect(() =>
+                    client.assertAllowed(new URL(partition)),
+                ).toThrow();
+            } finally {
+                await client.close();
+            }
+        }
+    });
+
+    it("keeps the redirect limit between trusted iCloud hosts", async () => {
+        let calls = 0;
+        const fetch: DavFetch = async (url) => {
+            calls += 1;
+            return new Response(null, {
+                status: 307,
+                headers: {
+                    location: url.origin === service ? partition : service,
+                },
+            });
+        };
+        const client = new RealCalDavClient(service, credentials, 15_000, {
+            fetch,
+        });
+        try {
+            await expect(client.discoverCalendars()).rejects.toEqual(
+                new CalDavFailure("caldav:too-many-redirects"),
+            );
+            expect(calls).toBe(6);
+        } finally {
+            await client.close();
+        }
+    });
 });
