@@ -27,6 +27,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           echo "tag=ghcr.io/${REPOSITORY,,}:dev" >> "$GITHUB_OUTPUT"
+          echo "version=master-$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
           echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
@@ -47,11 +48,15 @@ jobs:
         with:
           context: .
           file: Dockerfile
+          build-args: |
+            SOCKETHUB_BUILD_VERSION=${{ steps.image.outputs.version }}
           load: true
           push: false
           tags: sockethub-smoke:candidate
 
       - name: Smoke test candidate against Redis
+        env:
+          EXPECTED_VERSION: ${{ steps.image.outputs.version }}
         run: |
           docker network create smoke-net
           docker run -d --name smoke-redis --network smoke-net redis
@@ -88,6 +93,10 @@ jobs:
             exit 1
           fi
 
+          docker run --rm sockethub-smoke:candidate \
+            node /app/packages/sockethub/bin/sockethub --version | \
+            grep -Fx "$EXPECTED_VERSION"
+          docker logs smoke-sockethub 2>&1 | grep -F "$EXPECTED_VERSION"
           echo "✅ Smoke test passed"
 
       - name: Build and push multi-arch dev image
@@ -95,11 +104,13 @@ jobs:
         with:
           context: .
           file: Dockerfile
+          build-args: |
+            SOCKETHUB_BUILD_VERSION=${{ steps.image.outputs.version }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.image.outputs.tag }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=dev
+            org.opencontainers.image.version=${{ steps.image.outputs.version }}
             org.opencontainers.image.revision=${{ steps.image.outputs.revision }}
           provenance: false

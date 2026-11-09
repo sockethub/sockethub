@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
@@ -16,6 +17,33 @@ describe("version", () => {
 
     it("reports the running package version", () => {
         expect(SOCKETHUB_VERSION).toBe(packageJson.version);
+    });
+
+    it("reports an image build identifier while preserving API compatibility", () => {
+        const dir = mkdtempSync(join(tmpdir(), "sockethub-version-"));
+        try {
+            writeFileSync(
+                join(dir, "package.json"),
+                JSON.stringify({ version: "5.0.0", buildVersion: "master-20261110123456" }),
+            );
+            // The module resolves its manifest one directory above itself.
+            mkdirSync(join(dir, "src"));
+            writeFileSync(
+                join(dir, "src", "version.ts"),
+                readFileSync(join(import.meta.dir, "version.ts")),
+            );
+            const modulePath = JSON.stringify(join(dir, "src", "version.ts"));
+            const result = Bun.spawnSync([process.execPath, "-e", `
+                const v = await import(${modulePath});
+                console.log(JSON.stringify([v.SOCKETHUB_VERSION, v.SOCKETHUB_API_VERSION, v.defaultSentryRelease()]));
+            `]);
+            expect(result.exitCode).toBe(0);
+            expect(JSON.parse(result.stdout.toString())).toEqual([
+                "master-20261110123456", 5, "sockethub@master-20261110123456",
+            ]);
+        } finally {
+            rmSync(dir, { recursive: true, force: true });
+        }
     });
 
     it("resolves to a non-empty version string", () => {

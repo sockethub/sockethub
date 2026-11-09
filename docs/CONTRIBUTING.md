@@ -338,7 +338,9 @@ The fixture certificate is for local integration tests only.
 To publish a development image without a release, open **Actions → Publish Dev
 Docker Image → Run workflow** in GitHub. It always builds the latest `master`
 source and publishes `ghcr.io/sockethub/sockethub:dev` for amd64 and arm64 after
-a startup smoke test. Each run replaces the `dev` tag; pull it again before
+a startup smoke test. The image reports `master-YYYYMMDDHHMMSS` (UTC build
+time) at startup and with `--version`, without changing checked-in versions.
+Each run replaces the `dev` tag; pull it again before
 recreating your deployment. This workflow does not publish npm packages or create
 a release.
 

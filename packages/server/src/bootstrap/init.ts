@@ -10,6 +10,7 @@ import {
 import chalk from "chalk";
 import config from "../config.js";
 import { EXAMPLES_PATH } from "../server-info.js";
+import { SOCKETHUB_VERSION } from "../version.js";
 import loadPlatforms, {
     type PlatformMap,
     type PlatformSchemaRegistry,
@@ -169,10 +170,7 @@ export async function registerPlatforms(initObj: IInitObject): Promise<void> {
 
 async function __loadInit(): Promise<IInitObject> {
     log.debug("running init routines");
-    const packageJSON = await import("./../../package.json", {
-        with: { type: "json" },
-    });
-    const version = packageJSON.default.version;
+    const version = SOCKETHUB_VERSION;
     const platforms = await loadPlatforms(
         config.get("platforms") as Array<string>,
     );
@@ -182,7 +180,7 @@ async function __loadInit(): Promise<IInitObject> {
     // --info is a one-shot command-line action, not a config setting, so it
     // is read from argv rather than the config schema.
     if (process.argv.includes("--info")) {
-        printSettingsInfo(packageJSON.default.version, platforms);
+        printSettingsInfo(version, platforms);
     }
     log.debug("finished init routines");
     return {

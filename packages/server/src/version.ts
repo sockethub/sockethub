@@ -1,11 +1,12 @@
-/** The running server's own version, read from the installed package manifest. */
+/** The running server's version, including an optional image build identifier. */
 
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
 
-export const SOCKETHUB_VERSION: string = packageJson.version;
+export const SOCKETHUB_VERSION: string =
+    packageJson.buildVersion ?? packageJson.version;
 
 // major[.minor[.patch]] with optional prerelease and build metadata.
 const SEMVER_MAJOR_PATTERN =
@@ -32,8 +33,9 @@ export function apiVersionFromSemver(version: string): number {
 }
 
 /** The global Sockethub API version published to clients. */
-export const SOCKETHUB_API_VERSION: number =
-    apiVersionFromSemver(SOCKETHUB_VERSION);
+export const SOCKETHUB_API_VERSION: number = apiVersionFromSemver(
+    packageJson.version,
+);
 
 /**
  * The Sentry release identifier to report when the deployment has not set one
