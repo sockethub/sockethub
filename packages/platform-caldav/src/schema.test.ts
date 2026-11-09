@@ -171,3 +171,9 @@ describe("CalDAV schema", () => {
         expect(validateMessage({ type: "sync", actor })).toBeFalse();
     });
 });
+
+it("validates recurrence weekStart as an unnumbered weekday", () => {
+    for (const weekStart of ["MO", "TU", "WE", "TH", "FR", "SA", "SU", "1MO", "Sunday", ""]) {
+        expect(validateObject({ type: "event", name: "Weeks", startTime: "2026-08-03T09:00:00Z", recurrence: { frequency: "weekly", weekStart } })).toBe(/^(MO|TU|WE|TH|FR|SA|SU)$/.test(weekStart));
+    }
+});

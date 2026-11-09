@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { createHash } from "node:crypto";
 import type { DavAuthentication } from "@sockethub/dav";
 import { CalDavClient as RealCalDavClient, CalDavFailure } from "./dav.js";
+import { buildICalendar, parseICalendar } from "./ical.js";
+import { patchICalendar } from "./patch.js";
 
 // DavClient uses undici's own fetch (not the runtime global), so the tests
 // below stub globalThis.fetch and route the client through it lazily.
@@ -468,5 +470,48 @@ describe("CalDAV sync", () => {
         expect(result.removed).toEqual(["https://calendar.example/calendars/alice/work/gone.ics"]);
         expect(result.syncToken).toBe("t2");
         expect(result.truncated).toBe(false);
+    });
+});
+
+describe("CalDAV recurrence updates", () => {
+    it("keeps unsupported parts on rename and rejects recurrence rewrites before PUT", async () => {
+        for (const type of ["VEVENT", "VTODO"]) {
+            const stored = ["BEGIN:VCALENDAR", `BEGIN:${type}`, "UID:recurring", "SUMMARY:Before", "DTSTART:20260803T090000Z", "RRULE:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;", " BYSETPOS=-1", `END:${type}`, "END:VCALENDAR", ""].join("\r\n");
+            const requests: RequestInit[] = [];
+            globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+                requests.push(init ?? {});
+                return init?.method === "GET" ? new Response(stored) : new Response(null, { headers: { etag: '"v2"' } });
+            }) as typeof fetch;
+            const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+            const item = parseICalendar(stored, "");
+            const rename = { ...item, name: "After" };
+            const id = "https://calendar.example/dav/item.ics";
+            await client.update(id, '"v1"', (body) => patchICalendar(body, rename, buildICalendar(rename).body).body);
+            expect(requests.map((request) => request.method)).toEqual(["GET", "PUT"]);
+            expect(requests[1].body).toContain("SUMMARY:After");
+            expect(requests[1].body).toContain(" BYSETPOS=-1");
+            requests.length = 0;
+            const changed = { ...item, recurrence: { ...item.recurrence!, interval: 2 } };
+            await expect(client.update(id, '"v1"', (body) => patchICalendar(body, changed, buildICalendar(changed).body).body)).rejects.toEqual(new CalDavFailure("caldav:unsupported-update"));
+            expect(requests.map((request) => request.method)).toEqual(["GET"]);
+            requests.length = 0;
+            // Direct replacement callers receive the same protection.
+            await expect(client.update(id, '"v1"', buildICalendar(item).body)).rejects.toEqual(new CalDavFailure("caldav:unsupported-update"));
+            expect(requests.map((request) => request.method)).toEqual(["GET"]);
+            await client.close();
+        }
+    });
+
+    it("allows rewriting rules made entirely of modelled parts", async () => {
+        const stored = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:weeks\r\nSUMMARY:Weeks\r\nDTSTART:19970805T090000Z\r\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,SU;WKST=SU\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        const methods: string[] = [];
+        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+            methods.push(init?.method ?? "");
+            return init?.method === "GET" ? new Response(stored) : new Response(null);
+        }) as typeof fetch;
+        const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+        await client.update("https://calendar.example/dav/weeks.ics", '"v1"', stored.replace("INTERVAL=2", "INTERVAL=3"));
+        expect(methods).toEqual(["GET", "PUT"]);
+        await client.close();
     });
 });

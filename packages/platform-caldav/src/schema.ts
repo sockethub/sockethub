@@ -62,6 +62,7 @@ const recurrence = {
         interval: { type: "integer", minimum: 1, maximum: 999 },
         count: { type: "integer", minimum: 1, maximum: 99999 },
         until: { type: "string", format: "date-time" },
+        weekStart: { enum: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] },
         byDay: {
             type: "array",
             uniqueItems: true,
