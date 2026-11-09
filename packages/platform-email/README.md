@@ -9,9 +9,9 @@ Requires Node.js >=20.19 and Redis through the Sockethub server.
 Supported actions: `connect`, `disconnect`, `fetch`, `watch`, `unwatch`, `send`.
 Each client session has its own worker and IMAP connection, so clients using the
 same account can choose different folders and filters independently. Identical
-passwords or tokens do not share that worker. Replacing the credential object
-shuts this session's worker down; a send already in flight may have been
-accepted. See
+passwords or tokens do not share that worker. After the credentials change,
+the next action replaces this session's worker; a send already in flight may
+have been accepted. See
 [Credential sharing](../../docs/configuration.md#credential-sharing-and-anonymous-reconnects).
 
 ## Connect

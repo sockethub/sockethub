@@ -293,9 +293,9 @@ charged until the worker shuts down, including for HTTP actions that have no
 socket session. Clients behind a shared NAT share the IP quota.
 `maxStartsPerIpPerMinute` bounds how fast one IP can churn workers, for example
 by replacing credentials repeatedly. Reusing a running instance, such as after a
-page refresh, does not count against it. A replacement that the cap or this
-rate would reject is refused before the previous worker is shut down, so the
-existing connection stays up.
+page refresh, does not count against it. A replacement that this rate would
+reject is refused before the previous worker is shut down, so the existing
+connection stays up.
 
 Stateless platforms use one shared worker per enabled platform and are excluded
 from these caps, so persistent connections cannot prevent their startup or
@@ -350,8 +350,9 @@ the same.
 
 Email sets `shareConnections` to false. Its scope is a hash of that fingerprint
 plus the session id, so identical passwords still do not share a worker.
-Submitting a new credential object for the same actor on that session shuts the
-previous worker down once no other session is attached. The shutdown error is:
+After a session submits different credentials for the same actor, its next
+action replaces that session's previous worker, which shuts down once no other
+session is attached. The shutdown error is:
 
 <!-- markdownlint-disable MD013 -->
 
