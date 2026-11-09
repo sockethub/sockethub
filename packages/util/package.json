@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/util",
   "description": "Shared utilities for Sockethub (networking/SSRF helpers, etc.)",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -68,5 +68,5 @@
     "@types/sinon": "^17.0.4",
     "sinon": "^17.0.2"
   },
-  "gitHead": "cc4ffdd9714ebbd8372a88c4f2d795974e04029e"
+  "gitHead": "604f3da8850a19a4fd5f5e5dcec10bf283e9085e"
 }

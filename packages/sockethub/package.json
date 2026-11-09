@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "5.0.0-beta.5",
+  "version": "5.0.0-beta.6",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -37,18 +37,18 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sockethub/platform-caldav": "^1.0.0-beta.5",
-    "@sockethub/platform-carddav": "^1.0.0-beta.5",
-    "@sockethub/platform-dummy": "^3.0.0-beta.5",
-    "@sockethub/platform-email": "^1.0.0-beta.5",
-    "@sockethub/platform-feeds": "^4.0.0-beta.5",
-    "@sockethub/platform-instagram": "^1.0.0-beta.5",
-    "@sockethub/platform-irc": "^4.0.0-beta.5",
-    "@sockethub/platform-messenger": "^1.0.0-beta.5",
-    "@sockethub/platform-metadata": "^1.0.1-beta.5",
-    "@sockethub/platform-whatsapp": "^1.0.0-beta.5",
-    "@sockethub/platform-xmpp": "^5.0.0-beta.5",
-    "@sockethub/server": "^5.0.0-beta.5"
+    "@sockethub/platform-caldav": "^1.0.0-beta.6",
+    "@sockethub/platform-carddav": "^1.0.0-beta.6",
+    "@sockethub/platform-dummy": "^3.0.0-beta.6",
+    "@sockethub/platform-email": "^1.0.0-beta.6",
+    "@sockethub/platform-feeds": "^4.0.0-beta.6",
+    "@sockethub/platform-instagram": "^1.0.0-beta.6",
+    "@sockethub/platform-irc": "^4.0.0-beta.6",
+    "@sockethub/platform-messenger": "^1.0.0-beta.6",
+    "@sockethub/platform-metadata": "^1.0.1-beta.6",
+    "@sockethub/platform-whatsapp": "^1.0.0-beta.6",
+    "@sockethub/platform-xmpp": "^5.0.0-beta.6",
+    "@sockethub/server": "^5.0.0-beta.6"
   },
   "scripts": {
     "build": "bun build.js",
@@ -58,5 +58,5 @@
     "start": "node ./bin/sockethub",
     "start:logged": "bun ./bin/sockethub-logged"
   },
-  "gitHead": "cc4ffdd9714ebbd8372a88c4f2d795974e04029e"
+  "gitHead": "604f3da8850a19a4fd5f5e5dcec10bf283e9085e"
 }
