@@ -245,10 +245,15 @@ export class CalDavClient extends DavClient {
         };
     }
 
+    /**
+     * Replace a resource if its ETag still matches. `body` is either the new
+     * resource or a function that builds it from the stored one, so changes
+     * can be applied without losing what the item model does not carry.
+     */
     async update(
         id: string,
         etag: string,
-        body: string,
+        body: string | ((stored: string) => string),
     ): Promise<{ id: string; etag?: string }> {
         const resource = new URL(id);
         this.assertAllowed(resource);
@@ -262,7 +267,8 @@ export class CalDavClient extends DavClient {
             return rejectDavResponse(current, "caldav:not-found");
         if (!current.ok)
             return rejectDavResponse(current, "caldav:update-failed");
-        if (!isUpdateSupported(await current.text()))
+        const stored = await current.text();
+        if (!isUpdateSupported(stored))
             throw new CalDavFailure("caldav:unsupported-update");
         const response = await this.request(resource, {
             method: "PUT",
@@ -270,7 +276,7 @@ export class CalDavClient extends DavClient {
                 "content-type": "text/calendar; charset=utf-8",
                 "if-match": etag,
             },
-            body,
+            body: typeof body === "function" ? body(stored) : body,
         });
         if (response.status === 412)
             return rejectDavResponse(response, "caldav:conflict");

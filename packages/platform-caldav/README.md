@@ -311,8 +311,12 @@ Update sends the complete event or task returned by `query`, including `id`,
 `uid`, and `etag`. Increment `sequence` when changing scheduling information.
 An update is rejected when `updateSupported` is false, which protects recurrence
 exceptions, exclusion dates, and multi-component resources from being lost.
-Properties outside Sockethub's item model, such as `CATEGORIES` and `X-`
-properties, are not preserved when an otherwise supported item is updated.
+Update changes only the stored properties whose fields differ from the stored
+item, plus `DTSTAMP` and `LAST-MODIFIED`. Everything else stays as it was,
+including `CATEGORIES`, `X-` properties, `CREATED`, `VTIMEZONE` blocks, and
+parameters on unchanged attendees and alarms. A field left out of the update
+removes its property. A changed field is written from the item model, so
+parameters the model does not carry are dropped from that property.
 
 ```json
 {
