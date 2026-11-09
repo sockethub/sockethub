@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-messenger",
   "description": "Outgoing text messages through the Meta Messenger API",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "type": "module",
   "private": false,
   "license": "LGPL-3.0+",
@@ -30,18 +30,18 @@
     "test": "bun test src/"
   },
   "dependencies": {
-    "@sockethub/schemas": "^3.0.0-beta.6"
+    "@sockethub/schemas": "^3.0.0-beta.7"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-beta.6"
+    "@sockethub/server": "^5.0.0-beta.7"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
   },
-  "gitHead": "604f3da8850a19a4fd5f5e5dcec10bf283e9085e"
+  "gitHead": "1f29b4ad004979c1fb2e736343832aa643334dd1"
 }
