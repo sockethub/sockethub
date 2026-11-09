@@ -583,9 +583,9 @@ export class DavClient {
      * Errors use the client prefix: `sync-unsupported` when the server does
      * not offer the report, `sync-token-invalid` when it rejects the token
      * (start again without one), and `not-found` for a missing collection.
-     * Without a precondition element, a 400/403/409/412 counts as a rejected
+     * Without a precondition element, a 400/409/412 counts as a rejected
      * token when one was sent, so a client's retry without a token reaches
-     * the real cause.
+     * the real cause; a plain 403 stays an authentication failure.
      */
     async syncCollection(
         collection: URL,
@@ -622,7 +622,7 @@ export class DavClient {
                 throw new DavFailure(`${prefix}:sync-unsupported`);
             if (response.status === 404)
                 throw new DavFailure(`${prefix}:not-found`);
-            if ([400, 403, 409, 412].includes(response.status) && syncToken)
+            if ([400, 409, 412].includes(response.status) && syncToken)
                 throw new DavFailure(`${prefix}:sync-token-invalid`);
             if (response.status === 403)
                 throw new DavFailure(`${prefix}:authentication-failed`);

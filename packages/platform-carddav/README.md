@@ -125,7 +125,7 @@ sync again until it is `false`.
 On `carddav:sync-token-invalid`, drop the stored token and sync again without
 one. On `carddav:sync-unsupported`, the server does not offer WebDAV Sync; fall
 back to `query`. Other sync errors are `carddav:sync-failed`. A server that
-rejects a token without a `DAV:` precondition (a 400, 403, 409, or 412) is
+rejects a token without a `DAV:` precondition (a 400, 409, or 412) is
 reported as `carddav:sync-token-invalid`, so a retry without a token reports
 the real cause.
 

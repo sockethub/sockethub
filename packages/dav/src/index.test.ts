@@ -371,6 +371,7 @@ describe("DavClient.syncCollection", () => {
             [403, error("supported-report"), undefined, "sync-unsupported"],
             [409, "", "t", "sync-token-invalid"],
             [403, "", undefined, "authentication-failed"],
+            [403, "", "t", "authentication-failed"],
             [501, "", undefined, "sync-unsupported"],
             [400, "", undefined, "sync-unsupported"],
             [404, "", "t", "not-found"],

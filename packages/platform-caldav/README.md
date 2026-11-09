@@ -197,7 +197,7 @@ Handle these errors:
   to `query`, which returns a full snapshot.
 - `caldav:sync-failed`: any other sync error.
 
-When a server rejects a token without saying why (a 400, 403, 409, or 412 with
+When a server rejects a token without saying why (a 400, 409, or 412 with
 no `DAV:` precondition), the platform reports `caldav:sync-token-invalid`. A
 retry without a token then reports the real cause.
 
