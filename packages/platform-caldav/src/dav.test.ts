@@ -618,7 +618,7 @@ describe("iCloud CalDAV host policy", () => {
                 const basic = `Basic ${Buffer.from("alice:app-password").toString("base64")}`;
                 expect(
                     requests.some(
-                        (r) => r.url.startsWith(partition) && r.auth === basic,
+                        (r) => new URL(r.url).origin === partition && r.auth === basic,
                     ),
                 ).toBe(true);
                 expect(requests.at(-1)).toEqual({
