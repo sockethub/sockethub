@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/server",
   "description": "A polyglot messaging service, server libraries",
-  "version": "5.0.0-beta.6",
+  "version": "5.0.0-beta.7",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -53,11 +53,11 @@
   "dependencies": {
     "@sentry/node": "^10.36.0",
     "@sentry/profiling-node": "10.36.0",
-    "@sockethub/client": "^5.0.0-beta.6",
-    "@sockethub/data-layer": "^1.0.0-beta.6",
-    "@sockethub/logger": "^1.0.0-beta.6",
-    "@sockethub/schemas": "^3.0.0-beta.6",
-    "@sockethub/util": "^1.0.0-beta.6",
+    "@sockethub/client": "^5.0.0-beta.7",
+    "@sockethub/data-layer": "^1.0.0-beta.7",
+    "@sockethub/logger": "^1.0.0-beta.7",
+    "@sockethub/schemas": "^3.0.0-beta.7",
+    "@sockethub/util": "^1.0.0-beta.7",
     "chalk": "^5.6.2",
     "convict": "^6.2.5",
     "debug": "^4.4.3",
@@ -91,19 +91,19 @@
     "web-streams-polyfill": "^3.3.3"
   },
   "optionalDependencies": {
-    "@sockethub/examples": "^1.0.0-beta.6",
-    "@sockethub/platform-caldav": "^1.0.0-beta.6",
-    "@sockethub/platform-carddav": "^1.0.0-beta.6",
-    "@sockethub/platform-dummy": "^3.0.0-beta.6",
-    "@sockethub/platform-email": "^1.0.0-beta.6",
-    "@sockethub/platform-feeds": "^4.0.0-beta.6",
-    "@sockethub/platform-instagram": "^1.0.0-beta.6",
-    "@sockethub/platform-irc": "^4.0.0-beta.6",
-    "@sockethub/platform-messenger": "^1.0.0-beta.6",
-    "@sockethub/platform-metadata": "^1.0.1-beta.6",
-    "@sockethub/platform-whatsapp": "^1.0.0-beta.6",
-    "@sockethub/platform-xmpp": "^5.0.0-beta.6"
+    "@sockethub/examples": "^1.0.0-beta.7",
+    "@sockethub/platform-caldav": "^1.0.0-beta.7",
+    "@sockethub/platform-carddav": "^1.0.0-beta.7",
+    "@sockethub/platform-dummy": "^3.0.0-beta.7",
+    "@sockethub/platform-email": "^1.0.0-beta.7",
+    "@sockethub/platform-feeds": "^4.0.0-beta.7",
+    "@sockethub/platform-instagram": "^1.0.0-beta.7",
+    "@sockethub/platform-irc": "^4.0.0-beta.7",
+    "@sockethub/platform-messenger": "^1.0.0-beta.7",
+    "@sockethub/platform-metadata": "^1.0.1-beta.7",
+    "@sockethub/platform-whatsapp": "^1.0.0-beta.7",
+    "@sockethub/platform-xmpp": "^5.0.0-beta.7"
   },
-  "gitHead": "604f3da8850a19a4fd5f5e5dcec10bf283e9085e",
+  "gitHead": "483bff5c43a92b8e17e7dbed00f91adba66e8b6c",
   "types": "./dist/index.d.ts"
 }
