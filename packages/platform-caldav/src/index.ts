@@ -14,6 +14,7 @@ import { type Agent, fetch as undiciFetch } from "undici";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 import { buildICalendar } from "./ical.js";
 import { parseICalendarFeed } from "./ics.js";
+import { patchICalendar } from "./patch.js";
 import { PlatformCalDavSchema } from "./schema.js";
 import type {
     CalDavCredentials,
@@ -273,10 +274,20 @@ export default class CalDav implements PlatformInterface {
         this.calendar(client, credentials, job.target?.id ?? "")
             .then((calendar) => {
                 this.assertResource(calendar.id, input.id ?? "");
+                // Built first so invalid input fails before any request.
                 const generated = buildICalendar(input);
+                let uid = generated.uid;
                 return client
-                    .update(input.id ?? "", input.etag ?? "", generated.body)
-                    .then((updated) => ({ updated, uid: generated.uid }));
+                    .update(input.id ?? "", input.etag ?? "", (stored) => {
+                        const patched = patchICalendar(
+                            stored,
+                            input,
+                            generated.body,
+                        );
+                        uid = patched.uid;
+                        return patched.body;
+                    })
+                    .then((updated) => ({ updated, uid }));
             })
             .then(({ updated, uid }) =>
                 done(

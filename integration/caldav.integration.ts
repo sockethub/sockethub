@@ -3,7 +3,11 @@ import {
     CalDavClient,
     CalDavFailure,
 } from "../packages/platform-caldav/src/dav.js";
-import { buildICalendar } from "../packages/platform-caldav/src/ical.js";
+import {
+    buildICalendar,
+    parseICalendar,
+} from "../packages/platform-caldav/src/ical.js";
+import { patchICalendar } from "../packages/platform-caldav/src/patch.js";
 import type { CalendarDescription } from "../packages/platform-caldav/src/types.js";
 
 const radicaleRoot = "http://127.0.0.1:5232/alice/";
@@ -274,5 +278,101 @@ describe("CalDAV incremental sync", () => {
             await client.close();
             server.stop(true);
         }
+    });
+});
+
+async function exercisePreservingUpdate(
+    root: string,
+    calendarName: string,
+    uidPrefix: string,
+): Promise<void> {
+    const uid = `${uidPrefix}-preserve-${crypto.randomUUID()}`;
+    const client = new CalDavClient(
+        root,
+        { username: "alice", password: "calendar-test-password" },
+        15_000,
+        { allowPrivateAddresses: true, allowInsecureHttp: true },
+    );
+    let current: { id: string; etag?: string } | undefined;
+    try {
+        const calendar = (await client.discoverCalendars()).find(
+            (item) => item.name === calendarName,
+        );
+        if (!calendar)
+            throw new Error(`${calendarName} calendar was not discovered`);
+        // Written the way another app would, with data outside the item model.
+        const foreign = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Other App//EN",
+            "BEGIN:VEVENT",
+            `UID:${uid}`,
+            "DTSTAMP:20260101T000000Z",
+            "CREATED:20250101T000000Z",
+            "SUMMARY:Standup",
+            "DTSTART:20260803T130000Z",
+            "DTEND:20260803T133000Z",
+            "CATEGORIES:WORK,DAILY",
+            "X-GOOGLE-CONFERENCE:https://meet.example/abc-defg-hij",
+            "ATTENDEE;CN=Bob;PARTSTAT=ACCEPTED;X-NUM-GUESTS=0:mailto:bob@example.com",
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            "TRIGGER:-PT10M",
+            "DESCRIPTION:Soon",
+            "X-WR-ALARMUID:alarm-1",
+            "END:VALARM",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            "",
+        ].join("\r\n");
+        current = await client.create(calendar, uid, foreign);
+        const stored = (await client.query(calendar, { type: "event" })).find(
+            (item) => item.uid === uid,
+        );
+        if (!stored?.etag) throw new Error("created event has no ETag");
+        current = { id: stored.id, etag: stored.etag };
+        const renamed = { ...stored, name: "Daily sync" };
+        const updated = await client.update(
+            stored.id,
+            stored.etag,
+            (body) =>
+                patchICalendar(body, renamed, buildICalendar(renamed).body)
+                    .body,
+        );
+        const response = await client.request(new URL(stored.id), {
+            method: "GET",
+        });
+        const body = (await response.text()).replace(/\r?\n[ \t]/g, "");
+        current = {
+            id: stored.id,
+            etag: response.headers.get("etag") ?? updated.etag,
+        };
+        expect(parseICalendar(body, stored.id).name).toBe("Daily sync");
+        for (const line of [
+            "CREATED:20250101T000000Z",
+            "CATEGORIES:WORK,DAILY",
+            "X-GOOGLE-CONFERENCE:https://meet.example/abc-defg-hij",
+            "X-WR-ALARMUID:alarm-1",
+        ])
+            expect(body).toContain(line);
+        expect(body).toMatch(/ATTENDEE;[^\r\n]*X-NUM-GUESTS=0/);
+    } finally {
+        if (current?.etag)
+            await client.delete(current.id, current.etag).catch(() => {});
+        await client.close();
+    }
+}
+
+describe("CalDAV update keeps data outside the item model", () => {
+    it("renames a foreign event on Radicale without losing it", async () => {
+        await exercisePreservingUpdate(radicaleRoot, "Sockethub", "radicale");
+    });
+
+    it("renames a foreign event on Baikal without losing it", async () => {
+        await exercisePreservingUpdate(
+            baikalRoot,
+            "Sockethub Digest",
+            "baikal",
+        );
     });
 });

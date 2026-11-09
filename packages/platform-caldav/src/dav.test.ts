@@ -410,10 +410,10 @@ describe("CalDAV client", () => {
     });
 
     it("queries, updates, and deletes resources with ETag guards", async () => {
-        const methods: Array<{ method?: string; match: string | null }> = [];
+        const methods: Array<{ method?: string; match: string | null; body?: string }> = [];
         globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
             const headers = new Headers(init?.headers);
-            methods.push({ method: init?.method, match: headers.get("if-match") });
+            methods.push({ method: init?.method, match: headers.get("if-match"), body: init?.body as string | undefined });
             if (init?.method === "REPORT") {
                 return new Response(`<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:response><d:href>/calendars/alice/work/item.ics</d:href><d:propstat><d:prop><d:getetag>&quot;v1&quot;</d:getetag><c:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:item-1\r\nSUMMARY:Item\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</c:calendar-data></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`, { status: 207 });
             }
@@ -429,10 +429,13 @@ describe("CalDAV client", () => {
         expect(queried[0]?.etag).toBe('"v1"');
         expect(await client.update(`${calendar.id}item.ics`, '"v1"', "data")).toMatchObject({ etag: '"v2"' });
         await client.delete(`${calendar.id}item.ics`, '"v2"');
+        // A builder receives the stored body that passed the ETag check.
+        await client.update(`${calendar.id}item.ics`, '"v2"', (stored) => stored.replace("Item", "Renamed"));
         await client.close();
-        expect(methods.map((item) => item.method)).toEqual(["REPORT", "GET", "PUT", "DELETE"]);
+        expect(methods.map((item) => item.method)).toEqual(["REPORT", "GET", "PUT", "DELETE", "GET", "PUT"]);
         expect(methods[2]?.match).toBe('"v1"');
         expect(methods[3]?.match).toBe('"v2"');
+        expect(methods[5]?.body).toContain("SUMMARY:Renamed\r\n");
     });
 });
 
