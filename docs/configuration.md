@@ -245,6 +245,12 @@ refused. A connection is refused when the resolved address is any of:
   decoding one length would treat a private target as public. The prefix is
   not globally routed; public IPv4 uses `64:ff9b::/96`.
 
+When a hostname resolves to a blocked address, the error is
+`blocked non-public address for <hostname>` and does not include the address
+DNS returned. A client-supplied IP literal is named as given
+(`blocked non-public address 10.0.0.1`), because that value was already in the
+request.
+
 `packageConfig.<platform>.allowPrivateAddresses: true` disables only this
 address check. Scheme limits stay in effect. Feeds accept only `http:` and
 `https:` URLs. Metadata rejects any other scheme. CalDAV and CardDAV require
@@ -278,19 +284,25 @@ concurrent sockets per client IP, 100 persistent platform processes, 10 persiste
 instances per socket session, 20 persistent instances per client IP, and 60
 new persistent instances started per client IP per minute.
 
-`maxPlatformInstances` limits persistent workers across the server. IRC and XMPP
-use one process per actor and credential scope. Shared instances count against
-every attached session and IP; reusing the same instance consumes no extra slot.
-An IP remains charged until the worker shuts down, including for HTTP actions
-that have no socket session. Clients behind a shared NAT share the IP quota.
+`maxPlatformInstances` limits persistent workers across the server. IRC, XMPP,
+and email each use one process per actor and credential scope. IRC and XMPP can
+share that process across sockets. Email does not, so two sessions on the same
+mailbox consume two slots. Shared instances count against every attached
+session and IP; reusing the same instance consumes no extra slot. An IP remains
+charged until the worker shuts down, including for HTTP actions that have no
+socket session. Clients behind a shared NAT share the IP quota.
 `maxStartsPerIpPerMinute` bounds how fast one IP can churn workers, for example
 by replacing credentials repeatedly. Reusing a running instance, such as after a
-page refresh, does not count against it.
+page refresh, does not count against it. A replacement that the cap or this
+rate would reject is refused before the previous worker is shut down, so the
+existing connection stays up.
 
-Stateless platforms (CalDAV, CardDAV, feeds, and metadata) use one shared worker
-per enabled platform and are excluded from these caps, so persistent connections
-cannot prevent their startup or restart. With all four stateless platforms
-active, the default process budget is at most `100 + 4 = 104` workers.
+Stateless platforms use one shared worker per enabled platform and are excluded
+from these caps, so persistent connections cannot prevent their startup or
+restart. In the schema default those platforms are CalDAV, CardDAV, dummy,
+feeds, metadata, Messenger, Instagram, and WhatsApp. `sockethub --write-config`
+omits dummy. With the other seven enabled, a full persistent cap is at most
+`100 + 7 = 107` workers.
 
 Each instance limit can independently be disabled by setting it to `0`.
 Setting `maxConnectionsPerIp` to `0` removes the per-IP socket connection limit.
@@ -324,8 +336,10 @@ A persistent instance is selected by the platform, the actor, and a
 server-derived scope:
 
 - Credentials carrying a non-empty `password` or `token` scope the instance by
-  a fingerprint of the submitted credential object. Two sockets reach the same
-  instance only when they submitted identical credentials.
+  a fingerprint of the submitted credential object. The secret may sit on the
+  object itself or on a nested `imap` or `smtp` object, which is how email
+  credentials are shaped. Two sockets reach the same instance only when they
+  submitted identical credentials and the platform shares connections.
 - Anything else is scoped to the session, so anonymous connections stay private
   to the socket that opened them.
 
@@ -333,6 +347,22 @@ The fingerprint is derived from the credentials exactly as submitted, without
 filling in defaults first. A client sending `secure: true` and one leaving it
 off therefore get separate connections even though the resulting connection is
 the same.
+
+Email sets `shareConnections` to false. Its scope is a hash of that fingerprint
+plus the session id, so identical passwords still do not share a worker.
+Submitting a new credential object for the same actor on that session shuts the
+previous worker down once no other session is attached. The shutdown error is:
+
+<!-- markdownlint-disable MD013 -->
+
+`credentials replaced; pending operation interrupted; message submission may already have succeeded; do not automatically retry sends`
+
+<!-- markdownlint-enable MD013 -->
+
+Do not automatically retry a send that was in flight. Email also sets
+`retryStalledJobs` to false, which sets BullMQ `maxStalledCount` to 0, so a job
+whose worker disappears is not run again. Other platforms allow a stalled job
+to be recovered up to three times.
 
 Because the scope is part of the lookup, a client that guesses an `actor.id`
 cannot reach — or detect — someone else's connection. It gets its own

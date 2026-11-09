@@ -93,19 +93,27 @@ bun test
 
 ```
 packages/
-  server/           - Main server, middleware, Socket.IO, process management
-  sockethub/        - CLI entry point and executable
-  client/           - JavaScript client library for browsers/apps
-  data-layer/       - Redis, BullMQ job queues, credential storage
-  schemas/          - TypeScript types and AJV validators
-  crypto/           - Cryptographic utilities for credential encryption
-  irc2as/           - IRC to ActivityStreams conversion library
-  platform-irc/     - IRC protocol platform
-  platform-xmpp/    - XMPP protocol platform
-  platform-feeds/   - RSS/Atom feeds platform
-  platform-metadata/- URL metadata extraction platform
-  platform-dummy/   - Reference/test platform implementation
-  examples/         - SvelteKit demo application
+  server/            - Main server, middleware, Socket.IO, process management
+  sockethub/         - CLI entry point and executable
+  client/            - JavaScript client library for browsers/apps
+  data-layer/        - Redis, BullMQ job queues, credential storage
+  schemas/           - TypeScript types and AJV validators
+  util/              - Shared helpers, including the URL guard and crypto
+  dav/               - WebDAV transport shared by CalDAV and CardDAV
+  logger/            - Winston logger used by the other packages
+  irc2as/            - IRC to ActivityStreams conversion library
+  platform-irc/      - IRC protocol platform
+  platform-xmpp/     - XMPP protocol platform
+  platform-email/    - IMAP fetch/watch and SMTP send
+  platform-feeds/    - RSS/Atom feeds platform
+  platform-metadata/ - URL metadata extraction platform
+  platform-caldav/   - CalDAV calendars and published iCalendar feeds
+  platform-carddav/  - CardDAV address books
+  platform-messenger/ - Outgoing Facebook Page messages
+  platform-instagram/ - Outgoing Instagram professional-account messages
+  platform-whatsapp/ - Outgoing WhatsApp Business messages
+  platform-dummy/    - Reference/test platform implementation
+  examples/          - SvelteKit demo application
 ```
 
 ## Things NOT to Edit

@@ -454,13 +454,17 @@ A normal `send` is a channel or private `PRIVMSG`. The request schema only
 accepts `object.type` `message`; the content decides the IRC command. Content
 starting with `/me` is sent as a CTCP `ACTION` and content starting with
 `/notice` is sent as a `NOTICE`, with the prefix stripped. An incoming
-`ACTION` is delivered with `object.type` `me`. An incoming `NOTICE` is
-delivered as a plain `message`.
+`ACTION` is delivered with `object.type` `me`. An incoming `NOTICE` is a
+`send` with `object.type` `message`. A prefix of `nick!user@host` sets `actor`
+to a `person` (`nick@server`, with `name` the nick). A notice with no user
+part, such as a server notice, sets `actor` to a `service` whose `id` is the
+server name.
 
 Other incoming CTCP is not delivered to the application. The platform answers
 `VERSION` with `Sockethub <platform version>` and `PING` by echoing the
-argument. Other requests, and every CTCP reply, are ignored. Sending CTCP
-other than `me` is not supported.
+argument. Other requests, and every CTCP reply, are ignored. A CTCP frame
+carried in a `NOTICE` is one of those replies, not a chat message. Sending
+CTCP other than `me` is not supported.
 
 Channel and private `send` values, nicks, and topics must not contain CR or
 LF. A value that does is rejected before anything is written to the socket.

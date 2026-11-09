@@ -8,7 +8,11 @@ Requires Node.js >=20.19 and Redis through the Sockethub server.
 
 Supported actions: `connect`, `disconnect`, `fetch`, `watch`, `unwatch`, `send`.
 Each client session has its own worker and IMAP connection, so clients using the
-same account can choose different folders and filters independently.
+same account can choose different folders and filters independently. Identical
+passwords or tokens do not share that worker. Replacing the credential object
+shuts this session's worker down; a send already in flight may have been
+accepted. See
+[Credential sharing](../../docs/configuration.md#credential-sharing-and-anonymous-reconnects).
 
 ## Connect
 
@@ -149,6 +153,12 @@ accounts. The examples page resets pagination on connection changes.
 If the server resets UIDVALIDITY, Sockethub rejects the cursor;
 discard that folder's cursor and fetch again. The application owns any durable
 cursor storage and duplicate handling. Reset cursors when changing filters.
+
+If IMAP search fails, the acknowledgement is `email:search-failed; retry fetch`
+and that folder's cursor stays put. A failed search is not an empty window: an
+empty window advances the cursor across those UIDs. A `Date` header that is not
+a date leaves `published` unset. The rest of that message, and the page, still
+return.
 
 ## Watch
 
