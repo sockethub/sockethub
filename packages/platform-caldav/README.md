@@ -18,7 +18,7 @@ it is used.
 
 ## Discovery cache
 
-Each `query`, `create`, `update`, and `delete` needs the account's calendar list to
+Each `query`, `sync`, `create`, `update`, and `delete` needs the account's calendar list to
 check the target. The platform caches that discovery result in memory for
 `packageConfig.discoveryCacheTtlMs` (default `300000`, 5 minutes; `0`
 disables the cache). Entries are keyed by an HMAC of the protocol, service URL,
@@ -82,6 +82,8 @@ never forwarded to another origin.
 - `fetch`: discover calendars and their event/task support.
 - `query`: read items from one discovered calendar, optionally filtering by
   component type or UTC date range.
+- `sync`: report what changed in one discovered calendar since a sync token
+  (RFC 6578 WebDAV Sync).
 - `read`: list the items in a published `.ics` feed without credentials,
   with the same optional filters as `query`.
 - `create`: create an event or task with collision protection.
@@ -133,6 +135,71 @@ The collection contains calendar objects such as:
 Each returned item contains its resource `id`, `uid`, `etag`, and
 `updateSupported`. Keep the ETag for later update or delete requests. Use date
 ranges for large calendars; responses larger than 10 MiB are rejected.
+
+### Sync changes
+
+`sync` reports changes without downloading the whole calendar each time. Send
+it without an `object` (or without `object.syncToken`) for the initial sync:
+
+```json
+{
+  "type": "sync",
+  "actor": { "id": "caldav:alice", "type": "person" },
+  "target": {
+    "id": "https://calendar.example/calendars/alice/personal/",
+    "type": "calendar"
+  }
+}
+```
+
+The response is a collection with every event and task, plus a token:
+
+```json
+{
+  "type": "collection",
+  "summary": "CalDAV changes",
+  "totalItems": 1,
+  "items": [
+    {
+      "id": "https://calendar.example/calendars/alice/personal/a.ics",
+      "type": "task",
+      "uid": "a",
+      "name": "Pay rent",
+      "etag": "\"2\"",
+      "updateSupported": true
+    }
+  ],
+  "removed": [],
+  "syncToken": "http://sabre.io/ns/sync/42",
+  "truncated": false
+}
+```
+
+Store `syncToken` as an opaque string per calendar and send it back next time
+as `"object": { "syncToken": "..." }`. The response then holds only the items
+added or changed since that token, with their current ETag and content, and
+`removed` lists the ids of items deleted since then. Items in the same shape
+as `query` results replace the stored copy with the same `id`.
+
+When `truncated` is `true`, the server limited the result. The returned token
+covers exactly the changes delivered, so store it and sync again until
+`truncated` is `false`.
+
+Calendar resources that hold neither an event nor a task, such as journals, are
+left out of `items`.
+
+Handle these errors:
+
+- `caldav:sync-token-invalid`: the server no longer accepts the token (it
+  expired, or the calendar was reset). Drop the stored token and sync again
+  without one.
+- `caldav:sync-unsupported`: the server does not offer WebDAV Sync. Fall back
+  to `query`, which returns a full snapshot.
+- `caldav:sync-failed`: any other sync error.
+
+When a server rejects a token without saying why (a 400, 403, 409, or 412 with
+no `DAV:` precondition), the platform reports `caldav:sync-token-invalid`. A
+retry without a token then reports the real cause.
 
 ### Read a published iCalendar feed
 
@@ -257,7 +324,8 @@ Query again, reconcile the change, and retry with the new ETag.
 ## Interoperability and security
 
 The implementation follows WebDAV/CalDAV discovery, calendar-query REPORT,
-iCalendar content-line escaping/folding, and conditional PUT/DELETE semantics.
+iCalendar content-line escaping/folding, conditional PUT/DELETE semantics, and
+WebDAV Sync (RFC 6578).
 
 ### Server and provider compatibility
 
@@ -269,8 +337,8 @@ until they are included in automated or repeatable manual testing.
 
 | Service | Deployment | Verification | Authentication exercised | Notes |
 | --- | --- | --- | --- | --- |
-| Radicale 3.7.7 | Self-hosted | Automated integration | Basic | Complete discovery and event/task create, query, update, and delete lifecycle. |
-| Baïkal 0.10.1 | Self-hosted | Automated integration | Digest MD5 with `qop=auth` | Complete lifecycle through Baïkal's `dav.php/` endpoint, including its encoded ETags. |
+| Radicale 3.7.7 | Self-hosted | Automated integration | Basic | Complete discovery and event/task create, query, update, and delete lifecycle, and incremental sync. |
+| Baïkal 0.10.1 | Self-hosted | Automated integration | Digest MD5 with `qop=auth` | Complete lifecycle and incremental sync through Baïkal's `dav.php/` endpoint, including its encoded ETags. |
 | Nextcloud | Self-hosted or hosted | Manually verified during initial development | Basic with username and password or app password | Use the final `/remote.php/dav/` endpoint when cross-origin discovery redirects are involved. OAuth is not covered by this verification. |
 | ownCloud | Self-hosted or hosted | Not yet verified | Not yet verified | Expected to work when standard discovery and a supported authentication method are enabled. |
 | DAViCal | Self-hosted | Not yet verified | Not yet verified | Expected to work when standard discovery and a supported authentication method are enabled. |
@@ -300,17 +368,15 @@ administrator must explicitly enable `allowPrivateAddresses` or
 | Shared and delegated calendars | Read-only discovery only | Calendars returned from the user's calendar home can be queried, but creating shares, accepting invitations, proxy delegation, and ACL management are not implemented. |
 | Calendar collection management | Not supported | The platform does not create, rename, or delete calendar collections. |
 | Free/busy queries | Not supported | CalDAV free-busy REPORT and scheduling availability are not implemented. |
-| Incremental sync | Not supported | WebDAV sync tokens (RFC 6578) are not used yet; queries return snapshots. |
+| Incremental sync | Supported | `sync` uses RFC 6578 WebDAV Sync tokens, including truncated results. Members returned without calendar data are fetched with one `calendar-multiget`. |
 | Managed attachments | Not supported | iCalendar URL and inline attachment properties are supported, but CalDAV managed attachments are not. |
 
 <!-- markdownlint-enable MD013 -->
-
-Queries currently return calendar snapshots. CalDAV sync tokens (RFC 6578) are
-the intended follow-up for efficient incremental synchronization.
 
 Stable errors include `caldav:authentication-failed`,
 `caldav:unsupported-authentication`,
 `caldav:connection-failed`, `caldav:invalid-calendar`,
 `caldav:invalid-resource`, `caldav:unsupported-component`,
-`caldav:conflict`, `caldav:not-found`, `caldav:invalid-feed`, and
-`caldav:feed-failed`.
+`caldav:conflict`, `caldav:not-found`, `caldav:invalid-feed`,
+`caldav:feed-failed`, `caldav:sync-token-invalid`,
+`caldav:sync-unsupported`, and `caldav:sync-failed`.

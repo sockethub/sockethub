@@ -435,3 +435,35 @@ describe("CalDAV client", () => {
         expect(methods[3]?.match).toBe('"v2"');
     });
 });
+
+describe("CalDAV sync", () => {
+    it("returns events and tasks, skips journals, and keeps removals", async () => {
+        const event =
+            "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:e\r\nDTSTART:20260101T100000Z\r\nSUMMARY:E\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        const journal =
+            "BEGIN:VCALENDAR\r\nBEGIN:VJOURNAL\r\nUID:j\r\nSUMMARY:J\r\nEND:VJOURNAL\r\nEND:VCALENDAR\r\n";
+        const props = (name: string, data: string) =>
+            `<d:response><d:href>/calendars/alice/work/${name}</d:href><d:propstat><d:prop><d:getetag>"${name}"</d:getetag><c:calendar-data>${data}</c:calendar-data></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>`;
+        const bodies: string[] = [];
+        globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+            bodies.push(String(init?.body));
+            return new Response(
+                `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">${props("e.ics", event)}${props("j.ics", journal)}<d:response><d:href>/calendars/alice/work/gone.ics</d:href><d:status>HTTP/1.1 404 Not Found</d:status></d:response><d:sync-token>t2</d:sync-token></d:multistatus>`,
+                { status: 207 },
+            );
+        }) as typeof fetch;
+        const client = CalDavClient("https://calendar.example/dav/", { token: "t" });
+        const result = await client.sync(
+            { id: "https://calendar.example/calendars/alice/work/", type: "calendar", name: "Work", components: ["event", "task"] },
+            "t1",
+        );
+        await client.close();
+        expect(bodies[0]).toContain("<d:sync-token>t1</d:sync-token>");
+        expect(result.items.map((item) => [item.id, item.uid, item.etag])).toEqual([
+            ["https://calendar.example/calendars/alice/work/e.ics", "e", '"e.ics"'],
+        ]);
+        expect(result.removed).toEqual(["https://calendar.example/calendars/alice/work/gone.ics"]);
+        expect(result.syncToken).toBe("t2");
+        expect(result.truncated).toBe(false);
+    });
+});

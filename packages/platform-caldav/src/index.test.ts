@@ -1,7 +1,9 @@
 import { describe, expect, it, spyOn } from "bun:test";
 import type { PlatformSession } from "@sockethub/schemas";
+import Ajv from "ajv";
 import { CalDavClient, CalDavFailure } from "./dav.js";
 import CalDav, { assertCalendarResource } from "./index.js";
+import { PlatformCalDavSchema } from "./schema.js";
 
 describe("CalDAV resource membership", () => {
     const calendar = "https://calendar.example/dav/alice/work/";
@@ -224,6 +226,71 @@ describe("CalDAV discovery cache", () => {
         } finally {
             discover.mockRestore();
             run.mockRestore();
+        }
+    });
+});
+
+describe("CalDAV sync action", () => {
+    const session = {
+        log: { error() {}, warn() {}, info() {}, debug() {} },
+    } as unknown as PlatformSession;
+    const calendar = "https://calendar.example/dav/alice/work/";
+    const credentials = {
+        object: { url: "https://calendar.example/", token: "secret" },
+    } as never;
+
+    it("returns changes in a collection that matches the response schema", async () => {
+        const discover = spyOn(
+            CalDavClient.prototype,
+            "discoverCalendars",
+        ).mockResolvedValue([
+            { id: calendar, type: "calendar", name: "Work", components: ["task"] },
+        ]);
+        const sync = spyOn(CalDavClient.prototype, "sync").mockResolvedValue({
+            items: [
+                {
+                    id: `${calendar}a.ics`,
+                    type: "task",
+                    uid: "a",
+                    name: "A",
+                    etag: '"1"',
+                    updateSupported: true,
+                },
+            ],
+            removed: [`${calendar}b.ics`],
+            syncToken: "t2",
+            truncated: false,
+        });
+        try {
+            const [error, result] = await new Promise<[unknown, unknown]>(
+                (resolve) =>
+                    new CalDav(session).sync(
+                        {
+                            type: "sync",
+                            actor: { id: "caldav:alice", type: "person" },
+                            target: { id: calendar, type: "calendar" },
+                            object: { syncToken: "t1" },
+                        } as never,
+                        credentials,
+                        (err, res) => resolve([err, res]),
+                    ),
+            );
+            expect(error).toBeNull();
+            expect(sync.mock.calls[0]?.[1]).toBe("t1");
+            expect(result).toMatchObject({
+                type: "collection",
+                totalItems: 1,
+                removed: [`${calendar}b.ics`],
+                syncToken: "t2",
+                truncated: false,
+            });
+            const validate = new Ajv({ strict: false }).compile(
+                PlatformCalDavSchema.responses,
+            );
+            expect(validate(result)).toBeTrue();
+        } finally {
+            discover.mockRestore();
+            sync.mockRestore();
         }
     });
 });

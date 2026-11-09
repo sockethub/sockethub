@@ -101,4 +101,22 @@ describe("CardDAV schema", () => {
             ).toBe("");
         }
     });
+
+    it("accepts sync with or without a token", () => {
+        const validateMessage = ajv.compile({
+            allOf: [
+                { type: "object", ...PlatformCardDavSchema.messages },
+                PlatformCardDavSchema.messageConstraints,
+            ],
+        });
+        const actor = { id: "carddav:alice", type: "person" };
+        const target = { id: "https://contacts.example/books/alice/", type: "addressBook" };
+        expect(validateMessage({ type: "sync", actor, target })).toBeTrue();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { syncToken: "t1" } }),
+        ).toBeTrue();
+        expect(
+            validateMessage({ type: "sync", actor, target, object: { text: "a" } }),
+        ).toBeFalse();
+    });
 });

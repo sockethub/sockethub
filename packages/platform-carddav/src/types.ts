@@ -85,3 +85,14 @@ export interface DeleteInput {
     type: "person";
     etag: string;
 }
+
+export interface SyncInput {
+    syncToken?: string;
+}
+
+export interface ContactSyncResult {
+    items: Contact[];
+    removed: string[];
+    syncToken: string;
+    truncated: boolean;
+}

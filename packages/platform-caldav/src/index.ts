@@ -1,4 +1,4 @@
-import { DiscoveryCache } from "@sockethub/dav";
+import { DiscoveryCache, isDavCollectionChild } from "@sockethub/dav";
 import type {
     ActivityStream,
     Logger,
@@ -21,6 +21,7 @@ import type {
     CalendarObjectInput,
     DeleteInput,
     QueryInput,
+    SyncInput,
 } from "./types.js";
 
 const CONTEXT = buildCanonicalContext(PlatformCalDavSchema.contextUrl);
@@ -36,54 +37,11 @@ type FeedFetch = (
     init: RequestInit & { dispatcher?: Agent },
 ) => Promise<Response>;
 
-function safePathname(pathname: string): boolean {
-    if (pathname.includes("\\") || /%(?:2f|5c)/i.test(pathname)) return false;
-    for (const segment of pathname.split("/")) {
-        let decoded = segment;
-        try {
-            for (let pass = 0; pass < 3; pass += 1) {
-                const next = decodeURIComponent(decoded);
-                if (next === decoded) break;
-                decoded = next;
-            }
-        } catch {
-            return false;
-        }
-        if (decoded === "." || decoded === ".." || /[\\/]/.test(decoded))
-            return false;
-    }
-    return true;
-}
-
 export function assertCalendarResource(
     calendarId: string,
     resourceId: string,
 ): void {
-    let calendar: URL;
-    let resource: URL;
-    try {
-        calendar = new URL(calendarId);
-        resource = new URL(resourceId);
-    } catch {
-        throw new CalDavFailure("caldav:invalid-resource");
-    }
-    if (
-        calendar.search ||
-        calendar.hash ||
-        resource.search ||
-        resource.hash ||
-        !safePathname(calendar.pathname) ||
-        !safePathname(resource.pathname)
-    )
-        throw new CalDavFailure("caldav:invalid-resource");
-    const prefix = calendar.pathname.endsWith("/")
-        ? calendar.pathname
-        : `${calendar.pathname}/`;
-    if (
-        resource.origin !== calendar.origin ||
-        !resource.pathname.startsWith(prefix) ||
-        resource.pathname === prefix
-    )
+    if (!isDavCollectionChild(calendarId, resourceId))
         throw new CalDavFailure("caldav:invalid-resource");
 }
 
@@ -94,7 +52,14 @@ export default class CalDav implements PlatformInterface {
     private readonly discovery = new DiscoveryCache<CalendarDescription[]>();
     config: StatelessPlatformConfig & { discoveryCacheTtlMs: number } = {
         persist: false,
-        requireCredentials: ["fetch", "query", "create", "update", "delete"],
+        requireCredentials: [
+            "fetch",
+            "query",
+            "sync",
+            "create",
+            "update",
+            "delete",
+        ],
         connectTimeoutMs: 15_000,
         allowPrivateAddresses: false,
         allowInsecureHttp: false,
@@ -240,6 +205,39 @@ export default class CalDav implements PlatformInterface {
                     summary: "CalDAV items",
                     totalItems: items.length,
                     items,
+                } as never),
+            )
+            .catch((error) => this.fail(job, error, done, credentials))
+            .finally(() => client.close().catch(() => {}));
+    }
+
+    /**
+     * Incremental calendar sync (RFC 6578 WebDAV Sync). Without
+     * `object.syncToken`, returns every event and task plus a token; with
+     * one, returns only items changed and ids removed since that token.
+     * Store the returned `syncToken` opaquely and send it next time. When
+     * `truncated` is true, sync again with the new token before relying on
+     * the result being complete. `caldav:sync-token-invalid` means start
+     * over without a token; `caldav:sync-unsupported` means fall back to
+     * `query`.
+     */
+    sync(
+        job: ActivityStream,
+        credentials: CalDavCredentials,
+        done: PlatformCallback,
+    ): void {
+        const client = this.client(credentials);
+        const input = (job.object ?? {}) as SyncInput;
+        this.calendar(client, credentials, job.target?.id ?? "")
+            .then((calendar) => client.sync(calendar, input.syncToken))
+            .then((result) =>
+                done(null, {
+                    "@context": CONTEXT,
+                    ...(job.id ? { id: job.id } : {}),
+                    type: "collection",
+                    summary: "CalDAV changes",
+                    totalItems: result.items.length,
+                    ...result,
                 } as never),
             )
             .catch((error) => this.fail(job, error, done, credentials))

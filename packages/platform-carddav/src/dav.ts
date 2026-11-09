@@ -1,11 +1,9 @@
 import {
-    asArray,
     type DavAuthentication,
     DavClient,
     DavFailure,
     type DavNetworkOptions,
     davHref,
-    parseDavXml,
     propertyHref,
     rejectDavResponse,
     successfulProps,
@@ -15,6 +13,7 @@ import type {
     Contact,
     ContactInput,
     ContactQuery,
+    ContactSyncResult,
 } from "./types.js";
 import { buildVCard, parseVCard, prepareVCardUpdate } from "./vcard.js";
 
@@ -57,6 +56,18 @@ function queryBody(query: ContactQuery): string {
 }
 
 export { DavFailure as CardDavFailure };
+
+function contact(data: string, id: string, etag: unknown): Contact {
+    try {
+        return parseVCard(
+            data,
+            id,
+            typeof etag === "string" ? etag : undefined,
+        );
+    } catch {
+        throw new DavFailure("carddav:invalid-response");
+    }
+}
 
 export class CardDavClient extends DavClient {
     constructor(
@@ -147,39 +158,43 @@ export class CardDavClient extends DavClient {
         });
         if (response.status !== 207)
             return rejectDavResponse(response, "carddav:query-failed");
-        let parsed: Record<string, unknown>;
-        try {
-            parsed = parseDavXml(await response.text());
-        } catch {
-            throw new DavFailure("carddav:invalid-response");
-        }
         const contacts: Contact[] = [];
-        for (const item of asArray(
-            (parsed.multistatus as Record<string, unknown> | undefined)
-                ?.response as
-                | Record<string, unknown>
-                | Record<string, unknown>[],
-        )) {
+        for (const item of await this.readMultistatus(response)) {
             const props = successfulProps(item);
             const itemHref = davHref(item.href);
             const data = props["address-data"];
             if (!itemHref || typeof data !== "string") continue;
-            try {
-                contacts.push(
-                    parseVCard(
-                        data,
-                        new URL(itemHref, book.id).href,
-                        typeof props.getetag === "string"
-                            ? props.getetag
-                            : undefined,
-                    ),
-                );
-            } catch {
-                throw new DavFailure("carddav:invalid-response");
-            }
+            contacts.push(
+                contact(data, new URL(itemHref, book.id).href, props.getetag),
+            );
             if (query.limit && contacts.length >= query.limit) break;
         }
         return contacts;
+    }
+
+    /**
+     * Incremental sync (RFC 6578). Without `syncToken`, lists every contact
+     * in the address book; with one, lists only what changed since then.
+     */
+    async sync(
+        book: AddressBookDescription,
+        syncToken?: string,
+    ): Promise<ContactSyncResult> {
+        const { resources, ...result } = await this.syncResources(
+            new URL(book.id),
+            {
+                namespaces: 'xmlns:c="urn:ietf:params:xml:ns:carddav"',
+                data: "c:address-data",
+                multiget: "c:addressbook-multiget",
+            },
+            syncToken,
+        );
+        return {
+            ...result,
+            items: resources.map((resource) =>
+                contact(resource.data, resource.id, resource.etag),
+            ),
+        };
     }
 
     async create(

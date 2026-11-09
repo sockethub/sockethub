@@ -17,6 +17,7 @@ import type {
     ContactInput,
     ContactQuery,
     DeleteInput,
+    SyncInput,
 } from "./types.js";
 
 const CONTEXT = buildCanonicalContext(PlatformCardDavSchema.contextUrl);
@@ -26,7 +27,14 @@ export default class CardDav implements PlatformInterface {
     private readonly discovery = new DiscoveryCache<AddressBookDescription[]>();
     config: StatelessPlatformConfig & { discoveryCacheTtlMs: number } = {
         persist: false,
-        requireCredentials: ["fetch", "query", "create", "update", "delete"],
+        requireCredentials: [
+            "fetch",
+            "query",
+            "sync",
+            "create",
+            "update",
+            "delete",
+        ],
         connectTimeoutMs: 15_000,
         allowPrivateAddresses: false,
         allowInsecureHttp: false,
@@ -87,6 +95,39 @@ export default class CardDav implements PlatformInterface {
                     summary: "CardDAV contacts",
                     totalItems: items.length,
                     items,
+                } as never),
+            )
+            .catch((error) => this.fail(job, error, done, credentials))
+            .finally(() => client.close().catch(() => {}));
+    }
+
+    /**
+     * Incremental address book sync (RFC 6578 WebDAV Sync). Without
+     * `object.syncToken`, returns every contact plus a token; with one,
+     * returns only contacts changed and ids removed since that token. Store
+     * the returned `syncToken` opaquely and send it next time. When
+     * `truncated` is true, sync again with the new token before relying on
+     * the result being complete. `carddav:sync-token-invalid` means start
+     * over without a token; `carddav:sync-unsupported` means fall back to
+     * `query`.
+     */
+    sync(
+        job: ActivityStream,
+        credentials: CardDavCredentials,
+        done: PlatformCallback,
+    ): void {
+        const client = this.client(credentials);
+        const input = (job.object ?? {}) as SyncInput;
+        this.book(client, credentials, job.target?.id ?? "")
+            .then((book) => client.sync(book, input.syncToken))
+            .then((result) =>
+                done(null, {
+                    "@context": CONTEXT,
+                    ...(job.id ? { id: job.id } : {}),
+                    type: "collection",
+                    summary: "CardDAV changes",
+                    totalItems: result.items.length,
+                    ...result,
                 } as never),
             )
             .catch((error) => this.fail(job, error, done, credentials))

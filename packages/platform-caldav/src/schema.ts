@@ -196,6 +196,12 @@ const queryObject = {
         endTime: { type: "string", format: "date-time" },
     },
 };
+const syncToken = { type: "string", minLength: 1, maxLength: 4096 };
+const syncObject = {
+    type: "object",
+    additionalProperties: false,
+    properties: { syncToken },
+};
 const calendarItem = { oneOf: [eventObject, taskObject] };
 const mutationObject = {
     type: "object",
@@ -220,12 +226,27 @@ export const PlatformCalDavSchema = {
         properties: {
             type: {
                 type: "string",
-                enum: ["fetch", "read", "query", "create", "update", "delete"],
+                enum: [
+                    "fetch",
+                    "read",
+                    "query",
+                    "sync",
+                    "create",
+                    "update",
+                    "delete",
+                ],
             },
             actor,
             target: { oneOf: [target, feedTarget] },
             object: {
-                oneOf: [eventObject, taskObject, deleteObject, queryObject],
+                oneOf: [
+                    eventObject,
+                    taskObject,
+                    deleteObject,
+                    queryObject,
+                    // An empty sync object already matches queryObject.
+                    { ...syncObject, required: ["syncToken"] },
+                ],
             },
         },
     },
@@ -251,6 +272,14 @@ export const PlatformCalDavSchema = {
                     type: { const: "query" },
                     target,
                     object: queryObject,
+                },
+                required: ["type", "actor", "target"],
+            },
+            {
+                properties: {
+                    type: { const: "sync" },
+                    target,
+                    object: syncObject,
                 },
                 required: ["type", "actor", "target"],
             },
@@ -397,6 +426,30 @@ export const PlatformCalDavSchema = {
                             ],
                         },
                     },
+                },
+            },
+            {
+                type: "object",
+                required: [
+                    "@context",
+                    "type",
+                    "totalItems",
+                    "items",
+                    "removed",
+                    "syncToken",
+                    "truncated",
+                ],
+                additionalProperties: false,
+                properties: {
+                    "@context": { type: "array", items: { type: "string" } },
+                    id: { type: ["string", "null"] },
+                    type: { const: "collection" },
+                    summary: { type: "string" },
+                    totalItems: { type: "integer", minimum: 0 },
+                    items: { type: "array", items: calendarItem },
+                    removed: { type: "array", items: shared.id },
+                    syncToken,
+                    truncated: { type: "boolean" },
                 },
             },
             {

@@ -80,9 +80,15 @@ function xmlText(value: string): string {
     );
 }
 
-export function parseDavXml(xml: string): Record<string, unknown> {
+export function parseDavXml(
+    xml: string,
+    options: { parseTagValue?: boolean } = {},
+): Record<string, unknown> {
     return new XMLParser({
         ignoreAttributes: false,
+        // Opaque values such as sync tokens must survive verbatim; the parser
+        // would otherwise turn "0012" into 12.
+        parseTagValue: options.parseTagValue ?? true,
         removeNSPrefix: true,
         processEntities: false,
         tagValueProcessor: (_tagName, value) => xmlText(value),
@@ -329,6 +335,74 @@ function digestChallenge(header: string): DigestChallenge | undefined {
 const quote = (value: string) =>
     `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
 
+/** Request options understood by `DavClient.request`. */
+export type DavRequestInit = RequestInit & {
+    /**
+     * Return a 403 response to the caller instead of treating it as an
+     * authentication failure. WebDAV reports failed preconditions, such as an
+     * expired sync token, as 403 with a `DAV:error` body.
+     */
+    passForbidden?: boolean;
+};
+
+export interface DavSyncMember {
+    /** Absolute URL of the changed member. */
+    id: string;
+    props: Record<string, unknown>;
+}
+
+export interface DavSyncResult {
+    changed: DavSyncMember[];
+    /** Absolute URLs of members removed since the supplied token. */
+    removed: string[];
+    syncToken: string;
+    /** The server truncated the result; sync again with `syncToken`. */
+    truncated: boolean;
+}
+
+export interface DavSyncResource {
+    /** Absolute URL of the changed member. */
+    id: string;
+    etag?: string;
+    /** Body of the member, such as iCalendar or vCard text. */
+    data: string;
+}
+
+export interface DavSyncResourcesResult {
+    resources: DavSyncResource[];
+    removed: string[];
+    syncToken: string;
+    truncated: boolean;
+}
+
+export interface DavSyncDataOptions {
+    /** Namespace declarations for the prefixes below, besides `d` (`DAV:`). */
+    namespaces: string;
+    /** Prefixed element holding member data, e.g. `c:calendar-data`. */
+    data: string;
+    /** Prefixed multiget report element, e.g. `c:calendar-multiget`. */
+    multiget: string;
+}
+
+const isStatus = (value: unknown, code: number) =>
+    new RegExp(`\\s${code}(?:\\s|$)`).test(String(value ?? ""));
+
+/** Names of the precondition elements in a `DAV:error` body. */
+function davPreconditions(xml: string): string[] {
+    try {
+        const error = parseDavXml(xml).error;
+        return error && typeof error === "object" ? Object.keys(error) : [];
+    } catch {
+        return [];
+    }
+}
+
+const xmlEscape = (value: string) =>
+    value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+
 export class DavClient {
     private readonly dispatcher: Agent;
     private readonly fetchImpl: DavFetch;
@@ -379,7 +453,7 @@ export class DavClient {
 
     async request(
         url: URL,
-        init: RequestInit,
+        init: DavRequestInit,
         redirects = 0,
         authAttempts = 0,
         signal: AbortSignal = AbortSignal.timeout(this.timeoutMs),
@@ -387,9 +461,10 @@ export class DavClient {
         this.assertAllowed(url);
         let response: Response;
         try {
+            const { passForbidden: _, ...fetchInit } = init;
             const authorization = this.authorization(url, init);
             response = await this.fetchImpl(url, {
-                ...init,
+                ...fetchInit,
                 redirect: "manual",
                 signal,
                 headers: {
@@ -467,7 +542,10 @@ export class DavClient {
                 `${this.errorPrefix}:${authAttempts > 0 ? "authentication-failed" : "unsupported-authentication"}`,
             );
         }
-        if (response.status === 401 || response.status === 403) {
+        if (
+            response.status === 401 ||
+            (response.status === 403 && !init.passForbidden)
+        ) {
             await response.body?.cancel().catch(() => {});
             throw new DavFailure(`${this.errorPrefix}:authentication-failed`);
         }
@@ -493,6 +571,199 @@ export class DavClient {
             await response.body?.cancel().catch(() => {});
             throw new DavFailure(`${this.errorPrefix}:invalid-response`);
         }
+        return this.readMultistatus(response);
+    }
+
+    /**
+     * Run an RFC 6578 `DAV:sync-collection` REPORT against `collection`.
+     * Without `syncToken` this is the initial sync and lists every member.
+     * `prop` is the inner XML of the `DAV:prop` element, and `namespaces`
+     * declares any prefixes it uses besides `d` (`DAV:`).
+     *
+     * Errors use the client prefix: `sync-unsupported` when the server does
+     * not offer the report, `sync-token-invalid` when it rejects the token
+     * (start again without one), and `not-found` for a missing collection.
+     * Without a precondition element, a 400/403/409/412 counts as a rejected
+     * token when one was sent, so a client's retry without a token reaches
+     * the real cause.
+     */
+    async syncCollection(
+        collection: URL,
+        prop: string,
+        syncToken?: string,
+        namespaces = "",
+    ): Promise<DavSyncResult> {
+        const response = await this.request(collection, {
+            method: "REPORT",
+            passForbidden: true,
+            headers: {
+                depth: "0",
+                "content-type": "application/xml; charset=utf-8",
+            },
+            body: `<?xml version="1.0" encoding="utf-8"?>
+<d:sync-collection xmlns:d="DAV:"${namespaces ? ` ${namespaces}` : ""}>
+ ${syncToken ? `<d:sync-token>${xmlEscape(syncToken)}</d:sync-token>` : "<d:sync-token/>"}
+ <d:sync-level>1</d:sync-level>
+ <d:prop>${prop}</d:prop>
+</d:sync-collection>`,
+        });
+        if (response.status !== 207) {
+            let body = "";
+            try {
+                body = await response.text();
+            } catch {
+                // The status alone decides below.
+            }
+            const preconditions = davPreconditions(body);
+            const prefix = this.errorPrefix;
+            if (preconditions.includes("valid-sync-token"))
+                throw new DavFailure(`${prefix}:sync-token-invalid`);
+            if (preconditions.includes("supported-report"))
+                throw new DavFailure(`${prefix}:sync-unsupported`);
+            if (response.status === 404)
+                throw new DavFailure(`${prefix}:not-found`);
+            if ([400, 403, 409, 412].includes(response.status) && syncToken)
+                throw new DavFailure(`${prefix}:sync-token-invalid`);
+            if (response.status === 403)
+                throw new DavFailure(`${prefix}:authentication-failed`);
+            if ([400, 405, 415, 501].includes(response.status))
+                throw new DavFailure(`${prefix}:sync-unsupported`);
+            throw new DavFailure(`${prefix}:sync-failed`);
+        }
+        let multistatus: Record<string, unknown>;
+        try {
+            const parsed = parseDavXml(await response.text(), {
+                parseTagValue: false,
+            }).multistatus;
+            if (!parsed || typeof parsed !== "object") throw new Error();
+            multistatus = parsed as Record<string, unknown>;
+        } catch {
+            throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+        }
+        const token = multistatus["sync-token"];
+        if (typeof token !== "string" || token.trim() === "")
+            throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+        const result: DavSyncResult = {
+            changed: [],
+            removed: [],
+            syncToken: token.trim(),
+            truncated: false,
+        };
+        for (const item of asArray(
+            multistatus.response as
+                | Record<string, unknown>
+                | Record<string, unknown>[],
+        )) {
+            const href = davHref(item.href);
+            if (!href)
+                throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+            const id = new URL(href, collection).href;
+            const status = item.status;
+            if (id === collection.href || `${id}/` === collection.href) {
+                // RFC 6578 3.6: 507 on the collection marks a truncated result.
+                if (isStatus(status, 507)) result.truncated = true;
+                continue;
+            }
+            if (!isDavCollectionChild(collection.href, id))
+                throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+            if (isStatus(status, 404)) result.removed.push(id);
+            else result.changed.push({ id, props: successfulProps(item) });
+        }
+        return result;
+    }
+
+    /**
+     * `syncCollection` that also returns each changed member's data. Members
+     * the server lists without data are fetched with one multiget REPORT; a
+     * member the multiget reports as 404 was deleted in between and is listed
+     * as removed. A member that still has no data fails the sync with
+     * `invalid-response`, because returning the token would skip its change.
+     */
+    async syncResources(
+        collection: URL,
+        options: DavSyncDataOptions,
+        syncToken?: string,
+    ): Promise<DavSyncResourcesResult> {
+        const property = options.data.slice(options.data.indexOf(":") + 1);
+        const sync = await this.syncCollection(
+            collection,
+            `<d:getetag/><${options.data}/>`,
+            syncToken,
+            options.namespaces,
+        );
+        const resources: DavSyncResource[] = [];
+        const missing = new Map<string, unknown>();
+        const add = (id: string, value: unknown, etag: unknown) => {
+            // An element with attributes, such as content-type, parses to
+            // an object holding its text.
+            const data =
+                value && typeof value === "object"
+                    ? (value as Record<string, unknown>)["#text"]
+                    : value;
+            if (typeof data !== "string") return false;
+            resources.push({
+                id,
+                data,
+                ...(typeof etag === "string" ? { etag } : {}),
+            });
+            return true;
+        };
+        for (const member of sync.changed)
+            if (!add(member.id, member.props[property], member.props.getetag))
+                missing.set(member.id, member.props.getetag);
+        if (missing.size) {
+            const hrefs = [...missing.keys()]
+                .map(
+                    (id) =>
+                        `<d:href>${xmlEscape(new URL(id).pathname)}</d:href>`,
+                )
+                .join("");
+            const response = await this.request(collection, {
+                method: "REPORT",
+                headers: {
+                    depth: "1",
+                    "content-type": "application/xml; charset=utf-8",
+                },
+                body: `<?xml version="1.0" encoding="utf-8"?>
+<${options.multiget} xmlns:d="DAV:" ${options.namespaces}>
+ <d:prop><d:getetag/><${options.data}/></d:prop>
+ ${hrefs}
+</${options.multiget}>`,
+            });
+            if (response.status !== 207)
+                return rejectDavResponse(
+                    response,
+                    `${this.errorPrefix}:sync-failed`,
+                );
+            for (const item of await this.readMultistatus(response)) {
+                const href = davHref(item.href);
+                if (!href) continue;
+                const id = new URL(href, collection).href;
+                if (!missing.has(id)) continue;
+                if (isStatus(item.status, 404)) {
+                    sync.removed.push(id);
+                    missing.delete(id);
+                    continue;
+                }
+                const props = successfulProps(item);
+                if (add(id, props[property], props.getetag ?? missing.get(id)))
+                    missing.delete(id);
+            }
+            if (missing.size)
+                throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+        }
+        return {
+            resources,
+            removed: sync.removed,
+            syncToken: sync.syncToken,
+            truncated: sync.truncated,
+        };
+    }
+
+    /** The `DAV:response` elements of a 207 multistatus body. */
+    async readMultistatus(
+        response: Response,
+    ): Promise<Record<string, unknown>[]> {
         try {
             const parsed = parseDavXml(await response.text());
             return asArray(

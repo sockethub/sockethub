@@ -125,6 +125,12 @@ const query = {
         limit: { type: "integer", minimum: 1, maximum: 1000 },
     },
 };
+const syncToken = { type: "string", minLength: 1, maxLength: 4096 };
+const sync = {
+    type: "object",
+    additionalProperties: false,
+    properties: { syncToken },
+};
 const deletion = {
     type: "object",
     required: ["id", "type", "etag"],
@@ -195,10 +201,20 @@ export const PlatformCardDavSchema = {
     messages: {
         required: ["type", "actor"],
         properties: {
-            type: { enum: ["fetch", "query", "create", "update", "delete"] },
+            type: {
+                enum: ["fetch", "query", "sync", "create", "update", "delete"],
+            },
             actor,
             target,
-            object: { oneOf: [contact, query, deletion] },
+            object: {
+                oneOf: [
+                    contact,
+                    query,
+                    deletion,
+                    // An empty sync object already matches query.
+                    { ...sync, required: ["syncToken"] },
+                ],
+            },
         },
     },
     messageConstraints: {
@@ -212,6 +228,10 @@ export const PlatformCardDavSchema = {
             },
             {
                 properties: { type: { const: "query" }, object: query },
+                required: ["type", "actor", "target"],
+            },
+            {
+                properties: { type: { const: "sync" }, object: sync },
                 required: ["type", "actor", "target"],
             },
             {
@@ -266,6 +286,30 @@ export const PlatformCardDavSchema = {
                             ],
                         },
                     },
+                },
+            },
+            {
+                type: "object",
+                required: [
+                    "@context",
+                    "type",
+                    "totalItems",
+                    "items",
+                    "removed",
+                    "syncToken",
+                    "truncated",
+                ],
+                additionalProperties: false,
+                properties: {
+                    "@context": { type: "array", items: { type: "string" } },
+                    id: { type: ["string", "null"] },
+                    type: { const: "collection" },
+                    summary: { type: "string" },
+                    totalItems: { type: "integer", minimum: 0 },
+                    items: { type: "array", items: responseContact },
+                    removed: { type: "array", items: shared.id },
+                    syncToken,
+                    truncated: { type: "boolean" },
                 },
             },
             {

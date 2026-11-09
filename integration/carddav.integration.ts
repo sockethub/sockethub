@@ -1,5 +1,8 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { CardDavClient } from "../packages/platform-carddav/src/dav.js";
+import {
+    CardDavClient,
+    CardDavFailure,
+} from "../packages/platform-carddav/src/dav.js";
 import { buildVCard } from "../packages/platform-carddav/src/vcard.js";
 
 const root = "http://127.0.0.1:5232/alice/";
@@ -100,6 +103,59 @@ describe("CardDAV integration", () => {
         } finally {
             if (resourceId && etag)
                 await client.delete(resourceId, etag).catch(() => {});
+            await client.close();
+        }
+    });
+});
+
+describe("CardDAV incremental sync", () => {
+    it("reports additions, changes, and removals against Radicale", async () => {
+        const client = new CardDavClient(
+            root,
+            { username: "alice", password: "calendar-test-password" },
+            15_000,
+            { allowPrivateAddresses: true, allowInsecureHttp: true },
+        );
+        const uid = `sockethub-sync-${crypto.randomUUID()}`;
+        let current: { id: string; etag?: string } | undefined;
+        try {
+            const book = (await client.discoverAddressBooks()).find(
+                (item) => item.id === bookId,
+            );
+            if (!book) throw new Error("address book was not discovered");
+            const initial = await client.sync(book);
+            const created = await client.create(book, {
+                type: "person",
+                uid,
+                name: "Sync Contact",
+            });
+            current = created;
+            const added = await client.sync(book, initial.syncToken);
+            expect(added.items.map((item) => item.uid)).toEqual([uid]);
+            const stored = added.items[0];
+            if (!stored.etag) throw new Error("synced contact has no ETag");
+            current = await client.update({
+                ...stored,
+                name: "Synced Contact",
+                etag: stored.etag,
+            });
+            const changed = await client.sync(book, added.syncToken);
+            expect(changed.items.map((item) => item.name)).toEqual([
+                "Synced Contact",
+            ]);
+            const latest = changed.items[0];
+            if (!latest.etag) throw new Error("synced contact has no ETag");
+            await client.delete(latest.id, latest.etag);
+            current = undefined;
+            const removed = await client.sync(book, changed.syncToken);
+            expect(removed.items).toEqual([]);
+            expect(removed.removed).toEqual([latest.id]);
+            await expect(client.sync(book, "garbage")).rejects.toEqual(
+                new CardDavFailure("carddav:sync-token-invalid"),
+            );
+        } finally {
+            if (current?.etag)
+                await client.delete(current.id, current.etag).catch(() => {});
             await client.close();
         }
     });
