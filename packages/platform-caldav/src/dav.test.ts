@@ -515,3 +515,24 @@ describe("CalDAV recurrence updates", () => {
         await client.close();
     });
 });
+
+
+it("keeps a lowercase WKST when editing a parsed recurrence", async () => {
+    const stored = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:weeks\r\nSUMMARY:Weeks\r\nDTSTART:19970805T090000Z\r\nRRULE:freq=WEEKLY;interval=2;byday=TU,SU;wkst=su\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+    let written: string | undefined;
+    globalThis.fetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+        if (init?.method === "GET") return new Response(stored);
+        written = init?.body as string;
+        return new Response(null);
+    }) as typeof fetch;
+    const client = CalDavClient("https://calendar.example/dav/", { username: "alice", password: "secret" });
+    try {
+        const item = parseICalendar(stored, "");
+        expect(item.recurrence?.weekStart).toBe("SU");
+        const changed = { ...item, recurrence: { ...item.recurrence!, interval: 3 } };
+        await client.update("https://calendar.example/dav/weeks.ics", '"v1"', (body) => patchICalendar(body, changed, buildICalendar(changed).body).body);
+        expect(written).toContain("RRULE:FREQ=WEEKLY;INTERVAL=3;BYDAY=TU,SU;WKST=SU\r\n");
+    } finally {
+        await client.close();
+    }
+});

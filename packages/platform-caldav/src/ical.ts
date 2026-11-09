@@ -534,7 +534,7 @@ export function parseICalendar(
         const parts = Object.fromEntries(
             rule.split(";").map((part) => {
                 const [key, value] = part.split("=", 2);
-                return [key, value];
+                return [key.toUpperCase(), value];
             }),
         );
         if (parts.FREQ) {
