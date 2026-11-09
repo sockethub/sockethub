@@ -88,6 +88,7 @@ export interface DeleteInput {
 
 export interface SyncInput {
     syncToken?: string;
+    tokenOnly?: true;
 }
 
 export interface ContactSyncResult {

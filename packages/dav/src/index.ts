@@ -575,6 +575,48 @@ export class DavClient {
     }
 
     /**
+     * The collection's current RFC 6578 sync token, read from its
+     * `DAV:sync-token` property without listing any members. A later
+     * `syncCollection` with this token returns only what changed after it.
+     * Throws `sync-unsupported` when the server exposes no token.
+     */
+    async currentSyncToken(collection: URL): Promise<string> {
+        const response = await this.request(collection, {
+            method: "PROPFIND",
+            headers: {
+                depth: "0",
+                "content-type": "application/xml; charset=utf-8",
+            },
+            body: `<?xml version="1.0" encoding="utf-8"?>
+<d:propfind xmlns:d="DAV:"><d:prop><d:sync-token/></d:prop></d:propfind>`,
+        });
+        if (response.status === 404)
+            return rejectDavResponse(response, `${this.errorPrefix}:not-found`);
+        if (response.status !== 207) {
+            await response.body?.cancel().catch(() => {});
+            throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+        }
+        let responses: Record<string, unknown>[];
+        try {
+            responses = asArray(
+                (
+                    parseDavXml(await response.text(), {
+                        parseTagValue: false,
+                    }).multistatus as Record<string, unknown> | undefined
+                )?.response as
+                    | Record<string, unknown>
+                    | Record<string, unknown>[],
+            );
+        } catch {
+            throw new DavFailure(`${this.errorPrefix}:invalid-response`);
+        }
+        const token = successfulProps(responses[0] ?? {})["sync-token"];
+        if (typeof token !== "string" || token.trim() === "")
+            throw new DavFailure(`${this.errorPrefix}:sync-unsupported`);
+        return token.trim();
+    }
+
+    /**
      * Run an RFC 6578 `DAV:sync-collection` REPORT against `collection`.
      * Without `syncToken` this is the initial sync and lists every member.
      * `prop` is the inner XML of the `DAV:prop` element, and `namespaces`

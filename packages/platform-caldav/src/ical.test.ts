@@ -234,4 +234,38 @@ describe("iCalendar generation", () => {
             id: "https://calendar.example/tasks/task-1.ics", etag: '"v1"', type: "task", uid: "task-1", name: "Do it", due: "2026-08-04",
         });
     });
+
+    it("stamps CREATED only for new resources and LAST-MODIFIED always", () => {
+        const now = new Date("2026-08-01T10:00:00Z");
+        const item = { type: "event" as const, uid: "e", name: "E", startTime: "2026-08-03T15:00:00Z" };
+        const fresh = buildICalendar(item, now, { created: true }).body;
+        expect(fresh).toContain("CREATED:20260801T100000Z\r\n");
+        expect(fresh).toContain("LAST-MODIFIED:20260801T100000Z\r\n");
+        const rewritten = buildICalendar(item, now).body;
+        expect(rewritten).not.toContain("CREATED:");
+        expect(rewritten).toContain("LAST-MODIFIED:20260801T100000Z\r\n");
+    });
+
+    it("reads created and lastModified, falling back to DTSTAMP", () => {
+        const body = (lines: string) =>
+            `BEGIN:VCALENDAR\r\nBEGIN:VTODO\r\nUID:t\r\nSUMMARY:T\r\nDTSTAMP:20260301T000000Z\r\n${lines}END:VTODO\r\nEND:VCALENDAR\r\n`;
+        expect(
+            parseICalendar(body("CREATED:20240102T030405Z\r\nLAST-MODIFIED:20250203T040506Z\r\n"), "https://c.example/t.ics"),
+        ).toMatchObject({ created: "2024-01-02T03:04:05Z", lastModified: "2025-02-03T04:05:06Z" });
+        const fallback = parseICalendar(body(""), "https://c.example/t.ics");
+        expect(fallback.created).toBeUndefined();
+        expect(fallback.lastModified).toBe("2026-03-01T00:00:00Z");
+        // RFC 5545 requires UTC here; other forms are skipped rather than guessed.
+        const local = parseICalendar(body("CREATED:20240102T030405\r\nLAST-MODIFIED:garbage\r\n"), "https://c.example/t.ics");
+        expect(local.created).toBeUndefined();
+        expect(local.lastModified).toBe("2026-03-01T00:00:00Z");
+        const impossible = parseICalendar(body("CREATED:20260230T250000Z\r\n"), "https://c.example/t.ics");
+        expect(impossible.created).toBeUndefined();
+    });
+
+    it("does not treat a scheduling message's DTSTAMP as lastModified", () => {
+        const invite =
+            "BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:i\r\nSUMMARY:I\r\nDTSTAMP:20260301T000000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        expect(parseICalendar(invite, "https://c.example/i.ics").lastModified).toBeUndefined();
+    });
 });

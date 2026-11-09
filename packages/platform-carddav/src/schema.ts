@@ -126,10 +126,12 @@ const query = {
     },
 };
 const syncToken = { type: "string", minLength: 1, maxLength: 4096 };
+// `tokenOnly` asks for the current token without listing any contacts.
 const sync = {
     type: "object",
     additionalProperties: false,
-    properties: { syncToken },
+    properties: { syncToken, tokenOnly: { const: true } },
+    not: { required: ["syncToken", "tokenOnly"] },
 };
 const deletion = {
     type: "object",
@@ -213,6 +215,7 @@ export const PlatformCardDavSchema = {
                     deletion,
                     // An empty sync object already matches query.
                     { ...sync, required: ["syncToken"] },
+                    { ...sync, required: ["tokenOnly"] },
                 ],
             },
         },

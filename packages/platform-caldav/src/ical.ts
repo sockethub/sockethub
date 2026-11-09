@@ -296,9 +296,15 @@ function timeZoneRange(
     return [first - 1, Math.max(last + 1, first + 30)];
 }
 
+/**
+ * Serialize an item as a single-component iCalendar resource. `created`
+ * stamps `CREATED` with `now`; pass it only for a new resource, so an update
+ * does not move the creation time.
+ */
 export function buildICalendar(
     input: CalendarObjectInput,
     now = new Date(),
+    { created = false }: { created?: boolean } = {},
 ): { uid: string; body: string } {
     const uid = input.uid ?? `${randomUUID()}@sockethub`;
     if (/[\r\n%/\\]/.test(uid)) throw new Error("invalid uid");
@@ -328,6 +334,10 @@ export function buildICalendar(
         `BEGIN:${component}`,
         `UID:${escapeText(uid)}`,
         `DTSTAMP:${utcDateTime(now.toISOString(), "now")}`,
+        ...(created
+            ? [`CREATED:${utcDateTime(now.toISOString(), "now")}`]
+            : []),
+        `LAST-MODIFIED:${utcDateTime(now.toISOString(), "now")}`,
         `SUMMARY:${escapeText(input.name)}`,
     ];
     if (input.content) lines.push(`DESCRIPTION:${escapeText(input.content)}`);
@@ -371,6 +381,19 @@ function parseDate(value: string): string {
     if (/^\d{8}T\d{6}$/.test(value))
         return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}`;
     return value;
+}
+
+/** An RFC 5545 UTC date-time as ISO 8601, or undefined for any other form. */
+function utcTimestamp(value: string | undefined): string | undefined {
+    if (!value || !/^\d{8}T\d{6}Z$/.test(value)) return undefined;
+    const iso = parseDate(value);
+    // Date rolls impossible values over (Feb 30 -> Mar 2), so a round trip
+    // that changes the text means the date or time does not exist.
+    const parsed = new Date(iso);
+    return !Number.isNaN(parsed.getTime()) &&
+        parsed.toISOString().replace(".000Z", "Z") === iso
+        ? iso
+        : undefined;
 }
 
 const STATUSES = {
@@ -468,6 +491,17 @@ export function parseICalendar(
         name: unescapeText(summary),
         updateSupported: isUpdateSupported(body),
     };
+    const created = utcTimestamp(first("CREATED")?.value);
+    // DTSTAMP is the last revision time only when the resource carries no
+    // METHOD; in a scheduling message it is when the message was sent.
+    const hasMethod = lines
+        .slice(0, begin)
+        .some((line) => /^METHOD[;:]/i.test(line));
+    const lastModified =
+        utcTimestamp(first("LAST-MODIFIED")?.value) ??
+        (hasMethod ? undefined : utcTimestamp(first("DTSTAMP")?.value));
+    if (created) item.created = created;
+    if (lastModified) item.lastModified = lastModified;
     if (first("DESCRIPTION"))
         item.content = unescapeText(first("DESCRIPTION")?.value ?? "");
     if (first("LOCATION"))

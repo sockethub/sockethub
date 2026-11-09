@@ -19,6 +19,7 @@ import type {
     CalDavCredentials,
     CalendarDescription,
     CalendarObjectInput,
+    CalendarSyncResult,
     DeleteInput,
     QueryInput,
     SyncInput,
@@ -163,7 +164,9 @@ export default class CalDav implements PlatformInterface {
                 if (!target.components.includes(input.type)) {
                     throw new CalDavFailure("caldav:unsupported-component");
                 }
-                const calendarData = buildICalendar(input);
+                const calendarData = buildICalendar(input, new Date(), {
+                    created: true,
+                });
                 const created = await client.create(
                     target,
                     calendarData.uid,
@@ -220,6 +223,11 @@ export default class CalDav implements PlatformInterface {
      * the result being complete. `caldav:sync-token-invalid` means start
      * over without a token; `caldav:sync-unsupported` means fall back to
      * `query`.
+     *
+     * With `object.tokenOnly: true`, returns the calendar's current token
+     * and no items, so a client can start tracking changes without
+     * downloading history: get the token first, then `query` the range it
+     * needs, then `sync` with the token on later passes.
      */
     sync(
         job: ActivityStream,
@@ -229,7 +237,18 @@ export default class CalDav implements PlatformInterface {
         const client = this.client(credentials);
         const input = (job.object ?? {}) as SyncInput;
         this.calendar(client, credentials, job.target?.id ?? "")
-            .then((calendar) => client.sync(calendar, input.syncToken))
+            .then((calendar) =>
+                input.tokenOnly
+                    ? client.currentSyncToken(new URL(calendar.id)).then(
+                          (syncToken): CalendarSyncResult => ({
+                              items: [],
+                              removed: [],
+                              syncToken,
+                              truncated: false,
+                          }),
+                      )
+                    : client.sync(calendar, input.syncToken),
+            )
             .then((result) =>
                 done(null, {
                     "@context": CONTEXT,

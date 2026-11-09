@@ -397,6 +397,76 @@ describe("DavClient.syncCollection", () => {
     });
 });
 
+describe("DavClient.currentSyncToken", () => {
+    const collection = new URL("https://dav.example/cal/work/");
+
+    function client(response: () => Response) {
+        const requests: RequestInit[] = [];
+        const fetch: DavFetch = async (_url, init) => {
+            requests.push(init);
+            return response();
+        };
+        return {
+            requests,
+            client: new DavClient(
+                "https://dav.example/",
+                { token: "token" },
+                "davtest",
+                15_000,
+                { fetch },
+            ),
+        };
+    }
+
+    const propstat = (prop: string, status = "200 OK") =>
+        `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/cal/work/</d:href><d:propstat><d:prop>${prop}</d:prop><d:status>HTTP/1.1 ${status}</d:status></d:propstat></d:response></d:multistatus>`;
+
+    it("reads the token with a depth-0 PROPFIND and keeps it verbatim", async () => {
+        const { client: dav, requests } = client(
+            () =>
+                new Response(propstat("<d:sync-token> 0012 </d:sync-token>"), {
+                    status: 207,
+                }),
+        );
+        expect(await dav.currentSyncToken(collection)).toBe("0012");
+        expect(requests[0].method).toBe("PROPFIND");
+        expect(
+            (requests[0].headers as Record<string, string>).depth,
+        ).toBe("0");
+        expect(String(requests[0].body)).toContain("<d:sync-token/>");
+        await dav.close();
+    });
+
+    it("reports a missing token as unsupported", async () => {
+        for (const body of [
+            propstat("<d:sync-token/>", "404 Not Found"),
+            propstat("<d:sync-token></d:sync-token>"),
+        ]) {
+            const dav = client(
+                () => new Response(body, { status: 207 }),
+            ).client;
+            await expect(dav.currentSyncToken(collection)).rejects.toEqual(
+                new DavFailure("davtest:sync-unsupported"),
+            );
+        }
+    });
+
+    it("maps a missing collection and other statuses", async () => {
+        const missing = client(
+            () => new Response(null, { status: 404 }),
+        ).client;
+        await expect(missing.currentSyncToken(collection)).rejects.toEqual(
+            new DavFailure("davtest:not-found"),
+        );
+        const failed = client(
+            () => new Response(null, { status: 500 }),
+        ).client;
+        await expect(failed.currentSyncToken(collection)).rejects.toEqual(
+            new DavFailure("davtest:invalid-response"),
+        );
+    });
+});
+
 describe("DavClient.syncResources", () => {
     const collection = new URL("https://dav.example/cal/work/");
     const options = {

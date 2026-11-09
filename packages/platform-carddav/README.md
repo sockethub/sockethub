@@ -122,6 +122,11 @@ book and send it back as `"object": { "syncToken": "..." }` to receive only
 what changed since then. When `truncated` is `true`, store the new token and
 sync again until it is `false`.
 
+Send `"object": { "tokenOnly": true }` to get the address book's current
+`syncToken` with empty `items` and `removed`, without listing every contact.
+Read it before loading the contacts you need, then sync with it later. A
+server that exposes no token returns `carddav:sync-unsupported`.
+
 On `carddav:sync-token-invalid`, drop the stored token and sync again without
 one. On `carddav:sync-unsupported`, the server does not offer WebDAV Sync; fall
 back to `query`. Other sync errors are `carddav:sync-failed`. A server that

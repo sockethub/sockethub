@@ -16,6 +16,7 @@ import type {
     CardDavCredentials,
     ContactInput,
     ContactQuery,
+    ContactSyncResult,
     DeleteInput,
     SyncInput,
 } from "./types.js";
@@ -110,6 +111,10 @@ export default class CardDav implements PlatformInterface {
      * the result being complete. `carddav:sync-token-invalid` means start
      * over without a token; `carddav:sync-unsupported` means fall back to
      * `query`.
+     *
+     * With `object.tokenOnly: true`, returns the address book's current
+     * token and no contacts, so a client can start tracking changes
+     * without downloading every contact first.
      */
     sync(
         job: ActivityStream,
@@ -119,7 +124,18 @@ export default class CardDav implements PlatformInterface {
         const client = this.client(credentials);
         const input = (job.object ?? {}) as SyncInput;
         this.book(client, credentials, job.target?.id ?? "")
-            .then((book) => client.sync(book, input.syncToken))
+            .then((book) =>
+                input.tokenOnly
+                    ? client.currentSyncToken(new URL(book.id)).then(
+                          (syncToken): ContactSyncResult => ({
+                              items: [],
+                              removed: [],
+                              syncToken,
+                              truncated: false,
+                          }),
+                      )
+                    : client.sync(book, input.syncToken),
+            )
             .then((result) =>
                 done(null, {
                     "@context": CONTEXT,
