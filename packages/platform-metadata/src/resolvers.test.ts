@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+    extractAmazonImage,
     extractFacebookEmbedImage,
     extractYouTubeDescription,
     isAmazonUrl,
@@ -18,7 +19,9 @@ import {
     resolveFacebookEmbed,
     resolveRedditMedia,
     resolveTwitterStatus,
+    resolveAmazonAppLink,
     resolveYouTubeOEmbed,
+    schemaOrgSummary,
     stripFacebookEngagement,
     tweetToPageObject,
     youtubeOEmbedImage,
@@ -903,10 +906,99 @@ describe("tweetToPageObject", () => {
         expect(page?.description).toEqual("Tweet fallback");
     });
 
+    it("falls back to quoted media, then the link card, then the avatar", () => {
+        const avatar = { ...author, avatar_url: "https://pbs.twimg.com/a.jpg" };
+        const quoted = tweetToPageObject({
+            code: 200,
+            tweet: {
+                author: avatar,
+                quote: {
+                    media: {
+                        videos: [
+                            { url: "https://v/q.mp4", thumbnail_url: "https://v/q.jpg" },
+                        ],
+                    },
+                },
+            },
+        });
+        expect(quoted?.image?.[0].url).toEqual("https://v/q.jpg");
+        expect(quoted?.video?.url).toEqual("https://v/q.mp4");
+
+        const card = tweetToPageObject({
+            code: 200,
+            tweet: {
+                author: avatar,
+                card: { image: { url: "https://pbs.twimg.com/card.jpg", width: 800 } },
+            },
+        });
+        expect(card?.image).toEqual([
+            { url: "https://pbs.twimg.com/card.jpg", width: 800, height: undefined },
+        ]);
+
+        const textOnly = tweetToPageObject({ code: 200, tweet: { author: avatar } });
+        expect(textOnly?.image?.[0].url).toEqual("https://pbs.twimg.com/a.jpg");
+    });
+
     it("returns null for API errors so the caller can fall back", () => {
         expect(tweetToPageObject({ code: 404, message: "NOT_FOUND" })).toBeNull();
         expect(tweetToPageObject({ code: 200 })).toBeNull();
         // biome-ignore lint/suspicious/noExplicitAny: malformed API payload
         expect(tweetToPageObject(undefined as any)).toBeNull();
+    });
+});
+
+describe("resolveAmazonAppLink", () => {
+    it("rewrites mobile-app share links to the product page", () => {
+        expect(
+            resolveAmazonAppLink("https://www.amazon.com/gp/aw/d/B0C98MGCTB?th=1"),
+        ).toEqual("https://www.amazon.com/dp/B0C98MGCTB");
+    });
+
+    it("leaves other Amazon and non-Amazon URLs alone", () => {
+        expect(
+            resolveAmazonAppLink("https://www.amazon.de/-/en/Belt/dp/B00CDR09HW"),
+        ).toBeNull();
+        expect(resolveAmazonAppLink("https://example.com/gp/aw/d/B0C98MGCTB")).toBeNull();
+        expect(resolveAmazonAppLink("not a url")).toBeNull();
+    });
+});
+
+describe("schemaOrgSummary", () => {
+    it("uses a Wikipedia-style headline that differs from the title", () => {
+        expect(
+            schemaOrgSummary(
+                [{ name: "The Ship (album)", headline: "album by Brian Eno" }],
+                "The Ship (album) - Wikipedia",
+            ),
+        ).toEqual("album by Brian Eno");
+    });
+
+    it("prefers description and ignores a headline repeating the title", () => {
+        expect(
+            schemaOrgSummary([{ headline: "Big news", description: "Details" }], "Big news | Site"),
+        ).toEqual("Details");
+        expect(schemaOrgSummary([{ headline: "Big news" }], "Big news | Site")).toBeUndefined();
+        expect(schemaOrgSummary(undefined)).toBeUndefined();
+    });
+
+    it("prefers a later block's description and reads @graph nodes", () => {
+        expect(
+            schemaOrgSummary([{ headline: "Short" }, { description: "Details" }]),
+        ).toEqual("Details");
+        expect(
+            schemaOrgSummary([{ "@graph": [{ "@type": "WebPage", description: "In graph" }] }]),
+        ).toEqual("In graph");
+    });
+});
+
+describe("extractAmazonImage", () => {
+    it("reads the main product image from a desktop product page", () => {
+        const html =
+            '<img alt="x" src="https://m.media-amazon.com/images/I/a._SX342_.jpg" data-old-hires="https://m.media-amazon.com/images/I/a._SL1500_.jpg" id="landingImage">';
+        expect(extractAmazonImage(html)).toEqual(
+            "https://m.media-amazon.com/images/I/a._SL1500_.jpg",
+        );
+        expect(extractAmazonImage('<img data-old-hires="https://x/y.jpg">')).toBeUndefined();
+        expect(extractAmazonImage(undefined)).toBeUndefined();
     });
 });
