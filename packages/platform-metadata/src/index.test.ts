@@ -1201,6 +1201,15 @@ describe("non-HTML links", () => {
         // biome-ignore lint/suspicious/noExplicitAny: test result shape
         expect((result as any).object.title).toEqual("100%zz.pdf");
     });
+
+    it("names the file for a scheme-less URL instead of hanging", async () => {
+        ogsBehavior = () =>
+            Promise.reject({ result: { error: "Must scrape an HTML page" } });
+        const { err, result } = await runFetch(makePlatform(), "example.com/a/b.pdf?x=1");
+        expect(err).toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test result shape
+        expect((result as any).object.title).toEqual("b.pdf");
+    });
 });
 
 describe("JSON-LD description fallback", () => {

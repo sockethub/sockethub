@@ -880,7 +880,10 @@ export function tweetToPageObject(status: FxTwitterStatus): PageObject | null {
             : (author.name ?? "Post on X"));
     // A quote post's own media is usually empty; the quoted post's is what
     // X's own card shows. Link cards and the author avatar come last.
-    const media = tweet.media ?? tweet.quote?.media;
+    const media =
+        tweet.media?.photos?.length || tweet.media?.videos?.length
+            ? tweet.media
+            : tweet.quote?.media;
     const photo = media?.photos?.[0];
     const video = media?.videos?.[0];
     const articleImage = article?.cover_media?.media_info;

@@ -905,13 +905,21 @@ export default class Metadata implements PlatformInterface {
                 }
                 // PDFs and other files: OGS only parses HTML, but the link
                 // still deserves a card naming the file rather than an error.
-                let filename = /must scrape an html page/i.test(err.message)
-                    ? new URL(job.actor.id).pathname.split("/").at(-1) || ""
-                    : "";
-                try {
-                    filename = decodeURIComponent(filename);
-                } catch {
-                    // Malformed escape (e.g. "%zz"): show the raw name.
+                let filename = "";
+                if (/must scrape an html page/i.test(err.message)) {
+                    try {
+                        filename = decodeURIComponent(
+                            new URL(job.actor.id).pathname.split("/").at(-1) ||
+                                "",
+                        );
+                    } catch {
+                        // Scheme-less ID or malformed escape: fall back below.
+                        filename =
+                            job.actor.id
+                                .split(/[?#]/, 1)[0]
+                                .split("/")
+                                .at(-1) || "";
+                    }
                 }
                 if (filename) {
                     job.object = {

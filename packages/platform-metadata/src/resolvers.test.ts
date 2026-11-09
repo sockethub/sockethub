@@ -924,6 +924,16 @@ describe("tweetToPageObject", () => {
         expect(quoted?.image?.[0].url).toEqual("https://v/q.jpg");
         expect(quoted?.video?.url).toEqual("https://v/q.mp4");
 
+        const emptyOwnMedia = tweetToPageObject({
+            code: 200,
+            tweet: {
+                author: avatar,
+                media: { photos: [] },
+                quote: { media: { photos: [{ url: "https://p/q.jpg" }] } },
+            },
+        });
+        expect(emptyOwnMedia?.image?.[0].url).toEqual("https://p/q.jpg");
+
         const card = tweetToPageObject({
             code: 200,
             tweet: {
