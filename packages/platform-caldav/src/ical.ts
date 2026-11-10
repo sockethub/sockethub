@@ -198,6 +198,31 @@ function recurrenceLine(value: RecurrenceInput): string {
     return `RRULE:${parts.join(";")}`;
 }
 
+// Schema roles and the RFC 5545 ROLE tokens servers actually send.
+// REQUIRED/OPTIONAL are what this platform used to write; keep reading them.
+const ATTENDEE_ROLE_TOKENS: Record<string, NonNullable<PersonInput["role"]>> = {
+    CHAIR: "chair",
+    "REQ-PARTICIPANT": "required",
+    REQUIRED: "required",
+    "OPT-PARTICIPANT": "optional",
+    OPTIONAL: "optional",
+    "NON-PARTICIPANT": "non-participant",
+};
+const ATTENDEE_ROLE_PARAM: Record<NonNullable<PersonInput["role"]>, string> = {
+    chair: "CHAIR",
+    required: "REQ-PARTICIPANT",
+    optional: "OPT-PARTICIPANT",
+    "non-participant": "NON-PARTICIPANT",
+};
+const ATTENDEE_STATUSES = new Set<NonNullable<PersonInput["status"]>>([
+    "needs-action",
+    "accepted",
+    "declined",
+    "tentative",
+    "delegated",
+]);
+const BYDAY_PART = /^(?:[+-]?[1-5])?(?:MO|TU|WE|TH|FR|SA|SU)$/;
+
 function personLine(
     name: "ORGANIZER" | "ATTENDEE",
     person: PersonInput,
@@ -206,7 +231,8 @@ function personLine(
     const params: string[] = [];
     if (person.name) params.push(`CN=${encodeParameter(person.name)}`);
     if (name === "ATTENDEE") {
-        if (person.role) params.push(`ROLE=${person.role.toUpperCase()}`);
+        const role = person.role ? ATTENDEE_ROLE_PARAM[person.role] : undefined;
+        if (role) params.push(`ROLE=${role}`);
         if (person.status)
             params.push(`PARTSTAT=${person.status.toUpperCase()}`);
         if (person.rsvp !== undefined)
@@ -538,6 +564,9 @@ export function parseICalendar(
             }),
         );
         if (parts.FREQ) {
+            const byDay = parts.BYDAY?.split(",")
+                .map((day) => day.toUpperCase())
+                .filter((day) => BYDAY_PART.test(day));
             item.recurrence = {
                 frequency:
                     parts.FREQ.toLowerCase() as RecurrenceInput["frequency"],
@@ -550,7 +579,7 @@ export function parseICalendar(
                               parts.WKST.toUpperCase() as RecurrenceInput["weekStart"],
                       }
                     : {}),
-                ...(parts.BYDAY ? { byDay: parts.BYDAY.split(",") } : {}),
+                ...(byDay?.length ? { byDay } : {}),
                 ...(parts.BYMONTHDAY
                     ? { byMonthDay: parts.BYMONTHDAY.split(",").map(Number) }
                     : {}),
@@ -564,17 +593,15 @@ export function parseICalendar(
         params: Record<string, string>;
         value: string;
     }): PersonInput => {
+        const role = ATTENDEE_ROLE_TOKENS[params.ROLE?.toUpperCase() ?? ""];
+        const status = params.PARTSTAT?.toLowerCase() as
+            | PersonInput["status"]
+            | undefined;
         return {
             email: value.replace(/^mailto:/i, ""),
             ...(params.CN ? { name: params.CN } : {}),
-            ...(params.ROLE
-                ? { role: params.ROLE.toLowerCase() as PersonInput["role"] }
-                : {}),
-            ...(params.PARTSTAT
-                ? {
-                      status: params.PARTSTAT.toLowerCase() as PersonInput["status"],
-                  }
-                : {}),
+            ...(role ? { role } : {}),
+            ...(status && ATTENDEE_STATUSES.has(status) ? { status } : {}),
             ...(params.RSVP ? { rsvp: params.RSVP === "TRUE" } : {}),
         };
     };
