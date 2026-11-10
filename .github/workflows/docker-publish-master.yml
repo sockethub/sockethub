@@ -1,0 +1,116 @@
+name: Publish Master Docker Image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-publish-master
+  cancel-in-progress: false
+
+jobs:
+  docker-publish-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Compute image metadata
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "tag=ghcr.io/${REPOSITORY,,}:master" >> "$GITHUB_OUTPUT"
+          echo "version=master-$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build candidate image (native arch)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |
+            SOCKETHUB_BUILD_VERSION=${{ steps.image.outputs.version }}
+          load: true
+          push: false
+          tags: sockethub-smoke:candidate
+
+      - name: Smoke test candidate against Redis
+        env:
+          EXPECTED_VERSION: ${{ steps.image.outputs.version }}
+        run: |
+          docker network create smoke-net
+          docker run -d --name smoke-redis --network smoke-net redis
+          docker run -d --name smoke-sockethub --network smoke-net \
+            -e REDIS_URL=redis://smoke-redis:6379 \
+            -p 10550:10550 sockethub-smoke:candidate
+
+          # Dump logs and tear down on every exit path, so a failed check
+          # (which aborts the step under bash -e) still leaves the container
+          # logs in the Actions output for debugging.
+          cleanup() {
+            echo "--- sockethub container logs ---"
+            docker logs smoke-sockethub || true
+            docker rm -f smoke-sockethub smoke-redis >/dev/null 2>&1 || true
+            docker network rm smoke-net >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          echo "Waiting for sockethub to listen on :10550..."
+          for i in $(seq 1 30); do
+            if nc -z localhost 10550; then break; fi
+            sleep 2
+          done
+          if ! nc -zv localhost 10550; then
+            echo "❌ sockethub never opened port 10550"
+            exit 1
+          fi
+
+          # A crash while bootstrapping platforms happens after the port
+          # opens; confirm the process survives startup.
+          sleep 5
+          if [ "$(docker inspect -f '{{.State.Running}}' smoke-sockethub)" != "true" ]; then
+            echo "❌ Container exited after startup"
+            exit 1
+          fi
+
+          docker run --rm sockethub-smoke:candidate \
+            node /app/packages/sockethub/bin/sockethub --version | \
+            grep -Fx "$EXPECTED_VERSION"
+          docker logs smoke-sockethub 2>&1 | grep -F "$EXPECTED_VERSION"
+          echo "✅ Smoke test passed"
+
+      - name: Build and push multi-arch master image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |
+            SOCKETHUB_BUILD_VERSION=${{ steps.image.outputs.version }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.image.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.image.outputs.version }}
+            org.opencontainers.image.revision=${{ steps.image.outputs.revision }}
+          provenance: false

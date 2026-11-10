@@ -25,6 +25,11 @@ ENV LOG_LEVEL=${LOG_LEVEL}
 WORKDIR /app
 COPY --chown=node:node --from=build /app ./
 RUN echo "Running sockethub (prod) on node: LOG_LEVEL=${LOG_LEVEL}"
+# Stamp only this image; keep the package SemVer for API compatibility.
+ARG SOCKETHUB_BUILD_VERSION
+RUN if [ -n "$SOCKETHUB_BUILD_VERSION" ]; then \
+      node -e 'const fs = require("node:fs"); const path = "packages/server/package.json"; const pkg = JSON.parse(fs.readFileSync(path)); pkg.buildVersion = process.argv[1]; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + "\n");' "$SOCKETHUB_BUILD_VERSION"; \
+    fi
 RUN chown node:node /app
 USER node
 # node:*-slim ships no curl/wget, so probe with node's fetch. PORT is the same
