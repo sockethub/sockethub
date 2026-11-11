@@ -182,19 +182,39 @@ export function foldLine(line: string): string {
     return output.join("\r\n ");
 }
 
-function recurrenceLine(value: RecurrenceInput): string {
+/**
+ * RFC 5545 requires UNTIL to use the same value type as DTSTART: a date for
+ * an all-day object, and a UTC date-time otherwise. A date-time on an
+ * all-day object is reduced to its UTC date.
+ */
+function recurrenceUntil(until: string, allDay: boolean): string {
+    if (DATE_ONLY.test(until)) {
+        if (!allDay)
+            throw new Error("recurrence.until must include a UTC offset");
+        return dateValue(until, "recurrence.until");
+    }
+    if (!allDay) return utcDateTime(until, "recurrence.until");
+    if (!DATE_TIME_WITH_ZONE.test(until))
+        throw new Error("recurrence.until must include a UTC offset");
+    const parsed = new Date(until);
+    if (Number.isNaN(parsed.getTime()))
+        throw new Error("invalid recurrence.until");
+    return dateValue(parsed.toISOString().slice(0, 10), "recurrence.until");
+}
+
+function recurrenceLine(value: RecurrenceInput, allDay: boolean): string {
+    if (value.count && value.until)
+        throw new Error("recurrence cannot contain both count and until");
     const parts = [`FREQ=${value.frequency.toUpperCase()}`];
     if (value.interval) parts.push(`INTERVAL=${value.interval}`);
     if (value.count) parts.push(`COUNT=${value.count}`);
     if (value.until)
-        parts.push(`UNTIL=${utcDateTime(value.until, "recurrence.until")}`);
+        parts.push(`UNTIL=${recurrenceUntil(value.until, allDay)}`);
     if (value.byDay?.length)
         parts.push(`BYDAY=${value.byDay.join(",").toUpperCase()}`);
     if (value.byMonthDay?.length)
         parts.push(`BYMONTHDAY=${value.byMonthDay.join(",")}`);
     if (value.weekStart) parts.push(`WKST=${value.weekStart}`);
-    if (value.count && value.until)
-        throw new Error("recurrence cannot contain both count and until");
     return `RRULE:${parts.join(";")}`;
 }
 
@@ -388,7 +408,7 @@ export function buildICalendar(
     if (input.type === "task" && input.percentComplete !== undefined)
         lines.push(`PERCENT-COMPLETE:${input.percentComplete}`);
     if (input.sequence !== undefined) lines.push(`SEQUENCE:${input.sequence}`);
-    if (input.recurrence) lines.push(recurrenceLine(input.recurrence));
+    if (input.recurrence) lines.push(recurrenceLine(input.recurrence, allDay));
     if (input.organizer) lines.push(personLine("ORGANIZER", input.organizer));
     for (const attendee of input.attendees ?? [])
         lines.push(personLine("ATTENDEE", attendee));
@@ -567,12 +587,21 @@ export function parseICalendar(
             const byDay = parts.BYDAY?.split(",")
                 .map((day) => day.toUpperCase())
                 .filter((day) => BYDAY_PART.test(day));
+            const until = parts.UNTIL ? parseDate(parts.UNTIL) : undefined;
+            // Keep only values the item schema accepts. A date-only UNTIL is
+            // required for all-day events; anything else would fail response
+            // validation and drop the whole collection.
+            const validUntil =
+                until &&
+                (DATE_ONLY.test(until) || DATE_TIME_WITH_ZONE.test(until))
+                    ? until
+                    : undefined;
             item.recurrence = {
                 frequency:
                     parts.FREQ.toLowerCase() as RecurrenceInput["frequency"],
                 ...(parts.INTERVAL ? { interval: Number(parts.INTERVAL) } : {}),
                 ...(parts.COUNT ? { count: Number(parts.COUNT) } : {}),
-                ...(parts.UNTIL ? { until: parseDate(parts.UNTIL) } : {}),
+                ...(validUntil ? { until: validUntil } : {}),
                 ...(parts.WKST && /^(?:MO|TU|WE|TH|FR|SA|SU)$/i.test(parts.WKST)
                     ? {
                           weekStart:

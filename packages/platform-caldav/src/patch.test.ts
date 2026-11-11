@@ -153,6 +153,34 @@ describe("iCalendar update patching", () => {
         expect(body).toContain("SUMMARY:Daily sync\r\n");
     });
 
+    it("keeps a date-only UNTIL when renaming an all-day series", () => {
+        const series = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Other App//EN",
+            "BEGIN:VEVENT",
+            "UID:trip-1",
+            "SUMMARY:Trip",
+            "DTSTART;VALUE=DATE:20260105",
+            "DTEND;VALUE=DATE:20260106",
+            "RRULE:FREQ=WEEKLY;UNTIL=20260330;BYDAY=MO",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            "",
+        ].join("\r\n");
+        const fetched = parseICalendar(series, id, '"1"');
+        expect(fetched.recurrence?.until).toBe("2026-03-30");
+        const next = { ...fetched, name: "School run" };
+        const body = patchICalendar(
+            series,
+            next,
+            buildICalendar(next, now).body,
+        ).body;
+        expect(body).toContain("RRULE:FREQ=WEEKLY;UNTIL=20260330;BYDAY=MO\r\n");
+        expect(body).toContain("SUMMARY:School run\r\n");
+        expect(body).not.toContain("UNTIL=20260330T");
+    });
+
     it("replaces the whole resource when the component type changes", () => {
         const next: CalendarObjectInput = {
             type: "task",

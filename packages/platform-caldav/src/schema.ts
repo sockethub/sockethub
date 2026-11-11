@@ -61,7 +61,14 @@ const recurrence = {
         frequency: { enum: ["daily", "weekly", "monthly", "yearly"] },
         interval: { type: "integer", minimum: 1, maximum: 999 },
         count: { type: "integer", minimum: 1, maximum: 99999 },
-        until: { type: "string", format: "date-time" },
+        // A date for an all-day event, where RFC 5545 requires a date-only
+        // UNTIL, and a date-time for every other recurrence.
+        until: {
+            anyOf: [
+                { type: "string", format: "date" },
+                { type: "string", format: "date-time" },
+            ],
+        },
         weekStart: { enum: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] },
         byDay: {
             type: "array",
