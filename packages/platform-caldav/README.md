@@ -302,6 +302,8 @@ The optional `uid` field must not contain `%`, `/`, or `\`; omit it to let
 Sockethub generate a safe UID.
 Recurrence accepts optional `weekStart` (`MO`, `TU`, `WE`, `TH`, `FR`, `SA`, or `SU`),
 which maps to RRULE `WKST`. When omitted, RFC 5545 defaults to Monday.
+`recurrence.until` is a `YYYY-MM-DD` date for an all-day event and an RFC 3339
+date-time for a timed event, matching the value type RFC 5545 requires on `UNTIL`.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
 a `recipients` array. Events support `status` (`tentative`, `confirmed`, or
 `cancelled`). Tasks support `due`, `status`, `completedTime`, and

@@ -38,6 +38,52 @@ describe("iCalendar generation", () => {
         expect(body).toContain("DTEND;VALUE=DATE:20260804");
     });
 
+    it("writes a date-only UNTIL for an all-day series", () => {
+        const dated = buildICalendar({
+            type: "event",
+            name: "Trip",
+            allDay: true,
+            startTime: "2026-01-05",
+            endTime: "2026-01-06",
+            recurrence: {
+                frequency: "weekly",
+                until: "2026-03-30",
+                byDay: ["MO"],
+            },
+        });
+        expect(dated.body).toContain("RRULE:FREQ=WEEKLY;UNTIL=20260330;BYDAY=MO");
+        const fromDateTime = buildICalendar({
+            type: "event",
+            name: "Trip",
+            allDay: true,
+            startTime: "2026-01-05",
+            endTime: "2026-01-06",
+            recurrence: {
+                frequency: "weekly",
+                until: "2026-03-29T23:00:00-05:00",
+            },
+        });
+        expect(fromDateTime.body).toContain("RRULE:FREQ=WEEKLY;UNTIL=20260330");
+        expect(fromDateTime.body).not.toContain("UNTIL=20260330T");
+        const timed = buildICalendar({
+            type: "event",
+            name: "Standup",
+            startTime: "2026-01-05T09:00:00Z",
+            endTime: "2026-01-05T09:30:00Z",
+            recurrence: { frequency: "daily", until: "2026-03-30T09:00:00Z" },
+        });
+        expect(timed.body).toContain("UNTIL=20260330T090000Z");
+        expect(() =>
+            buildICalendar({
+                type: "event",
+                name: "Standup",
+                startTime: "2026-01-05T09:00:00Z",
+                endTime: "2026-01-05T09:30:00Z",
+                recurrence: { frequency: "daily", until: "2026-03-30" },
+            }),
+        ).toThrow("recurrence.until must include a UTC offset");
+    });
+
     it("creates a completed VTODO", () => {
         const { body } = buildICalendar({
             type: "task",
@@ -229,6 +275,34 @@ describe("iCalendar generation", () => {
             "BEGIN:VTIMEZONE\r\nTZID:X\r\nBEGIN:STANDARD\r\nDTSTART:19700101T000000\r\nRDATE:19710101T000000\r\nTZOFFSETFROM:+0000\r\nTZOFFSETTO:+0000\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT",
         );
         expect(isUpdateSupported(withTimeZoneRDate)).toBeTrue();
+    });
+
+    it("parses a date-only UNTIL and drops one that is not a date or date-time", () => {
+        const event = (rule: string) =>
+            parseICalendar(
+                [
+                    "BEGIN:VCALENDAR",
+                    "BEGIN:VEVENT",
+                    "UID:trip",
+                    "SUMMARY:Trip",
+                    "DTSTART;VALUE=DATE:20260105",
+                    "DTEND;VALUE=DATE:20260106",
+                    `RRULE:${rule}`,
+                    "END:VEVENT",
+                    "END:VCALENDAR",
+                    "",
+                ].join("\r\n"),
+                "https://calendar.example/trip.ics",
+            );
+        expect(event("FREQ=WEEKLY;UNTIL=20260330").recurrence?.until).toBe(
+            "2026-03-30",
+        );
+        expect(event("FREQ=WEEKLY;UNTIL=not-a-date").recurrence).not.toHaveProperty(
+            "until",
+        );
+        expect(event("FREQ=WEEKLY;UNTIL=not-a-date").recurrence?.frequency).toBe(
+            "weekly",
+        );
     });
 
     it("parses items returned by a CalDAV server", () => {

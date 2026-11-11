@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { validatePlatformSchema } from "@sockethub/schemas";
 import Ajv from "ajv";
+import addFormats from "ajv-formats";
 import { parseICalendar } from "./ical.js";
 import { PlatformCalDavSchema } from "./schema.js";
 
@@ -170,6 +171,66 @@ describe("CalDAV schema", () => {
             validateMessage({ type: "sync", actor, target, object: { type: "task" } }),
         ).toBeFalse();
         expect(validateMessage({ type: "sync", actor })).toBeFalse();
+    });
+
+    it("accepts a fetched all-day series whose UNTIL is a date", () => {
+        const formatted = new Ajv({ strict: false, allErrors: true });
+        addFormats(formatted);
+        const validateResponse = formatted.compile(PlatformCalDavSchema.responses);
+        const validateUpdate = formatted.compile({
+            allOf: [
+                { type: "object", ...PlatformCalDavSchema.messages },
+                PlatformCalDavSchema.messageConstraints,
+            ],
+        });
+        const item = parseICalendar(
+            [
+                "BEGIN:VCALENDAR",
+                "BEGIN:VEVENT",
+                "UID:trip-1",
+                "SUMMARY:Trip",
+                "DTSTART;VALUE=DATE:20260105",
+                "DTEND;VALUE=DATE:20260106",
+                "RRULE:FREQ=WEEKLY;WKST=SU;UNTIL=20260330;BYDAY=MO,WE,FR",
+                "END:VEVENT",
+                "END:VCALENDAR",
+                "",
+            ].join("\r\n"),
+            "https://calendar.example/cal/trip.ics",
+            '"1"',
+        );
+        expect(item.recurrence?.until).toBe("2026-03-30");
+        expect(
+            validateResponse({
+                "@context": [
+                    "https://sockethub.org/ns/context/platform/caldav/v1.jsonld",
+                ],
+                type: "collection",
+                summary: "CalDAV items",
+                totalItems: 1,
+                items: [item],
+            }),
+        ).toBeTrue();
+        expect(
+            validateUpdate({
+                type: "update",
+                actor,
+                target: {
+                    id: "https://calendar.example/cal/",
+                    type: "calendar",
+                },
+                object: { ...item, name: "School run" },
+            }),
+        ).toBeTrue();
+        expect(
+            formatted.compile(PlatformCalDavSchema.messages.properties.object)({
+                type: "event",
+                name: "Trip",
+                startTime: "2026-01-05",
+                allDay: true,
+                recurrence: { frequency: "weekly", until: "March 30" },
+            }),
+        ).toBeFalse();
     });
 });
 
