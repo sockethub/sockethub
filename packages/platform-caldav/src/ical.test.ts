@@ -89,6 +89,9 @@ describe("iCalendar generation", () => {
         expect(Buffer.byteLength(result.body)).toBeLessThan(10_000);
         expect(result.body).toContain("RRULE:FREQ=WEEKLY;COUNT=4;BYDAY=MO");
         expect(result.body).toContain("ORGANIZER;CN=Owner:mailto:owner@example.test");
+        expect(result.body).toContain(
+            "ATTENDEE;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:guest@example.test",
+        );
         expect(result.body).toContain("BEGIN:VALARM");
         expect(result.body).toContain("ATTACH;FMTTYPE=application/pdf:https://example.test/agenda.pdf");
         expect(parseICalendar(result.body, "https://calendar.example/item.ics")).toMatchObject({
@@ -267,6 +270,34 @@ describe("iCalendar generation", () => {
         const invite =
             "BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:i\r\nSUMMARY:I\r\nDTSTAMP:20260301T000000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         expect(parseICalendar(invite, "https://c.example/i.ics").lastModified).toBeUndefined();
+    });
+});
+
+describe("attendee roles and recurrence weekdays", () => {
+    const event = (lines: string[]) =>
+        parseICalendar(
+            ["BEGIN:VCALENDAR", "BEGIN:VEVENT", "UID:meet", "SUMMARY:Meet", "DTSTART:20260803T130000Z", ...lines, "END:VEVENT", "END:VCALENDAR", ""].join("\r\n"),
+            "https://calendar.example/meet.ics",
+        );
+
+    it("maps standard ROLE tokens and ignores ones the schema cannot store", () => {
+        const item = event([
+            "ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED:mailto:bob@example.com",
+            "ATTENDEE;ROLE=OPT-PARTICIPANT:mailto:carol@example.com",
+            "ATTENDEE;ROLE=REQUIRED:mailto:dave@example.com",
+            "ATTENDEE;ROLE=X-OWNER;PARTSTAT=X-TENTATIVE:mailto:erin@example.com",
+        ]);
+        expect(item.attendees).toEqual([
+            { email: "bob@example.com", role: "required", status: "accepted" },
+            { email: "carol@example.com", role: "optional" },
+            { email: "dave@example.com", role: "required" },
+            { email: "erin@example.com" },
+        ]);
+    });
+
+    it("uppercases BYDAY so a fetched rule matches the update schema", () => {
+        expect(event(["RRULE:FREQ=WEEKLY;BYDAY=mo,+1tu"]).recurrence?.byDay).toEqual(["MO", "+1TU"]);
+        expect(event(["RRULE:FREQ=WEEKLY;BYDAY=notaday"]).recurrence).not.toHaveProperty("byDay");
     });
 });
 

@@ -138,6 +138,21 @@ describe("iCalendar update patching", () => {
         expect(body.match(/BEGIN:VTIMEZONE/g)).toHaveLength(1);
     });
 
+    it("keeps a standard attendee role when the client sends the parsed item back", () => {
+        const invited = stored.replace(
+            "ATTENDEE;CN=Bob;PARTSTAT=ACCEPTED;SCHEDULE-STATUS=2.0;X-NUM-GUESTS=0:mailto:bob@example.com",
+            "ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;SCHEDULE-STATUS=2.0;X-NUM-GUESTS=0:mailto:bob@example.com",
+        );
+        const fetched = parseICalendar(invited, id, '"1"');
+        expect(fetched.attendees?.[0]?.role).toBe("required");
+        const next = { ...fetched, name: "Daily sync" };
+        const body = patchICalendar(invited, next, buildICalendar(next, now).body).body;
+        expect(body).toContain(
+            "ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;SCHEDULE-STATUS=2.0;X-NUM-GUESTS=0:mailto:bob@example.com\r\n",
+        );
+        expect(body).toContain("SUMMARY:Daily sync\r\n");
+    });
+
     it("replaces the whole resource when the component type changes", () => {
         const next: CalendarObjectInput = {
             type: "task",

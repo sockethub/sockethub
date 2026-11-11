@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { validatePlatformSchema } from "@sockethub/schemas";
 import Ajv from "ajv";
+import { parseICalendar } from "./ical.js";
 import { PlatformCalDavSchema } from "./schema.js";
 
 const ajv = new Ajv({ strict: false, allErrors: true });
@@ -170,6 +171,33 @@ describe("CalDAV schema", () => {
         ).toBeFalse();
         expect(validateMessage({ type: "sync", actor })).toBeFalse();
     });
+});
+
+it("accepts an update of a fetched event that uses standard attendee roles and lowercase weekdays", () => {
+    const item = parseICalendar(
+        [
+            "BEGIN:VCALENDAR",
+            "BEGIN:VEVENT",
+            "UID:meet-1",
+            "SUMMARY:Standup",
+            "DTSTART:20260803T130000Z",
+            "ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:bob@example.com",
+            "RRULE:FREQ=WEEKLY;BYDAY=mo,tu",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            "",
+        ].join("\r\n"),
+        "https://calendar.example/cal/meet.ics",
+        '"1"',
+    );
+    expect(
+        validateMessage({
+            type: "update",
+            actor,
+            target: { id: "https://calendar.example/cal/", type: "calendar" },
+            object: { ...item, name: "Daily sync" },
+        }),
+    ).toBeTrue();
 });
 
 it("validates recurrence weekStart as an unnumbered weekday", () => {
