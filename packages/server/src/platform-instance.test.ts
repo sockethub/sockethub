@@ -684,6 +684,57 @@ describe("PlatformInstance", () => {
                 sandbox.assert.called(pi.shutdown);
             });
 
+            test("an unexpected close answers jobs still waiting for a result", async () => {
+                // The real broadcast: it is what answers pending jobs.
+                delete pi.broadcastFatalError;
+                pi.flaggedForTermination = false;
+                const running = sandbox.spy();
+                pi.registerCompletedJobHandler("running", running);
+
+                await pi.handleProcessClose("SIGKILL");
+
+                sandbox.assert.calledOnce(running);
+                expect(running.firstCall.args[0].type).toBe("error");
+                expect(running.firstCall.args[0].error).toContain(
+                    "session thread closed unexpectedly: SIGKILL; pending operation interrupted",
+                );
+                expect(pi.completedJobHandlers.size).toBe(0);
+            });
+
+            test("a fatal error from the platform answers jobs still waiting", async () => {
+                delete pi.broadcastFatalError;
+                const running = sandbox.spy();
+                pi.registerCompletedJobHandler("running", running);
+
+                await pi.handleProcessMessage(["error", "out of memory"]);
+
+                sandbox.assert.calledOnce(running);
+                expect(running.firstCall.args[0].error).toContain(
+                    "out of memory; pending operation interrupted",
+                );
+            });
+
+            test("a heartbeat timeout answers jobs still waiting", async () => {
+                const clock = sandbox.useFakeTimers({ now: Date.now() });
+                pi.process.on = sandbox.stub();
+                pi.process.removeListener = sandbox.stub();
+                pi.process.connected = true;
+                const running = sandbox.spy();
+                pi.registerCompletedJobHandler("running", running);
+
+                pi.startHeartbeatMonitor();
+                clock.tick(60_000);
+                clock.restore();
+
+                sandbox.assert.calledOnce(running);
+                expect(running.firstCall.args[0].error).toContain(
+                    "heartbeat timeout after",
+                );
+                expect(running.firstCall.args[0].error).toContain(
+                    "pending operation interrupted",
+                );
+            });
+
             test("close events skip error reporting when flagged for termination", async () => {
                 pi.process.connected = false;
                 pi.flaggedForTermination = true;

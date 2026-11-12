@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import {
     createLogger,
     getLoggerNamespace,
@@ -82,6 +83,13 @@ export class JobQueue extends JobBase {
     protected events: QueueEvents;
     private readonly log: Logger;
     private counter = 0;
+    /**
+     * Distinguishes this queue object's job titles from those of an earlier
+     * instance on the same Redis queue. A replacement for a crashed worker
+     * reuses the queue and restarts the counter, and a leftover job of the
+     * dead worker must not take the callback of a new job with its title.
+     */
+    private readonly generation = randomBytes(4).toString("hex");
     private initialized = false;
 
     /**
@@ -272,7 +280,7 @@ export class JobQueue extends JobBase {
         // guaranteed unique (or honest); two in-flight jobs sharing a title
         // silently overwrite each other's completion handlers, dropping or
         // misrouting responses. Always use the internal counter.
-        const title = `${platformId}-${this.counter++}`;
+        const title = `${platformId}-${this.generation}-${this.counter++}`;
         return {
             title: title,
             sessionId: socketId,

@@ -42,6 +42,11 @@ import type {
 import { type SentryConfig, serializeSentryConfig } from "./sentry-config.js";
 import { __dirname } from "./util.js";
 
+/** Error for jobs still pending when their worker dies or stops responding. */
+function interruptedBy(reason: string): string {
+    return `${reason}; pending operation interrupted; message submission may already have succeeded; do not automatically retry sends`;
+}
+
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
 
@@ -630,7 +635,9 @@ export default class PlatformInstance {
         }
 
         this.sessions.clear();
-        await this.shutdown();
+        // Jobs the process was running die with it. Answer their callers now
+        // instead of leaving acks and HTTP requests to hang.
+        await this.shutdown(interruptedBy(message));
     }
 
     /**
@@ -928,7 +935,9 @@ export default class PlatformInstance {
                 );
                 // The child is unresponsive; mark for termination and trigger shutdown.
                 this.flaggedForTermination = true;
-                void this.shutdown();
+                void this.shutdown(
+                    interruptedBy(`heartbeat timeout after ${elapsed}ms`),
+                );
             },
         });
     }
