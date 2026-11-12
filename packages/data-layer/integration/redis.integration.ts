@@ -13,6 +13,7 @@ import {
     type CredentialsObject,
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
+import type { Queue } from "bullmq";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = `redis://${REDIS_HOST}:6379`;
@@ -216,6 +217,32 @@ describe("JobQueue", () => {
 
         // Wait for job to complete
         await completedPromise;
+    });
+
+    it("removes a delivered result from Redis", async () => {
+        const completed = new Promise<void>((resolve) => {
+            queue.on("completed", () => resolve());
+        });
+        worker.onJob(async () => "x".repeat(100_000));
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await queue.add("socket id", as);
+        await completed;
+
+        const bull = (queue as unknown as { queue: Queue }).queue;
+        const client = await bull.client;
+        const resultLeft = async () => {
+            const counts = await bull.getJobCounts("completed");
+            const events = await client.xrange(bull.keys.events, "-", "+");
+            const completedEvents = events.filter(
+                ([, fields]) => fields[1] === "completed",
+            );
+            return counts.completed + completedEvents.length;
+        };
+        const deadline = Date.now() + 2000;
+        while ((await resultLeft()) > 0 && Date.now() < deadline) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        expect(await resultLeft()).toBe(0);
     });
 
     it("handles job failures", async () => {
