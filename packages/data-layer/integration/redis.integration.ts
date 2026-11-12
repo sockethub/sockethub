@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { randomUUID } from "node:crypto";
 import {
+    buildAliveKey,
     CredentialsStore,
     type JobDataDecrypted,
     JobQueue,
     JobWorker,
+    KNOWN_SERVERS_KEY,
     redisCheck,
+    sweepOrphanedQueues,
 } from "@sockethub/data-layer";
 import {
     type ActivityStream,
@@ -14,6 +17,7 @@ import {
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 import type { Queue } from "bullmq";
+import Redis from "ioredis";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = `redis://${REDIS_HOST}:6379`;
@@ -464,4 +468,58 @@ describe.skip("Redis connection failure", () => {
             // Expected to fail
         }
     }, 15000);
+});
+
+describe("sweepOrphanedQueues", () => {
+    // Unique ids so a shared Redis (or a parallel run) is never touched.
+    const tag = crypto.randId(8);
+    const crashed = `crash${tag}`;
+    const alive = `alive${tag}`;
+    const older = `older${tag}`;
+    const prefix = (parentId: string) =>
+        `bull:sockethub-${parentId}-data-layer-queue-q${tag}`;
+    let client: Redis;
+
+    beforeEach(async () => {
+        client = new Redis(REDIS_URL);
+        for (const parentId of [crashed, alive, older]) {
+            await client.set(`${prefix(parentId)}:meta`, "1");
+            // An event two hours old (stream ids are millisecond timestamps).
+            await client.xadd(
+                `${prefix(parentId)}:events`,
+                `${Date.now() - 2 * 60 * 60 * 1000}-0`,
+                "event",
+                "completed",
+            );
+        }
+        await client.sadd(KNOWN_SERVERS_KEY, crashed, alive);
+        await client.set(buildAliveKey(alive), "1", "PX", 60_000);
+    });
+
+    afterEach(async () => {
+        for (const parentId of [crashed, alive, older]) {
+            await client.del(`${prefix(parentId)}:meta`);
+            await client.del(`${prefix(parentId)}:events`);
+        }
+        await client.srem(KNOWN_SERVERS_KEY, crashed, alive);
+        await client.del(buildAliveKey(alive));
+        await client.quit();
+    });
+
+    it("removes an idle crashed server's queues and nothing else", async () => {
+        await sweepOrphanedQueues(client, `own${tag}`);
+        const left = async (parentId: string) =>
+            (await client.keys(`${prefix(parentId)}:*`)).length;
+        expect(await left(crashed)).toBe(0);
+        expect(await client.sismember(KNOWN_SERVERS_KEY, crashed)).toBe(0);
+        expect(await left(alive)).toBe(2);
+        // Never registered: a release without alive keys is never swept.
+        expect(await left(older)).toBe(2);
+    });
+
+    it("keeps a crashed server's queues while they were recently active", async () => {
+        await client.xadd(`${prefix(crashed)}:events`, "*", "event", "added");
+        await sweepOrphanedQueues(client, `own${tag}`);
+        expect((await client.keys(`${prefix(crashed)}:*`)).length).toBe(2);
+    });
 });

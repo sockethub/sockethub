@@ -730,6 +730,15 @@ For authentication:
 }
 ```
 
+Each server run gets a random id, and its job queues in Redis are named after
+it. A clean shutdown removes them. A crash cannot, so every running server
+keeps a `sockethub:<id>:alive` key with a 60 second TTL and lists its id in
+`sockethub:servers`. At startup and every 15 minutes, each server deletes the
+queues of any listed server whose alive key is gone and whose queues have had
+no activity for an hour. The idle hour spares a server that stalled past the
+alive TTL. Servers from releases without alive keys are never listed, so they
+are never swept. Several servers can share one Redis this way.
+
 ### Health checks
 
 `GET /health` is registered on every server. It is unauthenticated and checks
