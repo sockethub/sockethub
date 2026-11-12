@@ -108,6 +108,7 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-dummy",
                 "@sockethub/platform-feeds",
                 "@sockethub/platform-email",
+                "@sockethub/platform-image",
                 "@sockethub/platform-irc",
                 "@sockethub/platform-metadata",
                 "@sockethub/platform-messenger",
@@ -209,6 +210,58 @@ export const SockethubConfigSchema = {
                             minLength: 1,
                             description:
                                 "User agent for sites that serve previews only to known embed crawlers",
+                        },
+                    },
+                },
+                "@sockethub/platform-image": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        allowPrivateAddresses: { type: "boolean" },
+                        concurrency: {
+                            type: "integer",
+                            minimum: 1,
+                            default: 3,
+                            description:
+                                "Downloads run at once across all clients. Peak memory is about concurrency × maxBytes × 2.5",
+                        },
+                        userAgent: {
+                            type: "string",
+                            minLength: 1,
+                            description:
+                                "User agent for image requests (defaults to SockethubBot)",
+                        },
+                        maxBytes: {
+                            type: "integer",
+                            minimum: 1,
+                            maximum: 26214400,
+                            default: 10485760,
+                            description:
+                                "Largest image returned, in bytes (at most 25 MiB)",
+                        },
+                        timeoutMs: {
+                            type: "integer",
+                            minimum: 1,
+                            default: 12000,
+                            description:
+                                "Time allowed for one download, response and body together. Keep it under httpActions.idleTimeoutMs, or HTTP clients lose slow downloads",
+                        },
+                        types: {
+                            type: "array",
+                            uniqueItems: true,
+                            items: {
+                                enum: [
+                                    "avif",
+                                    "gif",
+                                    "ico",
+                                    "jpeg",
+                                    "png",
+                                    "svg",
+                                    "webp",
+                                ],
+                            },
+                            description:
+                                "Image types that may be returned, identified from the file's bytes (default: all)",
                         },
                     },
                 },

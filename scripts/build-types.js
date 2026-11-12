@@ -52,6 +52,10 @@ const packages = [
         entries: ["src/index.ts"],
     },
     {
+        dir: "packages/platform-image",
+        entries: ["src/index.ts"],
+    },
+    {
         dir: "packages/platform-irc",
         entries: ["src/index.ts"],
     },
