@@ -109,6 +109,7 @@ add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
     "maxMessagesPerRequest": 20,
     "maxPayloadBytes": 262144,
     "idempotencyTtlMs": 300000,
+    "idempotencyMaxBytes": 1048576,
     "requestTimeoutMs": 30000,
     "idleTimeoutMs": 15000
   }
@@ -479,6 +480,7 @@ only used for persistent platforms that need it.
     "maxMessagesPerRequest": 20,
     "maxPayloadBytes": 262144,
     "idempotencyTtlMs": 300000,
+    "idempotencyMaxBytes": 1048576,
     "requestTimeoutMs": 30000,
     "idleTimeoutMs": 15000
   }
@@ -493,6 +495,9 @@ Configuration behavior:
 - `maxMessagesPerRequest`: maximum message count in one HTTP request.
 - `maxPayloadBytes`: JSON body size limit enforced by Express body parser.
 - `idempotencyTtlMs`: how long replay data is kept in Redis.
+- `idempotencyMaxBytes`: largest response, in bytes, kept for replay (default
+  1 MiB; `0` disables the cap). A larger response is still streamed in full, but
+  is not cached: replaying its `requestId` returns `410`.
 - `requestTimeoutMs`: maximum total request time.
 - `idleTimeoutMs`: maximum time between streamed result lines.
 - HTTP actions reuse the top-level `rateLimiter` settings (keyed by client IP).
@@ -552,6 +557,9 @@ Conflict behavior:
 
 - same `requestId` + request still running: `409`
 - same `requestId` + request complete: cached results are replayed
+- same `requestId` + results were over `idempotencyMaxBytes`: `410`. The
+  actions already ran; resending them with a new `requestId` repeats them, so
+  resend only actions that are safe to repeat
 
 Example request:
 

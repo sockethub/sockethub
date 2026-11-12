@@ -397,6 +397,16 @@ function buildIdempotencyKeys(requestId: string) {
     };
 }
 
+/** Idempotency status for a finished request whose results were too large to cache. */
+const TOO_LARGE_TO_REPLAY = "too-large";
+
+function tooLargeToReplay(requestId: string) {
+    return {
+        error: "results were too large to keep for replay; the actions already ran, so resending them can repeat side effects such as sends",
+        requestId,
+    };
+}
+
 async function streamCachedResults(
     res: Response,
     requestId: string,
@@ -488,6 +498,14 @@ export function registerHttpActionsRoutes(
     );
     const idempotencyTtlMs =
         idempotencyTtlMsCandidate > 0 ? idempotencyTtlMsCandidate : 300000;
+    // Replay data lives in Redis for idempotencyTtlMs; a request whose results
+    // exceed this (an image download is up to several MB) is not cached.
+    // 0 disables the cap.
+    const idempotencyMaxBytes = resolveConfigNumber(
+        getConfig,
+        "httpActions:idempotencyMaxBytes",
+        1048576,
+    );
     const requestTimeoutMs = resolveConfigNumber(
         getConfig,
         "httpActions:requestTimeoutMs",
@@ -562,6 +580,10 @@ export function registerHttpActionsRoutes(
                     status: "in-progress",
                     requestId,
                 });
+                return;
+            }
+            if (status === TOO_LARGE_TO_REPLAY) {
+                res.status(410).json(tooLargeToReplay(requestId));
                 return;
             }
             res.status(404).json({
@@ -669,6 +691,10 @@ export function registerHttpActionsRoutes(
                             );
                             return;
                         }
+                        if (status === TOO_LARGE_TO_REPLAY) {
+                            res.status(410).json(tooLargeToReplay(requestId));
+                            return;
+                        }
                         if (!status) {
                             claimed = Boolean(
                                 await idempotencyRedis.set(
@@ -753,6 +779,8 @@ export function registerHttpActionsRoutes(
             let requestTimeoutId: ReturnType<typeof setTimeout> | undefined;
             let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
             let completionStarted = false;
+            let cachedBytes = 0;
+            let cacheOverflowed = false;
             let redisWriteChain = Promise.resolve();
             let signalRequestFinalized: () => void = () => undefined;
             const requestFinalized = new Promise<void>((resolve) => {
@@ -807,7 +835,9 @@ export function registerHttpActionsRoutes(
                         .then(() =>
                             idempotencyRedis.set(
                                 idempotencyKeys.statusKey,
-                                "complete",
+                                cacheOverflowed
+                                    ? TOO_LARGE_TO_REPLAY
+                                    : "complete",
                                 "PX",
                                 idempotencyTtlMs,
                             ),
@@ -847,6 +877,46 @@ export function registerHttpActionsRoutes(
                     !idempotencyKeys ||
                     completionStarted
                 ) {
+                    return;
+                }
+                if (cacheOverflowed) {
+                    // Nothing more is cached, but the claim on this request id
+                    // must not expire while the batch runs, or a duplicate
+                    // POST could claim it and run the batch again.
+                    redisWriteChain = redisWriteChain
+                        .then(() =>
+                            idempotencyRedis.pexpire(
+                                idempotencyKeys.statusKey,
+                                idempotencyTtlMs,
+                            ),
+                        )
+                        .then(() => undefined)
+                        .catch((err) => {
+                            log.error(
+                                `failed to refresh idempotency claim for ${redactRequestId(requestId)}: ${String(err)}`,
+                            );
+                        });
+                    return;
+                }
+                cachedBytes += Buffer.byteLength(serialized);
+                if (
+                    idempotencyMaxBytes > 0 &&
+                    cachedBytes > idempotencyMaxBytes
+                ) {
+                    // A partial replay would be wrong and re-running could
+                    // repeat sends, so drop what is cached and record that
+                    // this request cannot be replayed.
+                    cacheOverflowed = true;
+                    redisWriteChain = redisWriteChain
+                        .then(() =>
+                            idempotencyRedis.del(idempotencyKeys.listKey),
+                        )
+                        .then(() => undefined)
+                        .catch((err) => {
+                            log.error(
+                                `failed to drop oversized idempotency results for ${redactRequestId(requestId)}: ${String(err)}`,
+                            );
+                        });
                     return;
                 }
                 redisWriteChain = redisWriteChain

@@ -72,6 +72,7 @@ type ConfigOverrides = Partial<
         | "httpActions:maxMessagesPerRequest"
         | "httpActions:requireRequestId"
         | "httpActions:idempotencyTtlMs"
+        | "httpActions:idempotencyMaxBytes"
         | "httpActions:requestTimeoutMs"
         | "httpActions:idleTimeoutMs"
         | "httpActions:enabled"
@@ -403,6 +404,69 @@ describe("http actions", () => {
         await handlers["/sockethub-http"](replay.req, replay.res);
         expect(replay.res.headers["x-idempotent-replay"]).toBe("true");
         expect(replay.writes.length).toBe(2);
+    });
+
+    it("streams but does not cache results over idempotencyMaxBytes", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: { "httpActions:idempotencyMaxBytes": 10 },
+        });
+
+        const requestId = "req-too-large";
+        const { req, res, writes } = createReqRes({
+            body: payloads,
+            headers: { "x-request-id": requestId },
+        });
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        // The caller still gets every line; only the replay copy is dropped.
+        expect(res.ended).toBeTrue();
+        expect(writes.length).toBe(2);
+        expect([...fakeRedis.lists.values()].flat()).toEqual([]);
+
+        const replay = createReqRes({
+            body: payloads,
+            headers: { "x-request-id": requestId },
+        });
+        await handlers["/sockethub-http"](replay.req, replay.res);
+        expect(replay.res.statusCode).toBe(410);
+        expect(replay.res.jsonBody).toEqual({
+            error: "results were too large to keep for replay; the actions already ran, so resending them can repeat side effects such as sends",
+            requestId,
+        });
+        expect(replay.writes.length).toBe(0);
+
+        const get = createReqRes({ params: { requestId } });
+        await handlers["GET:/sockethub-http/:requestId"](get.req, get.res);
+        expect(get.res.statusCode).toBe(410);
+    });
+
+    it("keeps refreshing the request claim after the replay cache overflows", async () => {
+        const fakeRedis = new FakeRedis();
+        const refreshed: Array<string> = [];
+        fakeRedis.pexpire = async (key: string) => {
+            refreshed.push(key);
+            return 1;
+        };
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: { "httpActions:idempotencyMaxBytes": 10 },
+        });
+        const { req, res } = createReqRes({
+            body: payloads,
+            headers: { "x-request-id": "req-claim" },
+        });
+        await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        // The first result overflows the 10-byte cap; the second arrives
+        // after that and must still renew the claim.
+        const claims = refreshed.filter((key) => key.includes(":status:"));
+        expect(claims).toEqual([
+            "sockethub:http-actions:status:req-claim",
+        ]);
     });
 
     it("redacts credentials from streamed and cached acknowledgements", async () => {
