@@ -617,15 +617,70 @@ describe("PlatformInstance", () => {
                 pi.config = { persist: false };
             });
 
-            test("broadcasts to peers when handling a completed job", async () => {
-                pi.sessions.add("other peer");
+            test("does not fan a job result out from a shared stateless worker", async () => {
+                pi.sessions.add("other client");
                 await pi.handleJobResult(
                     "completed",
-                    { msg: { foo: "bar" } },
-                    undefined,
+                    { sessionId: "alice", msg: { type: "query", object: { secret: "calendar" } } },
+                    { type: "collection", items: [{ name: "Alice's meeting" }] },
                 );
-                expect(pi.sendToClient.callCount).toEqual(1);
-                expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
+                sandbox.assert.calledOnce(pi.sendToClient);
+                sandbox.assert.calledWith(pi.sendToClient, "alice", {
+                    type: "collection",
+                    items: [{ name: "Alice's meeting" }],
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
+                });
+                sandbox.assert.notCalled(pi.broadcastToSharedPeers);
+            });
+
+            test("broadcasts a job result to peers of an actor-scoped worker", async () => {
+                const TestPlatformInstance = getTestPlatformInstanceClass();
+                const shared = new TestPlatformInstance({
+                    identifier: "shared-irc",
+                    platform: "irc",
+                    parentId: "parent",
+                    actor: "alice@irc.example.org",
+                });
+                shared.sendToClient = sandbox.fake();
+                shared.broadcastToSharedPeers = sandbox.fake();
+                shared.config = { persist: true };
+                try {
+                    await shared.handleJobResult(
+                        "completed",
+                        {
+                            sessionId: "tab-a",
+                            title: "job",
+                            msg: { type: "send" },
+                        },
+                        {
+                            type: "send",
+                            actor: {
+                                id: "alice@irc.example.org",
+                                type: "person",
+                            },
+                        },
+                    );
+                    expect(shared.global).toEqual(false);
+                    expect(shared.broadcastToSharedPeers.callCount).toEqual(1);
+                    sandbox.assert.calledWith(
+                        shared.broadcastToSharedPeers,
+                        "tab-a",
+                        {
+                            type: "send",
+                            actor: {
+                                id: "alice@irc.example.org",
+                                type: "person",
+                            },
+                            "@context": buildCanonicalContext(
+                                INTERNAL_PLATFORM_CONTEXT_URL,
+                            ),
+                        },
+                    );
+                } finally {
+                    await shared.shutdown();
+                }
             });
 
             test("appends completed result message when present", async () => {
@@ -634,7 +689,7 @@ describe("PlatformInstance", () => {
                     { sessionId: "a session id", msg: { foo: "bar" } },
                     "a good result message",
                 );
-                expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
+                sandbox.assert.notCalled(pi.broadcastToSharedPeers);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     "@context": buildCanonicalContext(
@@ -649,7 +704,7 @@ describe("PlatformInstance", () => {
                     { sessionId: "a session id", msg: { foo: "bar" } },
                     "a bad result message",
                 );
-                expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
+                sandbox.assert.notCalled(pi.broadcastToSharedPeers);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",

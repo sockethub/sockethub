@@ -565,9 +565,12 @@ export default class PlatformInstance {
             this.sendToClient(job.sessionId, payload);
         }
 
-        if (payload) {
-            // let all related peers know of result as an independent message
-            // (not as part of a job completion, or failure)
+        if (payload && !this.global) {
+            // Actor-scoped workers are one account, possibly open in several
+            // tabs, so those peers should see the result too. A stateless
+            // worker has no actor and is shared by every session; fanning the
+            // result out would hand one client's calendar, contacts, or sent
+            // message to every other client on that worker.
             this.broadcastToSharedPeers(job.sessionId, payload);
         }
 
