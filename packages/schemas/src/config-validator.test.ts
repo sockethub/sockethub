@@ -103,11 +103,11 @@ describe("validateSockethubConfig", () => {
         ).not.toEqual("");
     });
 
-    it("accepts image platform limits and rejects out-of-range ones", () => {
+    it("accepts media platform limits and rejects out-of-range ones", () => {
         const withImage = (entry: unknown) =>
             validateSockethubConfig({
                 ...base,
-                packageConfig: { "@sockethub/platform-image": entry },
+                packageConfig: { "@sockethub/platform-media": entry },
             });
         expect(
             withImage({

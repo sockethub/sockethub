@@ -1,5 +1,5 @@
 /**
- * End-to-end coverage for the image platform: a real server (run under Node,
+ * End-to-end coverage for the media platform: a real server (run under Node,
  * so the guarded dispatcher is in force) and a local image origin. Covers both
  * transports, a refused block page, the platform's concurrency limit, and
  * link previews staying fast while downloads are slow.
@@ -35,7 +35,7 @@ let maxActive = 0;
 
 function download(url: string, page = `${originUrl}/article`) {
     return {
-        "@context": context("image"),
+        "@context": context("media"),
         type: "download",
         actor: { id: page, type: "website" },
         object: { type: "image", url },
@@ -58,7 +58,7 @@ function send(
     return new Promise((resolve) => socket.emit("message", msg, resolve));
 }
 
-describe("image platform integration", () => {
+describe("media platform integration", () => {
     beforeAll(async () => {
         origin = createServer(async (req, res) => {
             const url = new URL(req.url ?? "/", "http://origin");

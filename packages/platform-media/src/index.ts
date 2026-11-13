@@ -1,5 +1,6 @@
 /**
- * This is a platform for Sockethub implementing image downloads.
+ * This is a platform for Sockethub implementing media downloads. Only images
+ * are supported for now.
  *
  * A browser can display an image from another origin, but it can only read
  * the bytes when that host sends CORS headers, so it cannot store a copy.
@@ -30,7 +31,7 @@ import {
     sniffImageType,
     TooLargeError,
 } from "./download";
-import { PlatformImageSchema } from "./schema";
+import { PlatformMediaSchema } from "./schema";
 
 /** Override per deployment via `packageConfig.userAgent`. */
 const DEFAULT_USER_AGENT = `Mozilla/5.0 (compatible; SockethubBot/${packageJson.version}; +https://sockethub.org)`;
@@ -67,7 +68,7 @@ function withDeadline<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
     });
 }
 
-export default class Image implements PlatformInterface {
+export default class Media implements PlatformInterface {
     private readonly log: Logger;
     private readonly fetchImpl = undiciFetch;
     private dispatcher?: ReturnType<typeof createGuardedDispatcher>;
@@ -83,7 +84,7 @@ export default class Image implements PlatformInterface {
     }
 
     get schema() {
-        return PlatformImageSchema;
+        return PlatformMediaSchema;
     }
 
     isInitialized(): boolean {

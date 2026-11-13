@@ -108,7 +108,7 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-dummy",
                 "@sockethub/platform-feeds",
                 "@sockethub/platform-email",
-                "@sockethub/platform-image",
+                "@sockethub/platform-media",
                 "@sockethub/platform-irc",
                 "@sockethub/platform-metadata",
                 "@sockethub/platform-messenger",
@@ -213,7 +213,7 @@ export const SockethubConfigSchema = {
                         },
                     },
                 },
-                "@sockethub/platform-image": {
+                "@sockethub/platform-media": {
                     type: "object",
                     additionalProperties: false,
                     properties: {

@@ -22,7 +22,12 @@ export interface DownloadConfig {
     types: ReadonlySet<DownloadImageType>;
 }
 
-/** Upper bound for `maxBytes`; the config schema enforces the same maximum. */
+/**
+ * Upper bound for `maxBytes`; the config schema enforces the same maximum.
+ * A result is held whole in memory (about 2.5× with base64 and JSON) and
+ * passes through Redis, so this is a ceiling on that, not a protocol limit.
+ * Larger media needs streaming instead (sockethub#1411).
+ */
 export const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
 const DEFAULT_MAX_BYTES = 10 * 1024 * 1024;
 /**

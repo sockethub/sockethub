@@ -18,7 +18,7 @@ about using, deploying, and extending Sockethub.
   * **[XMPP](../packages/platform-xmpp/README.md)** - chat and multi-user rooms
   * **[Feeds](../packages/platform-feeds/README.md)** - RSS and Atom
   * **[Metadata](../packages/platform-metadata/README.md)** - link previews
-  * **[Image](../packages/platform-image/README.md)** - image bytes for clients blocked by CORS
+  * **[Media](../packages/platform-media/README.md)** - image bytes for clients blocked by CORS
   * **[Email](../packages/platform-email/README.md)** - IMAP fetch/watch and SMTP send
   * **[CalDAV](../packages/platform-caldav/README.md)** - calendars and iCalendar feeds
   * **[CardDAV](../packages/platform-carddav/README.md)** - address books

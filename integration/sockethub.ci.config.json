@@ -11,7 +11,7 @@
     "@sockethub/platform-metadata": {
       "allowPrivateAddresses": true
     },
-    "@sockethub/platform-image": {
+    "@sockethub/platform-media": {
       "allowPrivateAddresses": true
     },
     "@sockethub/platform-caldav": {

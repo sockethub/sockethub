@@ -52,7 +52,7 @@ const packages = [
         entries: ["src/index.ts"],
     },
     {
-        dir: "packages/platform-image",
+        dir: "packages/platform-media",
         entries: ["src/index.ts"],
     },
     {

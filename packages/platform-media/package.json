@@ -1,6 +1,6 @@
 {
-  "name": "@sockethub/platform-image",
-  "description": "A sockethub platform module that returns an image's bytes to browser clients that cannot read them cross-origin",
+  "name": "@sockethub/platform-media",
+  "description": "A sockethub platform module that returns media (currently images) to browser clients that cannot read it cross-origin",
   "version": "1.0.0-beta.7",
   "type": "module",
   "private": false,
@@ -34,9 +34,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sockethub/sockethub.git",
-    "directory": "packages/platform-image"
+    "directory": "packages/platform-media"
   },
-  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-image",
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-media",
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",

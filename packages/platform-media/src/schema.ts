@@ -1,10 +1,10 @@
 import packageJson from "../package.json" with { type: "json" };
 import { DOWNLOAD_IMAGE_TYPES } from "./download";
 
-export const PlatformImageSchema = {
-    name: "image",
+export const PlatformMediaSchema = {
+    name: "media",
     version: packageJson.version,
-    contextUrl: "https://sockethub.org/ns/context/platform/image/v1.jsonld",
+    contextUrl: "https://sockethub.org/ns/context/platform/media/v1.jsonld",
     contextVersion: "1",
     schemaVersion: "1",
     messages: {

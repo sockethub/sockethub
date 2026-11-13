@@ -5,20 +5,20 @@ import {
     validateActivityStream,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
-import { PlatformImageSchema } from "./schema";
+import { PlatformMediaSchema } from "./schema";
 
-addPlatformSchema(PlatformImageSchema.responses, "image/responses");
-addPlatformSchema(PlatformImageSchema.messages, "image/messages");
-addPlatformContext("image", PlatformImageSchema.contextUrl);
+addPlatformSchema(PlatformMediaSchema.responses, "media/responses");
+addPlatformSchema(PlatformMediaSchema.messages, "media/messages");
+addPlatformContext("media", PlatformMediaSchema.contextUrl);
 
 const MSG_CTX = [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
-    PlatformImageSchema.contextUrl,
+    PlatformMediaSchema.contextUrl,
 ];
 const actor = { id: "https://example.com/article", type: "website" };
 
-describe("image platform schema", () => {
+describe("media platform schema", () => {
     it("accepts a download of an absolute or page-relative image URL", () => {
         for (const url of ["https://cdn.example.com/a.png", "/favicon.ico"]) {
             expect(

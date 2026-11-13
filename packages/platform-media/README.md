@@ -1,10 +1,14 @@
-# `@sockethub/platform-image`
+# `@sockethub/platform-media`
 
-Image downloads for browser clients. A browser can display an image from
+Media downloads for browser clients. A browser can display an image from
 another origin, but it can only read the bytes when that host sends CORS
 headers, so it cannot store a copy. `download` fetches the image on the
 client's behalf and returns its bytes. This is a stateless platform with no
 credentials.
+
+Only images are supported for now. The bytes come back in a single message,
+which suits images but not large audio or video; streaming those is tracked in
+[#1411](https://github.com/sockethub/sockethub/issues/1411).
 
 Pair it with the [metadata platform](../platform-metadata/README.md): `fetch`
 a link's preview, then `download` its image or favicon to keep a copy that
@@ -13,7 +17,7 @@ doesn't depend on the origin staying up.
 ## Setup
 
 The Sockethub CLI bundles this platform and loads it by default. For a custom
-server installation, install `@sockethub/platform-image` and include it in
+server installation, install `@sockethub/platform-media` and include it in
 your config's `platforms` list. Remove it from `platforms` to turn downloads
 off.
 
@@ -25,7 +29,7 @@ off.
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/image/v1.jsonld"
+    "https://sockethub.org/ns/context/platform/media/v1.jsonld"
   ],
   "actor": { "id": "https://example.com/article", "type": "website" },
   "object": { "type": "image", "url": "https://cdn.example.com/hero.jpg" }
@@ -81,7 +85,7 @@ Operators can narrow downloads under `packageConfig`:
 ```json
 {
   "packageConfig": {
-    "@sockethub/platform-image": {
+    "@sockethub/platform-media": {
       "maxBytes": 10485760,
       "concurrency": 3,
       "timeoutMs": 12000,

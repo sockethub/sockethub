@@ -53,7 +53,7 @@ add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
     "@sockethub/platform-email",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
-    "@sockethub/platform-image",
+    "@sockethub/platform-media",
     "@sockethub/platform-irc", 
     "@sockethub/platform-metadata",
     "@sockethub/platform-messenger",
@@ -182,7 +182,7 @@ them. They cannot be supplied by browser clients.
     "@sockethub/platform-email",
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
-    "@sockethub/platform-image",
+    "@sockethub/platform-media",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",
     "@sockethub/platform-messenger",
@@ -229,7 +229,7 @@ passed through to the platform unvalidated.
 
 #### Outbound URL guard
 
-Feeds, metadata, image, CalDAV, and CardDAV fetch client-supplied URLs through the
+Feeds, metadata, media, CalDAV, and CardDAV fetch client-supplied URLs through the
 shared guarded dispatcher in `@sockethub/util`. XMPP and IRC apply the same address
 check to the server they connect to. The check runs when the socket
 connects, including every redirect hop. An address that does not parse is
@@ -1062,7 +1062,7 @@ export SENTRY_RELEASE=sockethub@5.0.0   # optional; defaults to the running vers
     "@sockethub/platform-caldav",
     "@sockethub/platform-email",
     "@sockethub/platform-feeds",
-    "@sockethub/platform-image",
+    "@sockethub/platform-media",
     "@sockethub/platform-irc",
     "@sockethub/platform-metadata",
     "@sockethub/platform-messenger",

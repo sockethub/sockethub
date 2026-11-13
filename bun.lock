@@ -232,24 +232,6 @@
         "@sockethub/server",
       ],
     },
-    "packages/platform-image": {
-      "name": "@sockethub/platform-image",
-      "version": "1.0.0-beta.7",
-      "dependencies": {
-        "@sockethub/util": "^1.0.0-beta.7",
-        "undici": "^7.30.0",
-      },
-      "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-beta.7",
-        "@types/bun": "latest",
-      },
-      "peerDependencies": {
-        "@sockethub/server": "^5.0.0-beta.7",
-      },
-      "optionalPeers": [
-        "@sockethub/server",
-      ],
-    },
     "packages/platform-instagram": {
       "name": "@sockethub/platform-instagram",
       "version": "1.0.0-beta.7",
@@ -278,6 +260,24 @@
         "@sockethub/schemas": "^3.0.0-beta.7",
         "@types/bun": "latest",
         "typedoc": "^0.28.14",
+      },
+      "peerDependencies": {
+        "@sockethub/server": "^5.0.0-beta.7",
+      },
+      "optionalPeers": [
+        "@sockethub/server",
+      ],
+    },
+    "packages/platform-media": {
+      "name": "@sockethub/platform-media",
+      "version": "1.0.0-beta.7",
+      "dependencies": {
+        "@sockethub/util": "^1.0.0-beta.7",
+        "undici": "^7.30.0",
+      },
+      "devDependencies": {
+        "@sockethub/schemas": "^3.0.0-beta.7",
+        "@types/bun": "latest",
       },
       "peerDependencies": {
         "@sockethub/server": "^5.0.0-beta.7",
@@ -410,9 +410,9 @@
         "@sockethub/platform-dummy": "^3.0.0-beta.7",
         "@sockethub/platform-email": "^1.0.0-beta.7",
         "@sockethub/platform-feeds": "^4.0.0-beta.7",
-        "@sockethub/platform-image": "^1.0.0-beta.7",
         "@sockethub/platform-instagram": "^1.0.0-beta.7",
         "@sockethub/platform-irc": "^4.0.0-beta.7",
+        "@sockethub/platform-media": "^1.0.0-beta.7",
         "@sockethub/platform-messenger": "^1.0.0-beta.7",
         "@sockethub/platform-metadata": "^1.0.1-beta.7",
         "@sockethub/platform-whatsapp": "^1.0.0-beta.7",
@@ -429,9 +429,9 @@
         "@sockethub/platform-dummy": "^3.0.0-beta.7",
         "@sockethub/platform-email": "^1.0.0-beta.7",
         "@sockethub/platform-feeds": "^4.0.0-beta.7",
-        "@sockethub/platform-image": "^1.0.0-beta.7",
         "@sockethub/platform-instagram": "^1.0.0-beta.7",
         "@sockethub/platform-irc": "^4.0.0-beta.7",
+        "@sockethub/platform-media": "^1.0.0-beta.7",
         "@sockethub/platform-messenger": "^1.0.0-beta.7",
         "@sockethub/platform-metadata": "^1.0.1-beta.7",
         "@sockethub/platform-whatsapp": "^1.0.0-beta.7",
@@ -1285,11 +1285,11 @@
 
     "@sockethub/platform-feeds": ["@sockethub/platform-feeds@workspace:packages/platform-feeds"],
 
-    "@sockethub/platform-image": ["@sockethub/platform-image@workspace:packages/platform-image"],
-
     "@sockethub/platform-instagram": ["@sockethub/platform-instagram@workspace:packages/platform-instagram"],
 
     "@sockethub/platform-irc": ["@sockethub/platform-irc@workspace:packages/platform-irc"],
+
+    "@sockethub/platform-media": ["@sockethub/platform-media@workspace:packages/platform-media"],
 
     "@sockethub/platform-messenger": ["@sockethub/platform-messenger@workspace:packages/platform-messenger"],
 
@@ -4293,11 +4293,11 @@
 
     "@sockethub/platform-feeds/@types/bun": ["@types/bun@1.4.3", "", { "dependencies": { "bun-types": "1.4.3" } }, "sha512-N67Pqy8JXbAY/j0tNraS3V5mubGvc6rrrNDmDCtZLlFzccbUJPDb0tvgUBC5q4m8ybkP93Jcn1QB+RYQ6PvBhw=="],
 
-    "@sockethub/platform-image/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
     "@sockethub/platform-instagram/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "@sockethub/platform-irc/@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
+
+    "@sockethub/platform-media/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "@sockethub/platform-messenger/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
@@ -5357,11 +5357,11 @@
 
     "@sockethub/platform-feeds/@types/bun/bun-types": ["bun-types@1.4.3", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-tinRJNGOmUN+tEAsn2y2e942n9JHRHR42iUYzDH75NmhJqVBokGSQkkfSFdNWwsANIdrK6ACH9t01M452YyTwg=="],
 
-    "@sockethub/platform-image/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
     "@sockethub/platform-instagram/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 
     "@sockethub/platform-irc/@types/bun/bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
+
+    "@sockethub/platform-media/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 
     "@sockethub/platform-messenger/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 

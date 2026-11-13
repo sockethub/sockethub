@@ -9,7 +9,7 @@ import {
     sniffImageType,
     TooLargeError,
 } from "./download";
-import Image from "./index";
+import Media from "./index";
 
 const PNG = new Uint8Array([
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13,
@@ -109,7 +109,7 @@ type Handler = (
     headers: Record<string, string | string[] | undefined>,
 ) => { status?: number; headers?: Record<string, string>; body?: Uint8Array };
 
-describe("image download", () => {
+describe("media download", () => {
     let server: Server;
     let base: string;
     let handler: Handler = () => ({ body: PNG });
@@ -136,7 +136,7 @@ describe("image download", () => {
         page = `${base}/article`,
     ): Promise<{ err: Error | undefined; result: unknown }> {
         // biome-ignore lint/suspicious/noExplicitAny: minimal fake session
-        const platform = new Image({ log: { debug() {} } } as any);
+        const platform = new Media({ log: { debug() {} } } as any);
         Object.assign(platform.config, { allowPrivateAddresses: true }, config);
         const job = {
             "@context": ["x"],
@@ -259,7 +259,7 @@ describe("image download", () => {
                 ),
         ]) {
             // biome-ignore lint/suspicious/noExplicitAny: minimal fake session
-            const platform = new Image({ log: { debug() {} } } as any);
+            const platform = new Media({ log: { debug() {} } } as any);
             // biome-ignore lint/suspicious/noExplicitAny: test-only overrides
             Object.assign(platform as any, { fetchImpl: stalled });
             Object.assign(platform.config, { timeoutMs: 50 });
