@@ -83,6 +83,26 @@ describe("validateSockethubConfig", () => {
         ).toEqual("");
     });
 
+    it("accepts the metadata user agents documented in its README", () => {
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-metadata": {
+                        userAgent: "MyDeployment/1.0 (+https://my.example)",
+                        compatUserAgent: "Mozilla/5.0 (compatible; TelegramBot/1.0)",
+                    },
+                },
+            }),
+        ).toEqual("");
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: { "@sockethub/platform-metadata": { userAgent: 1 } },
+            }),
+        ).not.toEqual("");
+    });
+
     it("rejects an unknown key in the metadata packageConfig entry", () => {
         expect(
             validateSockethubConfig({

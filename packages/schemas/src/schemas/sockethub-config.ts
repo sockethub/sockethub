@@ -198,6 +198,18 @@ export const SockethubConfigSchema = {
                     properties: {
                         allowPrivateAddresses: { type: "boolean" },
                         concurrency: { type: "integer", minimum: 1 },
+                        userAgent: {
+                            type: "string",
+                            minLength: 1,
+                            description:
+                                "User agent for outbound requests (defaults to SockethubBot)",
+                        },
+                        compatUserAgent: {
+                            type: "string",
+                            minLength: 1,
+                            description:
+                                "User agent for sites that serve previews only to known embed crawlers",
+                        },
                     },
                 },
             },
