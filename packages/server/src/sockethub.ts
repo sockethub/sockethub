@@ -5,8 +5,11 @@ import type {
 } from "@sockethub/data-layer";
 import {
     CredentialsStore,
+    createCredentialsRedisConnection,
     purgeCredentialsStores,
     resetSharedCredentialsRedisConnection,
+    startAliveHeartbeat,
+    sweepOrphanedQueues,
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import {
@@ -37,6 +40,9 @@ import { resolveSocketClientIp } from "./trust-proxy.js";
 
 const log = createLogger("server:core");
 
+/** How often to look for queues left in Redis by crashed servers. */
+const ORPHAN_SWEEP_INTERVAL_MS = 15 * 60 * 1000;
+
 function getCredentialsTtlMs(): number | undefined {
     const ttlMs = Number(config.get("credentials:ttlMs") ?? 0);
     return Number.isFinite(ttlMs) && ttlMs > 0 ? ttlMs : undefined;
@@ -66,6 +72,8 @@ function getClientIp(socket: Socket): string {
  */
 class Sockethub {
     private readonly parentId: string;
+    private stopAliveHeartbeat?: () => Promise<void>;
+    private orphanSweepTimer?: ReturnType<typeof setInterval>;
     private readonly parentSecret1: string;
     private readonly parentSecret2: string;
     counter = 0;
@@ -166,13 +174,39 @@ class Sockethub {
             platforms: this.platformRegistry,
         });
         janitor.start(); // start cleanup cycle
+        void this.startOrphanSweep();
         log.debug("registering handlers");
         listener.io.on("connection", this.handleIncomingConnection.bind(this));
+    }
+
+    /**
+     * Keep this server's alive key fresh, and remove queues that crashed
+     * servers left in Redis (see `sweepOrphanedQueues`). Failures are logged,
+     * never fatal: the sweep is housekeeping.
+     */
+    private async startOrphanSweep() {
+        const client = createCredentialsRedisConnection(
+            config.get("redis") as RedisConfig,
+        );
+        // Retries on its own if Redis is down at boot.
+        this.stopAliveHeartbeat = await startAliveHeartbeat(
+            client,
+            this.parentId,
+        );
+        const sweep = () =>
+            sweepOrphanedQueues(client, this.parentId).catch((err: unknown) => {
+                log.warn(`orphaned queue sweep failed: ${err}`);
+            });
+        void sweep();
+        this.orphanSweepTimer = setInterval(sweep, ORPHAN_SWEEP_INTERVAL_MS);
+        this.orphanSweepTimer.unref?.();
     }
 
     async shutdown() {
         await janitor.stop();
         stopCleanup();
+        clearInterval(this.orphanSweepTimer);
+        await this.stopAliveHeartbeat?.();
         // Reclaim this instance's credential keys: parentId is randomized per
         // boot, so any key left behind would be stranded under a prefix no
         // future boot references (until its TTL lapses).

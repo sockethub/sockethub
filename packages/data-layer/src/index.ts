@@ -22,6 +22,12 @@ import {
 } from "./job-base.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker, type JobWorkerOptions } from "./job-worker.js";
+import {
+    buildAliveKey,
+    KNOWN_SERVERS_KEY,
+    startAliveHeartbeat,
+    sweepOrphanedQueues,
+} from "./orphan-sweep.js";
 import { buildCredentialsKey } from "./queue-id.js";
 
 export * from "./types.js";
@@ -52,6 +58,7 @@ async function redisCheck(config: RedisConfig): Promise<void> {
 }
 
 export {
+    buildAliveKey,
     buildCredentialsKey,
     CredentialsMismatchError,
     CredentialsStore,
@@ -63,6 +70,7 @@ export {
     createRateLimitRedisConnection,
     getRedisConnectionCount,
     JobQueue,
+    KNOWN_SERVERS_KEY,
     purgeCredentialsStoreKeys,
     purgeCredentialsStores,
     JobWorker,
@@ -72,4 +80,6 @@ export {
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
     resetSharedRedisConnection,
+    startAliveHeartbeat,
+    sweepOrphanedQueues,
 };
