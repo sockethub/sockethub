@@ -144,6 +144,11 @@ const OVERLAY: Record<string, OverlayEntry> = {
         env: "SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_TTL_MS",
         emptyEnvIsUnset: true,
     },
+    "httpActions.idempotencyMaxBytes": {
+        format: "nat",
+        env: "SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_MAX_BYTES",
+        emptyEnvIsUnset: true,
+    },
     "httpActions.requestTimeoutMs": {
         format: "nat",
         env: "SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS",

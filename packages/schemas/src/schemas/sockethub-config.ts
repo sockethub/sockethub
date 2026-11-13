@@ -503,6 +503,13 @@ export const SockethubConfigSchema = {
                     minimum: 0,
                     default: 300000,
                 },
+                idempotencyMaxBytes: {
+                    type: "integer",
+                    minimum: 0,
+                    default: 1048576,
+                    description:
+                        "Largest response, in bytes, kept for replay. Larger results are not cached; 0 disables the cap.",
+                },
                 requestTimeoutMs: {
                     type: "number",
                     minimum: 0,
