@@ -905,11 +905,18 @@ export function registerHttpActionsRoutes(
                 ) {
                     // A partial replay would be wrong and re-running could
                     // repeat sends, so drop what is cached and record that
-                    // this request cannot be replayed.
+                    // this request cannot be replayed. The claim is renewed
+                    // here too, as for every later result.
                     cacheOverflowed = true;
                     redisWriteChain = redisWriteChain
                         .then(() =>
                             idempotencyRedis.del(idempotencyKeys.listKey),
+                        )
+                        .then(() =>
+                            idempotencyRedis.pexpire(
+                                idempotencyKeys.statusKey,
+                                idempotencyTtlMs,
+                            ),
                         )
                         .then(() => undefined)
                         .catch((err) => {

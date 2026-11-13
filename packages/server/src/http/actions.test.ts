@@ -461,10 +461,11 @@ describe("http actions", () => {
         await handlers["/sockethub-http"](req, res);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        // The first result overflows the 10-byte cap; the second arrives
-        // after that and must still renew the claim.
+        // The first result overflows the 10-byte cap and the second arrives
+        // after that; both must renew the claim.
         const claims = refreshed.filter((key) => key.includes(":status:"));
         expect(claims).toEqual([
+            "sockethub:http-actions:status:req-claim",
             "sockethub:http-actions:status:req-claim",
         ]);
     });
