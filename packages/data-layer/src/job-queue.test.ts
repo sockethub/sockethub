@@ -123,10 +123,24 @@ describe("JobQueue", () => {
                 id: "an identifier",
             });
             expect(job).to.eql({
-                title: `${TEST_PLATFORM_ID}-0`,
+                title: `${TEST_PLATFORM_ID}-${jobQueue.generation}-0`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
+        });
+
+        it("gives each queue object its own titles, so a replacement's never repeat", () => {
+            cryptoMocks.encrypt.returns("an encrypted message");
+            const other = new jobQueue.constructor(
+                "a parent id",
+                "an instance id",
+                "secret is 32 char long like this",
+                { url: "redis config" },
+            );
+            const msg = { "@context": TEST_CONTEXT };
+            expect(other.createJob("s", msg).title).not.to.equal(
+                jobQueue.createJob("s", msg).title,
+            );
         });
 
         it("uses counter even when an id is provided (ids may repeat)", () => {
@@ -136,7 +150,7 @@ describe("JobQueue", () => {
                 id: "a reused identifier",
             });
             expect(job).to.eql({
-                title: `${TEST_PLATFORM_ID}-0`,
+                title: `${TEST_PLATFORM_ID}-${jobQueue.generation}-0`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
@@ -145,7 +159,7 @@ describe("JobQueue", () => {
                 id: "a reused identifier",
             });
             expect(job).to.eql({
-                title: `${TEST_PLATFORM_ID}-1`,
+                title: `${TEST_PLATFORM_ID}-${jobQueue.generation}-1`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
@@ -157,7 +171,7 @@ describe("JobQueue", () => {
                 id: "an identifier",
             });
             expect(job).to.eql({
-                title: "unknown-0",
+                title: `unknown-${jobQueue.generation}-0`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
@@ -220,7 +234,7 @@ describe("JobQueue", () => {
         it("stores encrypted job", async () => {
             cryptoMocks.encrypt.returns("encrypted foo");
             jobQueue.queue.isPaused.returns(false);
-            const title = `${TEST_PLATFORM_ID}-0`;
+            const title = `${TEST_PLATFORM_ID}-${jobQueue.generation}-0`;
             const resultJob = {
                 title,
                 sessionId: "a socket id",

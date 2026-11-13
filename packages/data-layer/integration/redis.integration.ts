@@ -184,7 +184,7 @@ describe("JobQueue", () => {
         const completedPromise = new Promise<JobDataDecrypted>((resolve) => {
             queue.on("completed", (jobData: JobDataDecrypted) => {
                 expect(jobData).toEqual({
-                    title: "bar-0",
+                    title: expect.stringMatching(/^bar-[0-9a-f]{8}-0$/),
                     sessionId: "socket id",
                     msg: as,
                 });
@@ -198,7 +198,7 @@ describe("JobQueue", () => {
                 job: JobDataDecrypted,
             ): Promise<string | undefined | ActivityStream> => {
                 expect(job).toEqual({
-                    title: "bar-0",
+                    title: expect.stringMatching(/^bar-[0-9a-f]{8}-0$/),
                     sessionId: "socket id",
                     msg: as,
                 });
@@ -212,7 +212,7 @@ describe("JobQueue", () => {
         // Add job and verify it was queued
         const job = await queue.add("socket id", as);
         expect(job.msg.length).toBeGreaterThan(0);
-        expect(job.title).toEqual("bar-0");
+        expect(job.title).toMatch(/^bar-[0-9a-f]{8}-0$/);
         expect(job.sessionId).toEqual("socket id");
 
         // Wait for job to complete
