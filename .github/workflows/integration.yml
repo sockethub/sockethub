@@ -75,6 +75,9 @@ jobs:
       - name: HTTP actions integration tests
         run: REQUIRE_HTTP_ACTIONS=true bun run integration:http-actions
 
+      - name: Media platform integration tests
+        run: bun run integration:media
+
       - name: Rate Limiter Integration Tests
         run: bun run integration:rate-limiter
 

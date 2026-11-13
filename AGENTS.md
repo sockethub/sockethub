@@ -107,6 +107,7 @@ packages/
   platform-email/    - IMAP fetch/watch and SMTP send
   platform-feeds/    - RSS/Atom feeds platform
   platform-metadata/ - URL metadata extraction platform
+  platform-media/    - Image downloads for clients blocked by CORS
   platform-caldav/   - CalDAV calendars and published iCalendar feeds
   platform-carddav/  - CardDAV address books
   platform-messenger/ - Outgoing Facebook Page messages

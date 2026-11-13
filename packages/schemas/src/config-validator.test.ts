@@ -103,6 +103,26 @@ describe("validateSockethubConfig", () => {
         ).not.toEqual("");
     });
 
+    it("accepts media platform limits and rejects out-of-range ones", () => {
+        const withImage = (entry: unknown) =>
+            validateSockethubConfig({
+                ...base,
+                packageConfig: { "@sockethub/platform-media": entry },
+            });
+        expect(
+            withImage({
+                maxBytes: 2097152,
+                timeoutMs: 5000,
+                concurrency: 2,
+                types: ["png", "jpeg"],
+                userAgent: "MyDeployment/1.0",
+            }),
+        ).toEqual("");
+        expect(withImage({ maxBytes: 26214401 })).not.toEqual("");
+        expect(withImage({ types: ["bmp"] })).not.toEqual("");
+        expect(withImage({ enabled: false })).not.toEqual("");
+    });
+
     it("rejects an unknown key in the metadata packageConfig entry", () => {
         expect(
             validateSockethubConfig({

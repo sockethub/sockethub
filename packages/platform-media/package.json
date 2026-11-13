@@ -1,0 +1,63 @@
+{
+  "name": "@sockethub/platform-media",
+  "description": "A sockethub platform module that returns media (currently images) to browser clients that cannot read it cross-origin",
+  "version": "1.0.0-beta.7",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "sockethub",
+    "activitystreams",
+    "image",
+    "download",
+    "cors",
+    "favicon"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/platform-media"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-media",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
+    "test": "bun test src/"
+  },
+  "dependencies": {
+    "@sockethub/util": "^1.0.0-beta.7",
+    "undici": "^7.30.0"
+  },
+  "devDependencies": {
+    "@sockethub/schemas": "^3.0.0-beta.7",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "@sockethub/server": "^5.0.0-beta.7"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
+  },
+  "types": "./dist/index.d.ts"
+}
