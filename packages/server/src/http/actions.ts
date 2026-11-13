@@ -583,6 +583,7 @@ export function registerHttpActionsRoutes(
                 return;
             }
             if (status === TOO_LARGE_TO_REPLAY) {
+                res.setHeader("Cache-Control", "no-store");
                 res.status(410).json(tooLargeToReplay(requestId));
                 return;
             }
@@ -692,6 +693,7 @@ export function registerHttpActionsRoutes(
                             return;
                         }
                         if (status === TOO_LARGE_TO_REPLAY) {
+                            res.setHeader("Cache-Control", "no-store");
                             res.status(410).json(tooLargeToReplay(requestId));
                             return;
                         }

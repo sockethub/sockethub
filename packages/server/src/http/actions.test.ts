@@ -432,6 +432,7 @@ describe("http actions", () => {
         });
         await handlers["/sockethub-http"](replay.req, replay.res);
         expect(replay.res.statusCode).toBe(410);
+        expect(replay.res.headers["cache-control"]).toBe("no-store");
         expect(replay.res.jsonBody).toEqual({
             error: "results were too large to keep for replay; the actions already ran, so resending them can repeat side effects such as sends",
             requestId,
@@ -441,6 +442,7 @@ describe("http actions", () => {
         const get = createReqRes({ params: { requestId } });
         await handlers["GET:/sockethub-http/:requestId"](get.req, get.res);
         expect(get.res.statusCode).toBe(410);
+        expect(get.res.headers["cache-control"]).toBe("no-store");
     });
 
     it("keeps refreshing the request claim after the replay cache overflows", async () => {
