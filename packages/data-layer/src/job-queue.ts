@@ -135,7 +135,7 @@ export class JobQueue extends JobBase {
             this.log.warn(`events error: ${err.message}`);
         });
 
-        this.events.on("completed", async ({ jobId, returnvalue }) => {
+        this.events.on("completed", async ({ jobId, returnvalue }, eventId) => {
             const job = await this.getJob(jobId);
             if (!job) {
                 this.log.debug(`completed job ${jobId} (already removed)`);
@@ -143,6 +143,22 @@ export class JobQueue extends JobBase {
             }
             this.log.debug(`completed ${job.data.title} ${job.data.msg.type}`);
             this.emit("completed", job.data, returnvalue);
+            // The result is handed off. Both the job and this event hold a
+            // copy of it, which would otherwise stay in Redis for
+            // `removeOnComplete`'s five minutes and until 10,000 later events
+            // trim the stream.
+            await job.remove().catch((err: unknown) => {
+                this.log.debug(
+                    `could not remove completed job ${jobId}: ${err}`,
+                );
+            });
+            await this.queue.client
+                .then((client) => client.xdel(this.queue.keys.events, eventId))
+                .catch((err: unknown) => {
+                    this.log.debug(
+                        `could not delete completed event for job ${jobId}: ${err}`,
+                    );
+                });
         });
 
         this.events.on("failed", async ({ jobId, failedReason }) => {
