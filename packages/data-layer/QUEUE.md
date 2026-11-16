@@ -80,8 +80,10 @@ Platform Result → Queue Event → Sockethub Server → Socket.IO → Web App
 
 **Message durability**: A job stays in Redis until the server has delivered
 its result. The completed job and its completion event are then deleted. If
-that delete fails, the job is still removed after five minutes. Failed jobs
-remain for those five minutes. There is no separate log of payloads.
+that delete fails, the job is removed when a later job on the queue
+completes and it is more than five minutes old. A failed job stays until a
+later job on the queue fails and it is more than five minutes old, or until
+the queue is deleted. There is no separate log of payloads.
 
 ## Real-World Example
 
@@ -109,9 +111,10 @@ User message → Queue → [IRC Platform] + [XMPP Platform]
   [Interrupted jobs](../../docs/client-guide.md#interrupted-jobs).
 - A stalled job may be recovered up to three times. Email does not rerun a
   job whose worker disappeared.
-- A clean worker shutdown deletes its queue. A crash cannot. Another server
-  sharing the Redis removes those queues after the dead server's alive key
-  expires and the queues have been idle for an hour. See
+- The server deletes a worker's queue when it shuts that worker down. A
+  server that crashes cannot. Any running server on the same Redis,
+  including the restarted one, removes those queues after the dead server's
+  alive key expires and the queues have been idle for an hour. See
   [Redis configuration](../../docs/configuration.md#redis-configuration).
 - Redis has to be up for a job to be stored or completed. An outage pauses
   processing.

@@ -284,9 +284,11 @@ connections and leaves the shared queue in place. Shutdown of a worker that
 has no replacement deletes the queue.
 
 After the server has handed a completed result to the caller, it deletes
-that job and its completion event from Redis. If the delete fails, BullMQ
-still removes the job after five minutes. Failed jobs are left for those
-five minutes. Queue names include a random server id, so a new boot uses
+that job and its completion event from Redis. If the delete fails, the job
+is removed when a later job on that queue completes and it is more than
+five minutes old. A failed job stays until a later job on that queue fails
+and it is more than five minutes old. Shutting the worker down deletes the
+queue with whatever is left. Queue names include a random server id, so a new boot uses
 new queues. A previous boot's queues stay until the sweep in
 [Redis configuration](configuration.md#redis-configuration).
 

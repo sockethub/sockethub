@@ -330,7 +330,8 @@ activity plus `error`.
 
 A job whose worker dies before that result is ready comes back on the emit
 callback as a short `type: "error"` object. `actor.id` is the connection's
-actor, or the platform name when the worker is shared. `@context` is the
+actor, or the platform name for a platform that keeps no connection and
+runs every job in one worker. `@context` is the
 platform's usual three-URL context.
 
 The `error` string always ends with:
@@ -343,9 +344,9 @@ The `error` string always ends with:
 
 The reason in front of that suffix is one of:
 
-- `Error: session thread closed unexpectedly: <signal>` when the process
-  exits on its own. `<signal>` is the close reason Node reports, such as
-  `SIGKILL`.
+- `Error: session thread closed unexpectedly: <code>` when the process
+  exits on its own. `<code>` is the exit code, or `null` when a signal such
+  as `SIGKILL` ended the process.
 - The platform's own fatal text, such as `out of memory`.
 - `heartbeat timeout after <milliseconds>ms` when the process stops sending
   heartbeats. The default limit is 15 seconds. See

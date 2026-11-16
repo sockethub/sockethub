@@ -310,9 +310,9 @@ Those are written as the RFC 5545 tokens `CHAIR`, `REQ-PARTICIPANT`,
 `REQUIRED` and `OPTIONAL` still map to `required` and `optional`. Any other
 `ROLE` is omitted. `status` is `needs-action`, `accepted`, `declined`,
 `tentative`, or `delegated` (`PARTSTAT`). Other participation statuses are
-omitted. A changed attendee is rewritten from these fields, so parameters
-the model does not store are dropped from that attendee. An attendee left
-unchanged keeps its stored parameters.
+omitted. An update that changes `attendees` rewrites every attendee from
+these fields, so parameters the model does not store are dropped. An update
+that leaves `attendees` as read keeps the stored parameters.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
 a `recipients` array. Events support `status` (`tentative`, `confirmed`, or
 `cancelled`). Tasks support `due`, `status`, `completedTime`, and
