@@ -251,7 +251,8 @@ is completely independent:
 
 **Each Platform = Separate Process**: Every protocol (IRC, XMPP, Feeds) runs as its own child
 process spawned by the main server. If the IRC platform crashes while processing a message, it
-doesn't affect XMPP or the main server.
+doesn't affect XMPP or the main server. The caller of the in-flight message is still answered.
+See [When a worker stops](#when-a-worker-stops).
 
 **Per-Login Isolation for Persistent Platforms**: For platforms that maintain connections (like
 IRC or XMPP), each user login gets its own dedicated process. So if Alice connects to IRC as
@@ -264,6 +265,32 @@ IRC or XMPP), each user login gets its own dedicated process. So if Alice connec
 **Why This Matters**: In traditional architectures, one bad connection or memory leak can bring
 down the entire service. Sockethub's isolation means problems are contained to individual users
 and platforms.
+
+### When a worker stops
+
+The parent answers every callback still waiting on a worker when that worker
+exits unexpectedly, reports a fatal error over IPC, or misses its heartbeat.
+The callback is `type: "error"` and tells the client to treat an in-flight
+send as possibly delivered. The exact strings are in
+[Interrupted jobs](client-guide.md#interrupted-jobs). Heartbeat timing is
+[configurable](configuration.md#platform-heartbeats).
+
+A later request that routes to that same connection can find the process
+already dead. The server waits until any teardown already in progress has
+finished, then starts a replacement on the same Redis queue. Callbacks the dead worker had
+not yet answered move onto the replacement, so the job can still finish
+once. Teardown of a replaced worker closes its own Redis
+connections and leaves the shared queue in place. Shutdown of a worker that
+has no replacement deletes the queue.
+
+After the server has handed a completed result to the caller, it deletes
+that job and its completion event from Redis. If the delete fails, the job
+is removed when a later job on that queue completes and it is more than
+five minutes old. A failed job stays until a later job on that queue fails
+and it is more than five minutes old. Shutting the worker down deletes the
+queue with whatever is left. Queue names include a random server id, so a new boot uses
+new queues. A previous boot's queues stay until the sweep in
+[Redis configuration](configuration.md#redis-configuration).
 
 ### Session Isolation
 
@@ -280,7 +307,9 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
 
 - **Async Processing**: Server doesn't block waiting for platform responses
 - **Message Encryption**: All job data encrypted before queuing
-- **Reliable Delivery**: Jobs persist across restarts and failures
+- **Completed results**: Deleted from Redis once delivered to the caller. A
+  restart does not resume another boot's queues. See
+  [When a worker stops](#when-a-worker-stops).
 - **Platform Routing**: Each platform has dedicated queues per session
 
 ## Message Flow

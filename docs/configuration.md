@@ -150,6 +150,31 @@ It can be overridden with `SOCKETHUB_MAX_PAYLOAD_BYTES`.
 Nesting depth is a separate fixed limit of 64 levels and is not configurable.
 See [Message limits](client-guide.md#message-limits).
 
+### Platform heartbeats
+
+Each platform child sends a heartbeat over IPC. When none arrives within
+`timeoutMs`, the parent shuts that worker down and answers jobs that were
+still waiting. The callback text is described in
+[Interrupted jobs](client-guide.md#interrupted-jobs).
+
+```json
+{
+  "platformHeartbeat": {
+    "intervalMs": 5000,
+    "timeoutMs": 15000
+  }
+}
+```
+
+- `intervalMs` (default `5000`): how often the child sends a heartbeat, and
+  how often the parent checks. Override with
+  `SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS`.
+- `timeoutMs` (default `15000`): silence, in milliseconds, after which the
+  worker is shut down. The error includes how long the parent actually
+  waited. Override with `SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS`.
+- Set either value to `0` to disable the check. A disabled check leaves a
+  wedged child in place until the process exits.
+
 ### Public Settings
 
 For client connections and reverse proxy setups:
@@ -972,6 +997,10 @@ export SOCKETHUB_CORS_ORIGIN="https://app.example.com,https://admin.example.com"
 # Redis connection
 export REDIS_URL=redis://localhost:6379
 
+# Platform child liveness (milliseconds; 0 disables the check)
+export SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS=5000
+export SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS=15000
+
 # Logging
 export LOG_LEVEL=info        # Console log level (error, warn, info, debug)
 export LOG_FILE_LEVEL=debug  # File log level (error, warn, info, debug)
@@ -1128,5 +1157,3 @@ pm2 logs sockethub
 npm update sockethub
 pm2 restart sockethub
 ```
-
-- **[Troubleshooting](troubleshooting.md)** - Common configuration issues
