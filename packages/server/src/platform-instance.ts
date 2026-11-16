@@ -383,6 +383,19 @@ export default class PlatformInstance {
         this.completedJobHandlerTimestamps.set(title, Date.now());
     }
 
+    /**
+     * Detach callbacks for jobs this instance will not see complete.
+     * Empty once a retirement error has already answered them, so a caller
+     * cannot deliver the same job twice.
+     */
+    public takePendingJobHandlers(): Array<[string, CompletedJobHandler]> {
+        if (this.retirementError) return [];
+        const pending = [...this.completedJobHandlers.entries()];
+        this.completedJobHandlers.clear();
+        this.completedJobHandlerTimestamps.clear();
+        return pending;
+    }
+
     private failRetiredJob(handler: CompletedJobHandler): void {
         try {
             handler({
