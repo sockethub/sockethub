@@ -304,6 +304,15 @@ Recurrence accepts optional `weekStart` (`MO`, `TU`, `WE`, `TH`, `FR`, `SA`, or 
 which maps to RRULE `WKST`. When omitted, RFC 5545 defaults to Monday.
 `recurrence.until` is a `YYYY-MM-DD` date for an all-day event and an RFC 3339
 date-time for a timed event, matching the value type RFC 5545 requires on `UNTIL`.
+`attendees[].role` is `chair`, `required`, `optional`, or `non-participant`.
+Those are written as the RFC 5545 tokens `CHAIR`, `REQ-PARTICIPANT`,
+`OPT-PARTICIPANT`, and `NON-PARTICIPANT`. On read, the older tokens
+`REQUIRED` and `OPTIONAL` still map to `required` and `optional`. Any other
+`ROLE` is omitted. `status` is `needs-action`, `accepted`, `declined`,
+`tentative`, or `delegated` (`PARTSTAT`). Other participation statuses are
+omitted. A changed attendee is rewritten from these fields, so parameters
+the model does not store are dropped from that attendee. An attendee left
+unchanged keeps its stored parameters.
 Attachments can use a URL or base64 `data`. Email reminders additionally need
 a `recipients` array. Events support `status` (`tentative`, `confirmed`, or
 `cancelled`). Tasks support `due`, `status`, `completedTime`, and
@@ -368,7 +377,8 @@ until they are included in automated or repeatable manual testing.
 | ownCloud | Self-hosted or hosted | Not yet verified | Not yet verified | Expected to work when standard discovery and a supported authentication method are enabled. |
 | DAViCal | Self-hosted | Not yet verified | Not yet verified | Expected to work when standard discovery and a supported authentication method are enabled. |
 | SOGo | Self-hosted | Not yet verified | Not yet verified | Expected to work when standard discovery and a supported authentication method are enabled. |
-| iCloud, Google Calendar, Fastmail, and other hosted providers | Hosted | Not yet verified | Provider-dependent | Provider-specific discovery, application passwords, OAuth scopes, or account policies may require additional work. |
+| iCloud | Hosted | Host check only | Provider-dependent | Not verified against a live account. When the configured URL is `https://caldav.icloud.com` or `https://p<digits>-caldav.icloud.com` on the default HTTPS port, discovery and later requests may also use another host of that form (for example `p49-caldav.icloud.com`). Any other host, a non-default port, or plain HTTP is still refused (`caldav:unsafe-redirect` or `caldav:https-required`). |
+| Google Calendar, Fastmail, and other hosted providers | Hosted | Not yet verified | Provider-dependent | Provider-specific discovery, application passwords, OAuth scopes, or account policies may require additional work. |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -382,7 +392,7 @@ administrator must explicitly enable `allowPrivateAddresses` or
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Principal and calendar-home discovery | Supported | Uses `current-user-principal`, `calendar-home-set`, and `/.well-known/caldav` fallback. Redirects must remain on the configured origin. |
+| Principal and calendar-home discovery | Supported | Uses `current-user-principal`, `calendar-home-set`, and `/.well-known/caldav` fallback. Redirects must remain on the configured origin, except the iCloud partition hosts in the compatibility table. |
 | Calendar listing | Supported | Discovers accessible calendars in the user's calendar home and their advertised `VEVENT`/`VTODO` component support. |
 | Events and tasks | Supported | Reads and writes `VEVENT` and `VTODO`. `VJOURNAL` and other component types are not supported. |
 | Calendar queries | Supported | Supports component and UTC time-range filters. Without a range, a query returns a calendar snapshot. |

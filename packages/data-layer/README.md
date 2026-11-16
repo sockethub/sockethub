@@ -37,8 +37,10 @@ encryption/decryption and session-based isolation.
 
 ### Reliability
 
-- **Message persistence** ensures no data loss during processing
-- **Automatic retries** for failed operations
+- **Delivered results are deleted** from Redis once the server emits them.
+  Failed jobs remain for five minutes. See [Queue system](QUEUE.md).
+- **Stalled jobs** may be recovered up to three times. Email does not rerun
+  a job whose worker disappeared.
 - **Connection pooling** with Redis for efficiency
 - **Graceful error handling** and recovery
 

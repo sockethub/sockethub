@@ -326,6 +326,48 @@ carried the activity. The instance-limit messages are listed under
 A job that a platform ran and failed still comes back as the original
 activity plus `error`.
 
+### Interrupted jobs
+
+A job whose worker dies before that result is ready comes back on the emit
+callback as a short `type: "error"` object. `actor.id` is the connection's
+actor, or the platform name when the worker is shared. `@context` is the
+platform's usual three-URL context.
+
+The `error` string always ends with:
+
+<!-- markdownlint-disable MD013 -->
+
+`pending operation interrupted; message submission may already have succeeded; do not automatically retry sends`
+
+<!-- markdownlint-enable MD013 -->
+
+The reason in front of that suffix is one of:
+
+- `Error: session thread closed unexpectedly: <signal>` when the process
+  exits on its own. `<signal>` is the close reason Node reports, such as
+  `SIGKILL`.
+- The platform's own fatal text, such as `out of memory`.
+- `heartbeat timeout after <milliseconds>ms` when the process stops sending
+  heartbeats. The default limit is 15 seconds. See
+  [Platform heartbeats](configuration.md#platform-heartbeats).
+- `credentials replaced` when this session submits new credentials for the
+  same actor on a platform that does not share a worker (email).
+
+Treat a send that was in flight as possibly delivered. A read or a connect
+can be tried again after the client connects again. Match the failure to
+the emit callback. That callback is where the request's object and target
+remain available.
+
+An unexpected exit or a fatal report from the platform is also pushed to
+every socket attached to that worker, as a `message` event with
+`type: "error"`. That copy is the reason text alone. A heartbeat timeout
+answers waiting callbacks only.
+
+A later message for that same connection, sent while callbacks are still
+waiting and the old process is already dead, moves those callbacks to the
+new worker. The job can still finish there. A callback the dead worker
+already answered stays answered.
+
 ## Platform Examples
 
 ### Dummy (Testing)

@@ -78,11 +78,10 @@ Platform Result → Queue Event → Sockethub Server → Socket.IO → Web App
 - Natural load distribution
 - Session-specific configurations possible
 
-**Message Durability**: All messages persist until processed
-
-- Server restarts don't lose messages
-- Failed operations can be retried
-- Audit trail for debugging
+**Message durability**: A job stays in Redis until the server has delivered
+its result. The completed job and its completion event are then deleted. If
+that delete fails, the job is still removed after five minutes. Failed jobs
+remain for those five minutes. There is no separate log of payloads.
 
 ## Real-World Example
 
@@ -103,12 +102,19 @@ User message → Queue → [IRC Platform] + [XMPP Platform]
 
 ## Operational Characteristics
 
-**Reliability**: Messages are never lost, even during:
+**Reliability**:
 
-- Server restarts
-- Platform process crashes  
-- Temporary network failures
-- Redis downtime
+- Other platforms keep running when one worker exits. Waiting callers are
+  answered. See
+  [Interrupted jobs](../../docs/client-guide.md#interrupted-jobs).
+- A stalled job may be recovered up to three times. Email does not rerun a
+  job whose worker disappeared.
+- A clean worker shutdown deletes its queue. A crash cannot. Another server
+  sharing the Redis removes those queues after the dead server's alive key
+  expires and the queues have been idle for an hour. See
+  [Redis configuration](../../docs/configuration.md#redis-configuration).
+- Redis has to be up for a job to be stored or completed. An outage pauses
+  processing.
 
 **Scalability**: Natural horizontal scaling:
 
