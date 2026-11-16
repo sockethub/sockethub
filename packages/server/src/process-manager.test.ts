@@ -209,6 +209,19 @@ describe("ProcessManager", () => {
         expect(platformInstances.size).toEqual(1);
     });
 
+    it("moves in-flight job callbacks onto the worker that replaces a dead one", async () => {
+        const first = await manager.get("fakeplatform", "actor-a", "session-a");
+        const pending = sandbox.spy();
+        first.registerCompletedJobHandler("running-send", pending);
+        setAlive(first, false);
+        const second = await manager.get("fakeplatform", "actor-a", "session-a");
+        expect(second).not.toBe(first);
+        expect(second.queueId).toEqual(first.queueId);
+        sinon.assert.notCalled(pending);
+        expect(first.completedJobHandlers.size).toBe(0);
+        expect(second.completedJobHandlers.get("running-send")).toBe(pending);
+    });
+
     it("marks a dead instance as replaced before shutting it down", async () => {
         const first = await manager.get("fakeplatform", "actor-a", "session-a");
         setAlive(first, false);

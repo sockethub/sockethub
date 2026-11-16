@@ -1,3 +1,4 @@
+import type { CompletedJobHandler } from "@sockethub/schemas";
 import { getPlatformId } from "@sockethub/util/crypto";
 import type { IInitObject } from "./bootstrap/init.js";
 import config from "./config.js";
@@ -203,6 +204,7 @@ class ProcessManager {
             !!reusable,
         );
         let inheritedQueueId: string | undefined;
+        let pendingHandlers: Array<[string, CompletedJobHandler]> = [];
         if (existing && !reusable) {
             // The replacement created below shares `identifier` and the Redis
             // queue name the dead instance was using. Mark the dead instance as
@@ -211,6 +213,13 @@ class ProcessManager {
             // one already in flight — a crash-close teardown pauses and
             // obliterates the queue — finishes before the replacement's queue
             // exists to be damaged by it.
+            //
+            // markReplaced() also makes the close handler skip its error
+            // report, and this shutdown() is given no error, so neither path
+            // answers callbacks for jobs still in the queue. Those callbacks
+            // are moved onto the replacement below, once this start is
+            // committed. A close that already answered them leaves nothing to
+            // move, so the job is not delivered twice.
             inheritedQueueId = existing.queueId;
             existing.markReplaced();
             await existing.shutdown();
@@ -227,6 +236,8 @@ class ProcessManager {
         // Charge only a start that is about to fork; synchronous from here.
         if (!reusable && actor !== undefined)
             this.assertStartRate(sessionIp, true);
+        if (existing && !reusable)
+            pendingHandlers = existing.takePendingJobHandlers();
         const platformInstance = reusable
             ? existing
             : this.createPlatformInstance(
@@ -236,6 +247,9 @@ class ProcessManager {
                   connectionScope?.scope,
                   inheritedQueueId,
               );
+        for (const [title, handler] of pendingHandlers) {
+            platformInstance.registerCompletedJobHandler(title, handler);
+        }
         if (sessionIp && !platformInstance.global) {
             platformInstance.ownerIps.add(sessionIp);
         }

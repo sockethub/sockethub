@@ -315,6 +315,24 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(second);
         });
 
+        it("returns pending job callbacks without calling them", () => {
+            const pending = sandbox.spy();
+            pi.registerCompletedJobHandler("running", pending);
+            expect(pi.takePendingJobHandlers()).toEqual([["running", pending]]);
+            sinon.assert.notCalled(pending);
+            expect(pi.completedJobHandlers.size).toBe(0);
+            expect(pi.takePendingJobHandlers()).toEqual([]);
+        });
+
+        it("does not hand off jobs a retiring worker already answered", async () => {
+            pi.initQueue("a secret");
+            const pending = sandbox.spy();
+            pi.registerCompletedJobHandler("running", pending);
+            await pi.shutdown("worker retired");
+            expect(pi.takePendingJobHandlers()).toEqual([]);
+            sandbox.assert.calledOnce(pending);
+        });
+
         it("settles remaining interrupted jobs even when a callback throws", async () => {
             const next = sandbox.spy();
             pi.registerCompletedJobHandler("throws", () => { throw new Error("callback failed"); });
