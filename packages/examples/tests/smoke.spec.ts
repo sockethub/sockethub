@@ -109,7 +109,7 @@ test.describe("examples smoke against sockethub --examples", () => {
             closeTransport?.();
             await expect(
                 page
-                    .getByRole("button", { name: "Not Connected", exact: true })
+                    .getByRole("button", { name: "Not connected", exact: true })
                     .first(),
             ).toBeVisible();
             await expect(

@@ -459,6 +459,7 @@ function formatTyped(value: TypedValue): string {
             id="carddav-actor"
             bind:value={actorId}
             placeholder="carddav:alice"
+            hint="Any name for this account. Every later activity uses the same actor, so Sockethub knows which credentials to use."
             onInput={invalidateCredentials}
         />
         <FormField
@@ -482,7 +483,7 @@ function formatTyped(value: TypedValue): string {
                 buttonAction={setCredentials}
                 disabled={credentialsSet || busy || !actorId || !serviceUrl || !username || !password}
             >
-                {credentialsSet ? "Credentials Set" : busy ? "Setting Credentials…" : "Set Credentials"}
+                {credentialsSet ? "Credentials set" : busy ? "Setting credentials…" : "Set credentials"}
             </SockethubButton>
         </div>
         {#if credentialError}
@@ -500,7 +501,7 @@ function formatTyped(value: TypedValue): string {
     <Step n={2} title="Choose an address book" description="Sends a fetch activity. Sockethub discovers the address books in your account." done={addressBooks.length > 0} blockedHint={credentialsSet ? undefined : "Set credentials first."}>
         <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={fetchAddressBooks} disabled={busy || !credentialsSet}>
-                Fetch Address Books
+                Fetch address books
             </SockethubButton>
         </div>
         {#if addressBooks.length > 0}
@@ -521,7 +522,7 @@ function formatTyped(value: TypedValue): string {
         {/if}
     </Step>
 
-    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server." blockedHint={selectedAddressBook ? undefined : "Choose an address book first."}>
+    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server." blockedHint={selectedAddressBook ? undefined : "Choose an address book first."} editableWhileBlocked>
         <div class="grid gap-4 md:grid-cols-[1fr_auto]">
             <FormField label="Search text (optional)" id="carddav-search-text" bind:value={searchText} placeholder="Bob" />
             <div class="w-full space-y-1.5 md:w-48">
@@ -541,7 +542,7 @@ function formatTyped(value: TypedValue): string {
         </div>
         <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={queryContacts} disabled={busy || !credentialsSet || !selectedAddressBook}>
-                {searchText.trim() ? "Search Contacts" : "List Contacts"}
+                {searchText.trim() ? "Search contacts" : "List contacts"}
             </SockethubButton>
         </div>
         {#if contacts.length > 0}
@@ -638,7 +639,7 @@ function formatTyped(value: TypedValue): string {
                 </button>
             {/if}
             <SockethubButton buttonAction={saveContact} disabled={busy || !canSubmitContact}>
-                {editing ? "Save Changes" : "Add Contact"}
+                {editing ? "Save changes" : "Add contact"}
             </SockethubButton>
         </div>
     </Step>

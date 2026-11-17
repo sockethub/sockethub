@@ -220,13 +220,14 @@ async function createItem(): Promise<void> {
             type="url"
             bind:value={feedUrl}
             placeholder="https://example.org/holidays.ics"
+            hint="Paste any public .ics or webcal:// link, such as a public holiday calendar."
         />
         <label class="flex items-center gap-2 text-sm text-zinc-700">
             <input class="check" type="checkbox" bind:checked={upcomingOnly} /> Upcoming items only
         </label>
         <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={readFeed} disabled={feedBusy || !actorId || !feedUrl}>
-                {feedBusy ? "Reading…" : "Read Feed"}
+                {feedBusy ? "Reading…" : "Read feed"}
             </SockethubButton>
         </div>
         {#if feedError}
@@ -261,6 +262,7 @@ async function createItem(): Promise<void> {
             id="caldav-actor"
             bind:value={actorId}
             placeholder="caldav:alice"
+            hint="Any name for this account. Every later activity uses the same actor, so Sockethub knows which credentials to use."
             onInput={invalidateCredentials}
         />
         <FormField
@@ -284,7 +286,7 @@ async function createItem(): Promise<void> {
                 buttonAction={setCredentials}
                 disabled={credentialsSet || busy || !actorId || !serviceUrl || !username || !password}
             >
-                {credentialsSet ? "Credentials Set" : busy ? "Setting Credentials…" : "Set Credentials"}
+                {credentialsSet ? "Credentials set" : busy ? "Setting credentials…" : "Set credentials"}
             </SockethubButton>
         </div>
         {#if credentialError}
@@ -302,7 +304,7 @@ async function createItem(): Promise<void> {
     <Step n={2} title="Choose a calendar" description="Sends a fetch activity. Sockethub discovers the calendars in your account." done={calendars.length > 0} blockedHint={credentialsSet ? undefined : "Set credentials first."}>
         <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={fetchCalendars} disabled={busy || !credentialsSet}>
-                Fetch Calendars
+                Fetch calendars
             </SockethubButton>
         </div>
         {#if calendars.length > 0}
@@ -354,7 +356,7 @@ async function createItem(): Promise<void> {
                 buttonAction={createItem}
                 disabled={busy || !itemTypeSupported || !name || (itemType === "event" && !startTime)}
             >
-                Add {itemType === "event" ? "Event" : "To-do"}
+                Add {itemType === "event" ? "event" : "to-do"}
             </SockethubButton>
         </div>
     </Step>

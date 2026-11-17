@@ -130,3 +130,15 @@
     font-family: var(--font-mono);
     line-height: 1.65;
 }
+
+/* CodeBlock: wrapped lines hang under their own indentation */
+.code-lines {
+    white-space: normal;
+}
+.code-line {
+    display: block;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding-left: calc((var(--indent) + 2) * 1ch);
+    text-indent: -2ch;
+}

@@ -17,3 +17,8 @@ export function resolveLogDetails(
         response: logs[id]?.[1],
     };
 }
+
+/** Drop the "Error: " prefix that stringified errors carry, so it is not shown twice. */
+export function cleanError(message: string): string {
+    return message.replace(/^(Error:\s*)+/, "");
+}

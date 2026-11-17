@@ -11,8 +11,9 @@ interface Props {
     done?: boolean;
     locked?: boolean;
     lockedHint?: string;
-    /** Shown above the content (which stays visible) while a prerequisite is missing. */
+    /** Shown above the content while a prerequisite is missing. The content is disabled unless `editableWhileBlocked`. */
     blockedHint?: string;
+    editableWhileBlocked?: boolean;
     /** Content placed at the right of the header, e.g. a secondary action. */
     actions?: import("svelte").Snippet;
     children?: import("svelte").Snippet;
@@ -26,12 +27,13 @@ let {
     locked = false,
     lockedHint,
     blockedHint,
+    editableWhileBlocked = false,
     actions,
     children,
 }: Props = $props();
 </script>
 
-<section class="card overflow-hidden transition-opacity {locked ? 'opacity-70' : ''}">
+<section class="card overflow-hidden">
     <div class="flex items-start gap-3.5 px-4 pt-4 sm:gap-4 sm:px-6 sm:pt-6 {children && !(locked && lockedHint) ? '' : 'pb-4 sm:pb-6'}">
         {#if n !== undefined}
             <span
@@ -75,7 +77,9 @@ let {
                     {blockedHint}
                 </p>
             {/if}
-            {@render children()}
+            <fieldset class="min-w-0 space-y-4" disabled={Boolean(blockedHint) && !editableWhileBlocked}>
+                {@render children()}
+            </fieldset>
         </div>
     {/if}
 </section>

@@ -4,8 +4,7 @@ import ApiInfo from "$components/ApiInfo.svelte";
 import Icon, { type IconName } from "$components/Icon.svelte";
 import { apiDiscovery } from "$lib/api-discovery";
 import { exampleGroups } from "$lib/examples";
-import Highlight from "svelte-highlight";
-import json from "svelte-highlight/languages/json";
+import CodeBlock from "$components/CodeBlock.svelte";
 
 const sample = `{
   "@context": ["https://www.w3.org/ns/activitystreams", "…/irc"],
@@ -88,7 +87,7 @@ const anyDisabled = $derived(
                 <span class="font-mono text-[11px] text-zinc-500">ActivityStreams JSON</span>
             </figcaption>
             <div class="code-block text-[12.5px] leading-relaxed sm:text-[13px]">
-                <Highlight language={json} code={sample} />
+                <CodeBlock code={sample} />
             </div>
         </figure>
     </section>

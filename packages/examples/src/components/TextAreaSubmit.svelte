@@ -15,6 +15,8 @@ interface Props {
     /** True once submitted; shows `doneText` in place of the button. */
     done?: boolean;
     doneText?: string;
+    /** Helper text under the password field. */
+    passwordHint?: string;
     submitData: (text: string) => void;
 }
 
@@ -25,6 +27,7 @@ let {
     title,
     done = false,
     doneText,
+    passwordHint = "Added to the credentials object when sent, so it stays out of the JSON below.",
     submitData,
 }: Props = $props();
 
@@ -66,19 +69,24 @@ async function handleSubmit(): Promise<void> {
     {#if typeof obj.password === "string"}
         <div class="space-y-1.5">
             <label for="secret-input-{slug}" class="label">Password</label>
-            <input id="secret-input-{slug}" bind:value={password} type="password" class="input" autocomplete="off" />
-            <p class="hint">Added to the credentials object when sent, so it stays out of the JSON below.</p>
+            <input id="secret-input-{slug}" bind:value={password} type="password" class="input" autocomplete="off" readonly={done} />
+            <p class="hint">{passwordHint}</p>
         </div>
     {/if}
     <div class="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-brand-500 focus-within:ring-3 focus-within:ring-brand-100">
         <div class="flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-1.5">
             <label for="json-object-{title}" class="text-xs font-semibold text-zinc-700">{title}</label>
-            <span class="flex items-center gap-1 text-[11px] text-zinc-500"><Icon name="pencil" class="size-3" /> editable JSON</span>
+            {#if done}
+                <span class="flex items-center gap-1 text-[11px] text-emerald-700"><Icon name="check" class="size-3" /> sent</span>
+            {:else}
+                <span class="flex items-center gap-1 text-[11px] text-zinc-500"><Icon name="pencil" class="size-3" /> editable JSON</span>
+            {/if}
         </div>
         <textarea
             id="json-object-{title}"
             bind:value={editedJson}
             {rows}
+            readonly={done}
             spellcheck="false"
             autocapitalize="off"
             class="block w-full resize-none border-0 bg-transparent px-3 py-2.5 font-mono text-[13px] leading-relaxed text-zinc-800 [field-sizing:content] focus:ring-0 focus:outline-none"

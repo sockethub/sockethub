@@ -97,7 +97,7 @@ async function joinRoom(): Promise<void> {
                 <span>Joined</span>
             {:else}
                 <Icon name="door" class="size-4" />
-                <span>Join Room</span>
+                <span>Join room</span>
             {/if}
         </SockethubButton>
     </div>

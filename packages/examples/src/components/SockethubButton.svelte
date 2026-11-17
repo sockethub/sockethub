@@ -22,7 +22,7 @@ const isDisabled = $derived(!$connected ? true : !!disabled);
 >
     {#if !$connected && isDisabled}
         <Icon name="plug" class="size-4" />
-        <span>Not Connected</span>
+        <span>Not connected</span>
     {:else}
         {@render children?.()}
     {/if}

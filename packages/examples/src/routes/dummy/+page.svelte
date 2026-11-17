@@ -5,8 +5,7 @@ import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import Step from "$components/Step.svelte";
-import Highlight from "svelte-highlight";
-import json from "svelte-highlight/languages/json";
+import CodeBlock from "$components/CodeBlock.svelte";
 
 const actorId = "https://sockethub.org/examples/dummy";
 
@@ -20,6 +19,7 @@ let content = $state("Hello from Sockethub");
  * @returns ActivityStreams object ready to send to Sockethub's dummy platform
  */
 async function getASObj(type: string): Promise<AnyActivityStream> {
+    lastType = type;
     return {
         "@context": await contextFor("dummy"),
         // Activity type - what action to perform (echo, fail, throw, greet)
@@ -37,6 +37,9 @@ async function getASObj(type: string): Promise<AnyActivityStream> {
         },
     };
 }
+
+/** The type of the last button pressed, shown in the preview. */
+let lastType = $state("echo");
 
 async function sendType(type: string): Promise<void> {
     await send(await getASObj(type));
@@ -121,7 +124,7 @@ const crashTypes = [
 
 const preview = $derived(`{
   "@context": ["…/activitystreams", "…/dummy"],
-  "type": "echo",
+  "type": "${lastType}",
   "actor": { "type": "person", "id": "${actorId}" },
   "object": { "type": "message", "content": ${JSON.stringify(content)} }
 }`);
@@ -130,24 +133,21 @@ const preview = $derived(`{
 <BaseExample
     platform="dummy"
     title="Dummy Platform Example"
-    description="The dummy platform answers instantly and talks to nothing outside Sockethub. Use it to see what a request and its response look like before you try a real protocol."
+    description="A test platform that answers instantly and talks to nothing outside Sockethub. See what a request and its reply look like before trying a real protocol."
 >
-    <Step n={1} title="Write a message" description="This text goes into the object.content field of the activity.">
+    <Step n={1} title="Send a message" description="Each button sends this text with a different activity type. The reply shows up in the activity log.">
         <FormField
             label="Message Content"
             id="objectContent"
             bind:value={content}
             placeholder="Hello from Sockethub"
         />
-    </Step>
-
-    <Step n={2} title="Send it with an activity type" description="Each button sends the same message with a different type. Watch the reply arrive in the activity log.">
         <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
             {#each basicTypes as item (item.type)}
-                <li class="flex items-center justify-between gap-4 px-4 py-3">
+                <li class="flex items-center justify-between gap-3 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                     <div class="min-w-0">
                         <code class="tok">{item.type}</code>
-                        <p class="mt-1 text-sm text-zinc-500">{item.text}</p>
+                        <p class="mt-1 text-[13px] leading-snug text-zinc-500 sm:text-sm">{item.text}</p>
                     </div>
                     <SockethubButton variant={item.type === "echo" ? "primary" : "secondary"} buttonAction={item.action}>{item.label}</SockethubButton>
                 </li>
@@ -157,11 +157,11 @@ const preview = $derived(`{
 
     <section class="card overflow-hidden">
         <div class="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 sm:px-6">
-            <h2 class="text-sm font-semibold text-zinc-900">The message these buttons send</h2>
-            <span class="hidden text-xs text-zinc-500 sm:inline">type changes per button</span>
+            <h2 class="text-sm font-semibold text-zinc-900">What the last button sent</h2>
+            <code class="tok">{lastType}</code>
         </div>
         <div class="code-block text-[12.5px]">
-            <Highlight language={json} code={preview} />
+            <CodeBlock code={preview} />
         </div>
     </section>
 

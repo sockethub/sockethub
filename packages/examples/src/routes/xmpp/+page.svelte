@@ -74,11 +74,8 @@ async function connectXmpp(): Promise<void> {
         <ActivityActor {actor} {sockethubState} />
     </Step>
 
-    <Step n={2} title="Send credentials" description="Your password goes in its own field. Sent once per session, separate from your activities." done={$sockethubState.credentialsSet} blockedHint={$sockethubState.actorSet ? undefined : "Confirm the actor first."}>
-        <p class="hint">
-            If your server accepts a bearer token in the SASL PLAIN password slot, enter the token as the password.
-        </p>
-        <Credentials context="xmpp" {credentials} {actor} {sockethubState} />
+    <Step n={2} title="Send credentials" description="Sent once per session, separate from your activities." done={$sockethubState.credentialsSet} blockedHint={$sockethubState.actorSet ? undefined : "Confirm the actor first."}>
+        <Credentials context="xmpp" {credentials} {actor} {sockethubState} passwordHint="Your account password. A bearer token also works if your server accepts one in the SASL PLAIN password slot." />
     </Step>
 
     <Step n={3} title="Connect" description="Sends a connect activity. Sockethub signs in to your XMPP server." done={$sockethubState.connected} blockedHint={$sockethubState.credentialsSet || $sockethubState.connected ? undefined : "Send credentials first."}>

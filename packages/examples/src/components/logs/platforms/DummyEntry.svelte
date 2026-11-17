@@ -7,12 +7,6 @@ interface Props {
 }
 
 let { entry }: Props = $props();
-const actor = $derived(
-    typeof entry.actor === "string"
-        ? entry.actor
-        : entry.actor?.name || entry.actor?.id,
-);
 </script>
 
-<span class="text-zinc-500">{actor}:</span>
 <span class="text-zinc-700">{entry.object?.content || "(empty)"}</span>

@@ -68,7 +68,7 @@ async function sendFetch(): Promise<void> {
         blockedHint={$sockethubState.actorSet ? undefined : "Confirm the actor first."}
     >
         <div class="flex justify-end">
-            <SockethubButton buttonAction={sendFetch} disabled={!$sockethubState.actorSet}>Extract Metadata</SockethubButton>
+            <SockethubButton buttonAction={sendFetch} disabled={!$sockethubState.actorSet}>Extract metadata</SockethubButton>
         </div>
         {#if preview}
             <div class="space-y-2">

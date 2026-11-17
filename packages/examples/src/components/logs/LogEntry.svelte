@@ -5,6 +5,7 @@ import DummyEntry from "./platforms/DummyEntry.svelte";
 import FeedsEntry from "./platforms/FeedsEntry.svelte";
 import GenericEntry from "./platforms/GenericEntry.svelte";
 import Icon from "../Icon.svelte";
+import { cleanError } from "./log-details";
 interface Props {
     id: string;
     entry: AnyActivityStream;
@@ -80,7 +81,7 @@ const statusText = $derived(
     {#if entry.error}
         <p class="mt-1.5 ml-3.5 flex items-start gap-1.5 rounded-md bg-red-50 px-2 py-1.5 text-[12px] leading-snug text-red-800">
             <Icon name="alert" class="mt-px size-3.5 shrink-0" />
-            <span class="break-words">{entry.error}</span>
+            <span class="break-words">{cleanError(String(entry.error))}</span>
         </p>
     {/if}
 </li>

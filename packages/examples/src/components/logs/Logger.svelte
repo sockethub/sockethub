@@ -1,7 +1,7 @@
 <script lang="ts" module>
 import type { AnyActivityStream } from "$lib/sockethub";
 import { writable } from "svelte/store";
-import { resolveLogDetails, type LogMetadata } from "./log-details";
+import { cleanError, resolveLogDetails, type LogMetadata } from "./log-details";
 
 type LogEntries = Record<
     string,
@@ -108,8 +108,7 @@ export { SchemaLogs };
     import LogEntry from "./LogEntry.svelte";
     import Icon from "../Icon.svelte";
     import SchemaLogEntryComponent from "./SchemaLogEntry.svelte";
-    import Highlight from "svelte-highlight";
-    import json from "svelte-highlight/languages/json";
+    import CodeBlock from "../CodeBlock.svelte";
 
     type UnifiedEntry =
         | { kind: "activity"; id: string; sortKey: number; timestamp: number; tuple: [AnyActivityStream | Record<string, never>, AnyActivityStream | Record<string, never>] }
@@ -137,6 +136,19 @@ export { SchemaLogs };
         schemaLogs = data;
     });
 
+    // Below xl the log sits under the steps, so long runs (a feed fetch
+    // returns one entry per item) collapse to the latest few.
+    const COLLAPSED_COUNT = 6;
+    let narrow = $state(false);
+    let expanded = $state(false);
+    $effect(() => {
+        const query = window.matchMedia("(max-width: 1279px)");
+        narrow = query.matches;
+        const update = (e: MediaQueryListEvent) => (narrow = e.matches);
+        query.addEventListener("change", update);
+        return () => query.removeEventListener("change", update);
+    });
+
     const unified: UnifiedEntry[] = $derived.by(() => {
         const items: UnifiedEntry[] = [];
         for (const [id, tuple] of Object.entries(logs ?? {})) {
@@ -161,7 +173,7 @@ export { SchemaLogs };
                     ? JSON.stringify(response, null, 2)
                     : "";
             const err = (response as AnyActivityStream | undefined)?.error;
-            modalError = typeof err === "string" ? err : "";
+            modalError = typeof err === "string" ? cleanError(err) : "";
             const object = (response as AnyActivityStream | undefined)?.object;
             modalPage = isPageObject(object) ? object : undefined;
         };
@@ -212,7 +224,7 @@ export { SchemaLogs };
             </div>
         {:else}
             <ul class="divide-y divide-zinc-100">
-                {#each unified as item (item.kind === "schema" ? item.entry._logId : item.id)}
+                {#each narrow && !expanded ? unified.slice(0, COLLAPSED_COUNT) : unified as item (item.kind === "schema" ? item.entry._logId : item.id)}
                     {#if item.kind === "schema"}
                         <SchemaLogEntryComponent entry={item.entry} buttonAction={showSchemaLog(item.entry)} />
                     {:else if Array.isArray(item.tuple[item.tuple.length - 1])}
@@ -244,6 +256,13 @@ export { SchemaLogs };
                     {/if}
                 {/each}
             </ul>
+            {#if narrow && unified.length > COLLAPSED_COUNT}
+                <div class="border-t border-zinc-100 px-5 py-3">
+                    <button type="button" class="btn btn-secondary btn-sm w-full" onclick={() => (expanded = !expanded)}>
+                        {expanded ? "Show fewer" : `Show ${unified.length - COLLAPSED_COUNT} older entries`}
+                    </button>
+                </div>
+            {/if}
         {/if}
     </div>
 </section>
@@ -277,9 +296,9 @@ export { SchemaLogs };
             </button>
         </div>
 
-        <div class="flex-1 space-y-5 overflow-auto px-5 py-5 sm:px-6">
+        <div class="flex flex-1 flex-col gap-5 overflow-auto px-5 py-5 sm:px-6">
             {#if modalError}
-                <div class="callout callout-error" role="alert">
+                <div class="callout callout-error order-first" role="alert">
                     <Icon name="alert" class="mt-0.5 size-4 shrink-0" />
                     <p><strong class="font-semibold">Sockethub returned an error:</strong> {modalError}</p>
                 </div>
@@ -296,17 +315,17 @@ export { SchemaLogs };
                     {#if jsonResp}<Icon name="up" class="size-3.5 text-brand-600" /> Sent to Sockethub{:else}Event payload{/if}
                 </h4>
                 <div class="code-block overflow-hidden rounded-lg border border-zinc-200 text-[13px]">
-                    <Highlight language={json} code={jsonSend} />
+                    <CodeBlock code={jsonSend} />
                 </div>
             </div>
 
             {#if jsonResp}
-                <div>
+                <div class="max-sm:order-first">
                     <h4 class="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase {modalError ? 'text-red-700' : 'text-zinc-500'}">
                         <Icon name="down" class="size-3.5 {modalError ? 'text-red-600' : 'text-emerald-600'}" /> {modalError ? "Error response from Sockethub" : "Response from Sockethub"}
                     </h4>
                     <div class="code-block overflow-hidden rounded-lg border text-[13px] {modalError ? 'border-red-200' : 'border-zinc-200'}">
-                        <Highlight language={json} code={jsonResp} />
+                        <CodeBlock code={jsonResp} />
                     </div>
                 </div>
             {/if}

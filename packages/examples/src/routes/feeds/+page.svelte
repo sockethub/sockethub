@@ -63,7 +63,7 @@ async function sendFetch(): Promise<void> {
             </div>
         {/if}
         <div class="flex justify-end">
-            <SockethubButton buttonAction={sendFetch} disabled={!$sockethubState.actorSet}>Fetch Feed</SockethubButton>
+            <SockethubButton buttonAction={sendFetch} disabled={!$sockethubState.actorSet}>Fetch feed</SockethubButton>
         </div>
     </Step>
 </BaseExample>

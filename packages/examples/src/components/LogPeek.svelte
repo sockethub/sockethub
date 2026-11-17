@@ -43,7 +43,7 @@ const label = $derived(
         ? "Waiting for a reply…"
         : event?.state === "error"
           ? "Error reply"
-          : "Reply received",
+          : "Received",
 );
 </script>
 
