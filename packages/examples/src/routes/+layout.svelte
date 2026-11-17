@@ -13,6 +13,25 @@ interface Props {
 
 let { children }: Props = $props();
 let menuOpen = $state(false);
+let drawer: HTMLDialogElement | undefined = $state();
+
+// The drawer is hidden at the desktop breakpoint, so close it there too;
+// a hidden modal dialog would still block the rest of the page.
+$effect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => {
+        if (e.matches) menuOpen = false;
+    };
+    desktop.addEventListener("change", onChange);
+    return () => desktop.removeEventListener("change", onChange);
+});
+
+// Keep the native dialog in step with menuOpen.
+$effect(() => {
+    if (!drawer) return;
+    if (menuOpen && !drawer.open) drawer.showModal();
+    if (!menuOpen && drawer.open) drawer.close();
+});
 
 // Close the drawer whenever the route changes.
 $effect(() => {
@@ -24,8 +43,6 @@ $effect(() => {
 <svelte:head>
     {@html githubLight}
 </svelte:head>
-
-<svelte:window onkeydown={(e) => e.key === "Escape" && (menuOpen = false)} />
 
 {#snippet brand()}
     <a href={base || "/"} class="flex items-center gap-2 no-underline" aria-label="Sockethub examples home">
@@ -83,26 +100,34 @@ $effect(() => {
     </div>
 </header>
 
-<!-- Mobile drawer -->
-{#if menuOpen}
-    <div class="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
-        <button type="button" class="absolute inset-0 bg-zinc-900/40" aria-label="Close navigation" onclick={() => (menuOpen = false)}></button>
-        <div class="absolute inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl">
-            <div class="flex h-14 items-center justify-between border-b border-zinc-200 px-4">
-                <span class="text-sm font-semibold text-zinc-900">Examples</span>
-                <button type="button" class="-mr-2 rounded-lg p-2 text-zinc-600 hover:bg-zinc-100" aria-label="Close navigation" onclick={() => (menuOpen = false)}>
-                    <Icon name="x" class="size-5" />
-                </button>
-            </div>
-            <div class="flex-1 overflow-y-auto px-3 py-4">
-                <Nav onNavigate={() => (menuOpen = false)} />
-            </div>
-            <div class="px-3 pb-4">
-                {@render footerLinks()}
-            </div>
+<!-- Mobile drawer. A native modal dialog moves focus in, keeps it there,
+     closes on Escape, and returns focus to the menu button. -->
+<dialog
+    bind:this={drawer}
+    onclose={() => {
+        menuOpen = false;
+    }}
+    onclick={(e) => {
+        if (e.target === drawer) menuOpen = false;
+    }}
+    aria-label="Navigation"
+    class="m-0 ml-auto h-dvh max-h-none w-72 max-w-[85vw] bg-white p-0 shadow-xl backdrop:bg-zinc-900/40 lg:hidden"
+>
+    <div class="flex h-full flex-col">
+        <div class="flex h-14 items-center justify-between border-b border-zinc-200 px-4">
+            <span class="text-sm font-semibold text-zinc-900">Examples</span>
+            <button type="button" class="-mr-2 rounded-lg p-2 text-zinc-600 hover:bg-zinc-100" aria-label="Close navigation" onclick={() => (menuOpen = false)}>
+                <Icon name="x" class="size-5" />
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-3 py-4">
+            <Nav onNavigate={() => (menuOpen = false)} />
+        </div>
+        <div class="px-3 pb-4">
+            {@render footerLinks()}
         </div>
     </div>
-{/if}
+</dialog>
 
 <main class="min-w-0">
     {@render children?.()}

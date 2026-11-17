@@ -312,7 +312,7 @@ onMount(() => {
             <SockethubButton variant="secondary" buttonAction={disconnect} disabled={busy || !connected}>Disconnect</SockethubButton>
         </div>
     </Step>
-    <Step n={2} title="Fetch or watch messages" description="Fetch starts with the oldest messages. Watching receives new arrivals while connected. Up to 100 messages are shown here." locked={!receiving} lockedHint="Connect with an IMAP host to fetch mail.">
+    <Step n={2} title="Fetch or watch messages" description="Fetch starts with the oldest messages. Watching receives new arrivals while connected. Up to 100 messages are shown here." locked={!receiving && messages.length === 0} lockedHint="Connect with an IMAP host to fetch mail." blockedHint={!receiving && messages.length > 0 ? "Connect again to fetch more mail." : undefined}>
         <fieldset disabled={busy || !receiving || watching} class="space-y-3">
             <FormField label="From addresses (optional, comma-separated)" id="email-filter-from" bind:value={fromFilter} onInput={resetCursor} />
             <FormField label="To addresses (optional, comma-separated)" id="email-filter-to" bind:value={toFilter} onInput={resetCursor} />

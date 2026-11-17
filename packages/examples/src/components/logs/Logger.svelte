@@ -126,6 +126,8 @@ export { SchemaLogs };
     let modalPage: PageObject | undefined = $state();
     /** Error carried by the response shown in the modal. */
     let modalError = $state("");
+    /** Whether the modal shows an activity (request and reply) or a client event. */
+    let modalKind = $state<"activity" | "event">("activity");
     /** True when the error came from the dummy platform, where errors are the point. */
     let modalErrorExpected = $state(false);
 
@@ -171,6 +173,7 @@ export { SchemaLogs };
         return () => {
             const { sent, response } = resolveLogDetails(logs, meta, uid);
             modalTitle = "Message details";
+            modalKind = "activity";
             logModalState = true;
             jsonSend = sent ? JSON.stringify(sent, null, 2) : "";
             jsonResp =
@@ -189,6 +192,7 @@ export { SchemaLogs };
     function showSchemaLog(entry: SchemaLogEntry) {
         return () => {
             modalTitle = "Client event";
+            modalKind = "event";
             logModalState = true;
             jsonSend = JSON.stringify(entry.payload, null, 2);
             jsonResp = "";
@@ -290,7 +294,7 @@ export { SchemaLogs };
             <div>
                 <h3 id="log-modal-title" class="text-base font-semibold text-zinc-900">{modalTitle}</h3>
                 <p class="mt-0.5 text-[13px] text-zinc-500">
-                    {jsonResp ? "The ActivityStreams message your page sent, and Sockethub's reply." : "The payload of this client event."}
+                    {modalKind === "event" ? "The payload of this client event." : jsonResp ? "The ActivityStreams message your page sent, and Sockethub's reply." : "The ActivityStreams message your page sent. No reply yet."}
                 </p>
             </div>
             <button
@@ -319,7 +323,7 @@ export { SchemaLogs };
 
             <div>
                 <h4 class="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                    {#if jsonResp}<Icon name="up" class="size-3.5 text-brand-600" /> Sent to Sockethub{:else}Event payload{/if}
+                    {#if modalKind === "activity"}<Icon name="up" class="size-3.5 text-brand-600" /> Sent to Sockethub{:else}Event payload{/if}
                 </h4>
                 <div class="code-block overflow-hidden rounded-lg border border-zinc-200 text-[13px]">
                     <CodeBlock code={jsonSend} />

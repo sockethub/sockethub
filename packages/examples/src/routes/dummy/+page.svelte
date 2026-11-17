@@ -21,6 +21,7 @@ let content = $state("Hello from Sockethub");
 async function getASObj(type: string): Promise<AnyActivityStream> {
     lastType = type;
     sentAny = true;
+    sentContent = content;
     return {
         "@context": await contextFor("dummy"),
         // Activity type - what action to perform (echo, fail, throw, greet)
@@ -42,6 +43,8 @@ async function getASObj(type: string): Promise<AnyActivityStream> {
 /** The type of the last button pressed, shown in the preview. */
 let lastType = $state("echo");
 let sentAny = $state(false);
+/** The content of the last activity sent, so the preview matches what went out. */
+let sentContent = $state("");
 
 async function sendType(type: string): Promise<void> {
     await send(await getASObj(type));
@@ -128,7 +131,7 @@ const preview = $derived(`{
   "@context": ["…/activitystreams", "…/dummy"],
   "type": "${lastType}",
   "actor": { "type": "person", "id": "${actorId}" },
-  "object": { "type": "message", "content": ${JSON.stringify(content)} }
+  "object": { "type": "message", "content": ${JSON.stringify(sentAny ? sentContent : content)} }
 }`);
 </script>
 
