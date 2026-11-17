@@ -38,7 +38,7 @@ const group = $derived(platform ? groupFor(platform) : undefined);
     <title>{title} · Sockethub</title>
 </svelte:head>
 
-<div class="mx-auto max-w-[1440px] px-4 pt-6 pb-24 sm:px-6 sm:pt-8 lg:px-10 lg:pt-12 xl:pb-12">
+<div class="mx-auto max-w-[1440px] px-4 pt-6 pb-10 sm:px-6 sm:pt-8 lg:px-10 lg:pt-12 xl:pb-12">
     <header class="max-w-3xl">
         {#if group}
             <p class="eyebrow">{group}</p>

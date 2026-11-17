@@ -24,14 +24,14 @@ import Icon from "./Icon.svelte";
             {#if descriptor.endpoints}
                 <div class="grid gap-1 px-5 py-3.5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:px-6">
                     <dt class="text-zinc-500">Socket.IO endpoint</dt>
-                    <dd class="min-w-0 break-all">
+                    <dd class="min-w-0 [overflow-wrap:anywhere]">
                         <code class="text-zinc-800" data-testid="api-info-socket">io({JSON.stringify(serverOrigin)}, &#123; path: {JSON.stringify(descriptor.endpoints.socketIO)} &#125;)</code>
                     </dd>
                 </div>
             {/if}
             <div class="grid gap-1 px-5 py-3.5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:px-6">
                 <dt class="text-zinc-500">HTTP actions endpoint</dt>
-                <dd class="min-w-0 break-all">
+                <dd class="min-w-0 [overflow-wrap:anywhere]">
                     {#if descriptor.endpoints?.httpActions}
                         <code class="text-zinc-800" data-testid="api-info-endpoint">{resolveEndpoint(serverOrigin, descriptor.endpoints.httpActions)}</code>
                     {:else}

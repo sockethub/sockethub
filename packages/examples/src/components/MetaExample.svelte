@@ -138,12 +138,12 @@ async function clearCredentials(): Promise<void> {
                     </select>
                 </div>
                 {#if login === "facebook"}
-                    <FormField label="Linked Facebook Page ID" id="meta-page" bind:value={pageId} onInput={invalidateCredentials} />
+                    <FormField label="Linked Facebook Page ID" id="meta-page" bind:value={pageId} error={pageId && !/^[0-9]+$/.test(pageId) ? "Use digits only." : undefined} onInput={invalidateCredentials} />
                 {/if}
             {/if}
-            <FormField label={platform === "messenger" ? "Facebook Page ID" : "Instagram account ID"} id="meta-account" bind:value={accountId} onInput={invalidateCredentials} />
+            <FormField label={platform === "messenger" ? "Facebook Page ID" : "Instagram account ID"} id="meta-account" bind:value={accountId} error={accountId && !/^[0-9]+$/.test(accountId) ? "Use digits only." : undefined} onInput={invalidateCredentials} />
             <FormField label="Access token" id="meta-token" type="password" bind:value={token} onInput={invalidateCredentials} />
-            <FormField label="Graph API version" id="meta-version" placeholder="v22.0" hint="Use a version your Meta app supports, e.g. v22.0." bind:value={apiVersion} onInput={invalidateCredentials} />
+            <FormField label="Graph API version" id="meta-version" placeholder="v22.0" hint="Use a version your Meta app supports, e.g. v22.0." error={apiVersion && !/^v[0-9]{1,3}\.[0-9]{1,2}$/.test(apiVersion) ? "Write it as v followed by the version, e.g. v22.0." : undefined} bind:value={apiVersion} onInput={invalidateCredentials} />
             <div class="flex flex-wrap justify-end gap-2">
                 <button type="button" onclick={clearCredentials} disabled={busy || (!token && !credentialsSet)} class="btn btn-secondary">Clear credentials</button>
                 <SockethubButton buttonAction={setCredentials} disabled={!canSetCredentials || busy || credentialsSet}>

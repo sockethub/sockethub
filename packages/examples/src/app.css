@@ -75,7 +75,7 @@
         @apply block text-sm font-medium text-zinc-800;
     }
     .input {
-        @apply block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] text-zinc-900 shadow-sm transition-colors placeholder:text-zinc-400 hover:border-zinc-400 focus:border-brand-500 focus:ring-3 focus:ring-brand-100 focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-500 sm:text-sm;
+        @apply block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] text-zinc-900 shadow-sm transition-colors placeholder:text-zinc-400 hover:border-zinc-400 focus:border-brand-500 focus:ring-3 focus:ring-brand-100 focus:outline-none disabled:bg-zinc-100 disabled:text-zinc-500 sm:text-sm;
     }
     .input-mono {
         @apply font-mono text-[13px] leading-relaxed sm:text-[13px];
@@ -125,7 +125,7 @@
     overflow-wrap: anywhere;
 }
 .code-block .hljs {
-    padding: 1rem 1.125rem;
+    padding: 0.75rem 0.875rem;
     background: var(--color-zinc-50);
     font-family: var(--font-mono);
     line-height: 1.65;
@@ -141,4 +141,10 @@
     overflow-wrap: anywhere;
     padding-left: calc((var(--indent) + 2) * 1ch);
     text-indent: -2ch;
+}
+
+@media (min-width: 640px) {
+    .code-block .hljs {
+        padding: 1rem 1.125rem;
+    }
 }

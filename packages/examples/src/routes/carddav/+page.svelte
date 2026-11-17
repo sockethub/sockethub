@@ -522,7 +522,7 @@ function formatTyped(value: TypedValue): string {
         {/if}
     </Step>
 
-    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server." blockedHint={selectedAddressBook ? undefined : "Choose an address book first."} editableWhileBlocked>
+    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server." blockedHint={selectedAddressBook ? undefined : "You can type a search now. List contacts unlocks once you choose an address book."} editableWhileBlocked>
         <div class="grid gap-4 md:grid-cols-[1fr_auto]">
             <FormField label="Search text (optional)" id="carddav-search-text" bind:value={searchText} placeholder="Bob" />
             <div class="w-full space-y-1.5 md:w-48">

@@ -9,7 +9,7 @@ import CodeBlock from "$components/CodeBlock.svelte";
 const sample = `{
   "@context": ["https://www.w3.org/ns/activitystreams", "…/irc"],
   "type": "send",
-  "actor":  { "id": "alice@irc.libera.chat", "type": "person" },
+  "actor": { "id": "alice@irc.libera.chat", "type": "person" },
   "target": { "id": "#sockethub@irc.libera.chat", "type": "room" },
   "object": { "type": "message", "content": "Hello!" }
 }`;

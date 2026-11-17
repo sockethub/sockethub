@@ -20,6 +20,7 @@ let content = $state("Hello from Sockethub");
  */
 async function getASObj(type: string): Promise<AnyActivityStream> {
     lastType = type;
+    sentAny = true;
     return {
         "@context": await contextFor("dummy"),
         // Activity type - what action to perform (echo, fail, throw, greet)
@@ -40,6 +41,7 @@ async function getASObj(type: string): Promise<AnyActivityStream> {
 
 /** The type of the last button pressed, shown in the preview. */
 let lastType = $state("echo");
+let sentAny = $state(false);
 
 async function sendType(type: string): Promise<void> {
     await send(await getASObj(type));
@@ -81,13 +83,13 @@ const basicTypes = [
     {
         type: "fail",
         label: "Fail",
-        text: "Returns an error, so you can see how failures look.",
+        text: "Returns your text as an error, so you can see how failures look.",
         action: sendFail,
     },
     {
         type: "throw",
         label: "Throw",
-        text: "Throws inside the platform. Sockethub reports it as an error.",
+        text: "Throws your text as an exception. Sockethub reports it as an error.",
         action: sendThrow,
     },
 ];
@@ -137,7 +139,7 @@ const preview = $derived(`{
 >
     <Step n={1} title="Send a message" description="Each button sends this text with a different activity type. The reply shows up in the activity log.">
         <FormField
-            label="Message Content"
+            label="Message content"
             id="objectContent"
             bind:value={content}
             placeholder="Hello from Sockethub"
@@ -157,7 +159,7 @@ const preview = $derived(`{
 
     <section class="card overflow-hidden">
         <div class="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 sm:px-6">
-            <h2 class="text-sm font-semibold text-zinc-900">What the last button sent</h2>
+            <h2 class="text-sm font-semibold text-zinc-900">{sentAny ? "What the last button sent" : "What the echo button sends"}</h2>
             <code class="tok">{lastType}</code>
         </div>
         <div class="code-block text-[12.5px]">

@@ -86,7 +86,7 @@ async function connectIrc(): Promise<void> {
 >
     <Step n={1} title="Choose a server and nickname" description="Try irc.libera.chat or irc.oftc.net. Your actor is nickname@server, so changing either field means confirming it again." done={$sockethubState.actorSet}>
         <div class="grid grid-cols-[minmax(0,1fr)_6.5rem] gap-3 sm:grid-cols-[minmax(0,1fr)_8rem] sm:gap-4">
-            <FormField label="IRC Server" id="server" bind:value={server} placeholder="irc.libera.chat" />
+            <FormField label="IRC server" id="server" bind:value={server} placeholder="irc.libera.chat" />
             <FormField label="Port" id="port" type="number" bind:value={port} placeholder="6697" />
         </div>
         <ActorIdField label="Nickname" bind:value={$actorIdStore} />

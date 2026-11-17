@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { TextAreaObject } from "$lib/types";
+import CodeBlock from "./CodeBlock.svelte";
 import Icon from "./Icon.svelte";
 import SockethubButton from "./SockethubButton.svelte";
 
@@ -75,22 +76,25 @@ async function handleSubmit(): Promise<void> {
     {/if}
     <div class="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-brand-500 focus-within:ring-3 focus-within:ring-brand-100">
         <div class="flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-1.5">
-            <label for="json-object-{title}" class="text-xs font-semibold text-zinc-700">{title}</label>
             {#if done}
-                <span class="flex items-center gap-1 text-[11px] text-emerald-700"><Icon name="check" class="size-3" /> sent</span>
+                <span class="text-xs font-semibold text-zinc-700">{title}</span>
             {:else}
+                <label for="json-object-{title}" class="text-xs font-semibold text-zinc-700">{title}</label>
                 <span class="flex items-center gap-1 text-[11px] text-zinc-500"><Icon name="pencil" class="size-3" /> editable JSON</span>
             {/if}
         </div>
-        <textarea
-            id="json-object-{title}"
-            bind:value={editedJson}
-            {rows}
-            readonly={done}
-            spellcheck="false"
-            autocapitalize="off"
-            class="block w-full resize-none border-0 bg-transparent px-3 py-2.5 font-mono text-[13px] leading-relaxed text-zinc-800 [field-sizing:content] focus:ring-0 focus:outline-none"
-        ></textarea>
+        {#if done}
+            <div class="code-block text-[13px]"><CodeBlock code={editedJson} /></div>
+        {:else}
+            <textarea
+                id="json-object-{title}"
+                bind:value={editedJson}
+                {rows}
+                spellcheck="false"
+                autocapitalize="off"
+                class="block w-full resize-none overflow-x-auto border-0 bg-transparent px-3 py-2.5 font-mono whitespace-pre text-[13px] leading-relaxed text-zinc-800 [field-sizing:content] focus:ring-0 focus:outline-none"
+            ></textarea>
+        {/if}
     </div>
     {#if parseError}
         <p class="callout callout-error" role="alert">{parseError}</p>

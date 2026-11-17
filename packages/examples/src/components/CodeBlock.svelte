@@ -23,7 +23,16 @@ const lines = $derived(
         .value.split("\n")
         .map((html) => {
             const indent = html.match(/^ */)?.[0].length ?? 0;
-            return { indent, html: html.slice(indent) };
+            // Offer line breaks after "/" in strings so URLs wrap at path
+            // boundaries before the browser resorts to breaking mid-word.
+            const body = html
+                .slice(indent)
+                .replace(
+                    /(<span class="hljs-string">)(.*?)(<\/span>)/g,
+                    (_m, open, text, close) =>
+                        `${open}${text.replaceAll("/", "/<wbr>")}${close}`,
+                );
+            return { indent, html: body };
         }),
 );
 </script>

@@ -19,6 +19,8 @@ interface Props {
     placeholder?: string;
     /** Helper text shown under the input */
     hint?: string;
+    /** Validation message; replaces the hint and marks the input invalid */
+    error?: string;
     /** Current value of the input (bindable) */
     value: string | number;
     /** Optional callback fired when input value changes */
@@ -34,6 +36,7 @@ let {
     type = "text",
     placeholder = "",
     hint,
+    error,
     value = $bindable(),
     onInput,
     class: customClass = "",
@@ -49,11 +52,14 @@ let {
         {placeholder}
         {disabled}
         bind:value
-        aria-describedby={hint ? `${id}-hint` : undefined}
-        class="input {customClass}"
+        aria-describedby={error || hint ? `${id}-hint` : undefined}
+        aria-invalid={error ? true : undefined}
+        class="input {error ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : ''} {customClass}"
         oninput={onInput ? () => onInput(value) : undefined}
     />
-    {#if hint}
+    {#if error}
+        <p id="{id}-hint" class="text-[13px] leading-relaxed text-red-700">{error}</p>
+    {:else if hint}
         <p id="{id}-hint" class="hint">{hint}</p>
     {/if}
 </div>

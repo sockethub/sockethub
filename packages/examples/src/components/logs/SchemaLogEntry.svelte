@@ -27,7 +27,7 @@ function summarize(payload: unknown): string {
             .filter(Boolean);
         const version =
             typeof p.apiVersion === "number" ? p.apiVersion : "unknown";
-        return `API v${version} — ${ids.length} platform${ids.length !== 1 ? "s" : ""}: ${ids.join(", ")}`;
+        return `API v${version} · ${ids.length} platform${ids.length !== 1 ? "s" : ""}`;
     }
 
     if (entry._logType === "ready") {
@@ -35,7 +35,7 @@ function summarize(payload: unknown): string {
         const version =
             typeof p.apiVersion === "number" ? p.apiVersion : "unknown";
         const platforms = Array.isArray(p.platforms) ? p.platforms.length : 0;
-        return `${reason} — Sockethub API v${version}, ${platforms} platform${platforms !== 1 ? "s" : ""}`;
+        return `${reason} · API v${version}`;
     }
 
     if (entry._logType === "init_error") {

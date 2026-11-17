@@ -48,10 +48,8 @@ const label = $derived(
 </script>
 
 {#if event && visible && !logInView}
-    <a
-        href="#activity-log"
-        onclick={() => (visible = false)}
-        class="fixed inset-x-4 bottom-4 z-30 flex items-center gap-3 rounded-xl border border-zinc-200 bg-white/95 px-4 py-3 text-sm text-zinc-800 no-underline shadow-lg backdrop-blur xl:hidden"
+    <div
+        class="fixed top-16 right-4 left-4 z-30 flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 py-1.5 pr-1.5 pl-3 text-[13px] text-zinc-800 shadow-md backdrop-blur sm:left-auto xl:hidden"
         aria-live="polite"
     >
         <span
@@ -60,12 +58,16 @@ const label = $derived(
                 : event.state === 'error'
                   ? 'bg-red-500'
                   : 'bg-emerald-500'}"
+            aria-hidden="true"
         ></span>
         <code class="rounded bg-zinc-100 px-1.5 py-0.5 text-[12px] font-medium">{event.type}</code>
         <span class="min-w-0 flex-1 truncate">{label}</span>
-        <span class="flex shrink-0 items-center gap-1 text-[13px] font-medium text-zinc-500">
+        <a href="#activity-log" onclick={() => (visible = false)} class="flex shrink-0 items-center gap-1 rounded-full px-2 py-1 font-medium text-zinc-600 no-underline hover:bg-zinc-100">
             View log
             <Icon name="arrow" class="size-3.5 rotate-90" />
-        </span>
-    </a>
+        </a>
+        <button type="button" class="shrink-0 rounded-full p-1 text-zinc-500 hover:bg-zinc-100" aria-label="Dismiss" onclick={() => (visible = false)}>
+            <Icon name="x" class="size-4" />
+        </button>
+    </div>
 {/if}

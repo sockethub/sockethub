@@ -1,5 +1,6 @@
 <script lang="ts" module>
 import type { AnyActivityStream } from "$lib/sockethub";
+import { platformIdFromContext } from "$lib/sockethub";
 import { writable } from "svelte/store";
 import { cleanError, resolveLogDetails, type LogMetadata } from "./log-details";
 
@@ -125,6 +126,8 @@ export { SchemaLogs };
     let modalPage: PageObject | undefined = $state();
     /** Error carried by the response shown in the modal. */
     let modalError = $state("");
+    /** True when the error came from the dummy platform, where errors are the point. */
+    let modalErrorExpected = $state(false);
 
     Logs.subscribe((data: LogEntries) => {
         logs = data;
@@ -174,6 +177,8 @@ export { SchemaLogs };
                     : "";
             const err = (response as AnyActivityStream | undefined)?.error;
             modalError = typeof err === "string" ? cleanError(err) : "";
+            modalErrorExpected =
+                platformIdFromContext((response as AnyActivityStream | undefined)?.["@context"]) === "dummy";
             const object = (response as AnyActivityStream | undefined)?.object;
             modalPage = isPageObject(object) ? object : undefined;
         };
@@ -296,11 +301,11 @@ export { SchemaLogs };
             </button>
         </div>
 
-        <div class="flex flex-1 flex-col gap-5 overflow-auto px-5 py-5 sm:px-6">
+        <div class="flex flex-1 flex-col gap-5 overflow-auto px-3 py-4 sm:px-6 sm:py-5">
             {#if modalError}
                 <div class="callout callout-error order-first" role="alert">
                     <Icon name="alert" class="mt-0.5 size-4 shrink-0" />
-                    <p><strong class="font-semibold">Sockethub returned an error:</strong> {modalError}</p>
+                    <p><strong class="font-semibold">{modalErrorExpected ? "Expected test error. The dummy platform replied:" : "Sockethub returned an error:"}</strong> {modalError}</p>
                 </div>
             {/if}
             {#if modalPage}
