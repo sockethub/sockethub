@@ -497,7 +497,7 @@ function formatTyped(value: TypedValue): string {
         {/if}
     </Step>
 
-    <Step n={2} title="Choose an address book" description="Sends a fetch activity. Sockethub discovers the address books in your account." done={addressBooks.length > 0}>
+    <Step n={2} title="Choose an address book" description="Sends a fetch activity. Sockethub discovers the address books in your account." done={addressBooks.length > 0} blockedHint={credentialsSet ? undefined : "Set credentials first."}>
         <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={fetchAddressBooks} disabled={busy || !credentialsSet}>
                 Fetch Address Books
@@ -521,7 +521,7 @@ function formatTyped(value: TypedValue): string {
         {/if}
     </Step>
 
-    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server.">
+    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server." blockedHint={selectedAddressBook ? undefined : "Choose an address book first."}>
         <div class="grid gap-4 md:grid-cols-[1fr_auto]">
             <FormField label="Search text (optional)" id="carddav-search-text" bind:value={searchText} placeholder="Bob" />
             <div class="w-full space-y-1.5 md:w-48">
@@ -561,26 +561,26 @@ function formatTyped(value: TypedValue): string {
                                 </p>
                             {/if}
                             {#if contact.emails?.length}
-                                <p class="text-sm text-zinc-600"><span class="text-zinc-400">Email: </span>{contact.emails.map(formatTyped).join(", ")}</p>
+                                <p class="text-sm text-zinc-600"><span class="text-zinc-500">Email: </span>{contact.emails.map(formatTyped).join(", ")}</p>
                             {/if}
                             {#if contact.telephones?.length}
-                                <p class="text-sm text-zinc-600"><span class="text-zinc-400">Phone: </span>{contact.telephones.map(formatTyped).join(", ")}</p>
+                                <p class="text-sm text-zinc-600"><span class="text-zinc-500">Phone: </span>{contact.telephones.map(formatTyped).join(", ")}</p>
                             {/if}
                             {#each contact.addresses ?? [] as address}
                                 {#if formatAddress(address)}
-                                    <p class="text-sm text-zinc-600"><span class="text-zinc-400">Address: </span>{formatAddress(address)}</p>
+                                    <p class="text-sm text-zinc-600"><span class="text-zinc-500">Address: </span>{formatAddress(address)}</p>
                                 {/if}
                             {/each}
                             {#if contact.urls?.length}
-                                <p class="text-sm text-zinc-600 break-all"><span class="text-zinc-400">Web: </span>{contact.urls.map((url) => url.value).join(", ")}</p>
+                                <p class="text-sm text-zinc-600 break-all"><span class="text-zinc-500">Web: </span>{contact.urls.map((url) => url.value).join(", ")}</p>
                             {/if}
                             {#if contact.birthday}
-                                <p class="text-sm text-zinc-600"><span class="text-zinc-400">Birthday: </span>{contact.birthday}</p>
+                                <p class="text-sm text-zinc-600"><span class="text-zinc-500">Birthday: </span>{contact.birthday}</p>
                             {/if}
                             {#if contact.note}
                                 <p class="text-sm text-zinc-600 whitespace-pre-wrap">{contact.note}</p>
                             {/if}
-                            <p class="truncate text-xs text-zinc-400" title={contact.id}>
+                            <p class="truncate text-xs text-zinc-500" title={contact.id}>
                                 uid {contact.uid}{contact.etag ? ` · etag ${contact.etag}` : ""}
                             </p>
                         </div>
@@ -610,7 +610,7 @@ function formatTyped(value: TypedValue): string {
         {/if}
     </Step>
 
-    <Step n={4} title={editing ? `Edit ${editing.name}` : "Add a contact"} description={editing ? undefined : "Sends a create activity. Edits and deletes carry the contact's etag, so Sockethub refuses them with carddav:conflict if another client changed the card first."}>
+    <Step n={4} title={editing ? `Edit ${editing.name}` : "Add a contact"} description={editing ? undefined : "Sends a create activity. Edits and deletes carry the contact's etag, so Sockethub refuses them with carddav:conflict if another client changed the card first."} blockedHint={selectedAddressBook || editing ? undefined : "Choose an address book first."}>
         {#if editing}
             <p class="text-sm text-zinc-600">
                 The update sends the full contact back with its stored <code>etag</code>. Fields not shown here are kept as they are.

@@ -49,25 +49,33 @@ const statusText = $derived(
 );
 </script>
 
-<li class="group px-5 py-3 transition-colors hover:bg-zinc-50/80">
+<li class="px-5 py-3 transition-colors hover:bg-zinc-50/80">
     <div class="flex items-center gap-2">
         <span class="size-1.5 shrink-0 rounded-full {statusDot}" aria-hidden="true"></span>
         {#if entry.type}
             <code class="rounded bg-zinc-100 px-1.5 py-0.5 text-[12px] font-medium text-zinc-800">{entry.type}</code>
         {/if}
-        {#if platform}
-            <span class="text-xs text-zinc-500">{platform}</span>
-        {/if}
-        <span class="ml-auto font-mono text-[11px] text-zinc-400 tabular-nums">{time || `#${id}`}</span>
+        <span class="truncate text-[11px] font-medium {statusText}">{statusLabel}</span>
+        <span class="ml-auto shrink-0 font-mono text-[11px] text-zinc-500 tabular-nums">{time || `#${id}`}</span>
     </div>
-    <div class="mt-1 line-clamp-2 pl-3.5 text-[13px] leading-relaxed break-words text-zinc-600">
-        {#if platform === "dummy"}
-            <DummyEntry {id} {entry} />
-        {:else if platform === "feeds"}
-            <FeedsEntry {id} {entry} />
-        {:else}
-            <GenericEntry {id} {entry} />
-        {/if}
+    <div class="mt-1 flex items-start gap-2 pl-3.5">
+        <div class="line-clamp-2 min-w-0 flex-1 text-[13px] leading-relaxed break-words text-zinc-600">
+            {#if platform === "dummy"}
+                <DummyEntry {id} {entry} />
+            {:else if platform === "feeds"}
+                <FeedsEntry {id} {entry} />
+            {:else}
+                <GenericEntry {id} {entry} />
+            {/if}
+        </div>
+        <button
+            type="button"
+            onclick={buttonAction}
+            class="-mr-1.5 flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+        >
+            View JSON
+            <Icon name="chevron" class="size-3.5" />
+        </button>
     </div>
     {#if entry.error}
         <p class="mt-1.5 ml-3.5 flex items-start gap-1.5 rounded-md bg-red-50 px-2 py-1.5 text-[12px] leading-snug text-red-800">
@@ -75,15 +83,4 @@ const statusText = $derived(
             <span class="break-words">{entry.error}</span>
         </p>
     {/if}
-    <div class="mt-1.5 flex items-center justify-between pl-3.5">
-        <span class="text-[11px] font-medium {statusText}">{statusLabel}</span>
-        <button
-            type="button"
-            onclick={buttonAction}
-            class="-mr-1.5 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-        >
-            View JSON
-            <Icon name="chevron" class="size-3.5" />
-        </button>
-    </div>
 </li>

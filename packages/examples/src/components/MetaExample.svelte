@@ -152,7 +152,7 @@ async function clearCredentials(): Promise<void> {
             </div>
         </fieldset>
     </Step>
-    <Step n={2} title="Send a reply" description="Sends a send activity. Meta accepts it and delivers it asynchronously.">
+    <Step n={2} title="Send a reply" description="Sends a send activity. Meta accepts it and delivers it asynchronously." blockedHint={credentialsSet ? undefined : "Set credentials first."}>
         <fieldset disabled={busy} class="space-y-4">
             <legend class="sr-only">Send a reply</legend>
             <FormField label={platform === "messenger" ? "Recipient Page-scoped ID (PSID)" : "Recipient Instagram-scoped ID (IGSID)"} id="meta-recipient" bind:value={recipientId} />

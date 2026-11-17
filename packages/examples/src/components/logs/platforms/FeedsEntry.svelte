@@ -28,13 +28,13 @@ const feedUrl = $derived(isCollection ? entry.summary : entry.object?.url);
 
 {#if isCollection}
     <span class="text-zinc-700">{feedUrl}</span>
-    <span class="text-zinc-400">· {entry.totalItems} {entry.totalItems === 1 ? "item" : "items"}</span>
+    <span class="text-zinc-500">· {entry.totalItems} {entry.totalItems === 1 ? "item" : "items"}</span>
 {:else}
     <a rel="noreferrer" href={entry.object?.url} target="_blank">
         {entry.object?.title ||
             (typeof entry.target === "string" ? entry.target : entry.target?.id)}
     </a>
     {#if entry.object?.published}
-        <span class="text-zinc-400">· {entry.object?.published.split("T")[0]}</span>
+        <span class="text-zinc-500">· {entry.object?.published.split("T")[0]}</span>
     {/if}
 {/if}

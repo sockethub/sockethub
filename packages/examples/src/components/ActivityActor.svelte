@@ -46,7 +46,8 @@ function confirmActor(data: string) {
 
 <TextAreaSubmit
     title="Actor"
-    caption="actor"
+    done={$sockethubState.actorSet}
+    doneText="Actor confirmed"
     obj={actor}
     buttonText="Confirm actor"
     submitData={confirmActor}

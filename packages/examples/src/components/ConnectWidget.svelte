@@ -15,5 +15,5 @@ import { connected } from "$lib/sockethub";
         {/if}
         <span class="relative inline-flex size-2 rounded-full {$connected ? 'bg-emerald-500' : 'bg-zinc-400'}"></span>
     </span>
-    {$connected ? "Connected" : "Disconnected"}
+    {$connected ? "Sockethub connected" : "Not connected"}
 </div>

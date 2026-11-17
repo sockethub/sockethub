@@ -40,26 +40,22 @@ async function sendFetch(): Promise<void> {
     title="Feeds Platform Example"
     description="Give Sockethub the address of an RSS or Atom feed. It downloads and parses the feed, and sends back one activity per entry."
 >
-    <Step n={1} title="Choose a feed" done={$sockethubState.actorSet}>
+    <Step n={1} title="Choose a feed and confirm the actor" description='Every activity names an actor. For feeds, the actor is the feed itself: its id is the URL and its type is "feed".' done={$sockethubState.actorSet}>
         <FormField
             label="Feed URL"
             id="URL"
             type="url"
             bind:value={url}
             placeholder="https://example.com/feed.xml"
-            hint="For feeds, the URL is the actor: Sockethub fetches on behalf of the feed itself."
         />
-    </Step>
-
-    <Step n={2} title="Confirm the actor" description='The actor goes on every activity. Here its id is the feed URL and its type is "feed".' done={$sockethubState.actorSet}>
         <ActivityActor {actor} {sockethubState} />
     </Step>
 
     <Step
-        n={3}
+        n={2}
         title="Fetch the feed"
         description="Sends a fetch activity. Each entry comes back as its own message in the activity log."
-        locked={!$sockethubState.actorSet}
+        blockedHint={$sockethubState.actorSet ? undefined : "Confirm the actor first."}
     >
         {#if fetchError}
             <div class="callout callout-error" role="alert">

@@ -50,14 +50,14 @@ const itemClass =
                     ? 'bg-zinc-100 text-zinc-900'
                     : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'}"
             >
-                <Icon name="home" class="size-4 shrink-0 {isActive('/') ? 'text-brand-600' : 'text-zinc-400 group-hover:text-zinc-600'}" />
+                <Icon name="home" class="size-4 shrink-0 {isActive('/') ? 'text-brand-600' : 'text-zinc-500 group-hover:text-zinc-600'}" />
                 Overview
             </a>
         </li>
     </ul>
     {#each exampleGroups as group (group.label)}
         <div>
-            <h2 class="mb-1.5 px-3 text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">
+            <h2 class="mb-1.5 px-3 text-[11px] font-semibold tracking-[0.08em] text-zinc-500 uppercase">
                 {group.label}
             </h2>
             <ul class="space-y-0.5">
@@ -74,19 +74,19 @@ const itemClass =
                                     ? 'bg-zinc-100 text-zinc-900'
                                     : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'}"
                             >
-                                <Icon name={item.icon} class="size-4 shrink-0 {active ? 'text-brand-600' : 'text-zinc-400 group-hover:text-zinc-600'}" />
+                                <Icon name={item.icon} class="size-4 shrink-0 {active ? 'text-brand-600' : 'text-zinc-500 group-hover:text-zinc-600'}" />
                                 {item.title}
                             </a>
                         {:else}
                             <span
-                                class="{itemClass} cursor-not-allowed text-zinc-400"
+                                class="{itemClass} cursor-not-allowed text-zinc-500"
                                 aria-disabled="true"
                                 title={enabledPlatforms ? "Not enabled on this server" : "Checking server…"}
                             >
                                 <Icon name={item.icon} class="size-4 shrink-0 text-zinc-300" />
                                 {item.title}
                                 {#if enabledPlatforms}
-                                    <span class="ml-auto text-[11px] font-normal text-zinc-400">off</span>
+                                    <span class="ml-auto text-[11px] font-normal text-zinc-500">off</span>
                                 {/if}
                             </span>
                         {/if}

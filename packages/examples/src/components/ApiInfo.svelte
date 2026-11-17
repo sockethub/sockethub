@@ -50,7 +50,7 @@ import Icon from "./Icon.svelte";
                         {#each sortPlatforms(descriptor.platforms) as platform (platform.id)}
                             <li class="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[13px] text-zinc-700">
                                 {platform.id}
-                                <span class="text-zinc-400">v{platform.apiVersion}</span>
+                                <span class="text-zinc-500">v{platform.apiVersion}</span>
                             </li>
                         {/each}
                     </ul>

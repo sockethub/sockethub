@@ -43,23 +43,30 @@ const enabled = $derived(
         ? new Set($apiDiscovery.descriptor.platforms.map((p) => p.id))
         : undefined,
 );
+
+const anyDisabled = $derived(
+    enabled !== undefined &&
+        exampleGroups.some((group) =>
+            group.items.some((item) => !enabled?.has(item.platform)),
+        ),
+);
 </script>
 
 <svelte:head>
     <title>Sockethub Examples</title>
 </svelte:head>
 
-<div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-10 lg:py-16">
+<div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-16">
     <!-- Hero -->
-    <section class="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-12">
+    <section class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-12">
         <div>
             <p class="eyebrow">Interactive examples</p>
-            <h1 class="mt-3 text-4xl leading-[1.1] font-semibold tracking-tight text-zinc-900 sm:text-5xl">Sockethub Examples</h1>
-            <p class="mt-5 text-lg leading-relaxed text-zinc-600">
+            <h1 class="mt-3 text-[2.5rem] leading-[1.1] font-semibold tracking-tight text-zinc-900 sm:text-5xl">Sockethub Examples</h1>
+            <p class="mt-4 text-[17px] leading-relaxed text-zinc-600 sm:mt-5 sm:text-lg">
                 Sockethub lets a web page talk to IRC, XMPP, email, feeds, calendars, and more.
                 Your app sends one kind of JSON message over a WebSocket, and Sockethub speaks each protocol for you.
             </p>
-            <p class="mt-3 text-base leading-relaxed text-zinc-500">
+            <p class="mt-3 hidden text-base leading-relaxed text-zinc-500 sm:block">
                 Each example below runs against this server. Fill in a form, press a button,
                 and watch the exact messages go back and forth.
             </p>
@@ -75,10 +82,10 @@ const enabled = $derived(
             </div>
         </div>
 
-        <figure class="card overflow-hidden">
+        <figure class="card overflow-hidden lg:mt-9">
             <figcaption class="flex items-center justify-between border-b border-zinc-200 px-4 py-2.5">
                 <span class="text-xs font-semibold text-zinc-700">Sending a chat message to IRC</span>
-                <span class="font-mono text-[11px] text-zinc-400">ActivityStreams JSON</span>
+                <span class="font-mono text-[11px] text-zinc-500">ActivityStreams JSON</span>
             </figcaption>
             <div class="code-block text-[12.5px] leading-relaxed sm:text-[13px]">
                 <Highlight language={json} code={sample} />
@@ -104,7 +111,7 @@ const enabled = $derived(
                         <p class="mt-1 text-sm leading-relaxed text-zinc-500">{step.text}</p>
                     </div>
                     {#if i < 2}
-                        <span class="absolute top-1/2 -right-3 z-10 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 md:flex">
+                        <span class="absolute top-1/2 -right-3 z-10 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 md:flex">
                             <Icon name="arrow" class="size-3.5" />
                         </span>
                     {/if}
@@ -129,17 +136,19 @@ const enabled = $derived(
     <section class="mt-16 lg:mt-20" aria-labelledby="examples-heading">
         <div class="flex flex-wrap items-end justify-between gap-2">
             <h2 id="examples-heading" class="text-xl font-semibold tracking-tight text-zinc-900">Pick an example</h2>
-            <p class="text-sm text-zinc-500">Greyed-out examples are not enabled on this server.</p>
+            {#if anyDisabled}
+                <p class="text-sm text-zinc-500">Greyed-out examples are not enabled on this server.</p>
+            {/if}
         </div>
         <div class="mt-6 space-y-8">
             {#each exampleGroups as group (group.label)}
                 <div>
-                    <h3 class="text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">{group.label}</h3>
-                    <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <h3 class="text-[11px] font-semibold tracking-[0.08em] text-zinc-500 uppercase">{group.label}</h3>
+                    <ul class="mt-3 grid gap-3 md:grid-cols-2">
                         {#each group.items as item (item.path)}
                             {@const off = enabled !== undefined && !enabled.has(item.platform)}
                             {@const featured = item.platform === "dummy"}
-                            <li class={featured ? "sm:col-span-2 lg:col-span-3" : ""}>
+                            <li class={featured ? "md:col-span-2" : ""}>
                                 <a
                                     href={off ? undefined : `${base}${item.path}`}
                                     aria-disabled={off || undefined}
@@ -169,8 +178,8 @@ const enabled = $derived(
                                             {/each}
                                         </span>
                                         <span class="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
-                                            <Icon name={item.needsAccount ? "key" : "check"} class="size-3.5 {item.needsAccount ? 'text-zinc-400' : 'text-emerald-600'}" />
-                                            {item.needsAccount ? "Needs your own account" : "No account needed"}
+                                            <Icon name={item.needsAccount ? "key" : "check"} class="size-3.5 {item.needsAccount ? 'text-zinc-500' : 'text-emerald-600'}" />
+                                            {item.access}
                                         </span>
                                     </span>
                                     {#if !off}

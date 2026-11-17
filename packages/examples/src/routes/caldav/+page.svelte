@@ -213,6 +213,48 @@ async function createItem(): Promise<void> {
     title="CalDAV Platform Example"
     description="Discover the calendars in a CalDAV account and add an event or to-do, or list the events in a published .ics feed."
 >
+    <Step title="No account? Read a public calendar feed" description="Public .ics and webcal:// links need no credentials. Sends a read activity and lists what comes back.">
+        <FormField
+            label="Feed URL"
+            id="caldav-feed-url"
+            type="url"
+            bind:value={feedUrl}
+            placeholder="https://example.org/holidays.ics"
+        />
+        <label class="flex items-center gap-2 text-sm text-zinc-700">
+            <input class="check" type="checkbox" bind:checked={upcomingOnly} /> Upcoming items only
+        </label>
+        <div class="flex flex-wrap justify-end gap-2">
+            <SockethubButton buttonAction={readFeed} disabled={feedBusy || !actorId || !feedUrl}>
+                {feedBusy ? "Reading…" : "Read Feed"}
+            </SockethubButton>
+        </div>
+        {#if feedError}
+            <div class="callout callout-error" role="alert">{feedError}</div>
+        {/if}
+        {#if feedItems.length > 0}
+            <h3 class="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{feedName || "Feed"} ({feedItems.length})</h3>
+            <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white">
+                {#each feedItems as item, index (`${index}:${item.id}`)}
+                    <li class="flex flex-col gap-1 px-4 py-3 text-sm">
+                        <span class="font-medium text-zinc-900">{item.name}</span>
+                        <span class="text-zinc-600">
+                            {item.type === "task" ? "To-do" : "Event"}
+                            {#if itemWhen(item)}
+                                · {itemWhen(item)}
+                            {/if}
+                            {#if item.location}
+                                · {item.location}
+                            {/if}
+                        </span>
+                    </li>
+                {/each}
+            </ul>
+        {/if}
+    </Step>
+
+    <div class="flex items-center gap-3 pt-2 text-xs font-semibold tracking-[0.08em] text-zinc-500 uppercase"><span class="h-px flex-1 bg-zinc-200"></span>Or use your own calendar account<span class="h-px flex-1 bg-zinc-200"></span></div>
+
     <Step n={1} title="Set credentials" description="Use an app password if your provider offers one. Credentials stay in this Sockethub session." done={credentialsSet}>
         <FormField
             label="Actor ID"
@@ -257,7 +299,7 @@ async function createItem(): Promise<void> {
         {/if}
     </Step>
 
-    <Step n={2} title="Choose a calendar" description="Sends a fetch activity. Sockethub discovers the calendars in your account." done={calendars.length > 0}>
+    <Step n={2} title="Choose a calendar" description="Sends a fetch activity. Sockethub discovers the calendars in your account." done={calendars.length > 0} blockedHint={credentialsSet ? undefined : "Set credentials first."}>
         <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={fetchCalendars} disabled={busy || !credentialsSet}>
                 Fetch Calendars
@@ -279,7 +321,7 @@ async function createItem(): Promise<void> {
         {/if}
     </Step>
 
-    <Step n={3} title="Add an item" description="Sends a create activity targeting the chosen calendar.">
+    <Step n={3} title="Add an item" description="Sends a create activity targeting the chosen calendar." blockedHint={selectedCalendar ? undefined : "Choose a calendar first."}>
         <div class="flex gap-6 text-sm font-medium text-zinc-800">
             <label class="flex items-center gap-2">
                 <input
@@ -324,43 +366,5 @@ async function createItem(): Promise<void> {
         <div class="callout callout-success" role="status">{success}</div>
     {/if}
 
-    <Step title="Or read a public calendar feed" description="Public .ics and webcal:// links need no credentials. Sends a read activity and lists what comes back.">
-        <FormField
-            label="Feed URL"
-            id="caldav-feed-url"
-            type="url"
-            bind:value={feedUrl}
-            placeholder="https://example.org/holidays.ics"
-        />
-        <label class="flex items-center gap-2 text-sm text-zinc-700">
-            <input class="check" type="checkbox" bind:checked={upcomingOnly} /> Upcoming items only
-        </label>
-        <div class="flex flex-wrap justify-end gap-2">
-            <SockethubButton buttonAction={readFeed} disabled={feedBusy || !actorId || !feedUrl}>
-                {feedBusy ? "Reading…" : "Read Feed"}
-            </SockethubButton>
-        </div>
-        {#if feedError}
-            <div class="callout callout-error" role="alert">{feedError}</div>
-        {/if}
-        {#if feedItems.length > 0}
-            <h3 class="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{feedName || "Feed"} ({feedItems.length})</h3>
-            <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white">
-                {#each feedItems as item, index (`${index}:${item.id}`)}
-                    <li class="flex flex-col gap-1 px-4 py-3 text-sm">
-                        <span class="font-medium text-zinc-900">{item.name}</span>
-                        <span class="text-zinc-600">
-                            {item.type === "task" ? "To-do" : "Event"}
-                            {#if itemWhen(item)}
-                                · {itemWhen(item)}
-                            {/if}
-                            {#if item.location}
-                                · {item.location}
-                            {/if}
-                        </span>
-                    </li>
-                {/each}
-            </ul>
-        {/if}
-    </Step>
+
 </BaseExample>

@@ -121,8 +121,8 @@
 /* Highlighted JSON blocks (svelte-highlight) */
 .code-block pre {
     margin: 0;
-    white-space: pre;
-    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 .code-block .hljs {
     padding: 1rem 1.125rem;

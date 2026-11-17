@@ -11,6 +11,15 @@ type LogEntries = Record<
     ]
 >;
 const Logs = writable({} as LogEntries);
+
+/** The most recent request or reply, for the compact status pill on small screens. */
+export interface LastEvent {
+    seq: number;
+    type: string;
+    state: "waiting" | "ok" | "error";
+    error?: string;
+}
+export const lastEvent = writable<LastEvent | undefined>(undefined);
 const LogMeta = writable({} as Record<string, LogMetadata>);
 let counter = 0;
 
@@ -43,6 +52,13 @@ export function addObject(
             meta[index] = { timestamp: now, sortKey, requestId };
         }
         return meta;
+    });
+
+    lastEvent.set({
+        seq: sortKey,
+        type: typeof obj.type === "string" ? obj.type : "message",
+        state: type === "SEND" ? "waiting" : obj.error ? "error" : "ok",
+        error: typeof obj.error === "string" ? obj.error : undefined,
     });
 
     Logs.update((currentLogs: LogEntries) => {
@@ -108,6 +124,8 @@ export { SchemaLogs };
     let modalTitle = $state("Message details");
     /** Page object from the response shown in the modal, for a rendered preview. */
     let modalPage: PageObject | undefined = $state();
+    /** Error carried by the response shown in the modal. */
+    let modalError = $state("");
 
     Logs.subscribe((data: LogEntries) => {
         logs = data;
@@ -142,6 +160,8 @@ export { SchemaLogs };
                 response && Object.keys(response as object).length > 0
                     ? JSON.stringify(response, null, 2)
                     : "";
+            const err = (response as AnyActivityStream | undefined)?.error;
+            modalError = typeof err === "string" ? err : "";
             const object = (response as AnyActivityStream | undefined)?.object;
             modalPage = isPageObject(object) ? object : undefined;
         };
@@ -154,11 +174,12 @@ export { SchemaLogs };
             jsonSend = JSON.stringify(entry.payload, null, 2);
             jsonResp = "";
             modalPage = undefined;
+            modalError = "";
         };
     }
 </script>
 
-<section class="card flex flex-col overflow-hidden xl:max-h-[calc(100vh-4rem)]">
+<section id="activity-log" class="card flex scroll-mt-20 flex-col overflow-hidden xl:max-h-[calc(100vh-4rem)]">
     <header class="flex items-start justify-between gap-3 border-b border-zinc-200 px-5 py-4">
         <div class="min-w-0">
             <h2 class="flex items-center gap-2 text-sm font-semibold text-zinc-900">
@@ -180,10 +201,10 @@ export { SchemaLogs };
         <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-sky-500"></span>Client event</span>
     </div>
 
-    <div id="messages" class="max-h-[28rem] min-h-0 flex-1 overflow-y-auto xl:max-h-none">
+    <div id="messages" class="min-h-0 flex-1 xl:overflow-y-auto">
         {#if unified.length === 0}
             <div class="flex flex-col items-center px-6 py-12 text-center">
-                <span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+                <span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
                     <Icon name="inbox" class="size-5" />
                 </span>
                 <p class="mt-3 text-sm font-medium text-zinc-700">No activity yet</p>
@@ -250,13 +271,19 @@ export { SchemaLogs };
                 type="button"
                 aria-label="Close activity log details"
                 onclick={() => (logModalState = false)}
-                class="-mr-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+                class="-mr-2 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
             >
                 <Icon name="x" class="size-5" />
             </button>
         </div>
 
         <div class="flex-1 space-y-5 overflow-auto px-5 py-5 sm:px-6">
+            {#if modalError}
+                <div class="callout callout-error" role="alert">
+                    <Icon name="alert" class="mt-0.5 size-4 shrink-0" />
+                    <p><strong class="font-semibold">Sockethub returned an error:</strong> {modalError}</p>
+                </div>
+            {/if}
             {#if modalPage}
                 <div>
                     <h4 class="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">Rendered preview</h4>
@@ -275,10 +302,10 @@ export { SchemaLogs };
 
             {#if jsonResp}
                 <div>
-                    <h4 class="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                        <Icon name="down" class="size-3.5 text-emerald-600" /> Response from Sockethub
+                    <h4 class="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase {modalError ? 'text-red-700' : 'text-zinc-500'}">
+                        <Icon name="down" class="size-3.5 {modalError ? 'text-red-600' : 'text-emerald-600'}" /> {modalError ? "Error response from Sockethub" : "Response from Sockethub"}
                     </h4>
-                    <div class="code-block overflow-hidden rounded-lg border border-zinc-200 text-[13px]">
+                    <div class="code-block overflow-hidden rounded-lg border text-[13px] {modalError ? 'border-red-200' : 'border-zinc-200'}">
                         <Highlight language={json} code={jsonResp} />
                     </div>
                 </div>

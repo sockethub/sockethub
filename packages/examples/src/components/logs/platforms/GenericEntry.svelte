@@ -24,10 +24,10 @@ const content = $derived(
 
 <span class="text-zinc-700">{actor}</span>
 {#if target}
-    <span class="text-zinc-400">→</span>
+    <span class="text-zinc-500">→</span>
     <span class="text-zinc-700">{target}</span>
 {/if}
 {#if content}
-    <span class="text-zinc-400">:</span>
+    <span class="text-zinc-500">:</span>
     <span class="text-zinc-600">{content}</span>
 {/if}

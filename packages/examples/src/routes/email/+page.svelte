@@ -289,8 +289,8 @@ onMount(() => {
             <FormField label="Sender name (optional)" id="email-sender-name" bind:value={displayName} />
             <div class="grid gap-6 md:grid-cols-2">
                 {#each servers as server (server.kind)}
-                    <fieldset class="space-y-3 rounded-lg border border-zinc-200 p-4">
-                        <legend class="px-1 text-sm font-semibold text-zinc-900">{server.label}</legend>
+                    <div class="space-y-3 rounded-lg border border-zinc-200 p-4">
+                        <h3 class="text-sm font-semibold text-zinc-900">{server.label}</h3>
                         <FormField label="Host" id="email-{server.kind}-host" bind:value={server.host} />
                         <FormField label="Port" id="email-{server.kind}-port" type="number" bind:value={server.port} />
                         <label class="flex items-center gap-2 text-sm text-zinc-700"><input class="check" type="checkbox" bind:checked={server.secure} /> TLS from connection start</label>
@@ -303,11 +303,11 @@ onMount(() => {
                             </select>
                         </div>
                         <FormField label={server.auth === "token" ? "Access token" : "Password"} id="email-{server.kind}-secret" type="password" bind:value={server.secret} />
-                    </fieldset>
+                    </div>
                 {/each}
             </div>
         </fieldset>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={connect} disabled={busy || connected || !address || !servers.some(server => server.host)}>Connect</SockethubButton>
             <SockethubButton variant="secondary" buttonAction={disconnect} disabled={busy || !connected}>Disconnect</SockethubButton>
         </div>
@@ -324,12 +324,14 @@ onMount(() => {
             </div>
         </fieldset>
         <FormField label="Fetch folders (comma-separated)" id="email-folders" bind:value={folders} onInput={resetCursor} />
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={() => fetchMail()} disabled={busy || !receiving || !folders.trim()}>Fetch</SockethubButton>
             <SockethubButton variant="secondary" buttonAction={() => fetchMail(true)} disabled={busy || !receiving || !hasMore}>Fetch next</SockethubButton>
         </div>
         <FormField label="Folder to watch" id="email-watch-folder" bind:value={watchFolder} />
+        <div class="flex justify-end">
         <SockethubButton buttonAction={toggleWatch} disabled={busy || !receiving || !watchFolder}>{watching ? "Stop watching" : "Watch new messages"}</SockethubButton>
+        </div>
         {#each messages as message (message.id)}
             <article class="space-y-2 rounded-lg border border-zinc-200 p-4">
                 <h3 class="font-semibold text-zinc-900">{message.subject || "(No subject)"}</h3>
@@ -352,7 +354,9 @@ onMount(() => {
             <label for="email-body" class="label">Message</label>
             <textarea id="email-body" bind:value={content} rows="6" class="input"></textarea>
         </div>
+        <div class="flex justify-end">
         <SockethubButton buttonAction={sendMail} disabled={busy || !sending || !recipients.trim() || !content}>Send</SockethubButton>
+        </div>
     </Step>
     {#if error}<div role="alert" class="callout callout-error">{error}</div>{/if}
     {#if status}<div role="status" class="callout callout-success">{status}</div>{/if}

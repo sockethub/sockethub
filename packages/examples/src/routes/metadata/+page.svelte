@@ -50,26 +50,22 @@ async function sendFetch(): Promise<void> {
     title="Metadata Platform Example"
     description="Give Sockethub a web page address. It reads the page's Open Graph, Twitter Card, and meta tags, and returns what a chat app needs for a link preview."
 >
-    <Step n={1} title="Choose a page" done={$sockethubState.actorSet}>
+    <Step n={1} title="Choose a page and confirm the actor" description='Every activity names an actor. Here the actor is the page: its id is the URL and its type is "website".' done={$sockethubState.actorSet}>
         <FormField
             label="Website URL"
             id="URL"
             type="url"
             bind:value={url}
             placeholder="https://example.com"
-            hint='The page URL is the actor id, with type "website".'
         />
-    </Step>
-
-    <Step n={2} title="Confirm the actor" description="The actor goes on every activity you send." done={$sockethubState.actorSet}>
         <ActivityActor {actor} {sockethubState} />
     </Step>
 
     <Step
-        n={3}
+        n={2}
         title="Extract the metadata"
         description="Sends a fetch activity and renders the reply as a link preview."
-        locked={!$sockethubState.actorSet}
+        blockedHint={$sockethubState.actorSet ? undefined : "Confirm the actor first."}
     >
         <div class="flex justify-end">
             <SockethubButton buttonAction={sendFetch} disabled={!$sockethubState.actorSet}>Extract Metadata</SockethubButton>

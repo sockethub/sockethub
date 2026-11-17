@@ -30,7 +30,7 @@ $effect(() => {
 {#snippet brand()}
     <a href={base || "/"} class="flex items-center gap-2 no-underline" aria-label="Sockethub examples home">
         <img src="/sockethub-logo.svg" alt="Sockethub" class="h-6 w-auto" />
-        <span class="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-zinc-500">
+        <span class="hidden rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 min-[420px]:inline lg:inline">
             Examples
         </span>
     </a>

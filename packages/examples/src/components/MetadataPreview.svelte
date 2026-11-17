@@ -101,7 +101,7 @@ const imageFailed = $derived(
             onerror={() => (failedImage = image?.url)}
         />
     {:else}
-        <div class="w-full h-24 bg-zinc-100 flex items-center justify-center text-zinc-400 text-sm">
+        <div class="w-full h-24 bg-zinc-100 flex items-center justify-center text-zinc-500 text-sm">
             No preview image
         </div>
     {/if}

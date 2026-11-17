@@ -84,20 +84,20 @@ async function connectIrc(): Promise<void> {
     title="IRC Platform Example"
     description="Connect to a real IRC network, join a channel, and chat. Sockethub keeps the IRC connection open for you while this page is open."
 >
-    <Step n={1} title="Choose a server and nickname" description="Your actor is nickname@server. Changing either field means confirming the actor again." done={$sockethubState.actorSet}>
-        <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
-            <FormField label="IRC Server" id="server" bind:value={server} placeholder="irc.libera.chat" hint="Try irc.libera.chat or irc.oftc.net." />
+    <Step n={1} title="Choose a server and nickname" description="Try irc.libera.chat or irc.oftc.net. Your actor is nickname@server, so changing either field means confirming it again." done={$sockethubState.actorSet}>
+        <div class="grid grid-cols-[minmax(0,1fr)_6.5rem] gap-3 sm:grid-cols-[minmax(0,1fr)_8rem] sm:gap-4">
+            <FormField label="IRC Server" id="server" bind:value={server} placeholder="irc.libera.chat" />
             <FormField label="Port" id="port" type="number" bind:value={port} placeholder="6697" />
         </div>
         <ActorIdField label="Nickname" bind:value={$actorIdStore} />
         <ActivityActor {actor} {sockethubState} />
     </Step>
 
-    <Step n={2} title="Send credentials" description="Tells Sockethub how to log in. Sent once per session, separate from your activities." done={$sockethubState.credentialsSet}>
+    <Step n={2} title="Send credentials" description="Tells Sockethub how to log in. Sent once per session, separate from your activities." done={$sockethubState.credentialsSet} blockedHint={$sockethubState.actorSet ? undefined : "Confirm the actor first."}>
         <Credentials context="irc" {credentials} {actor} {sockethubState} />
     </Step>
 
-    <Step n={3} title="Connect" description="Sends a connect activity. Sockethub opens the IRC connection." done={$sockethubState.connected}>
+    <Step n={3} title="Connect" description="Sends a connect activity. Sockethub opens the IRC connection." done={$sockethubState.connected} blockedHint={$sockethubState.credentialsSet || $sockethubState.connected ? undefined : "Send credentials first."}>
         <PlatformConnection {sockethubState} {connecting} onConnect={connectIrc} />
     </Step>
 

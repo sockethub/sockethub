@@ -85,7 +85,7 @@ export function displayMessage(m: AnyActivityStream, isResponse = false) {
         {#if $messages.length === 0}
             <div class="flex h-full flex-col items-center justify-center px-6 text-center">
                 <p class="text-sm font-medium text-zinc-600">No messages yet</p>
-                <p class="mt-1 text-[13px] text-zinc-400">Messages in the room, including yours, show up here.</p>
+                <p class="mt-1 text-[13px] text-zinc-500">Messages in the room, including yours, show up here.</p>
             </div>
         {:else}
             <ul class="space-y-2 p-3">

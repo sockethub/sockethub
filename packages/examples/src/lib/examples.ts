@@ -14,6 +14,8 @@ export interface ExampleInfo {
     activities: string[];
     /** Needs an account on a real external service. */
     needsAccount: boolean;
+    /** Short note on what access the example needs. */
+    access: string;
 }
 
 export interface ExampleGroup {
@@ -32,8 +34,9 @@ export const exampleGroups: ExampleGroup[] = [
                 icon: "flask",
                 summary:
                     "A test platform that answers instantly. Learn the message shape with nothing to set up.",
-                activities: ["echo", "greet", "fail"],
+                activities: ["echo", "greet", "fail", "throw"],
                 needsAccount: false,
+                access: "No account needed",
             },
         ],
     },
@@ -48,6 +51,7 @@ export const exampleGroups: ExampleGroup[] = [
                 summary: "Fetch an RSS or Atom feed and get each entry back.",
                 activities: ["fetch"],
                 needsAccount: false,
+                access: "No account needed",
             },
             {
                 path: "/metadata",
@@ -58,6 +62,7 @@ export const exampleGroups: ExampleGroup[] = [
                     "Turn a URL into a link preview: title, description, and image.",
                 activities: ["fetch"],
                 needsAccount: false,
+                access: "No account needed",
             },
         ],
     },
@@ -72,6 +77,7 @@ export const exampleGroups: ExampleGroup[] = [
                 summary: "Connect to an IRC network, join a channel, and chat.",
                 activities: ["connect", "join", "send"],
                 needsAccount: false,
+                access: "No account needed",
             },
             {
                 path: "/xmpp",
@@ -82,6 +88,7 @@ export const exampleGroups: ExampleGroup[] = [
                     "Sign in to a Jabber account and chat in a group room.",
                 activities: ["connect", "join", "send"],
                 needsAccount: true,
+                access: "Needs your own account",
             },
         ],
     },
@@ -96,6 +103,7 @@ export const exampleGroups: ExampleGroup[] = [
                 summary: "Read mail over IMAP and send it over SMTP.",
                 activities: ["connect", "fetch", "send"],
                 needsAccount: true,
+                access: "Needs your own account",
             },
             {
                 path: "/messenger",
@@ -105,6 +113,7 @@ export const exampleGroups: ExampleGroup[] = [
                 summary: "Reply to a customer from a Facebook Page.",
                 activities: ["send"],
                 needsAccount: true,
+                access: "Needs your own account",
             },
             {
                 path: "/instagram",
@@ -114,6 +123,7 @@ export const exampleGroups: ExampleGroup[] = [
                 summary: "Reply from an Instagram professional account.",
                 activities: ["send"],
                 needsAccount: true,
+                access: "Needs your own account",
             },
         ],
     },
@@ -129,6 +139,7 @@ export const exampleGroups: ExampleGroup[] = [
                     "List calendars, add events and to-dos, or read a public .ics feed.",
                 activities: ["fetch", "create", "read"],
                 needsAccount: true,
+                access: "Public feeds need no account",
             },
             {
                 path: "/carddav",
@@ -138,6 +149,7 @@ export const exampleGroups: ExampleGroup[] = [
                 summary: "Browse, search, add, edit, and delete contacts.",
                 activities: ["fetch", "query", "create"],
                 needsAccount: true,
+                access: "Needs your own account",
             },
         ],
     },

@@ -14,5 +14,5 @@ const actor = $derived(
 );
 </script>
 
-<span class="text-zinc-400">{actor}:</span>
+<span class="text-zinc-500">{actor}:</span>
 <span class="text-zinc-700">{entry.object?.content || "(empty)"}</span>

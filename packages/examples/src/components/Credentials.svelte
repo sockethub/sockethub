@@ -42,7 +42,8 @@ async function sendCredentials(data: string): Promise<void> {
 
 <TextAreaSubmit
     title="Credentials"
-    caption="object"
+    done={!!$sockethubState.credentialsSet}
+    doneText="Credentials set"
     obj={credentials}
     buttonText="Set Credentials"
     submitData={sendCredentials}

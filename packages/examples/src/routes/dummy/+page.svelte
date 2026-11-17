@@ -10,7 +10,7 @@ import json from "svelte-highlight/languages/json";
 
 const actorId = "https://sockethub.org/examples/dummy";
 
-let content = $state("");
+let content = $state("Hello from Sockethub");
 
 /**
  * Creates an ActivityStreams object for Sockethub's dummy platform.
@@ -139,18 +139,9 @@ const preview = $derived(`{
             bind:value={content}
             placeholder="Hello from Sockethub"
         />
-        <div class="overflow-hidden rounded-lg border border-zinc-200">
-            <div class="flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-1.5">
-                <span class="text-xs font-semibold text-zinc-700">What gets sent</span>
-                <span class="font-mono text-[11px] text-zinc-400">type changes per button</span>
-            </div>
-            <div class="code-block text-[12.5px]">
-                <Highlight language={json} code={preview} />
-            </div>
-        </div>
     </Step>
 
-    <Step n={2} title="Send it with an activity type" description="Each button sends the same message with a different type. The reply appears in the activity log.">
+    <Step n={2} title="Send it with an activity type" description="Each button sends the same message with a different type. Watch the reply arrive in the activity log.">
         <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
             {#each basicTypes as item (item.type)}
                 <li class="flex items-center justify-between gap-4 px-4 py-3">
@@ -164,8 +155,18 @@ const preview = $derived(`{
         </ul>
     </Step>
 
+    <section class="card overflow-hidden">
+        <div class="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 sm:px-6">
+            <h2 class="text-sm font-semibold text-zinc-900">The message these buttons send</h2>
+            <span class="hidden text-xs text-zinc-500 sm:inline">type changes per button</span>
+        </div>
+        <div class="code-block text-[12.5px]">
+            <Highlight language={json} code={preview} />
+        </div>
+    </section>
+
     <details class="card group overflow-hidden">
-        <summary class="flex cursor-pointer list-none items-center gap-3 px-5 py-4 select-none sm:px-6 [&::-webkit-details-marker]:hidden">
+        <summary class="flex cursor-pointer list-none items-center gap-3 px-4 py-4 select-none sm:px-6 [&::-webkit-details-marker]:hidden">
             <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /></svg>
             </span>
@@ -173,9 +174,9 @@ const preview = $derived(`{
                 <span class="block text-base font-semibold text-zinc-900">Crash and recovery tests</span>
                 <span class="block text-sm text-zinc-500">For Sockethub developers. These kill or hang the dummy platform process.</span>
             </span>
-            <svg class="size-4 shrink-0 text-zinc-400 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+            <svg class="size-4 shrink-0 text-zinc-500 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
         </summary>
-        <ul class="mx-5 mb-5 divide-y divide-zinc-100 rounded-lg border border-zinc-200 sm:mx-6 sm:mb-6">
+        <ul class="mx-4 mb-4 divide-y divide-zinc-100 rounded-lg border border-zinc-200 sm:mx-6 sm:mb-6">
             {#each crashTypes as item (item.type)}
                 <li class="flex items-center justify-between gap-4 px-4 py-3">
                     <div class="min-w-0">
