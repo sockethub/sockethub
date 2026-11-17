@@ -147,7 +147,9 @@ export { SchemaLogs };
     $effect(() => {
         const query = window.matchMedia("(max-width: 1279px)");
         narrow = query.matches;
-        const update = (e: MediaQueryListEvent) => (narrow = e.matches);
+        const update = (e: MediaQueryListEvent) => {
+            narrow = e.matches;
+        };
         query.addEventListener("change", update);
         return () => query.removeEventListener("change", update);
     });

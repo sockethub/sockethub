@@ -22,7 +22,9 @@ $effect(() => {
     visible = true;
     clearTimeout(timer);
     if (event.state !== "waiting") {
-        timer = setTimeout(() => (visible = false), 6000);
+        timer = setTimeout(() => {
+            visible = false;
+        }, 6000);
     }
     return () => clearTimeout(timer);
 });
@@ -31,7 +33,9 @@ $effect(() => {
     const el = document.getElementById("activity-log");
     if (!el) return;
     const observer = new IntersectionObserver(
-        ([entry]) => (logInView = entry.isIntersecting),
+        ([entry]) => {
+            logInView = entry.isIntersecting;
+        },
         { threshold: 0.1 },
     );
     observer.observe(el);
