@@ -1,136 +1,191 @@
-<script>
+<script lang="ts">
 import { base } from "$app/paths";
-import ApiInfo from "../components/ApiInfo.svelte";
-import Intro from "../components/Intro.svelte";
+import ApiInfo from "$components/ApiInfo.svelte";
+import Icon, { type IconName } from "$components/Icon.svelte";
+import { apiDiscovery } from "$lib/api-discovery";
+import { exampleGroups } from "$lib/examples";
+import Highlight from "svelte-highlight";
+import json from "svelte-highlight/languages/json";
+
+const sample = `{
+  "@context": ["https://www.w3.org/ns/activitystreams", "…/irc"],
+  "type": "send",
+  "actor":  { "id": "alice@irc.libera.chat", "type": "person" },
+  "target": { "id": "#sockethub@irc.libera.chat", "type": "room" },
+  "object": { "type": "message", "content": "Hello!" }
+}`;
+
+const concepts: { icon: IconName; term: string; text: string }[] = [
+    {
+        icon: "user",
+        term: "Actor",
+        text: "Who is acting: your IRC nick, your Jabber address, or the URL of a feed.",
+    },
+    {
+        icon: "zap",
+        term: "Activity",
+        text: "What to do: connect, join, send, fetch. The type field of every message.",
+    },
+    {
+        icon: "server",
+        term: "Platform",
+        text: "The Sockethub module that speaks one protocol, such as IRC or CalDAV.",
+    },
+    {
+        icon: "key",
+        term: "Credentials",
+        text: "Logins you hand over once per session. They never travel inside an activity.",
+    },
+];
+
+const enabled = $derived(
+    $apiDiscovery?.state === "available"
+        ? new Set($apiDiscovery.descriptor.platforms.map((p) => p.id))
+        : undefined,
+);
 </script>
 
-<Intro title="Sockethub Examples">
+<svelte:head>
     <title>Sockethub Examples</title>
-    
-    <div class="space-y-6">
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-            <h2 class="text-xl font-semibold text-blue-800 mb-2">What is Sockethub?</h2>
-            <p class="text-blue-700 mb-3">
-                Sockethub is a <strong>protocol gateway</strong> that bridges web applications with various internet protocols 
-                like IRC, XMPP, RSS/ATOM feeds, and more. Instead of implementing each protocol directly in your web app, 
-                you send standardized <strong>ActivityStreams</strong> messages to Sockethub, which handles the protocol-specific details.
-            </p>
-            <p class="text-blue-700">
-                Think of it as a universal translator that lets your web application communicate with 
-                chat servers, feed readers, and other internet services using a single, consistent API.
-            </p>
-        </div>
+</svelte:head>
 
-        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
-            <h2 class="text-xl font-semibold text-green-800 mb-2">Key Concepts</h2>
-            <div class="space-y-3">
-                <div>
-                    <h3 class="font-semibold text-green-700">🎭 Actor</h3>
-                    <p class="text-green-600 text-sm">Your identity on a platform (e.g., IRC nickname, XMPP username, feed URL)</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-green-700">🔧 Platform</h3>
-                    <p class="text-green-600 text-sm">A protocol handler (IRC, XMPP, Feeds, etc.) that runs as a separate process</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-green-700">📝 ActivityStreams</h3>
-                    <p class="text-green-600 text-sm">Standardized JSON format for describing activities like "send message", "connect", "fetch"</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-green-700">🔐 Credentials</h3>
-                    <p class="text-green-600 text-sm">Connection details securely stored per session (servers, passwords, API keys)</p>
-                </div>
+<div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-10 lg:py-16">
+    <!-- Hero -->
+    <section class="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-12">
+        <div>
+            <p class="eyebrow">Interactive examples</p>
+            <h1 class="mt-3 text-4xl leading-[1.1] font-semibold tracking-tight text-zinc-900 sm:text-5xl">Sockethub Examples</h1>
+            <p class="mt-5 text-lg leading-relaxed text-zinc-600">
+                Sockethub lets a web page talk to IRC, XMPP, email, feeds, calendars, and more.
+                Your app sends one kind of JSON message over a WebSocket, and Sockethub speaks each protocol for you.
+            </p>
+            <p class="mt-3 text-base leading-relaxed text-zinc-500">
+                Each example below runs against this server. Fill in a form, press a button,
+                and watch the exact messages go back and forth.
+            </p>
+            <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+                <a href="{base}/dummy" class="btn btn-primary px-5 no-underline">
+                    Start with the Dummy example
+                    <Icon name="arrow" class="size-4" />
+                </a>
+                <a href="https://github.com/sockethub/sockethub/blob/master/docs/client-guide.md" target="_blank" rel="noreferrer" class="btn btn-secondary px-5 no-underline">
+                    <Icon name="book" class="size-4" />
+                    Read the client guide
+                </a>
             </div>
         </div>
 
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-            <h2 class="text-xl font-semibold text-yellow-800 mb-2">How It Works</h2>
-            <ol class="text-yellow-700 space-y-2 text-sm">
-                <li><span class="font-semibold">1.</span> Your web app connects to Sockethub via WebSocket</li>
-                <li><span class="font-semibold">2.</span> You define an actor and send ActivityStreams messages (<code>credentials</code>, <code>connect</code>, <code>join</code>, …) with full actor objects</li>
-                <li><span class="font-semibold">3.</span> Sockethub routes messages to the appropriate platform</li>
-                <li><span class="font-semibold">4.</span> Platform handles protocol-specific communication</li>
-                <li><span class="font-semibold">5.</span> Results are sent back to your web app as ActivityStreams</li>
-            </ol>
-        </div>
+        <figure class="card overflow-hidden">
+            <figcaption class="flex items-center justify-between border-b border-zinc-200 px-4 py-2.5">
+                <span class="text-xs font-semibold text-zinc-700">Sending a chat message to IRC</span>
+                <span class="font-mono text-[11px] text-zinc-400">ActivityStreams JSON</span>
+            </figcaption>
+            <div class="code-block text-[12.5px] leading-relaxed sm:text-[13px]">
+                <Highlight language={json} code={sample} />
+            </div>
+        </figure>
+    </section>
 
-        <div class="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">Explore the Examples</h2>
-            <p class="text-purple-700 mb-3">
-                Each example demonstrates a different platform. Start with <strong>Dummy</strong> to understand 
-                the basic flow, then explore real-world protocols:
-            </p>
-            <div class="grid gap-3 text-sm">
-                <a href="{base}/dummy" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors border-l-4 border-l-green-400">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-semibold text-purple-800">🔧 Dummy Platform</div>
-                            <div class="text-purple-600">Learn the basics with simple echo/fail examples</div>
-                        </div>
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Start Here</span>
+    <!-- How it works -->
+    <section class="mt-16 lg:mt-20" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="text-xl font-semibold tracking-tight text-zinc-900">How it works</h2>
+        <ol class="mt-5 grid gap-3 md:grid-cols-3 md:gap-0">
+            {#each [
+                { icon: "code", title: "Your web app", text: "Sends an activity with the Sockethub client over Socket.IO." },
+                { icon: "server", title: "Sockethub", text: "Validates it and hands it to the right platform, in its own process." },
+                { icon: "chat", title: "The network", text: "IRC, XMPP, IMAP, CalDAV… Replies come back to you as activities." },
+            ] as step, i (step.title)}
+                <li class="relative flex gap-4 rounded-xl border border-zinc-200 bg-white p-5 md:rounded-none md:border-r-0 md:first:rounded-l-xl md:last:rounded-r-xl md:last:border-r">
+                    <span class="flex size-9 shrink-0 items-center justify-center rounded-lg {i === 1 ? 'bg-brand-50 text-brand-600' : 'bg-zinc-100 text-zinc-600'}">
+                        <Icon name={step.icon as IconName} class="size-[18px]" />
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-semibold text-zinc-900">{step.title}</h3>
+                        <p class="mt-1 text-sm leading-relaxed text-zinc-500">{step.text}</p>
                     </div>
-                </a>
-                <a href="{base}/email" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                    <div class="font-semibold text-purple-800">✉️ Email</div>
-                    <div class="text-purple-600">Fetch and watch filtered mail with IMAP, and send with SMTP</div>
-                </a>
-                <div class="grid md:grid-cols-2 gap-3">
-                    <a href="{base}/caldav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">📅 CalDAV Calendars</div>
-                        <div class="text-purple-600">Discover calendars and create events or tasks</div>
-                    </a>
-                    <a href="{base}/carddav" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">👤 CardDAV Contacts</div>
-                        <div class="text-purple-600">Discover address books, then search, add, edit, and delete contacts</div>
-                    </a>
-                </div>
-                <div class="grid md:grid-cols-2 gap-3">
-                    <a href="{base}/feeds" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">📰 RSS/ATOM Feeds</div>
-                        <div class="text-purple-600">Fetch and parse web feeds</div>
-                    </a>
-                    <a href="{base}/irc" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors border-l-4 border-l-orange-400">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-semibold text-purple-800">💬 IRC Chat</div>
-                                <div class="text-purple-600">Connect to IRC servers and channels</div>
-                            </div>
-                            <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">Advanced</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="grid md:grid-cols-2 gap-3">
-                    <a href="{base}/instagram" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">📷 Instagram</div>
-                        <div class="text-purple-600">Send text replies from a professional account</div>
-                    </a>
-                    <a href="{base}/messenger" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">✉️ Messenger</div>
-                        <div class="text-purple-600">Send text replies from a Facebook Page</div>
-                    </a>
-                </div>
-                <div class="grid md:grid-cols-2 gap-3">
-                    <a href="{base}/metadata" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors">
-                        <div class="font-semibold text-purple-800">🔍 Metadata</div>
-                        <div class="text-purple-600">Extract metadata from web pages</div>
-                    </a>
-                    <a href="{base}/xmpp" class="block p-3 bg-white rounded border hover:bg-purple-50 transition-colors border-l-4 border-l-orange-400">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-semibold text-purple-800">📨 XMPP Messaging</div>
-                                <div class="text-purple-600">Send and receive XMPP messages</div>
-                            </div>
-                            <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">Advanced</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
+                    {#if i < 2}
+                        <span class="absolute top-1/2 -right-3 z-10 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 md:flex">
+                            <Icon name="arrow" class="size-3.5" />
+                        </span>
+                    {/if}
+                </li>
+            {/each}
+        </ol>
 
+        <dl class="mt-8 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+            {#each concepts as concept (concept.term)}
+                <div>
+                    <dt class="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                        <Icon name={concept.icon} class="size-4 text-brand-600" />
+                        {concept.term}
+                    </dt>
+                    <dd class="mt-1.5 text-sm leading-relaxed text-zinc-500">{concept.text}</dd>
+                </div>
+            {/each}
+        </dl>
+    </section>
+
+    <!-- Catalog -->
+    <section class="mt-16 lg:mt-20" aria-labelledby="examples-heading">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+            <h2 id="examples-heading" class="text-xl font-semibold tracking-tight text-zinc-900">Pick an example</h2>
+            <p class="text-sm text-zinc-500">Greyed-out examples are not enabled on this server.</p>
+        </div>
+        <div class="mt-6 space-y-8">
+            {#each exampleGroups as group (group.label)}
+                <div>
+                    <h3 class="text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">{group.label}</h3>
+                    <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {#each group.items as item (item.path)}
+                            {@const off = enabled !== undefined && !enabled.has(item.platform)}
+                            {@const featured = item.platform === "dummy"}
+                            <li class={featured ? "sm:col-span-2 lg:col-span-3" : ""}>
+                                <a
+                                    href={off ? undefined : `${base}${item.path}`}
+                                    aria-disabled={off || undefined}
+                                    class="group flex h-full gap-4 rounded-xl border bg-white p-4 no-underline sm:p-5 transition-all {off
+                                        ? 'cursor-not-allowed border-zinc-200 opacity-50'
+                                        : featured
+                                          ? 'border-brand-200 shadow-[0_1px_2px_rgb(0_0_0/0.04)] ring-1 ring-brand-100 hover:border-brand-500'
+                                          : 'border-zinc-200 shadow-[0_1px_2px_rgb(0_0_0/0.04)] hover:border-zinc-300 hover:shadow-md'}"
+                                >
+                                    <span class="flex size-10 shrink-0 items-center justify-center rounded-lg {featured ? 'bg-brand-50 text-brand-600' : 'bg-zinc-100 text-zinc-600'}">
+                                        <Icon name={item.icon} class="size-5" />
+                                    </span>
+                                    <span class="flex min-w-0 flex-1 flex-col">
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-semibold text-zinc-900">{item.title}</span>
+                                            {#if featured}
+                                                <span class="chip bg-brand-50 text-brand-700">Start here</span>
+                                            {/if}
+                                            {#if off}
+                                                <span class="chip bg-zinc-100 text-zinc-500">Not enabled</span>
+                                            {/if}
+                                        </span>
+                                        <span class="mt-1 text-sm leading-relaxed text-zinc-500">{item.summary}</span>
+                                        <span class="mt-auto flex flex-wrap items-center gap-1.5 pt-3">
+                                            {#each item.activities as activity (activity)}
+                                                <code class="tok">{activity}</code>
+                                            {/each}
+                                        </span>
+                                        <span class="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
+                                            <Icon name={item.needsAccount ? "key" : "check"} class="size-3.5 {item.needsAccount ? 'text-zinc-400' : 'text-emerald-600'}" />
+                                            {item.needsAccount ? "Needs your own account" : "No account needed"}
+                                        </span>
+                                    </span>
+                                    {#if !off}
+                                        <Icon name="arrow" class="mt-0.5 size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-600" />
+                                    {/if}
+                                </a>
+                            </li>
+                        {/each}
+                    </ul>
+                </div>
+            {/each}
+        </div>
+    </section>
+
+    <section class="mt-16 lg:mt-20">
         <ApiInfo />
-
-        <div class="text-center text-gray-600 text-sm bg-gray-50 p-4 rounded-lg">
-            💡 <strong>Tip:</strong> Watch the connection status at the top and the activity log at the bottom of each example to understand what's happening behind the scenes.
-        </div>
-    </div>
-</Intro>
+    </section>
+</div>

@@ -1,52 +1,132 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens. One neutral scale (zinc) for surfaces and text, the
+ * Sockethub orange-red as the single accent, and semantic colors only for
+ * state (success, error, pending).
+ */
+@theme {
+    --font-sans:
+        "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    --font-mono:
+        "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        monospace;
+
+    --color-brand-50: #fff4ed;
+    --color-brand-100: #ffe5d4;
+    --color-brand-200: #fec8a8;
+    --color-brand-500: #f2541b;
+    --color-brand-600: #dc4410;
+    --color-brand-700: #b5340b;
+}
+
 @layer base {
-    h1 {
-        @apply text-2xl;
+    html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
-    h2 {
-        @apply text-xl;
-    }
-    h3 {
-        @apply text-lg;
+    body {
+        @apply bg-zinc-50 text-zinc-900 font-sans;
     }
     a {
-        @apply text-blue-600 underline;
+        @apply text-brand-700 underline decoration-brand-200 underline-offset-2 hover:decoration-brand-600;
     }
-    button:disabled {
-        background-color: lightgrey !important;
-    }
-    button:disabled:hover {
-        background-color: lightgrey !important;
+    code {
+        @apply font-mono text-[0.85em];
     }
     pre {
         white-space: pre-wrap;
     }
-}
-@layer components {
-    .incoming-messages {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        overflow: scroll;
-        height: 20em;
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-brand-500;
     }
-    .incoming-messages li {
-        padding: 0.1em 1%;
-    }
-    .incoming-messages li:nth-child(odd) {
-        background: #eee;
-    }
-    .incoming-messages-container {
-        height: 20rem;
-        display: block;
-        border: 1px solid #ccc;
-        overflow: scroll;
-        overflow-anchor: none;
-    }
-    .incoming-messages-anchor {
-        overflow-anchor: auto;
-        height: 1px;
+    fieldset:disabled {
+        @apply opacity-60;
     }
 }
 
-@tailwind utilities;
+@layer components {
+    /* Surfaces */
+    .card {
+        @apply rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgb(0_0_0/0.04)];
+    }
+
+    /* Buttons */
+    .btn {
+        @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors duration-150 select-none disabled:cursor-not-allowed;
+    }
+    .btn-primary {
+        @apply bg-zinc-900 text-white shadow-sm hover:bg-zinc-700 disabled:bg-zinc-200 disabled:text-zinc-500 disabled:shadow-none;
+    }
+    .btn-secondary {
+        @apply border border-zinc-300 bg-white text-zinc-800 shadow-sm hover:bg-zinc-50 disabled:border-zinc-200 disabled:text-zinc-400 disabled:shadow-none;
+    }
+    .btn-danger {
+        @apply border border-red-200 bg-white text-red-700 hover:bg-red-50 disabled:border-zinc-200 disabled:text-zinc-400;
+    }
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    /* Form controls */
+    .label {
+        @apply block text-sm font-medium text-zinc-800;
+    }
+    .input {
+        @apply block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] text-zinc-900 shadow-sm transition-colors placeholder:text-zinc-400 hover:border-zinc-400 focus:border-brand-500 focus:ring-3 focus:ring-brand-100 focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-500 sm:text-sm;
+    }
+    .input-mono {
+        @apply font-mono text-[13px] leading-relaxed sm:text-[13px];
+    }
+    .hint {
+        @apply text-[13px] leading-relaxed text-zinc-500;
+    }
+    .check {
+        @apply size-4 rounded border-zinc-300 accent-zinc-900;
+    }
+
+    /* Inline code tokens inside prose */
+    .tok {
+        @apply rounded-md border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.8em] text-zinc-800;
+    }
+
+    /* Messages */
+    .callout {
+        @apply flex gap-3 rounded-lg border px-4 py-3 text-sm leading-relaxed;
+    }
+    .callout-info {
+        @apply border-zinc-200 bg-zinc-50 text-zinc-700;
+    }
+    .callout-success {
+        @apply border-emerald-200 bg-emerald-50 text-emerald-900;
+    }
+    .callout-error {
+        @apply border-red-200 bg-red-50 text-red-900 break-words whitespace-pre-wrap;
+    }
+    .callout-warn {
+        @apply border-amber-200 bg-amber-50 text-amber-900;
+    }
+
+    /* Small labels */
+    .chip {
+        @apply inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tracking-wide;
+    }
+    .eyebrow {
+        @apply text-xs font-semibold tracking-[0.08em] text-brand-700 uppercase;
+    }
+}
+
+/* Highlighted JSON blocks (svelte-highlight) */
+.code-block pre {
+    margin: 0;
+    white-space: pre;
+    overflow-x: auto;
+}
+.code-block .hljs {
+    padding: 1rem 1.125rem;
+    background: var(--color-zinc-50);
+    font-family: var(--font-mono);
+    line-height: 1.65;
+}

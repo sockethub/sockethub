@@ -90,6 +90,7 @@ export { SchemaLogs };
 <script lang="ts">
     import MetadataPreview, { isPageObject, type PageObject } from "../MetadataPreview.svelte";
     import LogEntry from "./LogEntry.svelte";
+    import Icon from "../Icon.svelte";
     import SchemaLogEntryComponent from "./SchemaLogEntry.svelte";
     import Highlight from "svelte-highlight";
     import json from "svelte-highlight/languages/json";
@@ -104,7 +105,7 @@ export { SchemaLogs };
     let logModalState = $state(false);
     let jsonSend = $state("");
     let jsonResp = $state("");
-    let modalTitle = $state("ActivityStreams Data Exchange");
+    let modalTitle = $state("Message details");
     /** Page object from the response shown in the modal, for a rendered preview. */
     let modalPage: PageObject | undefined = $state();
 
@@ -134,7 +135,7 @@ export { SchemaLogs };
     function showLog(uid: string) {
         return () => {
             const { sent, response } = resolveLogDetails(logs, meta, uid);
-            modalTitle = "ActivityStreams Data Exchange";
+            modalTitle = "Message details";
             logModalState = true;
             jsonSend = sent ? JSON.stringify(sent, null, 2) : "";
             jsonResp =
@@ -148,7 +149,7 @@ export { SchemaLogs };
 
     function showSchemaLog(entry: SchemaLogEntry) {
         return () => {
-            modalTitle = `Schema Event: ${entry._logType}`;
+            modalTitle = "Client event";
             logModalState = true;
             jsonSend = JSON.stringify(entry.payload, null, 2);
             jsonResp = "";
@@ -157,162 +158,141 @@ export { SchemaLogs };
     }
 </script>
 
-<div class="bg-gradient-to-r from-slate-50 to-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                <span class="mr-2">📡</span>
-                Sockethub Activity Log
-            </h3>
-            <p class="text-gray-600 text-sm mt-1">
-                Real-time communication between your browser and Sockethub server
+<section class="card flex flex-col overflow-hidden xl:max-h-[calc(100vh-4rem)]">
+    <header class="flex items-start justify-between gap-3 border-b border-zinc-200 px-5 py-4">
+        <div class="min-w-0">
+            <h2 class="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                <Icon name="activity" class="size-4 text-brand-600" />
+                Activity log
+                {#if unified.length > 0}
+                    <span class="rounded-full bg-zinc-100 px-1.5 text-[11px] font-semibold text-zinc-500 tabular-nums">{unified.length}</span>
+                {/if}
+            </h2>
+            <p class="mt-0.5 text-[13px] text-zinc-500">
+                Every message this page sends to Sockethub, and what comes back. Open an entry for the full JSON.
             </p>
         </div>
-        <div class="flex items-center space-x-4 text-xs">
-            <div class="flex items-center space-x-1">
-                <div class="w-3 h-3 bg-orange-400 rounded-full"></div>
-                <span class="text-gray-600">Pending</span>
-            </div>
-            <div class="flex items-center space-x-1">
-                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span class="text-gray-600">Complete</span>
-            </div>
-            <div class="flex items-center space-x-1">
-                <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
-                <span class="text-gray-600">Schema</span>
-            </div>
-        </div>
+    </header>
+    <div class="flex items-center gap-4 border-b border-zinc-100 bg-zinc-50/60 px-5 py-2 text-[11px] text-zinc-500">
+        <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-amber-500"></span>Waiting</span>
+        <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-emerald-500"></span>Answered</span>
+        <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-red-500"></span>Error</span>
+        <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-sky-500"></span>Client event</span>
     </div>
-    
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div class="p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-            <p class="text-sm text-gray-700">
-                💡 <strong>How to read this log:</strong> Each entry shows messages sent to and received from Sockethub. 
-                Click "View Details" to see the full JSON data being exchanged.
-            </p>
-        </div>
-        
-        <div id="messages" class="max-h-96 overflow-y-auto">
-            {#if unified.length === 0}
-                <div class="p-8 text-center text-gray-500">
-                    <div class="text-4xl mb-2">📭</div>
-                    <p class="font-medium">No activity yet</p>
-                    <p class="text-sm">Activity will appear here when you interact with Sockethub</p>
-                </div>
-            {:else}
-                <ul class="divide-y divide-gray-100">
-                    {#each unified as item (item.kind === "schema" ? item.entry._logId : item.id)}
-                        {#if item.kind === "schema"}
-                            <SchemaLogEntryComponent entry={item.entry} buttonAction={showSchemaLog(item.entry)} />
-                        {:else if Array.isArray(item.tuple[item.tuple.length - 1])}
-                            {#each Object.entries(item.tuple[item.tuple.length - 1]) as [s, r]}
-                                {#if r}
-                                    <LogEntry
-                                        buttonAction={showLog(`${item.id}-${s}`)}
-                                        hasSend={Object.prototype.hasOwnProperty.call(item.tuple[0], "@context")}
-                                        hasResponse={typeof logs[item.id][1] !== "undefined"}
-                                        id={`${item.id}-${s}`}
-                                        entry={r}
-                                        timestamp={item.timestamp}
-                                    />
-                                {/if}
-                            {/each}
-                        {:else}
-                            {@const hasSend = Object.prototype.hasOwnProperty.call(item.tuple[0], "@context")}
-                            {@const hasResponse = Object.prototype.hasOwnProperty.call(item.tuple[1], "@context")}
-                            <LogEntry
-                                buttonAction={showLog(item.id)}
-                                id={item.id}
-                                {hasSend}
-                                {hasResponse}
-                                entry={(hasResponse
-                                    ? item.tuple[1]
-                                    : item.tuple[0]) as AnyActivityStream}
-                                timestamp={item.timestamp}
-                            />
-                        {/if}
-                    {/each}
-                </ul>
-            {/if}
-        </div>
-    </div>
-</div>
 
+    <div id="messages" class="max-h-[28rem] min-h-0 flex-1 overflow-y-auto xl:max-h-none">
+        {#if unified.length === 0}
+            <div class="flex flex-col items-center px-6 py-12 text-center">
+                <span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+                    <Icon name="inbox" class="size-5" />
+                </span>
+                <p class="mt-3 text-sm font-medium text-zinc-700">No activity yet</p>
+                <p class="mt-1 max-w-56 text-[13px] text-zinc-500">Messages appear here as soon as you send one.</p>
+            </div>
+        {:else}
+            <ul class="divide-y divide-zinc-100">
+                {#each unified as item (item.kind === "schema" ? item.entry._logId : item.id)}
+                    {#if item.kind === "schema"}
+                        <SchemaLogEntryComponent entry={item.entry} buttonAction={showSchemaLog(item.entry)} />
+                    {:else if Array.isArray(item.tuple[item.tuple.length - 1])}
+                        {#each Object.entries(item.tuple[item.tuple.length - 1]) as [s, r]}
+                            {#if r}
+                                <LogEntry
+                                    buttonAction={showLog(`${item.id}-${s}`)}
+                                    hasSend={Object.prototype.hasOwnProperty.call(item.tuple[0], "@context")}
+                                    hasResponse={typeof logs[item.id][1] !== "undefined"}
+                                    id={`${item.id}-${s}`}
+                                    entry={r}
+                                    timestamp={item.timestamp}
+                                />
+                            {/if}
+                        {/each}
+                    {:else}
+                        {@const hasSend = Object.prototype.hasOwnProperty.call(item.tuple[0], "@context")}
+                        {@const hasResponse = Object.prototype.hasOwnProperty.call(item.tuple[1], "@context")}
+                        <LogEntry
+                            buttonAction={showLog(item.id)}
+                            id={item.id}
+                            {hasSend}
+                            {hasResponse}
+                            entry={(hasResponse
+                                ? item.tuple[1]
+                                : item.tuple[0]) as AnyActivityStream}
+                            timestamp={item.timestamp}
+                        />
+                    {/if}
+                {/each}
+            </ul>
+        {/if}
+    </div>
+</section>
+
+{#if logModalState}
 <div
-    class="{logModalState
-        ? 'flex items-center justify-center'
-        : 'hidden'} bg-black bg-opacity-50 fixed top-0 left-0 w-full h-full z-50 p-4"
+    class="fixed inset-0 z-50 flex items-end justify-center bg-zinc-900/50 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+    role="presentation"
+    onclick={(e) => e.target === e.currentTarget && (logModalState = false)}
 >
-    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <!-- Modal Header -->
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                    <span class="mr-2">🔍</span>
-                    {modalTitle}
-                </h3>
-                <button
-                    type="button"
-                    aria-label="Close activity log details"
-                    onclick={() => (logModalState = false)}
-                    class="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <div
+        class="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="log-modal-title"
+    >
+        <div class="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4 sm:px-6">
+            <div>
+                <h3 id="log-modal-title" class="text-base font-semibold text-zinc-900">{modalTitle}</h3>
+                <p class="mt-0.5 text-[13px] text-zinc-500">
+                    {jsonResp ? "The ActivityStreams message your page sent, and Sockethub's reply." : "The payload of this client event."}
+                </p>
             </div>
-            <p class="text-gray-600 text-sm mt-1">
-                Raw JSON data showing the ActivityStreams message exchange with Sockethub
-            </p>
+            <button
+                type="button"
+                aria-label="Close activity log details"
+                onclick={() => (logModalState = false)}
+                class="-mr-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+            >
+                <Icon name="x" class="size-5" />
+            </button>
         </div>
-        
-        <!-- Modal Content -->
-        <div class="flex-1 overflow-auto p-6 space-y-6">
+
+        <div class="flex-1 space-y-5 overflow-auto px-5 py-5 sm:px-6">
             {#if modalPage}
-            <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
-                <h4 class="font-semibold text-purple-900 mb-3 flex items-center">
-                    <span class="mr-2">🖼️</span>
-                    Rendered Preview
-                </h4>
-                <MetadataPreview page={modalPage} />
-            </div>
+                <div>
+                    <h4 class="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">Rendered preview</h4>
+                    <MetadataPreview page={modalPage} />
+                </div>
             {/if}
 
-            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
-                <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
-                    <span class="mr-2">{jsonResp ? '📤' : '📋'}</span>
-                    {jsonResp ? 'Sent to Sockethub' : 'Event Payload'}
+            <div>
+                <h4 class="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                    {#if jsonResp}<Icon name="up" class="size-3.5 text-brand-600" /> Sent to Sockethub{:else}Event payload{/if}
                 </h4>
-                <div class="bg-white rounded border border-blue-200 overflow-hidden">
+                <div class="code-block overflow-hidden rounded-lg border border-zinc-200 text-[13px]">
                     <Highlight language={json} code={jsonSend} />
                 </div>
             </div>
 
             {#if jsonResp}
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                <h4 class="font-semibold text-green-900 mb-3 flex items-center">
-                    <span class="mr-2">📥</span>
-                    Response from Sockethub
-                </h4>
-                <div class="bg-white rounded border border-green-200 overflow-hidden">
-                    <Highlight language={json} code={jsonResp} />
+                <div>
+                    <h4 class="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                        <Icon name="down" class="size-3.5 text-emerald-600" /> Response from Sockethub
+                    </h4>
+                    <div class="code-block overflow-hidden rounded-lg border border-zinc-200 text-[13px]">
+                        <Highlight language={json} code={jsonResp} />
+                    </div>
                 </div>
-            </div>
             {/if}
         </div>
-        
-        <!-- Modal Footer -->
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
-            <button
-                onclick={() => (logModalState = false)}
-                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-            >
-                Close
-            </button>
+
+        <div class="flex justify-end border-t border-zinc-200 bg-zinc-50 px-5 py-3 sm:px-6">
+            <button type="button" onclick={() => (logModalState = false)} class="btn btn-secondary">Close</button>
         </div>
     </div>
 </div>
+{/if}
+
+<svelte:window onkeydown={(e) => logModalState && e.key === "Escape" && (logModalState = false)} />
 
 <svelte:head>
     {#if logModalState}

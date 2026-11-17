@@ -75,14 +75,28 @@ export function displayMessage(m: AnyActivityStream, isResponse = false) {
 </script>
 
 <div>
-    <label for="incomingMessagesContainer" class="text-gray-900 font-bold">Incoming Messages</label>
-
-    <div id="incomingMessagesContainer" class="incoming-messages-container w-full">
-        <ui class="incoming-messages">
-            {#each $messages as l}
-                <li>{l[0]}: {l[1]}</li>
-            {/each}
-        </ui>
-        <div class="incoming-messages-anchor"></div>
+    <h3 id="incoming-messages-label" class="sr-only">Messages</h3>
+    <div
+        id="incomingMessagesContainer"
+        class="h-72 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 [overflow-anchor:none]"
+        aria-labelledby="incoming-messages-label"
+        aria-live="polite"
+    >
+        {#if $messages.length === 0}
+            <div class="flex h-full flex-col items-center justify-center px-6 text-center">
+                <p class="text-sm font-medium text-zinc-600">No messages yet</p>
+                <p class="mt-1 text-[13px] text-zinc-400">Messages in the room, including yours, show up here.</p>
+            </div>
+        {:else}
+            <ul class="space-y-2 p-3">
+                {#each $messages as [name, content], i (i)}
+                    <li class="text-sm leading-relaxed">
+                        <span class="font-semibold text-zinc-900">{name}</span>
+                        <span class="text-zinc-700">{content}</span>
+                    </li>
+                {/each}
+            </ul>
+        {/if}
+        <div class="h-px [overflow-anchor:auto]"></div>
     </div>
 </div>

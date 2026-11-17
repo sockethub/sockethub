@@ -1,21 +1,13 @@
 <script lang="ts">
+import FormField from "./FormField.svelte";
+
 interface Props {
     value: string;
-    class?: string;
+    label?: string;
+    hint?: string;
 }
 
-let {
-    value = $bindable(),
-    class: customClass = "bg-white border border-solid border-gray-300 rounded",
-}: Props = $props();
+let { value = $bindable(), label = "Actor ID", hint }: Props = $props();
 </script>
 
-<div class="pb-4">
-    <label for="actor-id-input" class="pr-3">Actor ID</label>
-    <input
-        id="actor-id-input"
-        class={customClass}
-        type="text"
-        bind:value
-    />
-</div>
+<FormField id="actor-id-input" {label} {hint} bind:value />

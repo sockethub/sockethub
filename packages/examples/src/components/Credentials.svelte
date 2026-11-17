@@ -42,6 +42,7 @@ async function sendCredentials(data: string): Promise<void> {
 
 <TextAreaSubmit
     title="Credentials"
+    caption="object"
     obj={credentials}
     buttonText="Set Credentials"
     submitData={sendCredentials}

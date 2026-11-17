@@ -1,6 +1,7 @@
 <!-- @migration-task Error while migrating Svelte code: can't migrate `let joining = false;` to `$state` because there's a variable named state.
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
+import Icon from "$components/Icon.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
@@ -75,55 +76,32 @@ async function joinRoom(): Promise<void> {
 }
 </script>
 
-<div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 shadow-sm">
-    <h4 class="text-lg font-bold text-indigo-900 mb-4 flex items-center">
-        <span class="mr-2">🏠</span>
-        Join Chat Room
-    </h4>
-    
-    <div class="space-y-4">
-        <div class="w-full space-y-2">
-            <label for="room" class="block text-sm font-semibold text-gray-700">Room/Channel</label>
-            <input 
-                id="room" 
-                bind:value={room} 
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
-                placeholder="#sockethub or kosmos-random@kosmos.chat"
-            />
-            <p class="text-gray-500 text-xs">
-                💡 IRC: enter a channel with its # (e.g. #sockethub); XMPP: room@server.com
-            </p>
-        </div>
-        
-        <div class="flex justify-end">
-            <SockethubButton
-                disabled={!$sockethubState.connected || $sockethubState.joined || joining}
-                buttonAction={joinRoom}
-            >
-                {#if joining}
-                    <div class="flex items-center space-x-2">
-                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Joining...</span>
-                    </div>
-                {:else if $sockethubState.joined}
-                    <div class="flex items-center space-x-2">
-                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Joined</span>
-                    </div>
-                {:else}
-                    <div class="flex items-center space-x-2">
-                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        <span>Join Room</span>
-                    </div>
-                {/if}
-            </SockethubButton>
-        </div>
+<div class="space-y-1.5">
+    <label for="room" class="label">{context === "irc" ? "Channel" : "Room address"}</label>
+    <div class="flex flex-col gap-2 sm:flex-row">
+        <input
+            id="room"
+            bind:value={room}
+            class="input sm:flex-1"
+            placeholder={context === "irc" ? "#sockethub" : "room@conference.example.org"}
+        />
+        <SockethubButton
+            disabled={!$sockethubState.connected || $sockethubState.joined || joining}
+            buttonAction={joinRoom}
+        >
+            {#if joining}
+                <Icon name="loader" class="size-4 animate-spin" />
+                <span>Joining…</span>
+            {:else if $sockethubState.joined}
+                <Icon name="check" class="size-4" />
+                <span>Joined</span>
+            {:else}
+                <Icon name="door" class="size-4" />
+                <span>Join Room</span>
+            {/if}
+        </SockethubButton>
     </div>
+    <p class="hint">
+        {context === "irc" ? "Include the leading #. Sockethub adds the server for you." : "The full address of a multi-user chat room."}
+    </p>
 </div>

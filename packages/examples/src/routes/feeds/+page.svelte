@@ -3,6 +3,7 @@ import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
+import Step from "$components/Step.svelte";
 import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import { writable } from "svelte/store";
@@ -34,51 +35,39 @@ async function sendFetch(): Promise<void> {
 }
 </script>
 
-<BaseExample 
+<BaseExample
+    platform="feeds"
     title="Feeds Platform Example"
-    description="The feeds platform takes an RSS/ATOM feed URL, fetches and parses it, and returns an array of Activity Objects for each entry."
+    description="Give Sockethub the address of an RSS or Atom feed. It downloads and parses the feed, and sends back one activity per entry."
 >
-    <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg mb-6">
-        <h3 class="text-lg font-semibold text-green-800 mb-2">📰 How Feed Processing Works</h3>
-        <p class="text-green-700 text-sm mb-3">
-            This example shows how Sockethub can fetch and parse RSS/ATOM feeds from any website.
-        </p>
-        <div class="text-green-700 text-sm space-y-1">
-            <div><strong>🌐 Fetching:</strong> Sockethub downloads the feed content from the URL</div>
-            <div><strong>🔍 Parsing:</strong> Content is parsed from RSS/ATOM format</div>
-            <div><strong>📝 Converting:</strong> Each feed entry becomes an ActivityStreams object</div>
-            <div><strong>📊 Results:</strong> You receive an array of structured feed entries</div>
-        </div>
-    </div>
-    <div class="space-y-4">
-        <FormField label="Feed URL" id="URL" bind:value={url} placeholder="https://example.com/feed.xml" />
-        <p class="text-gray-600 text-sm">
-            The feed URL is the actor <code>id</code> with <code>type: "feed"</code>.
-        </p>
+    <Step n={1} title="Choose a feed" done={$sockethubState.actorSet}>
+        <FormField
+            label="Feed URL"
+            id="URL"
+            type="url"
+            bind:value={url}
+            placeholder="https://example.com/feed.xml"
+            hint="For feeds, the URL is the actor: Sockethub fetches on behalf of the feed itself."
+        />
+    </Step>
 
+    <Step n={2} title="Confirm the actor" description='The actor goes on every activity. Here its id is the feed URL and its type is "feed".' done={$sockethubState.actorSet}>
         <ActivityActor {actor} {sockethubState} />
+    </Step>
 
-        <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-            <p class="text-blue-700 text-sm">
-                <strong>💡 What happens when you click Fetch:</strong><br>
-                Sockethub sends a <code>fetch</code> activity with the feed URL as the actor and returns a collection of entries.
-            </p>
-        </div>
-
+    <Step
+        n={3}
+        title="Fetch the feed"
+        description="Sends a fetch activity. Each entry comes back as its own message in the activity log."
+        locked={!$sockethubState.actorSet}
+    >
         {#if fetchError}
-            <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm" role="alert">
-                <p class="font-semibold mb-1">Fetch failed</p>
-                <p class="font-mono text-xs whitespace-pre-wrap break-words">{fetchError}</p>
+            <div class="callout callout-error" role="alert">
+                <p><strong class="font-semibold">Fetch failed.</strong> <span class="font-mono text-xs">{fetchError}</span></p>
             </div>
         {/if}
-
-        <div class="w-full text-right">
-            <SockethubButton
-                buttonAction={sendFetch}
-                disabled={!$sockethubState.actorSet}
-            >
-                Fetch Feed
-            </SockethubButton>
+        <div class="flex justify-end">
+            <SockethubButton buttonAction={sendFetch} disabled={!$sockethubState.actorSet}>Fetch Feed</SockethubButton>
         </div>
-    </div>
+    </Step>
 </BaseExample>

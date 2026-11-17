@@ -1,24 +1,19 @@
-<script>
+<script lang="ts">
 import { connected } from "$lib/sockethub";
 </script>
 
-<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-    <div class="flex items-center justify-center space-x-3">
-        <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 rounded-full {$connected ? 'bg-green-400 animate-pulse' : 'bg-gray-300'}"></div>
-            <span class="text-sm font-medium text-gray-700">Sockethub Connection</span>
-        </div>
-        <span
-            class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide {$connected
-                ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-600'}"
-        >
-            {$connected ? "Connected" : "Disconnected"}
-        </span>
-    </div>
-    {#if !$connected}
-        <p class="text-xs text-gray-500 text-center mt-2">
-            Make sure Sockethub server is running
-        </p>
-    {/if}
+<!-- Live status of this page's Socket.IO connection to the Sockethub server. -->
+<div
+    class="flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium {$connected
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+        : 'border-zinc-200 bg-zinc-50 text-zinc-600'}"
+    title={$connected ? "This page is connected to the Sockethub server" : "Make sure the Sockethub server is running"}
+>
+    <span class="relative flex size-2">
+        {#if $connected}
+            <span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
+        {/if}
+        <span class="relative inline-flex size-2 rounded-full {$connected ? 'bg-emerald-500' : 'bg-zinc-400'}"></span>
+    </span>
+    {$connected ? "Connected" : "Disconnected"}
 </div>

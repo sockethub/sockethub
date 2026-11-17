@@ -83,7 +83,7 @@ const imageFailed = $derived(
 );
 </script>
 
-<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden max-w-xl">
+<div class="bg-white border border-zinc-200 rounded-xl overflow-hidden max-w-xl">
     {#if page.video?.url}
         <!-- svelte-ignore a11y_media_has_caption -->
         <video
@@ -95,19 +95,19 @@ const imageFailed = $derived(
         ></video>
     {:else if image && !imageFailed}
         <img
-            class="w-full max-h-80 object-cover bg-gray-100"
+            class="w-full max-h-80 object-cover bg-zinc-100"
             src={image.url}
             alt={image.alt ?? page.title ?? ""}
             onerror={() => (failedImage = image?.url)}
         />
     {:else}
-        <div class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+        <div class="w-full h-24 bg-zinc-100 flex items-center justify-center text-zinc-400 text-sm">
             No preview image
         </div>
     {/if}
 
     <div class="p-4 space-y-1">
-        <div class="flex items-center space-x-2 text-xs text-gray-500 uppercase tracking-wide">
+        <div class="flex items-center space-x-2 text-xs text-zinc-500 uppercase tracking-wide">
             {#if faviconUrl && !faviconFailed}
                 <img
                     class="w-4 h-4"
@@ -119,14 +119,14 @@ const imageFailed = $derived(
             <span>{page.name || host}</span>
         </div>
         {#if page.title}
-            <h4 class="font-semibold text-gray-900 whitespace-pre-line">{page.title}</h4>
+            <h4 class="font-semibold text-zinc-900 whitespace-pre-line">{page.title}</h4>
         {/if}
         {#if page.description}
-            <p class="text-sm text-gray-600 whitespace-pre-line line-clamp-6">{page.description}</p>
+            <p class="text-sm text-zinc-600 whitespace-pre-line line-clamp-6">{page.description}</p>
         {/if}
         {#if page.url}
             <a
-                class="block text-xs text-indigo-600 hover:text-indigo-800 truncate"
+                class="block text-xs text-zinc-500 no-underline hover:text-zinc-800 truncate"
                 href={page.url}
                 target="_blank"
                 rel="noopener noreferrer"

@@ -8,22 +8,10 @@ interface Props {
 
 let { entry, buttonAction }: Props = $props();
 
-const labelMap: Record<string, { label: string; color: string; bg: string }> = {
-    schemas: {
-        label: "Schemas Received",
-        color: "text-indigo-800",
-        bg: "bg-indigo-100",
-    },
-    ready: {
-        label: "Client Ready",
-        color: "text-emerald-800",
-        bg: "bg-emerald-100",
-    },
-    init_error: {
-        label: "Init Error",
-        color: "text-red-800",
-        bg: "bg-red-100",
-    },
+const labelMap: Record<string, { label: string }> = {
+    schemas: { label: "Schemas received" },
+    ready: { label: "Client ready" },
+    init_error: { label: "Client init error" },
 };
 
 const meta = $derived(labelMap[entry._logType] ?? labelMap.schemas);
@@ -64,39 +52,27 @@ const summary = $derived(summarize(entry.payload));
 const time = $derived(new Date(entry._timestamp).toLocaleTimeString());
 </script>
 
-<li class="p-4 hover:bg-indigo-50/40 transition-colors">
-    <div class="flex items-start space-x-3">
-        <div class="flex flex-col items-center space-y-1 mt-1">
-            <div class="w-3 h-3 {entry._logType === 'init_error' ? 'bg-red-500' : 'bg-indigo-500'} rounded-full"></div>
-            <div class="text-xs text-gray-400 font-mono">{time}</div>
-        </div>
-
-        <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between mb-1">
-                <div class="flex items-center space-x-2">
-                    <span class="px-2 py-1 {meta.bg} {meta.color} text-xs font-semibold rounded-full">
-                        {meta.label}
-                    </span>
-                </div>
-
-                <button
-                    onclick={buttonAction}
-                    class="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors flex items-center space-x-1"
-                >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                    <span>View Details</span>
-                </button>
-            </div>
-
-            <p class="text-sm text-gray-600 truncate">{summary}</p>
-
-            {#if entry._logType === "init_error"}
-                <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                    <span class="text-red-700 text-xs">{(entry.payload as Record<string, unknown>)?.error ?? ""}</span>
-                </div>
-            {/if}
-        </div>
+<li class="px-5 py-3 transition-colors hover:bg-zinc-50/80">
+    <div class="flex items-center gap-2">
+        <span class="size-1.5 shrink-0 rounded-full {entry._logType === 'init_error' ? 'bg-red-500' : 'bg-sky-500'}" aria-hidden="true"></span>
+        <span class="text-[13px] font-medium text-zinc-800">{meta.label}</span>
+        <span class="text-xs text-zinc-400">client</span>
+        <span class="ml-auto font-mono text-[11px] text-zinc-400 tabular-nums">{time}</span>
+    </div>
+    <p class="mt-1 truncate pl-3.5 text-[13px] text-zinc-500" title={summary}>{summary}</p>
+    {#if entry._logType === "init_error"}
+        <p class="mt-1.5 ml-3.5 rounded-md bg-red-50 px-2 py-1.5 text-[12px] text-red-800">
+            {(entry.payload as Record<string, unknown>)?.error ?? ""}
+        </p>
+    {/if}
+    <div class="mt-1 flex justify-end">
+        <button
+            type="button"
+            onclick={buttonAction}
+            class="-mr-1.5 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+        >
+            View JSON
+            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
     </div>
 </li>

@@ -2,6 +2,7 @@
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
+import Step from "$components/Step.svelte";
 import { contextFor, ensureClientReady, sc, send } from "$lib/sockethub";
 import type { AnyActivityStream, SockethubResponse } from "$lib/sockethub";
 
@@ -208,14 +209,11 @@ async function createItem(): Promise<void> {
 </script>
 
 <BaseExample
+    platform="caldav"
     title="CalDAV Platform Example"
     description="Discover the calendars in a CalDAV account and add an event or to-do, or list the events in a published .ics feed."
 >
-    <section class="space-y-4">
-        <h2 class="text-xl font-semibold text-gray-900">1. Set credentials</h2>
-        <p class="text-sm text-gray-600">
-            Use an app password when your calendar provider supports one. Credentials stay in this Sockethub session.
-        </p>
+    <Step n={1} title="Set credentials" description="Use an app password if your provider offers one. Credentials stay in this Sockethub session." done={credentialsSet}>
         <FormField
             label="Actor ID"
             id="caldav-actor"
@@ -239,7 +237,7 @@ async function createItem(): Promise<void> {
             bind:value={password}
             onInput={invalidateCredentials}
         />
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton
                 buttonAction={setCredentials}
                 disabled={credentialsSet || busy || !actorId || !serviceUrl || !username || !password}
@@ -248,30 +246,29 @@ async function createItem(): Promise<void> {
             </SockethubButton>
         </div>
         {#if credentialError}
-            <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <div class="callout callout-error" role="alert">
                 {credentialError}
             </div>
         {/if}
         {#if credentialSuccess}
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800" role="status">
+            <div class="callout callout-success" role="status">
                 {credentialSuccess}
             </div>
         {/if}
-    </section>
+    </Step>
 
-    <section class="space-y-4 border-t border-gray-200 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900">2. Choose a calendar</h2>
-        <div class="flex justify-end">
+    <Step n={2} title="Choose a calendar" description="Sends a fetch activity. Sockethub discovers the calendars in your account." done={calendars.length > 0}>
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={fetchCalendars} disabled={busy || !credentialsSet}>
                 Fetch Calendars
             </SockethubButton>
         </div>
         {#if calendars.length > 0}
-            <label for="caldav-calendar" class="block text-sm font-semibold text-gray-700">Calendar</label>
+            <label for="caldav-calendar" class="label">Calendar</label>
             <select
                 id="caldav-calendar"
                 bind:value={selectedCalendarId}
-                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3"
+                class="input"
             >
                 {#each calendars as calendar (calendar.id)}
                     <option value={calendar.id}>
@@ -280,13 +277,13 @@ async function createItem(): Promise<void> {
                 {/each}
             </select>
         {/if}
-    </section>
+    </Step>
 
-    <section class="space-y-4 border-t border-gray-200 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900">3. Add an item</h2>
-        <div class="flex gap-6">
+    <Step n={3} title="Add an item" description="Sends a create activity targeting the chosen calendar.">
+        <div class="flex gap-6 text-sm font-medium text-zinc-800">
             <label class="flex items-center gap-2">
                 <input
+                    class="check"
                     type="radio"
                     bind:group={itemType}
                     value="event"
@@ -295,6 +292,7 @@ async function createItem(): Promise<void> {
             </label>
             <label class="flex items-center gap-2">
                 <input
+                    class="check"
                     type="radio"
                     bind:group={itemType}
                     value="task"
@@ -309,7 +307,7 @@ async function createItem(): Promise<void> {
         {:else}
             <FormField label="Due (optional)" id="caldav-due" type="datetime-local" bind:value={due} />
         {/if}
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton
                 buttonAction={createItem}
                 disabled={busy || !itemTypeSupported || !name || (itemType === "event" && !startTime)}
@@ -317,20 +315,16 @@ async function createItem(): Promise<void> {
                 Add {itemType === "event" ? "Event" : "To-do"}
             </SockethubButton>
         </div>
-    </section>
+    </Step>
 
     {#if error}
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{error}</div>
+        <div class="callout callout-error" role="alert">{error}</div>
     {/if}
     {#if success}
-        <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800" role="status">{success}</div>
+        <div class="callout callout-success" role="status">{success}</div>
     {/if}
 
-    <section class="space-y-4 border-t border-gray-200 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900">Read a published iCalendar feed</h2>
-        <p class="text-sm text-gray-600">
-            Public .ics and webcal:// links need no credentials. Sockethub fetches the feed and lists its items.
-        </p>
+    <Step title="Or read a public calendar feed" description="Public .ics and webcal:// links need no credentials. Sends a read activity and lists what comes back.">
         <FormField
             label="Feed URL"
             id="caldav-feed-url"
@@ -338,24 +332,24 @@ async function createItem(): Promise<void> {
             bind:value={feedUrl}
             placeholder="https://example.org/holidays.ics"
         />
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" bind:checked={upcomingOnly} /> Upcoming items only
+        <label class="flex items-center gap-2 text-sm text-zinc-700">
+            <input class="check" type="checkbox" bind:checked={upcomingOnly} /> Upcoming items only
         </label>
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={readFeed} disabled={feedBusy || !actorId || !feedUrl}>
                 {feedBusy ? "Reading…" : "Read Feed"}
             </SockethubButton>
         </div>
         {#if feedError}
-            <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{feedError}</div>
+            <div class="callout callout-error" role="alert">{feedError}</div>
         {/if}
         {#if feedItems.length > 0}
-            <h3 class="text-sm font-semibold text-gray-700">{feedName || "Feed"} ({feedItems.length})</h3>
-            <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
+            <h3 class="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{feedName || "Feed"} ({feedItems.length})</h3>
+            <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white">
                 {#each feedItems as item, index (`${index}:${item.id}`)}
                     <li class="flex flex-col gap-1 px-4 py-3 text-sm">
-                        <span class="font-medium text-gray-900">{item.name}</span>
-                        <span class="text-gray-600">
+                        <span class="font-medium text-zinc-900">{item.name}</span>
+                        <span class="text-zinc-600">
                             {item.type === "task" ? "To-do" : "Event"}
                             {#if itemWhen(item)}
                                 · {itemWhen(item)}
@@ -368,5 +362,5 @@ async function createItem(): Promise<void> {
                 {/each}
             </ul>
         {/if}
-    </section>
+    </Step>
 </BaseExample>
