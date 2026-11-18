@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
-import Context from "./Context.svelte";
 
 /**
  * Feeds log entries come in two types:
@@ -21,37 +20,21 @@ interface Props {
     entry: AnyActivityStream;
 }
 
-let { id, entry }: Props = $props();
+let { entry }: Props = $props();
 
 const isCollection = $derived(entry.totalItems !== undefined);
 const feedUrl = $derived(isCollection ? entry.summary : entry.object?.url);
-const actorName = $derived(
-    typeof entry.actor === "string"
-        ? entry.actor
-        : entry.actor?.name || entry.actor?.id,
-);
 </script>
 
-<Context {entry} />
-
 {#if isCollection}
-    <!-- Collection Entry: Show the feed URL and item count -->
-    <span class="font-medium">📰 Fetched feed:</span>
-    <span>{feedUrl}</span>
-    <span class="text-gray-500">({entry.totalItems} {entry.totalItems === 1 ? 'item' : 'items'})</span>
+    <span class="text-zinc-700">{feedUrl}</span>
+    <span class="text-zinc-500">· {entry.totalItems} {entry.totalItems === 1 ? "item" : "items"}</span>
 {:else}
-    <!-- Individual Feed Item: Show article title and details -->
-    <span class="text-gray-500">#{id}</span>
-    {#if actorName}
-        <span>{actorName}:</span>
-    {/if}
-    <span>
-        <a rel="noreferrer" href={entry.object?.url} target="_blank" class="text-blue-600 hover:text-blue-800 underline">
-            {entry.object?.title ||
-                (typeof entry.target === "string" ? entry.target : entry.target?.id)}
-        </a>
-    </span>
+    <a rel="noreferrer" href={entry.object?.url} target="_blank">
+        {entry.object?.title ||
+            (typeof entry.target === "string" ? entry.target : entry.target?.id)}
+    </a>
     {#if entry.object?.published}
-        <span class="text-gray-500 text-xs italic">{entry.object?.published.split("T")[0]}</span>
+        <span class="text-zinc-500">· {entry.object?.published.split("T")[0]}</span>
     {/if}
 {/if}

@@ -2,6 +2,7 @@
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
+import Step from "$components/Step.svelte";
 import { contextFor, ensureClientReady, sc, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 
@@ -448,32 +449,17 @@ function formatTyped(value: TypedValue): string {
 </script>
 
 <BaseExample
+    platform="carddav"
     title="CardDAV Platform Example"
     description="Discover the address books in a CardDAV account, then list, search, add, edit, and delete contacts."
 >
-    <div class="bg-teal-50 border-l-4 border-teal-400 p-4 rounded-r-lg mb-6">
-        <h3 class="text-lg font-semibold text-teal-800 mb-2">👤 How the CardDAV Platform Works</h3>
-        <p class="text-teal-700 text-sm mb-3">
-            Sockethub talks WebDAV and vCard to your contacts server so your app only has to send ActivityStreams.
-        </p>
-        <div class="text-teal-700 text-sm space-y-1">
-            <div><strong>1. 🔐 Credentials:</strong> Sent once per session over the <code>credentials</code> event, never in an activity</div>
-            <div><strong>2. 📚 fetch:</strong> Discovers the account's address books from the service URL</div>
-            <div><strong>3. 🔍 query:</strong> Lists every contact, or runs a server-side search across name, email, telephone, or organization</div>
-            <div><strong>4. ✏️ create / update / delete:</strong> Each contact carries an <code>etag</code>; updates and deletes are refused with <code>carddav:conflict</code> if another client changed the card first</div>
-        </div>
-    </div>
-
-    <section class="space-y-4">
-        <h2 class="text-xl font-semibold text-gray-900">1. Set credentials</h2>
-        <p class="text-sm text-gray-600">
-            Use an app password when your contacts provider supports one. Credentials stay in this Sockethub session.
-        </p>
+    <Step n={1} title="Set credentials" description="Use an app password if your provider offers one. Credentials are sent once over the credentials event, never inside an activity." done={credentialsSet}>
         <FormField
             label="Actor ID"
             id="carddav-actor"
             bind:value={actorId}
             placeholder="carddav:alice"
+            hint="Any name for this account. Every later activity uses the same actor, so Sockethub knows which credentials to use."
             onInput={invalidateCredentials}
         />
         <FormField
@@ -492,64 +478,59 @@ function formatTyped(value: TypedValue): string {
             bind:value={password}
             onInput={invalidateCredentials}
         />
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton
                 buttonAction={setCredentials}
                 disabled={credentialsSet || busy || !actorId || !serviceUrl || !username || !password}
             >
-                {credentialsSet ? "Credentials Set" : busy ? "Setting Credentials…" : "Set Credentials"}
+                {credentialsSet ? "Credentials set" : busy ? "Setting credentials…" : "Set credentials"}
             </SockethubButton>
         </div>
         {#if credentialError}
-            <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <div class="callout callout-error" role="alert">
                 {credentialError}
             </div>
         {/if}
         {#if credentialSuccess}
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800" role="status">
+            <div class="callout callout-success" role="status">
                 {credentialSuccess}
             </div>
         {/if}
-    </section>
+    </Step>
 
-    <section class="space-y-4 border-t border-gray-200 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900">2. Choose an address book</h2>
-        <div class="flex justify-end">
+    <Step n={2} title="Choose an address book" description="Sends a fetch activity. Sockethub discovers the address books in your account." done={addressBooks.length > 0} blockedHint={credentialsSet ? undefined : "Set credentials first."}>
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={fetchAddressBooks} disabled={busy || !credentialsSet}>
-                Fetch Address Books
+                Fetch address books
             </SockethubButton>
         </div>
         {#if addressBooks.length > 0}
-            <label for="carddav-address-book" class="block text-sm font-semibold text-gray-700">Address book</label>
+            <label for="carddav-address-book" class="label">Address book</label>
             <select
                 id="carddav-address-book"
                 bind:value={selectedAddressBookId}
                 onchange={selectAddressBook}
-                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3"
+                class="input"
             >
                 {#each addressBooks as addressBook (addressBook.id)}
                     <option value={addressBook.id}>{addressBook.name}</option>
                 {/each}
             </select>
             {#if selectedAddressBook?.description}
-                <p class="text-sm text-gray-600">{selectedAddressBook.description}</p>
+                <p class="text-sm text-zinc-600">{selectedAddressBook.description}</p>
             {/if}
         {/if}
-    </section>
+    </Step>
 
-    <section class="space-y-4 border-t border-gray-200 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900">3. Browse contacts</h2>
-        <p class="text-sm text-gray-600">
-            Leave the search empty to list every contact, or type text to search on the server.
-        </p>
+    <Step n={3} title="Browse contacts" description="Sends a query activity. Leave the search empty to list every contact, or type text to search on the server." blockedHint={selectedAddressBook ? undefined : "You can type a search now. List contacts unlocks once you choose an address book."} editableWhileBlocked>
         <div class="grid gap-4 md:grid-cols-[1fr_auto]">
             <FormField label="Search text (optional)" id="carddav-search-text" bind:value={searchText} placeholder="Bob" />
-            <div class="w-full space-y-2 md:w-48">
-                <label for="carddav-search-field" class="block text-sm font-semibold text-gray-700">Search in</label>
+            <div class="w-full space-y-1.5 md:w-48">
+                <label for="carddav-search-field" class="label">Search in</label>
                 <select
                     id="carddav-search-field"
                     bind:value={searchField}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3"
+                    class="input"
                 >
                     <option value="all">All fields</option>
                     <option value="name">Name</option>
@@ -559,55 +540,55 @@ function formatTyped(value: TypedValue): string {
                 </select>
             </div>
         </div>
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={queryContacts} disabled={busy || !credentialsSet || !selectedAddressBook}>
-                {searchText.trim() ? "Search Contacts" : "List Contacts"}
+                {searchText.trim() ? "Search contacts" : "List contacts"}
             </SockethubButton>
         </div>
         {#if contacts.length > 0}
-            <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200">
+            <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
                 {#each contacts as contact (contact.id)}
                     <li class="flex flex-col gap-3 p-4 md:flex-row md:items-start md:justify-between">
                         <div class="min-w-0 space-y-1">
-                            <h3 class="font-semibold text-gray-900">
+                            <h3 class="font-semibold text-zinc-900">
                                 {contact.name}
                                 {#if contact.nickname}
-                                    <span class="font-normal text-gray-500">“{contact.nickname}”</span>
+                                    <span class="font-normal text-zinc-500">“{contact.nickname}”</span>
                                 {/if}
                             </h3>
                             {#if contact.title || contact.organization}
-                                <p class="text-sm text-gray-600">
+                                <p class="text-sm text-zinc-600">
                                     {[contact.title, contact.organization].filter(Boolean).join(" · ")}
                                 </p>
                             {/if}
                             {#if contact.emails?.length}
-                                <p class="text-sm text-gray-600">✉️ {contact.emails.map(formatTyped).join(", ")}</p>
+                                <p class="text-sm text-zinc-600"><span class="text-zinc-500">Email: </span>{contact.emails.map(formatTyped).join(", ")}</p>
                             {/if}
                             {#if contact.telephones?.length}
-                                <p class="text-sm text-gray-600">📞 {contact.telephones.map(formatTyped).join(", ")}</p>
+                                <p class="text-sm text-zinc-600"><span class="text-zinc-500">Phone: </span>{contact.telephones.map(formatTyped).join(", ")}</p>
                             {/if}
                             {#each contact.addresses ?? [] as address}
                                 {#if formatAddress(address)}
-                                    <p class="text-sm text-gray-600">📍 {formatAddress(address)}</p>
+                                    <p class="text-sm text-zinc-600"><span class="text-zinc-500">Address: </span>{formatAddress(address)}</p>
                                 {/if}
                             {/each}
                             {#if contact.urls?.length}
-                                <p class="text-sm text-gray-600 break-all">🔗 {contact.urls.map((url) => url.value).join(", ")}</p>
+                                <p class="text-sm text-zinc-600 break-all"><span class="text-zinc-500">Web: </span>{contact.urls.map((url) => url.value).join(", ")}</p>
                             {/if}
                             {#if contact.birthday}
-                                <p class="text-sm text-gray-600">🎂 {contact.birthday}</p>
+                                <p class="text-sm text-zinc-600"><span class="text-zinc-500">Birthday: </span>{contact.birthday}</p>
                             {/if}
                             {#if contact.note}
-                                <p class="text-sm text-gray-600 whitespace-pre-wrap">{contact.note}</p>
+                                <p class="text-sm text-zinc-600 whitespace-pre-wrap">{contact.note}</p>
                             {/if}
-                            <p class="truncate text-xs text-gray-400" title={contact.id}>
+                            <p class="truncate text-xs text-zinc-500" title={contact.id}>
                                 uid {contact.uid}{contact.etag ? ` · etag ${contact.etag}` : ""}
                             </p>
                         </div>
                         <div class="flex shrink-0 gap-2">
                             <button
                                 type="button"
-                                class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="btn btn-secondary btn-sm"
                                 onclick={() => startEdit(contact)}
                                 disabled={busy || !contact.etag}
                                 title={contact.etag ? "" : "This contact has no ETag, so it cannot be updated safely"}
@@ -616,7 +597,7 @@ function formatTyped(value: TypedValue): string {
                             </button>
                             <button
                                 type="button"
-                                class="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="btn btn-danger btn-sm"
                                 onclick={() => deleteContact(contact)}
                                 disabled={busy || !contact.etag}
                                 title={contact.etag ? "" : "This contact has no ETag, so it cannot be deleted safely"}
@@ -628,14 +609,11 @@ function formatTyped(value: TypedValue): string {
                 {/each}
             </ul>
         {/if}
-    </section>
+    </Step>
 
-    <section class="space-y-4 border-t border-gray-200 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900">
-            4. {editing ? `Edit ${editing.name}` : "Add a contact"}
-        </h2>
+    <Step n={4} title={editing ? `Edit ${editing.name}` : "Add a contact"} description={editing ? undefined : "Sends a create activity. Edits and deletes carry the contact's etag, so Sockethub refuses them with carddav:conflict if another client changed the card first."} blockedHint={selectedAddressBook || editing ? undefined : "Choose an address book first."}>
         {#if editing}
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-zinc-600">
                 The update sends the full contact back with its stored <code>etag</code>. Fields not shown here are kept as they are.
             </p>
         {/if}
@@ -654,22 +632,22 @@ function formatTyped(value: TypedValue): string {
             {#if editing}
                 <button
                     type="button"
-                    class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    class="btn btn-secondary"
                     onclick={clearForm}
                 >
                     Cancel
                 </button>
             {/if}
             <SockethubButton buttonAction={saveContact} disabled={busy || !canSubmitContact}>
-                {editing ? "Save Changes" : "Add Contact"}
+                {editing ? "Save changes" : "Add contact"}
             </SockethubButton>
         </div>
-    </section>
+    </Step>
 
     {#if error}
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{error}</div>
+        <div class="callout callout-error" role="alert">{error}</div>
     {/if}
     {#if success}
-        <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800" role="status">{success}</div>
+        <div class="callout callout-success" role="status">{success}</div>
     {/if}
 </BaseExample>

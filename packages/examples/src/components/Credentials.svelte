@@ -15,9 +15,11 @@ interface Props {
     actor: ActorData;
     sockethubState: SockethubStateStore;
     context: string;
+    passwordHint?: string;
 }
 
-let { credentials, actor, sockethubState, context }: Props = $props();
+let { credentials, actor, sockethubState, context, passwordHint }: Props =
+    $props();
 
 async function sendCredentials(data: string): Promise<void> {
     await ensureClientReady();
@@ -42,8 +44,11 @@ async function sendCredentials(data: string): Promise<void> {
 
 <TextAreaSubmit
     title="Credentials"
+    done={!!$sockethubState.credentialsSet}
+    doneText="Credentials set"
+    {passwordHint}
     obj={credentials}
-    buttonText="Set Credentials"
+    buttonText="Set credentials"
     submitData={sendCredentials}
     disabled={!$sockethubState.actorSet || $sockethubState.credentialsSet || false}
 />

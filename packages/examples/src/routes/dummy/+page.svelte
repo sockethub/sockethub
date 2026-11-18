@@ -1,20 +1,15 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
 import { contextFor, send } from "$lib/sockethub";
-import type { SockethubStateStore } from "$lib/types";
-import { writable } from "svelte/store";
-import ActivityActor from "../../components/ActivityActor.svelte";
-import BaseExample from "../../components/BaseExample.svelte";
-import FormField from "../../components/FormField.svelte";
-import SockethubButton from "../../components/SockethubButton.svelte";
+import BaseExample from "$components/BaseExample.svelte";
+import FormField from "$components/FormField.svelte";
+import SockethubButton from "$components/SockethubButton.svelte";
+import Step from "$components/Step.svelte";
+import CodeBlock from "$components/CodeBlock.svelte";
 
 const actorId = "https://sockethub.org/examples/dummy";
 
-const sockethubState: SockethubStateStore = writable({
-    actorSet: false,
-});
-
-let content = $state("");
+let content = $state("Hello from Sockethub");
 
 /**
  * Creates an ActivityStreams object for Sockethub's dummy platform.
@@ -24,6 +19,9 @@ let content = $state("");
  * @returns ActivityStreams object ready to send to Sockethub's dummy platform
  */
 async function getASObj(type: string): Promise<AnyActivityStream> {
+    lastType = type;
+    sentAny = true;
+    sentContent = content;
     return {
         "@context": await contextFor("dummy"),
         // Activity type - what action to perform (echo, fail, throw, greet)
@@ -41,6 +39,12 @@ async function getASObj(type: string): Promise<AnyActivityStream> {
         },
     };
 }
+
+/** The type of the last button pressed, shown in the preview. */
+let lastType = $state("echo");
+let sentAny = $state(false);
+/** The content of the last activity sent, so the preview matches what went out. */
+let sentContent = $state("");
 
 async function sendType(type: string): Promise<void> {
     await send(await getASObj(type));
@@ -65,213 +69,128 @@ async function sendThrow(): Promise<void> {
 async function sendGreet(): Promise<void> {
     await send(await getASObj("greet"));
 }
+
+const basicTypes = [
+    {
+        type: "echo",
+        label: "Echo",
+        text: "Sends your message straight back.",
+        action: sendEcho,
+    },
+    {
+        type: "greet",
+        label: "Greet",
+        text: "Replies with a greeting.",
+        action: sendGreet,
+    },
+    {
+        type: "fail",
+        label: "Fail",
+        text: "Returns your text as an error, so you can see how failures look.",
+        action: sendFail,
+    },
+    {
+        type: "throw",
+        label: "Throw",
+        text: "Throws your text as an exception. Sockethub reports it as an error.",
+        action: sendThrow,
+    },
+];
+
+const crashTypes = [
+    {
+        type: "exit0",
+        label: "Exit 0",
+        text: "Exits cleanly with process.exit(0).",
+    },
+    { type: "exit1", label: "Exit 1", text: "Crashes with process.exit(1)." },
+    {
+        type: "sigterm",
+        label: "SIGTERM",
+        text: "Terminates itself with SIGTERM.",
+    },
+    { type: "sigkill", label: "SIGKILL", text: "Kills itself with SIGKILL." },
+    {
+        type: "throwTypeError",
+        label: "TypeError",
+        text: "Throws a TypeError on the next tick.",
+    },
+    {
+        type: "throwReferenceError",
+        label: "ReferenceError",
+        text: "Throws a ReferenceError on the next tick.",
+    },
+    {
+        type: "hang",
+        label: "Hang",
+        text: "Blocks the event loop until the heartbeat times out.",
+    },
+];
+
+const preview = $derived(`{
+  "@context": ["…/activitystreams", "…/dummy"],
+  "type": "${lastType}",
+  "actor": { "type": "person", "id": "${actorId}" },
+  "object": { "type": "message", "content": ${JSON.stringify(sentAny ? sentContent : content)} }
+}`);
 </script>
 
-<BaseExample 
+<BaseExample
+    platform="dummy"
     title="Dummy Platform Example"
-    description="The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back. You can use either the echo or fail types on your Activity Stream object."
+    description="A test platform that answers instantly and talks to nothing outside Sockethub. See what a request and its reply look like before trying a real protocol."
 >
-    <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6 shadow-sm">
-        <h3 class="text-xl font-bold text-blue-900 mb-3 flex items-center">
-            <span class="mr-2">💡</span>
-            What You'll Learn
-        </h3>
-        <p class="text-blue-800 mb-4 leading-relaxed">
-            This example demonstrates the core Sockethub workflow with a test platform that doesn't require external connections.
-        </p>
-        <div class="grid md:grid-cols-2 gap-3 text-blue-800">
-            <div class="flex items-start space-x-2">
-                <span class="text-lg">📤</span>
-                <div>
-                    <div class="font-semibold">Sending</div>
-                    <div class="text-sm text-blue-700">How to create and send ActivityStreams messages</div>
-                </div>
-            </div>
-            <div class="flex items-start space-x-2">
-                <span class="text-lg">📥</span>
-                <div>
-                    <div class="font-semibold">Receiving</div>
-                    <div class="text-sm text-blue-700">How Sockethub responds with results or errors</div>
-                </div>
-            </div>
-            <div class="flex items-start space-x-2">
-                <span class="text-lg">🎯</span>
-                <div>
-                    <div class="font-semibold">Actor</div>
-                    <div class="text-sm text-blue-700">How your identity is represented</div>
-                </div>
-            </div>
-            <div class="flex items-start space-x-2">
-                <span class="text-lg">🔄</span>
-                <div>
-                    <div class="font-semibold">Types</div>
-                    <div class="text-sm text-blue-700">
-                        Different activity types (echo, greet, fail, throw, exit0, exit1, sigterm, sigkill, throwTypeError, throwReferenceError, hang)
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="space-y-4">
-        <FormField 
-            label="Message Content" 
-            id="objectContent" 
+    <Step n={1} title="Send a message" description="Each button sends this text with a different activity type. The reply shows up in the activity log.">
+        <FormField
+            label="Message content"
+            id="objectContent"
             bind:value={content}
             placeholder="Hello from Sockethub"
         />
-        <p class="text-gray-600 text-sm">
-            ⬆️ This text will be included in the <code>object.content</code> field of your ActivityStreams message.
-        </p>
-        
-        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6 shadow-sm">
-            <h4 class="text-lg font-bold text-amber-900 mb-3 flex items-center">
-                <span class="mr-2">🚀</span>
-                Try Different Activity Types
-            </h4>
-            <p class="text-amber-800 mb-4 leading-relaxed">
-                Each button sends the same basic message structure but with a different <code class="bg-amber-100 px-1 rounded text-sm">type</code> field:
-            </p>
-            
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="space-y-4">
-                    <div class="bg-white rounded-lg p-4 border border-amber-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-amber-900 mb-1">Echo</div>
-                                <p class="text-amber-700 text-sm">Returns your message back unchanged</p>
-                            </div>
-                            <SockethubButton buttonAction={sendEcho}>Echo</SockethubButton>
-                        </div>
+        <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+            {#each basicTypes as item (item.type)}
+                <li class="flex items-center justify-between gap-3 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
+                    <div class="min-w-0">
+                        <code class="tok">{item.type}</code>
+                        <p class="mt-1 text-[13px] leading-snug text-zinc-500 sm:text-sm">{item.text}</p>
                     </div>
-                    <div class="bg-white rounded-lg p-4 border border-amber-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-amber-900 mb-1">Greet</div>
-                                <p class="text-amber-700 text-sm">Returns a friendly greeting</p>
-                            </div>
-                            <SockethubButton buttonAction={sendGreet}>Greet</SockethubButton>
-                        </div>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <div class="bg-white rounded-lg p-4 border border-amber-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-amber-900 mb-1">Fail</div>
-                                <p class="text-amber-700 text-sm">Returns an error message (for testing error handling)</p>
-                            </div>
-                            <SockethubButton buttonAction={sendFail}>Fail</SockethubButton>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-amber-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-amber-900 mb-1">Throw</div>
-                                <p class="text-amber-700 text-sm">Throws an exception (for testing exception handling)</p>
-                            </div>
-                            <SockethubButton buttonAction={sendThrow}>Throw</SockethubButton>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <SockethubButton variant={item.type === "echo" ? "primary" : "secondary"} buttonAction={item.action}>{item.label}</SockethubButton>
+                </li>
+            {/each}
+        </ul>
+    </Step>
 
-        <div class="bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl p-6 shadow-sm">
-            <h4 class="text-lg font-bold text-red-900 mb-3 flex items-center">
-                <span class="mr-2">⚠️</span>
-                Crash/Recovery Tests
-            </h4>
-            <p class="text-red-800 mb-4 leading-relaxed">
-                These types intentionally terminate or hang the dummy platform process. Use them to validate crash handling and recovery.
-            </p>
-
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="space-y-4">
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">Exit 0</div>
-                                <p class="text-red-700 text-sm">Graceful exit (process.exit(0))</p>
-                            </div>
-                            <SockethubButton buttonAction={() => sendType("exit0")}>
-                                Exit 0
-                            </SockethubButton>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">Exit 1</div>
-                                <p class="text-red-700 text-sm">Crash exit (process.exit(1))</p>
-                            </div>
-                            <SockethubButton buttonAction={() => sendType("exit1")}>
-                                Exit 1
-                            </SockethubButton>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">SIGTERM</div>
-                                <p class="text-red-700 text-sm">Self-terminate with SIGTERM</p>
-                            </div>
-                            <SockethubButton buttonAction={() => sendType("sigterm")}>
-                                SIGTERM
-                            </SockethubButton>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">SIGKILL</div>
-                                <p class="text-red-700 text-sm">Self-terminate with SIGKILL</p>
-                            </div>
-                            <SockethubButton buttonAction={() => sendType("sigkill")}>
-                                SIGKILL
-                            </SockethubButton>
-                        </div>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">TypeError</div>
-                                <p class="text-red-700 text-sm">Throw a TypeError on next tick</p>
-                            </div>
-                            <SockethubButton
-                                buttonAction={() => sendType("throwTypeError")}
-                            >
-                                TypeError
-                            </SockethubButton>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">ReferenceError</div>
-                                <p class="text-red-700 text-sm">Throw a ReferenceError on next tick</p>
-                            </div>
-                            <SockethubButton
-                                buttonAction={() => sendType("throwReferenceError")}
-                            >
-                                ReferenceError
-                            </SockethubButton>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-red-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-red-900 mb-1">Hang</div>
-                                <p class="text-red-700 text-sm">Block the event loop (heartbeat timeout)</p>
-                            </div>
-                            <SockethubButton buttonAction={() => sendType("hang")}>
-                                Hang
-                            </SockethubButton>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <section class="card overflow-hidden">
+        <div class="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 sm:px-6">
+            <h2 class="text-sm font-semibold text-zinc-900">{sentAny ? "What the last button sent" : "What the echo button sends"}</h2>
+            <code class="tok">{lastType}</code>
         </div>
-    </div>
+        <div class="code-block text-[12.5px]">
+            <CodeBlock code={preview} />
+        </div>
+    </section>
+
+    <details class="card group overflow-hidden">
+        <summary class="flex cursor-pointer list-none items-center gap-3 px-4 py-4 select-none sm:px-6 [&::-webkit-details-marker]:hidden">
+            <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /></svg>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span class="block text-base font-semibold text-zinc-900">Crash and recovery tests</span>
+                <span class="block text-sm text-zinc-500">For Sockethub developers. These kill or hang the dummy platform process.</span>
+            </span>
+            <svg class="size-4 shrink-0 text-zinc-500 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </summary>
+        <ul class="mx-4 mb-4 divide-y divide-zinc-100 rounded-lg border border-zinc-200 sm:mx-6 sm:mb-6">
+            {#each crashTypes as item (item.type)}
+                <li class="flex items-center justify-between gap-4 px-4 py-3">
+                    <div class="min-w-0">
+                        <code class="tok">{item.type}</code>
+                        <p class="mt-1 text-sm text-zinc-500">{item.text}</p>
+                    </div>
+                    <SockethubButton variant="danger" buttonAction={() => sendType(item.type)}>{item.label}</SockethubButton>
+                </li>
+            {/each}
+        </ul>
+    </details>
 </BaseExample>

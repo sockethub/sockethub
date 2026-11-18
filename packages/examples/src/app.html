@@ -6,10 +6,11 @@
              so the examples and the server info page share one source. -->
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="alternate icon" href="/favicon.ico" type="image/x-icon" />
-        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#ffffff" />
         %sveltekit.head%
     </head>
-    <body class="bg-white-100">
-        <div class="container mx-auto pl-2 pr-2 pt-2">%sveltekit.body%</div>
+    <body>
+        <div style="display: contents">%sveltekit.body%</div>
     </body>
 </html>

@@ -3,6 +3,7 @@ import { onMount } from "svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
+import Step from "$components/Step.svelte";
 import {
     contextFor,
     ensureClientReady,
@@ -281,58 +282,60 @@ onMount(() => {
 });
 </script>
 
-<BaseExample title="Email Platform Example" description="Fetch and watch messages with IMAP, and send through SMTP. Messages remain on your mail server.">
-    <section class="space-y-4">
-        <h2 class="text-xl font-semibold">1. Connect your account</h2>
-        <p class="text-sm text-gray-600">Configure receiving, sending, or both. Leave a server host blank to disable it. Use an app password or an OAuth access token.</p>
+<BaseExample platform="email" title="Email Platform Example" description="Fetch and watch messages with IMAP, and send through SMTP. Messages remain on your mail server.">
+    <Step n={1} title="Connect your account" description="Set up receiving, sending, or both. Leave a host blank to turn that side off. Use an app password or an OAuth access token." done={connected}>
         <fieldset disabled={connected || busy} class="space-y-4">
             <FormField label="Your email address" id="email-address" type="email" bind:value={address} />
             <FormField label="Sender name (optional)" id="email-sender-name" bind:value={displayName} />
             <div class="grid gap-6 md:grid-cols-2">
                 {#each servers as server (server.kind)}
-                    <fieldset class="space-y-3 border rounded-lg p-4">
-                        <legend class="font-semibold">{server.label}</legend>
+                    <div class="space-y-3 rounded-lg border border-zinc-200 p-4">
+                        <h3 class="text-sm font-semibold text-zinc-900">{server.label}</h3>
                         <FormField label="Host" id="email-{server.kind}-host" bind:value={server.host} />
                         <FormField label="Port" id="email-{server.kind}-port" type="number" bind:value={server.port} />
-                        <label class="flex gap-2"><input type="checkbox" bind:checked={server.secure} /> TLS from connection start</label>
-                        <p class="text-xs text-gray-600">When unchecked, STARTTLS is required.</p>
+                        <label class="flex items-center gap-2 text-sm text-zinc-700"><input class="check" type="checkbox" bind:checked={server.secure} /> TLS from connection start</label>
+                        <p class="hint -mt-2">When unchecked, STARTTLS is required.</p>
                         <FormField label="Username" id="email-{server.kind}-username" bind:value={server.username} />
-                        <label for="email-{server.kind}-auth" class="block text-sm font-semibold">Authentication</label>
-                        <select id="email-{server.kind}-auth" bind:value={server.auth} class="border rounded p-2 w-full">
-                            <option value="password">Password / app password</option><option value="token">OAuth access token</option>
-                        </select>
+                        <div class="space-y-1.5">
+                            <label for="email-{server.kind}-auth" class="label">Authentication</label>
+                            <select id="email-{server.kind}-auth" bind:value={server.auth} class="input">
+                                <option value="password">Password / app password</option><option value="token">OAuth access token</option>
+                            </select>
+                        </div>
                         <FormField label={server.auth === "token" ? "Access token" : "Password"} id="email-{server.kind}-secret" type="password" bind:value={server.secret} />
-                    </fieldset>
+                    </div>
                 {/each}
             </div>
         </fieldset>
-        <div class="flex gap-3">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={connect} disabled={busy || connected || !address || !servers.some(server => server.host)}>Connect</SockethubButton>
-            <SockethubButton buttonAction={disconnect} disabled={busy || !connected}>Disconnect</SockethubButton>
+            <SockethubButton variant="secondary" buttonAction={disconnect} disabled={busy || !connected}>Disconnect</SockethubButton>
         </div>
-    </section>
-    <section class="space-y-4 border-t pt-6">
-        <h2 class="text-xl font-semibold">2. Fetch or watch messages</h2>
+    </Step>
+    <Step n={2} title="Fetch or watch messages" description="Fetch starts with the oldest messages. Watching receives new arrivals while connected. Up to 100 messages are shown here." locked={!receiving && messages.length === 0} lockedHint="Connect with an IMAP host to fetch mail." blockedHint={!receiving && messages.length > 0 ? "Connect again to fetch more mail." : undefined}>
         <fieldset disabled={busy || !receiving || watching} class="space-y-3">
             <FormField label="From addresses (optional, comma-separated)" id="email-filter-from" bind:value={fromFilter} onInput={resetCursor} />
             <FormField label="To addresses (optional, comma-separated)" id="email-filter-to" bind:value={toFilter} onInput={resetCursor} />
-            <label for="email-match" class="block text-sm font-semibold">Match filters</label>
-            <select id="email-match" bind:value={match} onchange={resetCursor} class="border rounded p-2">
-                <option value="any">From OR To</option><option value="all">From AND To</option>
-            </select>
+            <div class="space-y-1.5">
+                <label for="email-match" class="label">Match filters</label>
+                <select id="email-match" bind:value={match} onchange={resetCursor} class="input sm:w-56">
+                    <option value="any">From OR To</option><option value="all">From AND To</option>
+                </select>
+            </div>
         </fieldset>
         <FormField label="Fetch folders (comma-separated)" id="email-folders" bind:value={folders} onInput={resetCursor} />
-        <div class="flex gap-3">
+        <div class="flex flex-wrap justify-end gap-2">
             <SockethubButton buttonAction={() => fetchMail()} disabled={busy || !receiving || !folders.trim()}>Fetch</SockethubButton>
-            <SockethubButton buttonAction={() => fetchMail(true)} disabled={busy || !receiving || !hasMore}>Fetch next</SockethubButton>
+            <SockethubButton variant="secondary" buttonAction={() => fetchMail(true)} disabled={busy || !receiving || !hasMore}>Fetch next</SockethubButton>
         </div>
         <FormField label="Folder to watch" id="email-watch-folder" bind:value={watchFolder} />
+        <div class="flex justify-end">
         <SockethubButton buttonAction={toggleWatch} disabled={busy || !receiving || !watchFolder}>{watching ? "Stop watching" : "Watch new messages"}</SockethubButton>
-        <p class="text-sm text-gray-600">Fetch starts with the oldest messages. Watching receives new arrivals while connected. Only the latest 100 fetched or received messages are displayed here.</p>
+        </div>
         {#each messages as message (message.id)}
-            <article class="border rounded-lg p-4 space-y-2">
-                <h3 class="font-semibold">{message.subject || "(No subject)"}</h3>
-                <p class="text-sm text-gray-600">{message.from?.map(item => item.name ? `${item.name} <${item.address}>` : item.address).join(", ")} → {message.to?.map(item => item.address).join(", ")} · {message.folder}</p>
+            <article class="space-y-2 rounded-lg border border-zinc-200 p-4">
+                <h3 class="font-semibold text-zinc-900">{message.subject || "(No subject)"}</h3>
+                <p class="text-sm text-zinc-600">{message.from?.map(item => item.name ? `${item.name} <${item.address}>` : item.address).join(", ")} → {message.to?.map(item => item.address).join(", ")} · {message.folder}</p>
                 {#if message.attachments?.length}
                     <ul class="text-sm list-disc pl-5" aria-label="Attachments">
                         {#each message.attachments as attachment, index (index)}
@@ -340,18 +343,21 @@ onMount(() => {
                         {/each}
                     </ul>
                 {/if}
-                {#if message.bodyOmitted}<p class="text-sm">Body omitted because this message exceeds the size limit.</p>{:else}<pre class="whitespace-pre-wrap break-words text-sm">{message.content || "(No plain-text body)"}</pre>{/if}
+                {#if message.bodyOmitted}<p class="text-sm">Body omitted because this message exceeds the size limit.</p>{:else}<pre class="font-sans whitespace-pre-wrap break-words text-sm text-zinc-700">{message.content || "(No plain-text body)"}</pre>{/if}
             </article>
         {/each}
-    </section>
-    <section class="space-y-4 border-t pt-6">
-        <h2 class="text-xl font-semibold">3. Send a message</h2>
+    </Step>
+    <Step n={3} title="Send a message" description="Sends a send activity through your SMTP server." locked={!sending} lockedHint="Connect with an SMTP host to send mail.">
         <FormField label="To (comma-separated)" id="email-recipients" bind:value={recipients} />
         <FormField label="Subject" id="email-subject" bind:value={subject} />
-        <label for="email-body" class="block text-sm font-semibold">Message</label>
-        <textarea id="email-body" bind:value={content} rows="6" class="w-full border rounded-lg p-3"></textarea>
+        <div class="space-y-1.5">
+            <label for="email-body" class="label">Message</label>
+            <textarea id="email-body" bind:value={content} rows="6" class="input"></textarea>
+        </div>
+        <div class="flex justify-end">
         <SockethubButton buttonAction={sendMail} disabled={busy || !sending || !recipients.trim() || !content}>Send</SockethubButton>
-    </section>
-    {#if error}<div role="alert" class="border border-red-200 bg-red-50 rounded p-4 text-red-800">{error}</div>{/if}
-    {#if status}<div role="status" class="border border-green-200 bg-green-50 rounded p-4 text-green-800">{status}</div>{/if}
+        </div>
+    </Step>
+    {#if error}<div role="alert" class="callout callout-error">{error}</div>{/if}
+    {#if status}<div role="status" class="callout callout-success">{status}</div>{/if}
 </BaseExample>

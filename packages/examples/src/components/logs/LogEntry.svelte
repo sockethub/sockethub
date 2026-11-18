@@ -4,6 +4,8 @@ import { platformIdFromContext } from "$lib/sockethub";
 import DummyEntry from "./platforms/DummyEntry.svelte";
 import FeedsEntry from "./platforms/FeedsEntry.svelte";
 import GenericEntry from "./platforms/GenericEntry.svelte";
+import Icon from "../Icon.svelte";
+import { cleanError } from "./log-details";
 interface Props {
     id: string;
     entry: AnyActivityStream;
@@ -20,83 +22,66 @@ const time = $derived(
     timestamp ? new Date(timestamp).toLocaleTimeString() : "",
 );
 
+const failed = $derived(Boolean(entry.error));
 const statusLabel = $derived(
     hasSend && hasResponse
-        ? "Sent \u2192 Response OK"
+        ? failed
+            ? "Sent \u2192 Error"
+            : "Sent \u2192 Response OK"
         : hasSend
           ? "Sent \u2192 Awaiting response"
-          : "",
+          : failed
+            ? "Received \u2192 Error"
+            : "Received",
 );
 const statusDot = $derived(
-    hasSend && hasResponse
-        ? "bg-green-500"
-        : hasSend
-          ? "bg-orange-400"
-          : "bg-green-500",
+    failed
+        ? "bg-red-500"
+        : hasSend && !hasResponse
+          ? "bg-amber-500 animate-pulse"
+          : "bg-emerald-500",
+);
+const statusText = $derived(
+    failed
+        ? "text-red-700"
+        : hasSend && !hasResponse
+          ? "text-amber-700"
+          : "text-emerald-700",
 );
 </script>
 
-<li class="p-4 hover:bg-gray-50 transition-colors">
-    <div class="flex items-start space-x-3">
-        <!-- Status Indicator -->
-        <div class="flex flex-col items-center space-y-1 mt-1">
-            <div class="w-3 h-3 {statusDot} rounded-full"></div>
-            <div class="text-xs text-gray-400 font-mono">{time || `#${id}`}</div>
-        </div>
-
-        <!-- Content -->
-        <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm font-semibold text-gray-700">
-                        {statusLabel}
-                    </span>
-                    {#if platform}
-                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                            {platform.toUpperCase()}
-                        </span>
-                    {/if}
-                    {#if entry.type}
-                        <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                            {entry.type}
-                        </span>
-                    {/if}
-                </div>
-                
-                <button
-                    onclick={buttonAction}
-                    class="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors flex items-center space-x-1"
-                >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                    <span>View Details</span>
-                </button>
-            </div>
-            
-            <!-- Platform-specific content -->
-            <div class="text-sm text-gray-600">
-                {#if platform === "dummy"}
-                    <DummyEntry {id} {entry} />
-                {:else if platform === "feeds"}
-                    <FeedsEntry {id} {entry} />
-                {:else}
-                    <GenericEntry {id} {entry} />
-                {/if}
-            </div>
-            
-            <!-- Error display -->
-            {#if entry.error}
-                <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span class="text-red-800 font-medium text-sm">Error:</span>
-                        <span class="text-red-700 text-sm">{entry.error}</span>
-                    </div>
-                </div>
+<li class="px-5 py-3 transition-colors hover:bg-zinc-50/80">
+    <div class="flex items-center gap-2">
+        <span class="size-1.5 shrink-0 rounded-full {statusDot}" aria-hidden="true"></span>
+        {#if entry.type}
+            <code class="rounded bg-zinc-100 px-1.5 py-0.5 text-[12px] font-medium text-zinc-800">{entry.type}</code>
+        {/if}
+        <span class="truncate text-[11px] font-medium {statusText}">{statusLabel}</span>
+        <span class="ml-auto shrink-0 font-mono text-[11px] text-zinc-500 tabular-nums">{time || `#${id}`}</span>
+    </div>
+    <div class="mt-1 flex items-start gap-2 pl-3.5">
+        <div class="line-clamp-2 min-w-0 flex-1 text-[13px] leading-relaxed break-words text-zinc-600">
+            {#if platform === "dummy"}
+                <DummyEntry {id} {entry} />
+            {:else if platform === "feeds"}
+                <FeedsEntry {id} {entry} />
+            {:else}
+                <GenericEntry {id} {entry} />
             {/if}
         </div>
+        <button
+            type="button"
+            onclick={buttonAction}
+            class="-mr-1.5 flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+        >
+            View JSON
+            <Icon name="chevron" class="size-3.5" />
+        </button>
     </div>
+    {#if entry.error}
+        <p class="mt-1.5 ml-3.5 flex items-start gap-1.5 rounded-md bg-red-50 px-2 py-1.5 text-[12px] leading-snug text-red-800">
+            <Icon name="alert" class="mt-px size-3.5 shrink-0" />
+            <span class="break-words">{cleanError(String(entry.error))}</span>
+        </p>
+    {/if}
 </li>
