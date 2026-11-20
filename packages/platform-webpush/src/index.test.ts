@@ -4,7 +4,13 @@ import type {
     PlatformConfig,
     PlatformSession,
 } from "@sockethub/schemas";
-import WebPush, { hostAllowed, retryAfterSeconds, statusFor } from "./index";
+import WebPush, {
+    failureCode,
+    hostAllowed,
+    refusalReason,
+    retryAfterSeconds,
+    statusFor,
+} from "./index";
 import { generateVapidKeys } from "./vapid.test";
 
 const ENDPOINT = "https://fcm.googleapis.com/fcm/send/secret-subscription-id";
@@ -125,11 +131,7 @@ describe("webpush send", () => {
             [
                 () =>
                     new Response('{"reason":"BadJwtToken"}', { status: 403 }),
-                {
-                    status: "rejected",
-                    httpStatus: 403,
-                    detail: '{"reason":"BadJwtToken"}',
-                },
+                { status: "rejected", httpStatus: 403, detail: "BadJwtToken" },
             ],
         ];
         for (const [answer, expected] of cases) {
@@ -143,15 +145,39 @@ describe("webpush send", () => {
     it("treats an unreachable push service as a temporary failure", async () => {
         const { webpush } = platform(() => {
             throw Object.assign(new TypeError("fetch failed"), {
-                cause: new Error("connect ECONNREFUSED"),
+                cause: Object.assign(
+                    new Error(`connect ECONNREFUSED ${ENDPOINT}`),
+                    { code: "ECONNREFUSED" },
+                ),
             });
         });
         const { err, result } = await send(webpush, job());
         expect(err).toBeNull();
+        // A code, never the error's own text, which can quote the URL.
         expect(result?.object).toEqual({
             type: "delivery",
             status: "retry",
-            detail: "connect ECONNREFUSED",
+            detail: "ECONNREFUSED",
+        });
+        expect(
+            JSON.stringify(
+                (session.log.debug as ReturnType<typeof mock>).mock.calls,
+            ),
+        ).not.toContain("secret-subscription-id");
+    });
+
+    it("passes on a push service's reason code but none of its other text", async () => {
+        const { webpush } = platform(
+            () =>
+                new Response(`no such subscription: ${ENDPOINT}`, {
+                    status: 400,
+                }),
+        );
+        const { result } = await send(webpush, job());
+        expect(result?.object).toEqual({
+            type: "delivery",
+            status: "rejected",
+            httpStatus: 400,
         });
     });
 
@@ -160,6 +186,8 @@ describe("webpush send", () => {
             "https://attacker.example/collect",
             "http://fcm.googleapis.com/fcm/send/x",
             "https://fcm.googleapis.com.attacker.example/x",
+            // A fetch refuses credentials with an error quoting the URL.
+            "https://user:pass@fcm.googleapis.com/fcm/send/x",
         ]) {
             const { webpush, calls } = platform(
                 () => new Response(null, { status: 201 }),
@@ -202,22 +230,21 @@ describe("webpush send", () => {
         expect((result?.object as { status: string }).status).toBe("rejected");
     });
 
-    it("fails the job when the server has no signing key", async () => {
+    it("reports a server with no signing key without failing the job", async () => {
         const { webpush, calls } = platform(
             () => new Response(null, { status: 201 }),
             { vapid: undefined },
         );
-        const { err } = await send(webpush, job());
-        expect(String(err)).toContain("vapid.publicKey");
+        // A failed job is answered with the original message, delivery URL
+        // and all, so this has to be an ordinary result.
+        const { err, result } = await send(webpush, job());
+        expect(err).toBeNull();
+        expect(result?.object).toEqual({
+            type: "delivery",
+            status: "retry",
+            detail: "server-misconfigured",
+        });
         expect(calls).toHaveLength(0);
-    });
-
-    it("refuses schedule, which the server handles when it is enabled", async () => {
-        const { webpush } = platform(() => new Response(null));
-        const err = await new Promise((resolve) =>
-            webpush.schedule(job(), resolve),
-        );
-        expect(String(err)).toContain("not enabled");
     });
 });
 
@@ -242,6 +269,26 @@ describe("webpush helpers", () => {
         expect(statusFor(413)).toBe("rejected");
         // A redirect is not followed off the allowlisted host.
         expect(statusFor(302)).toBe("rejected");
+    });
+
+    it("reduces failures and refusals to short codes", () => {
+        const timeout = Object.assign(new Error("aborted"), {
+            name: "TimeoutError",
+        });
+        expect(failureCode(timeout)).toBe("timeout");
+        expect(failureCode(new Error(`bad ${ENDPOINT}`))).toBe("network-error");
+        expect(
+            failureCode(
+                Object.assign(new Error("x"), { code: `E ${ENDPOINT}` }),
+            ),
+        ).toBe("network-error");
+
+        expect(refusalReason('{"reason":"VapidPkHashMismatch"}')).toBe(
+            "VapidPkHashMismatch",
+        );
+        expect(refusalReason(`{"reason":"see ${ENDPOINT}"}`)).toBeUndefined();
+        expect(refusalReason("<html>403</html>")).toBeUndefined();
+        expect(refusalReason("")).toBeUndefined();
     });
 
     it("reads Retry-After as seconds or as a date", () => {

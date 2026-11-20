@@ -12,7 +12,9 @@ import {
 import Redis from "ioredis";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
-const REDIS_URL = `redis://${REDIS_HOST}:6379`;
+// Its own database: these tests clear the whole schedule namespace, and that
+// must never be a namespace a real server is using.
+const REDIS_URL = `redis://${REDIS_HOST}:6379/15`;
 
 const SECRET = "integration-test-secret-0123456789abcdef";
 const HOUR = 60 * 60 * 1000;
@@ -74,12 +76,14 @@ describe("ScheduleStore", () => {
         expect(dump).not.toContain("integration-secret-path");
         expect(dump).not.toContain("TOPSECRET");
 
-        // Another secret can neither find nor read the record, and reading
-        // it under the wrong key removes it.
+        // Another secret can neither find nor read the record. It is left
+        // in place: a server started with a mistyped secret must not
+        // destroy schedules that the right secret can still read.
         const other = new ScheduleStore(redis, `${SECRET}-other`);
         expect(await other.has(ENDPOINT)).toBe(false);
         expect(await other.load(id)).toBeNull();
-        expect(await redis.exists(scheduleRecordKey(id))).toBe(0);
+        expect((await store.load(id))?.record.endpoint).toBe(ENDPOINT);
+        expect(await redis.zscore(SCHEDULE_DUE_KEY, id)).not.toBeNull();
     });
 
     it("refuses a record copied under another subscription's key", async () => {
@@ -152,9 +156,11 @@ describe("ScheduleStore", () => {
         const loaded = await store.load(id);
         if (!loaded) throw new Error("record missing");
 
+        expect(await store.unchanged(id, loaded)).toBe(true);
         // The app syncs a new list before the send finishes.
         await store.replace(ENDPOINT, [message(4 * HOUR)]);
 
+        expect(await store.unchanged(id, loaded)).toBe(false);
         expect(await store.save(id, loaded, [])).toBe(false);
         expect((await store.load(id))?.record.messages).toEqual([
             message(4 * HOUR),

@@ -136,11 +136,15 @@ delivery URL and the content are not echoed back.
 | `accepted` | 2xx | Taken for delivery. Not proof that it was shown |
 | `gone` | 404, 410 | The subscription no longer exists. Subscribe again |
 | `retry` | 429, 5xx, or no answer | Temporary. `retryAfter` holds the seconds asked for, if any |
-| `rejected` | Any other answer | This request can never succeed. `detail` holds the reason given |
+| `rejected` | Any other answer | This request can never succeed |
 
-These are results, not errors: a job fails with `error` only when the server
-itself is misconfigured, for example with no key pair. A URL on a host that
-is not an allowed push service is `rejected` without a request being made.
+These are results, not errors. A URL on a host that is not an allowed push
+service is `rejected` without a request being made. A server with no usable
+key pair answers `retry` with `detail` set to `server-misconfigured`.
+
+`detail` is a short code when there is one: the push service's own reason,
+such as Apple's `BadJwtToken`, or a network code such as `ECONNREFUSED`. No
+other text from the push service is passed on.
 
 ### Send later
 
@@ -168,18 +172,20 @@ is not an allowed push service is `rejected` without a request being made.
 ```
 
 `items` is the complete list of future messages for that subscription. It
-replaces any list sent earlier, and an empty list cancels. Sending the same
-list twice changes nothing, so an app can sync its schedule every time it
-opens. Each item takes the same `ttl`, `urgency` and `topic` as `send`.
+replaces any list sent earlier, and an empty list cancels. An item whose time
+has already passed is left out, so an app can send the same list every time
+it opens without repeating what was delivered. To send something now, use
+`send`. Each item takes the same `ttl`, `urgency` and `topic` as `send`.
 
-The result is `{ "type": "schedule", "pending": 2 }`. It is a single HTTP
+The result is `{ "type": "schedule", "pending": 2 }`, counting the items kept. It is a single HTTP
 request through [HTTP actions](../../docs/configuration.md#http-actions), so
 an app does not need to hold a socket open to sync.
 
 When a message comes due:
 
 * It is skipped if it is more than its `ttl` late, for example after a long
-  outage.
+  outage. The server checks every five seconds, so a `ttl` of a few seconds
+  is often missed. A `ttl` of 0 is given a minute.
 * Otherwise it is sent, with the push service given whatever is left of the
   `ttl`.
 * A `retry` answer is tried again with a growing delay, and no sooner than
@@ -267,8 +273,9 @@ to look after.
 * **Two secrets must survive restarts**, and be the same on every server
   sharing the Redis: the key pair and `scheduledDelivery.secret`. Back both
   up.
-  * Losing or changing the secret makes stored schedules unreadable. They are
-    dropped, and each app's next sync writes a new one.
+  * Losing or changing the secret makes stored schedules unreadable. They
+    stay in Redis until they expire, and are sent again if the old secret is
+    restored in time. Each app's next sync writes a new schedule.
   * Losing or changing the key pair invalidates every subscription. Each app
     must subscribe again.
 * **What is stored.** One encrypted record per subscription under
@@ -277,7 +284,9 @@ to look after.
   secret it reveals delivery URLs and times, never content.
 * **Several servers can share one Redis.** Each due subscription is claimed
   by one of them, and another takes over if that one stops.
-* **Logs** name push service hosts, never a delivery URL.
+* **Logs** name push service hosts, never a delivery URL. With Sentry
+  enabled, this platform's outbound requests are left out of its breadcrumbs
+  and traces for the same reason.
 
 ## What it does not do
 

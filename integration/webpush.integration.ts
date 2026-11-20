@@ -93,7 +93,9 @@ async function startServer(configFile: string): Promise<void> {
             env: {
                 ...process.env,
                 PORT: String(PORT),
-                REDIS_URL: config.redis.url,
+                // Its own database, apart from any schedules a real server
+                // on this Redis may hold.
+                REDIS_URL: `${config.redis.url}/15`,
                 SOCKETHUB_CONFIG: configFile,
                 SOCKETHUB_HTTP_ACTIONS_ENABLED: "true",
             },
@@ -332,7 +334,7 @@ describe("webpush platform integration", () => {
                 type: "delivery",
                 status: "rejected",
                 httpStatus: 403,
-                detail: '{"reason":"BadJwtToken"}',
+                detail: "BadJwtToken",
             });
         } finally {
             socket.close();

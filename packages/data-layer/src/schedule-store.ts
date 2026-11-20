@@ -256,8 +256,11 @@ export class ScheduleStore {
     }
 
     /**
-     * Read a claimed record. Returns null, and drops the wake-up entry, when
-     * the record has expired or cannot be read with the current secret.
+     * Read a claimed record. Returns null when it has expired, which also
+     * drops its wake-up entry, or when it cannot be read with the current
+     * secret. An unreadable record is left alone until it expires: deleting
+     * it would let one server started with a mistyped secret destroy every
+     * schedule as it came due.
      */
     async load(id: string): Promise<LoadedSchedule | null> {
         const key = scheduleRecordKey(id);
@@ -269,19 +272,13 @@ export class ScheduleStore {
         try {
             return { record: this.open(id, raw), raw };
         } catch {
-            // Written with another secret, or tampered with. Unusable either
-            // way; the app's next sync writes a fresh record.
-            await this.redis.eval(
-                SAVE_SCRIPT,
-                2,
-                key,
-                SCHEDULE_DUE_KEY,
-                raw,
-                "",
-                id,
-            );
             return null;
         }
+    }
+
+    /** Whether a record is still the one that was read. */
+    async unchanged(id: string, loaded: LoadedSchedule): Promise<boolean> {
+        return (await this.redis.get(scheduleRecordKey(id))) === loaded.raw;
     }
 
     /**

@@ -65,13 +65,20 @@ class MemoryStore {
             this.due.delete(id);
             return null;
         }
-        return { record: { endpoint: id, messages }, raw: id };
+        return {
+            record: { endpoint: id, messages },
+            raw: JSON.stringify(messages),
+        };
+    }
+    async unchanged(id: string, loaded: LoadedSchedule) {
+        return JSON.stringify(this.records.get(id)) === loaded.raw;
     }
     async save(
         id: string,
         _loaded: LoadedSchedule,
         messages: Array<ScheduledMessage>,
     ) {
+        if (!(await this.unchanged(id, _loaded))) return false;
         await this.replace(id, messages);
         return true;
     }
@@ -110,6 +117,8 @@ const schedule = (
     }) as ActivityStream;
 
 const at = (offsetMs: number) => new Date(NOW + offsetMs).toISOString();
+/** A moment after NOW: a schedule only takes messages that are still ahead. */
+const DUE = 1000;
 
 describe("ScheduledDelivery.schedule", () => {
     it("stores the list and acknowledges without the delivery URL", async () => {
@@ -157,6 +166,29 @@ describe("ScheduledDelivery.schedule", () => {
         expect((ack.object as { pending: number }).pending).toBe(0);
         expect(store.records.size).toBe(0);
         expect(store.due.size).toBe(0);
+    });
+
+    it("leaves out messages whose time has passed, so a list can be sent again", async () => {
+        const { store, clock, sent, scheduler } = setup();
+        const list = schedule([
+            { deliverAt: at(MINUTE), content: "FIRST", ttl: 3600 },
+            { deliverAt: at(HOUR), content: "SECOND", ttl: 3600 },
+        ]);
+        await scheduler.schedule(list);
+        clock.now = NOW + MINUTE;
+        await scheduler.tick();
+        expect(sent.map((s) => s.content)).toEqual(["FIRST"]);
+
+        // The app opens five minutes later and syncs the same list. FIRST
+        // is still within its ttl, and must not go out a second time.
+        clock.now = NOW + 5 * MINUTE;
+        const ack = await scheduler.schedule(list);
+        expect((ack.object as { pending: number }).pending).toBe(1);
+        await scheduler.tick();
+        expect(sent.map((s) => s.content)).toEqual(["FIRST"]);
+        expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
+            "SECOND",
+        ]);
     });
 
     it("enforces the per-subscription, look-ahead and server-wide limits", async () => {
@@ -242,6 +274,16 @@ describe("ScheduledDelivery.tick", () => {
         expect(store.records.size).toBe(0);
     });
 
+    it("does not stretch a short ttl", async () => {
+        const { clock, sent, scheduler } = setup();
+        await scheduler.schedule(
+            schedule([{ deliverAt: at(MINUTE), content: "AAAA", ttl: 30 }]),
+        );
+        clock.now = NOW + MINUTE + 45 * 1000;
+        await scheduler.tick();
+        expect(sent).toHaveLength(0);
+    });
+
     it("still sends a message with a ttl of zero", async () => {
         const { clock, sent, scheduler } = setup();
         await scheduler.schedule(
@@ -259,42 +301,46 @@ describe("ScheduledDelivery.tick", () => {
             { status: "retry" },
         ]);
         await scheduler.schedule(
-            schedule([{ deliverAt: at(0), content: "AAAA", ttl: 1800 }]),
+            schedule([{ deliverAt: at(DUE), content: "AAAA", ttl: 1800 }]),
         );
 
+        clock.now = NOW + DUE;
         await scheduler.tick();
         expect(store.records.get(ENDPOINT)?.[0]).toMatchObject({
             attempts: 1,
-            retryAt: NOW + MINUTE,
+            retryAt: NOW + DUE + MINUTE,
         });
         // Not due again until the retry time.
-        clock.now = NOW + 30 * 1000;
+        clock.now = NOW + DUE + 30 * 1000;
         await scheduler.tick();
         expect(sent).toHaveLength(1);
 
         // The push service's Retry-After wins over a shorter backoff.
-        clock.now = NOW + MINUTE;
+        clock.now = NOW + DUE + MINUTE;
         await scheduler.tick();
         expect(store.records.get(ENDPOINT)?.[0]).toMatchObject({
             attempts: 2,
-            retryAt: NOW + 11 * MINUTE,
+            retryAt: NOW + DUE + 11 * MINUTE,
         });
 
         // The next retry would land after the ttl, so the message is dropped.
-        clock.now = NOW + 28 * MINUTE;
+        clock.now = NOW + DUE + 28 * MINUTE;
         await scheduler.tick();
         expect(sent).toHaveLength(3);
         expect(store.records.size).toBe(0);
     });
 
     it("drops a refused message but keeps the rest of the list", async () => {
-        const { store, sent, scheduler } = setup([{ status: "rejected" }]);
+        const { store, clock, sent, scheduler } = setup([
+            { status: "rejected" },
+        ]);
         await scheduler.schedule(
             schedule([
-                { deliverAt: at(0), content: "BAD" },
+                { deliverAt: at(DUE), content: "BAD" },
                 { deliverAt: at(HOUR), content: "LATER" },
             ]),
         );
+        clock.now = NOW + DUE;
         await scheduler.tick();
         expect(sent).toHaveLength(1);
         expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
@@ -303,18 +349,82 @@ describe("ScheduledDelivery.tick", () => {
     });
 
     it("removes the whole schedule when the subscription is gone", async () => {
-        const { store, sent, scheduler } = setup([{ status: "gone" }]);
+        const { store, clock, sent, scheduler } = setup([{ status: "gone" }]);
         await scheduler.schedule(
             schedule([
-                { deliverAt: at(0), content: "AAAA" },
-                { deliverAt: at(0), content: "BBBB" },
+                { deliverAt: at(DUE), content: "AAAA" },
+                { deliverAt: at(DUE), content: "BBBB" },
                 { deliverAt: at(HOUR), content: "CCCC" },
             ]),
         );
+        clock.now = NOW + DUE;
         await scheduler.tick();
         expect(sent).toHaveLength(1);
         expect(store.records.size).toBe(0);
         expect(store.due.size).toBe(0);
+    });
+
+    it("stops when the list is replaced or cancelled during a send", async () => {
+        const store = new MemoryStore();
+        const clock = { now: NOW };
+        const sent: Array<string> = [];
+        const scheduler: ScheduledDelivery = new ScheduledDelivery(
+            store as unknown as ScheduleStore,
+            async (_endpoint, message) => {
+                sent.push(message.content);
+                // The app syncs a new list while this send is in flight.
+                await scheduler.schedule(
+                    schedule([{ deliverAt: at(HOUR), content: "NEW" }]),
+                );
+                return { status: "accepted" };
+            },
+            limits,
+            () => clock.now,
+        );
+        await scheduler.schedule(
+            schedule([
+                { deliverAt: at(DUE), content: "OLD-1" },
+                { deliverAt: at(DUE), content: "OLD-2" },
+            ]),
+        );
+        clock.now = NOW + DUE;
+        await scheduler.tick();
+
+        expect(sent).toEqual(["OLD-1"]);
+        expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
+            "NEW",
+        ]);
+        expect(store.due.get(ENDPOINT)).toBe(NOW + HOUR);
+    });
+
+    it("starts no further send once it has been stopped", async () => {
+        const store = new MemoryStore();
+        const clock = { now: NOW };
+        const sent: Array<string> = [];
+        const scheduler: ScheduledDelivery = new ScheduledDelivery(
+            store as unknown as ScheduleStore,
+            async (_endpoint, message) => {
+                sent.push(message.content);
+                await scheduler.stop();
+                return { status: "accepted" };
+            },
+            limits,
+            () => clock.now,
+        );
+        await scheduler.schedule(
+            schedule([
+                { deliverAt: at(DUE), content: "ONE" },
+                { deliverAt: at(DUE), content: "TWO" },
+            ]),
+        );
+        clock.now = NOW + DUE;
+        await scheduler.tick();
+
+        expect(sent).toEqual(["ONE"]);
+        // Kept for the next server run.
+        expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
+            "TWO",
+        ]);
     });
 
     it("forgets a wake-up whose record has expired", async () => {

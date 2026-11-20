@@ -84,11 +84,51 @@ export function retryAfterSeconds(
     return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
 }
 
+/**
+ * A short code for a request that got no answer, e.g. `ECONNREFUSED`. Never
+ * the error's message, which can quote the URL.
+ */
+export function failureCode(err: unknown): string {
+    const error = toError(err);
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+        return "timeout";
+    }
+    const cause = (error as { cause?: unknown }).cause;
+    const code = (cause ?? error) as { code?: unknown };
+    return typeof code.code === "string" &&
+        /^[A-Z][A-Z0-9_]{2,40}$/.test(code.code)
+        ? code.code
+        : "network-error";
+}
+
+/**
+ * The reason a push service gave for a refusal, when it is a plain code like
+ * Apple's `{"reason":"BadJwtToken"}`. That is what an operator needs to fix
+ * a key or a contact address. Anything else in the body is dropped: it is
+ * the push service's text and could repeat the delivery URL.
+ */
+export function refusalReason(body: string): string | undefined {
+    try {
+        const reason = (JSON.parse(body) as { reason?: unknown }).reason;
+        return typeof reason === "string" &&
+            /^[A-Za-z0-9_.-]{1,64}$/.test(reason)
+            ? reason
+            : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 /** Enforce a deadline independently of a dependency's AbortSignal handling. */
 function withDeadline<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
     return new Promise((resolve, reject) => {
         const timer = setTimeout(
-            () => reject(new Error(`no response in ${timeoutMs}ms`)),
+            () =>
+                reject(
+                    Object.assign(new Error(`no response in ${timeoutMs}ms`), {
+                        name: "TimeoutError",
+                    }),
+                ),
             timeoutMs,
         );
         promise.then(
@@ -143,8 +183,7 @@ export default class WebPush implements PlatformInterface {
      * Post one encrypted message to the subscription in `target.id`. The job
      * completes with `object.status` for every answer a push service can
      * give, so a caller can tell "the subscription is gone" from "try again"
-     * without parsing an error string. It only fails when the server itself
-     * is misconfigured.
+     * without parsing an error string.
      */
     async send(job: ActivityStream, cb: PlatformCallback) {
         const done = (
@@ -169,7 +208,11 @@ export default class WebPush implements PlatformInterface {
             this.vapid ??= new Vapid(this.settings.vapid);
             vapid = this.vapid;
         } catch (err) {
-            cb(toError(err));
+            // Reported as a result, not a failed job: a failed job is
+            // answered with the original message, delivery URL included.
+            // `retry`, because it will work once the operator fixes the key.
+            this.log.error(toError(err).message);
+            done("retry", { detail: "server-misconfigured" });
             return;
         }
 
@@ -185,7 +228,14 @@ export default class WebPush implements PlatformInterface {
             (url.protocol === "http:" &&
                 this.config.allowInsecureHttp === true);
         const allowed = this.settings.allowedHosts ?? DEFAULT_ALLOWED_HOSTS;
-        if (!secure || !hostAllowed(url.hostname, allowed)) {
+        if (
+            !secure ||
+            // No push service puts credentials in a delivery URL, and a
+            // fetch refuses one with an error that quotes the whole URL.
+            url.username ||
+            url.password ||
+            !hostAllowed(url.hostname, allowed)
+        ) {
             done("rejected", {
                 detail: `${url.host} is not a push service this server sends to`,
             });
@@ -231,26 +281,18 @@ export default class WebPush implements PlatformInterface {
                 timeoutMs,
             )) as unknown as Response;
         } catch (err) {
-            const error = toError(err);
-            const cause = (error as { cause?: unknown }).cause;
-            const reason =
-                cause instanceof Error ? cause.message : error.message;
-            // Only the host is logged: the rest of the URL is a secret.
+            // Only the host and a short code are logged or returned: the
+            // rest of the URL is a secret, and an error message can quote it.
+            const reason = failureCode(err);
             this.log.debug(`push to ${url.host} failed: ${reason}`);
             done("retry", { detail: reason });
             return;
         }
 
         const status = statusFor(res.status);
-        // A refusal carries a short reason (Apple: `{"reason":"BadJwtToken"}`),
-        // which is what an operator needs to fix a key or a contact address.
-        const reason =
-            status === "accepted"
-                ? ""
-                : (await res.text().catch(() => "")).trim().slice(0, 200);
-        if (status === "accepted") {
-            await res.body?.cancel().catch(() => undefined);
-        }
+        // Read to the end either way, so the connection can be reused.
+        const text = await res.text().catch(() => "");
+        const reason = status === "accepted" ? undefined : refusalReason(text);
         this.log.debug(`push to ${url.host}: HTTP ${res.status} (${status})`);
         const retryAfter =
             status === "retry"
@@ -261,14 +303,6 @@ export default class WebPush implements PlatformInterface {
             ...(retryAfter !== undefined ? { retryAfter } : {}),
             ...(reason ? { detail: reason } : {}),
         });
-    }
-
-    /**
-     * The server handles `schedule` before it reaches a platform. A job only
-     * arrives here when scheduled delivery is turned off.
-     */
-    schedule(_job: ActivityStream, cb: PlatformCallback) {
-        cb(new Error("scheduled delivery is not enabled on this server"));
     }
 
     cleanup(cb: PlatformCallback) {

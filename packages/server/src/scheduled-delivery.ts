@@ -40,11 +40,13 @@ const BATCH_SIZE = 20;
 /** Give up waiting for the platform; the message is retried. */
 const DELIVER_TIMEOUT_MS = 60 * 1000;
 /**
- * A message is still sent when it is at least this late, whatever its `ttl`.
- * Without it a `ttl` of 0 could never be delivered: the poll that finds a
- * message is always a little after `deliverAt`.
+ * How late a message with a `ttl` of 0 may still be sent. Taken literally it
+ * could never be delivered: the poll that finds a message is always a little
+ * after `deliverAt`.
  */
-const MIN_LATE_SECONDS = 60;
+const ZERO_TTL_LATE_SECONDS = 60;
+/** How long shutdown waits for a send that is already in flight. */
+const STOP_WAIT_MS = 5000;
 const FIRST_RETRY_MS = 60 * 1000;
 const MAX_RETRY_MS = 60 * 60 * 1000;
 
@@ -186,11 +188,22 @@ export class ScheduledDelivery {
         poll();
     }
 
-    /** Stop polling and wait for the poll in progress to finish. */
+    /**
+     * Stop polling. No further send is started; one already in flight gets a
+     * few seconds to finish. Whatever is cut short is still claimed, and is
+     * sent by the next server run when the claim lapses.
+     */
     async stop(): Promise<void> {
         this.stopped = true;
         clearTimeout(this.timer);
-        await this.inFlight;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        await Promise.race([
+            this.inFlight,
+            new Promise((resolve) => {
+                timer = setTimeout(resolve, STOP_WAIT_MS);
+            }),
+        ]);
+        clearTimeout(timer);
     }
 
     private overRate(clientIp: string | undefined): boolean {
@@ -235,23 +248,28 @@ export class ScheduledDelivery {
                 `a schedule may hold at most ${this.limits.maxMessagesPerSubscription} messages`,
             );
         }
-        const latest =
-            this.now() + this.limits.maxDaysAhead * 24 * 60 * 60 * 1000;
-        const messages = items.map((item): ScheduledMessage => {
+        const now = this.now();
+        const latest = now + this.limits.maxDaysAhead * 24 * 60 * 60 * 1000;
+        const messages: Array<ScheduledMessage> = [];
+        for (const item of items) {
             const deliverAt = Date.parse(item.deliverAt);
             if (!Number.isFinite(deliverAt) || deliverAt > latest) {
                 throw new Error(
                     `deliverAt may be at most ${this.limits.maxDaysAhead} days ahead`,
                 );
             }
-            return {
+            // A schedule is a list of future messages. One whose time has
+            // passed is left out, so an app can send the same list again
+            // without repeating what was already delivered.
+            if (deliverAt <= now) continue;
+            messages.push({
                 deliverAt,
                 content: item.content,
                 ttl: item.ttl ?? DEFAULT_TTL_SECONDS,
                 ...(item.urgency ? { urgency: item.urgency } : {}),
                 ...(item.topic ? { topic: item.topic } : {}),
-            };
-        });
+            });
+        }
         // A delivery URL cannot be checked until something is sent to it, so
         // made-up ones can be stored. The cap bounds what they can take up.
         if (
@@ -298,6 +316,7 @@ export class ScheduledDelivery {
     private async process(id: string): Promise<void> {
         const loaded = await this.store.load(id);
         if (!loaded) return;
+        const started = this.now();
         const remaining: Array<ScheduledMessage> = [];
         for (const message of loaded.record.messages) {
             const now = this.now();
@@ -305,11 +324,23 @@ export class ScheduledDelivery {
                 remaining.push(message);
                 continue;
             }
-            const window = Math.max(message.ttl, MIN_LATE_SECONDS);
+            const window =
+                message.ttl > 0 ? message.ttl : ZERO_TTL_LATE_SECONDS;
             const expires = message.deliverAt + window * 1000;
             if (now > expires) {
                 // Too late to be worth showing, e.g. after a long outage.
                 continue;
+            }
+            if (this.stopped || now - started > LEASE_MS / 2) {
+                // Shutting down, or close to the end of the claim: leave
+                // the rest for the next poll, which claims it afresh.
+                remaining.push(message);
+                continue;
+            }
+            if (!(await this.store.unchanged(id, loaded))) {
+                // The app replaced or cancelled this list while an earlier
+                // message was being sent. The new list has its own wake-up.
+                return;
             }
             const late = Math.max(
                 0,

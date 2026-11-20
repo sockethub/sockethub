@@ -20,7 +20,10 @@ import {
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 import type { Socket } from "socket.io";
-import { buildPlatformRegistryPayload } from "./api-info.js";
+import {
+    buildPlatformRegistryPayload,
+    buildServiceDescriptor,
+} from "./api-info.js";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
@@ -172,6 +175,14 @@ class Sockethub {
         }
 
         log.debug("active platforms: ", [...init.platforms.keys()]);
+        if (
+            init.platforms.has(WEBPUSH_PLATFORM_ID) &&
+            !buildServiceDescriptor(init.platforms).webpush
+        ) {
+            log.warn(
+                "@sockethub/platform-webpush is loaded without a key pair (packageConfig vapid); it cannot send until one is configured",
+            );
+        }
         listener.start(); // start external services
         registerServerInfoRoute(listener.getApp(), {
             platforms: this.platformRegistry,
