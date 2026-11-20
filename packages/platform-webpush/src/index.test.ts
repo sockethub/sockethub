@@ -287,6 +287,8 @@ describe("webpush helpers", () => {
             "VapidPkHashMismatch",
         );
         expect(refusalReason(`{"reason":"see ${ENDPOINT}"}`)).toBeUndefined();
+        // Shaped like a code, but it could as well be a subscription token.
+        expect(refusalReason('{"reason":"dGhpcy1pcy1hLXRva2Vu"}')).toBeUndefined();
         expect(refusalReason("<html>403</html>")).toBeUndefined();
         expect(refusalReason("")).toBeUndefined();
     });

@@ -250,6 +250,7 @@ export class ScheduledDelivery {
         }
         const now = this.now();
         const latest = now + this.limits.maxDaysAhead * 24 * 60 * 60 * 1000;
+        const pending = await this.store.pending(endpoint);
         const messages: Array<ScheduledMessage> = [];
         for (const item of items) {
             const deliverAt = Date.parse(item.deliverAt);
@@ -258,23 +259,32 @@ export class ScheduledDelivery {
                     `deliverAt may be at most ${this.limits.maxDaysAhead} days ahead`,
                 );
             }
-            // A schedule is a list of future messages. One whose time has
-            // passed is left out, so an app can send the same list again
-            // without repeating what was already delivered.
-            if (deliverAt <= now) continue;
-            messages.push({
-                deliverAt,
-                content: item.content,
-                ttl: item.ttl ?? DEFAULT_TTL_SECONDS,
-                ...(item.urgency ? { urgency: item.urgency } : {}),
-                ...(item.topic ? { topic: item.topic } : {}),
-            });
+            if (deliverAt > now) {
+                messages.push({
+                    deliverAt,
+                    content: item.content,
+                    ttl: item.ttl ?? DEFAULT_TTL_SECONDS,
+                    ...(item.urgency ? { urgency: item.urgency } : {}),
+                    ...(item.topic ? { topic: item.topic } : {}),
+                });
+                continue;
+            }
+            // Its time has passed. Sending the same list again must change
+            // nothing: a message that is still waiting to go out, or being
+            // retried, stays exactly as it is, and one that has been dealt
+            // with is not sent a second time.
+            const waiting = pending.find(
+                (message) =>
+                    message.deliverAt === deliverAt &&
+                    message.content === item.content,
+            );
+            if (waiting) messages.push(waiting);
         }
         // A delivery URL cannot be checked until something is sent to it, so
         // made-up ones can be stored. The cap bounds what they can take up.
         if (
             messages.length > 0 &&
-            !(await this.store.has(endpoint)) &&
+            pending.length === 0 &&
             (await this.store.count()) >= this.limits.maxSubscriptions
         ) {
             throw new Error("this server is not accepting new schedules");
@@ -319,11 +329,18 @@ export class ScheduledDelivery {
         const started = this.now();
         const remaining: Array<ScheduledMessage> = [];
         for (const message of loaded.record.messages) {
-            const now = this.now();
-            if (nextAttempt(message) > now) {
+            if (nextAttempt(message) > this.now()) {
                 remaining.push(message);
                 continue;
             }
+            if (!(await this.store.unchanged(id, loaded))) {
+                // The app replaced or cancelled this list while an earlier
+                // message was being sent. The new list has its own wake-up.
+                return;
+            }
+            // Everything below is decided on the time after that read, as
+            // close to the send as this process gets.
+            const now = this.now();
             const window =
                 message.ttl > 0 ? message.ttl : ZERO_TTL_LATE_SECONDS;
             const expires = message.deliverAt + window * 1000;
@@ -336,11 +353,6 @@ export class ScheduledDelivery {
                 // the rest for the next poll, which claims it afresh.
                 remaining.push(message);
                 continue;
-            }
-            if (!(await this.store.unchanged(id, loaded))) {
-                // The app replaced or cancelled this list while an earlier
-                // message was being sent. The new list has its own wake-up.
-                return;
             }
             const late = Math.max(
                 0,

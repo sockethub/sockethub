@@ -101,17 +101,36 @@ export function failureCode(err: unknown): string {
         : "network-error";
 }
 
+/** The reasons Apple documents for refusing a Web Push request. */
+const KNOWN_REASONS = new Set([
+    "BadAuthorizationHeader",
+    "BadJwtToken",
+    "BadPath",
+    "BadTtl",
+    "BadUrgency",
+    "BadVapidPublicKey",
+    "BadWebPushRequest",
+    "BadWebPushTopic",
+    "IdleTimeout",
+    "InternalServerError",
+    "MethodNotAllowed",
+    "PayloadTooLarge",
+    "ServiceUnavailable",
+    "Shutdown",
+    "TooManyRequests",
+    "VapidPkHashMismatch",
+]);
+
 /**
- * The reason a push service gave for a refusal, when it is a plain code like
- * Apple's `{"reason":"BadJwtToken"}`. That is what an operator needs to fix
- * a key or a contact address. Anything else in the body is dropped: it is
- * the push service's text and could repeat the delivery URL.
+ * The reason a push service gave for a refusal, when it is one of the known
+ * codes, e.g. `{"reason":"BadJwtToken"}`. That is what an operator needs to
+ * fix a key or a contact address. Everything else in the body is dropped: it
+ * is the push service's text, and could repeat the delivery URL.
  */
 export function refusalReason(body: string): string | undefined {
     try {
         const reason = (JSON.parse(body) as { reason?: unknown }).reason;
-        return typeof reason === "string" &&
-            /^[A-Za-z0-9_.-]{1,64}$/.test(reason)
+        return typeof reason === "string" && KNOWN_REASONS.has(reason)
             ? reason
             : undefined;
     } catch {
@@ -290,9 +309,13 @@ export default class WebPush implements PlatformInterface {
         }
 
         const status = statusFor(res.status);
-        // Read to the end either way, so the connection can be reused.
-        const text = await res.text().catch(() => "");
-        const reason = status === "accepted" ? undefined : refusalReason(text);
+        let reason: string | undefined;
+        if (status === "accepted") {
+            // Nothing in the body is needed; do not wait for it.
+            void res.body?.cancel().catch(() => undefined);
+        } else {
+            reason = refusalReason(await res.text().catch(() => ""));
+        }
         this.log.debug(`push to ${url.host}: HTTP ${res.status} (${status})`);
         const retryAfter =
             status === "retry"

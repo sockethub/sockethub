@@ -142,9 +142,9 @@ These are results, not errors. A URL on a host that is not an allowed push
 service is `rejected` without a request being made. A server with no usable
 key pair answers `retry` with `detail` set to `server-misconfigured`.
 
-`detail` is a short code when there is one: the push service's own reason,
-such as Apple's `BadJwtToken`, or a network code such as `ECONNREFUSED`. No
-other text from the push service is passed on.
+`detail` is a short code when there is one: one of the reasons Apple
+documents, such as `BadJwtToken`, or a network code such as `ECONNREFUSED`.
+No other text from the push service is passed on.
 
 ### Send later
 
@@ -172,9 +172,10 @@ other text from the push service is passed on.
 ```
 
 `items` is the complete list of future messages for that subscription. It
-replaces any list sent earlier, and an empty list cancels. An item whose time
-has already passed is left out, so an app can send the same list every time
-it opens without repeating what was delivered. To send something now, use
+replaces any list sent earlier, and an empty list cancels. Sending the same
+list again changes nothing, so an app can sync every time it opens: an item
+whose time has passed is kept only if it is still waiting to go out, and one
+that was already delivered is not repeated. To send something now, use
 `send`. Each item takes the same `ttl`, `urgency` and `topic` as `send`.
 
 The result is `{ "type": "schedule", "pending": 2 }`, counting the items kept. It is a single HTTP

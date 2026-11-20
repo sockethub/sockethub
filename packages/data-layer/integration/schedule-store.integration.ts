@@ -53,7 +53,7 @@ describe("ScheduleStore", () => {
         // with only the configured secret in common.
         const connection = new Redis(REDIS_URL);
         const later = new ScheduleStore(connection, SECRET);
-        expect(await later.has(ENDPOINT)).toBe(true);
+        expect(await later.pending(ENDPOINT)).toHaveLength(2);
         expect(await later.count()).toBe(1);
         const loaded = await later.load(later.idFor(ENDPOINT));
         connection.disconnect();
@@ -80,7 +80,7 @@ describe("ScheduleStore", () => {
         // in place: a server started with a mistyped secret must not
         // destroy schedules that the right secret can still read.
         const other = new ScheduleStore(redis, `${SECRET}-other`);
-        expect(await other.has(ENDPOINT)).toBe(false);
+        expect(await other.pending(ENDPOINT)).toEqual([]);
         expect(await other.load(id)).toBeNull();
         expect((await store.load(id))?.record.endpoint).toBe(ENDPOINT);
         expect(await redis.zscore(SCHEDULE_DUE_KEY, id)).not.toBeNull();
@@ -201,7 +201,7 @@ describe("ScheduleStore", () => {
         // What a server deletes on shutdown.
         await purgeCredentialsStoreKeys(redis, deadServer);
 
-        expect(await store.has(ENDPOINT)).toBe(true);
+        expect(await store.pending(ENDPOINT)).toEqual([message(HOUR)]);
         expect(await redis.zscore(SCHEDULE_DUE_KEY, id)).toBe(
             String(NOW + HOUR),
         );

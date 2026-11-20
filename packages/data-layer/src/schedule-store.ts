@@ -205,12 +205,16 @@ export class ScheduleStore {
         return this.redis.zcard(SCHEDULE_DUE_KEY);
     }
 
-    async has(endpoint: string): Promise<boolean> {
-        return (
-            (await this.redis.exists(
-                scheduleRecordKey(this.idFor(endpoint)),
-            )) === 1
-        );
+    /** The messages still pending for a subscription; empty if none. */
+    async pending(endpoint: string): Promise<Array<ScheduledMessage>> {
+        const id = this.idFor(endpoint);
+        const raw = await this.redis.get(scheduleRecordKey(id));
+        if (raw === null) return [];
+        try {
+            return this.open(id, raw).messages;
+        } catch {
+            return [];
+        }
     }
 
     /**

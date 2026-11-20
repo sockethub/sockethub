@@ -36,8 +36,8 @@ class MemoryStore {
     async count() {
         return this.due.size;
     }
-    async has(endpoint: string) {
-        return this.records.has(endpoint);
+    async pending(endpoint: string) {
+        return this.records.get(endpoint) ?? [];
     }
     async replace(endpoint: string, messages: Array<ScheduledMessage>) {
         if (messages.length === 0) {
@@ -189,6 +189,34 @@ describe("ScheduledDelivery.schedule", () => {
         expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
             "SECOND",
         ]);
+    });
+
+    it("keeps a due message that is still waiting when the list is sent again", async () => {
+        const { store, clock, sent, scheduler } = setup([{ status: "retry" }]);
+        const list = schedule([
+            { deliverAt: at(MINUTE), content: "FIRST", ttl: 3600 },
+        ]);
+        await scheduler.schedule(list);
+        clock.now = NOW + MINUTE;
+        await scheduler.tick();
+        const retrying = store.records.get(ENDPOINT)?.[0];
+        expect(retrying).toMatchObject({ attempts: 1 });
+
+        // The push service is down and the message is being retried. The
+        // same list arriving again must neither cancel it nor restart it.
+        clock.now = NOW + MINUTE + 10 * 1000;
+        const ack = await scheduler.schedule(list);
+        expect((ack.object as { pending: number }).pending).toBe(1);
+        expect(store.records.get(ENDPOINT)).toEqual([
+            retrying as ScheduledMessage,
+        ]);
+        await scheduler.tick();
+        expect(sent).toHaveLength(1);
+
+        clock.now = NOW + 2 * MINUTE;
+        await scheduler.tick();
+        expect(sent).toHaveLength(2);
+        expect(store.records.size).toBe(0);
     });
 
     it("enforces the per-subscription, look-ahead and server-wide limits", async () => {
