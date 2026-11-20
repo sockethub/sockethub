@@ -75,11 +75,13 @@ for _, id in ipairs(ids) do
 end
 return ids`;
 
-// Writes a record back only if it is still the one that was read. A client
-// may replace its schedule while a send is in flight; that newer list must
-// win, and it has already set its own wake-up time.
+// Writes a record only if it is still the one that was read ('' for none).
+// A worker and a client can both be changing a subscription at once: a
+// client may replace its schedule while a send is in flight, and a send may
+// finish while a client's new list is being worked out. Whoever wrote first
+// wins, and the other reads again.
 const SAVE_SCRIPT = `
-if redis.call('GET', KEYS[1]) ~= ARGV[1] then
+if (redis.call('GET', KEYS[1]) or '') ~= ARGV[1] then
     return 0
 end
 if ARGV[2] == '' then
@@ -205,39 +207,65 @@ export class ScheduleStore {
         return this.redis.zcard(SCHEDULE_DUE_KEY);
     }
 
-    /** The messages still pending for a subscription; empty if none. */
-    async pending(endpoint: string): Promise<Array<ScheduledMessage>> {
+    /**
+     * The messages still pending for a subscription, with the stored bytes
+     * to pass to {@link replace}. `raw` is null when there is no record.
+     */
+    async pending(
+        endpoint: string,
+    ): Promise<{ messages: Array<ScheduledMessage>; raw: string | null }> {
         const id = this.idFor(endpoint);
         const raw = await this.redis.get(scheduleRecordKey(id));
-        if (raw === null) return [];
+        if (raw === null) return { messages: [], raw };
         try {
-            return this.open(id, raw).messages;
+            return { messages: this.open(id, raw).messages, raw };
         } catch {
-            return [];
+            return { messages: [], raw };
         }
     }
 
     /**
      * Replace a subscription's whole list. An empty list removes it. The
      * record expires on its own once its last message is past delivery, so
-     * an abandoned subscription cleans itself up.
+     * an abandoned subscription cleans itself up. Returns false, and changes
+     * nothing, when the record is no longer the one `expected` was read from.
      */
     async replace(
         endpoint: string,
         messages: Array<ScheduledMessage>,
-    ): Promise<void> {
+        expected: string | null,
+    ): Promise<boolean> {
         const id = this.idFor(endpoint);
-        const key = scheduleRecordKey(id);
-        if (messages.length === 0) {
-            await this.redis.multi().del(key).zrem(SCHEDULE_DUE_KEY, id).exec();
-            return;
-        }
-        await this.redis
-            .multi()
-            .set(key, this.seal(id, { endpoint, messages }))
-            .pexpireat(key, ScheduleStore.expiry(messages))
-            .zadd(SCHEDULE_DUE_KEY, ScheduleStore.wakeAt(messages), id)
-            .exec();
+        return this.write(
+            id,
+            expected ?? "",
+            messages.length === 0 ? null : { endpoint, messages },
+        );
+    }
+
+    private async write(
+        id: string,
+        expected: string,
+        record: ScheduleRecord | null,
+    ): Promise<boolean> {
+        const args = record
+            ? [
+                  this.seal(id, record),
+                  id,
+                  ScheduleStore.expiry(record.messages),
+                  ScheduleStore.wakeAt(record.messages),
+              ]
+            : ["", id, 0, 0];
+        return (
+            (await this.redis.eval(
+                SAVE_SCRIPT,
+                2,
+                scheduleRecordKey(id),
+                SCHEDULE_DUE_KEY,
+                expected,
+                ...args,
+            )) === 1
+        );
     }
 
     /**
@@ -295,24 +323,10 @@ export class ScheduleStore {
         loaded: LoadedSchedule,
         messages: Array<ScheduledMessage>,
     ): Promise<boolean> {
-        const args =
-            messages.length === 0
-                ? ["", id, 0, 0]
-                : [
-                      this.seal(id, { ...loaded.record, messages }),
-                      id,
-                      ScheduleStore.expiry(messages),
-                      ScheduleStore.wakeAt(messages),
-                  ];
-        return (
-            (await this.redis.eval(
-                SAVE_SCRIPT,
-                2,
-                scheduleRecordKey(id),
-                SCHEDULE_DUE_KEY,
-                loaded.raw,
-                ...args,
-            )) === 1
+        return this.write(
+            id,
+            loaded.raw,
+            messages.length === 0 ? null : { ...loaded.record, messages },
         );
     }
 }

@@ -71,6 +71,9 @@ export interface ScheduledDeliveryLimits {
     maxSchedulesPerMinute: number;
 }
 
+/** How often `schedule` re-reads a record that changed under it. */
+const SCHEDULE_WRITE_ATTEMPTS = 3;
+
 type ScheduleItem = {
     deliverAt: string;
     content: string;
@@ -144,6 +147,38 @@ export function createQueueDeliver(
                 },
             );
         });
+}
+
+/**
+ * The list to store for a `schedule` request. Sending the same list again
+ * must change nothing, so a message whose time has passed is kept only if it
+ * is still pending, and then exactly as stored, retry state included. One
+ * that has been dealt with is not sent a second time.
+ */
+function merge(
+    wanted: Array<ScheduledMessage>,
+    pending: Array<ScheduledMessage>,
+    now: number,
+): Array<ScheduledMessage> {
+    const waiting = [...pending];
+    const messages: Array<ScheduledMessage> = [];
+    for (const message of wanted) {
+        if (message.deliverAt > now) {
+            messages.push(message);
+            continue;
+        }
+        const index = waiting.findIndex(
+            (stored) =>
+                stored.deliverAt === message.deliverAt &&
+                stored.content === message.content &&
+                stored.ttl === message.ttl &&
+                stored.urgency === message.urgency &&
+                stored.topic === message.topic,
+        );
+        // Each stored message answers for one submitted item.
+        if (index >= 0) messages.push(...waiting.splice(index, 1));
+    }
+    return messages;
 }
 
 export class ScheduledDelivery {
@@ -250,55 +285,58 @@ export class ScheduledDelivery {
         }
         const now = this.now();
         const latest = now + this.limits.maxDaysAhead * 24 * 60 * 60 * 1000;
-        const pending = await this.store.pending(endpoint);
-        const messages: Array<ScheduledMessage> = [];
-        for (const item of items) {
+        const wanted = items.map((item): ScheduledMessage => {
             const deliverAt = Date.parse(item.deliverAt);
             if (!Number.isFinite(deliverAt) || deliverAt > latest) {
                 throw new Error(
                     `deliverAt may be at most ${this.limits.maxDaysAhead} days ahead`,
                 );
             }
-            if (deliverAt > now) {
-                messages.push({
-                    deliverAt,
-                    content: item.content,
-                    ttl: item.ttl ?? DEFAULT_TTL_SECONDS,
-                    ...(item.urgency ? { urgency: item.urgency } : {}),
-                    ...(item.topic ? { topic: item.topic } : {}),
-                });
-                continue;
-            }
-            // Its time has passed. Sending the same list again must change
-            // nothing: a message that is still waiting to go out, or being
-            // retried, stays exactly as it is, and one that has been dealt
-            // with is not sent a second time.
-            const waiting = pending.find(
-                (message) =>
-                    message.deliverAt === deliverAt &&
-                    message.content === item.content,
-            );
-            if (waiting) messages.push(waiting);
-        }
-        // A delivery URL cannot be checked until something is sent to it, so
-        // made-up ones can be stored. The cap bounds what they can take up.
-        if (
-            messages.length > 0 &&
-            pending.length === 0 &&
-            (await this.store.count()) >= this.limits.maxSubscriptions
-        ) {
-            throw new Error("this server is not accepting new schedules");
-        }
-        await this.store.replace(endpoint, messages);
+            return {
+                deliverAt,
+                content: item.content,
+                ttl: item.ttl ?? DEFAULT_TTL_SECONDS,
+                ...(item.urgency ? { urgency: item.urgency } : {}),
+                ...(item.topic ? { topic: item.topic } : {}),
+            };
+        });
         // The delivery URL is left out: results may be cached for replay.
-        const ack = {
-            "@context": msg["@context"],
-            type: SCHEDULE_ACTION,
-            actor: msg.actor,
-            object: { type: "schedule", pending: messages.length },
-        } as ActivityStream;
-        if (msg.id) ack.id = msg.id;
-        return ack;
+        const ack = (pending: number) => {
+            const result = {
+                "@context": msg["@context"],
+                type: SCHEDULE_ACTION,
+                actor: msg.actor,
+                object: { type: "schedule", pending },
+            } as ActivityStream;
+            if (msg.id) result.id = msg.id;
+            return result;
+        };
+        // A send can finish while the new list is being worked out. The
+        // write only goes through if the record is still the one read here;
+        // otherwise read it again.
+        for (let attempt = 0; attempt < SCHEDULE_WRITE_ATTEMPTS; attempt++) {
+            const current = await this.store.pending(endpoint);
+            const messages = merge(wanted, current.messages, now);
+            if (JSON.stringify(messages) === JSON.stringify(current.messages)) {
+                // The same list again. Nothing is written, so a send in
+                // progress keeps its claim.
+                return ack(messages.length);
+            }
+            // A delivery URL cannot be checked until something is sent to
+            // it, so made-up ones can be stored. The cap bounds what they
+            // can take up.
+            if (
+                messages.length > 0 &&
+                current.raw === null &&
+                (await this.store.count()) >= this.limits.maxSubscriptions
+            ) {
+                throw new Error("this server is not accepting new schedules");
+            }
+            if (await this.store.replace(endpoint, messages, current.raw)) {
+                return ack(messages.length);
+            }
+        }
+        throw new Error("the schedule is being changed; try again");
     }
 
     /** Send everything that is due now. Runs on a timer; public for tests. */

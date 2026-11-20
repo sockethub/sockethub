@@ -36,20 +36,35 @@ class MemoryStore {
     async count() {
         return this.due.size;
     }
-    async pending(endpoint: string) {
-        return this.records.get(endpoint) ?? [];
+    writes = 0;
+    private raw(endpoint: string) {
+        const messages = this.records.get(endpoint);
+        return messages ? JSON.stringify(messages) : null;
     }
-    async replace(endpoint: string, messages: Array<ScheduledMessage>) {
+    async pending(endpoint: string) {
+        return {
+            messages: this.records.get(endpoint) ?? [],
+            raw: this.raw(endpoint),
+        };
+    }
+    async replace(
+        endpoint: string,
+        messages: Array<ScheduledMessage>,
+        expected: string | null,
+    ) {
+        if (this.raw(endpoint) !== expected) return false;
+        this.writes += 1;
         if (messages.length === 0) {
             this.records.delete(endpoint);
             this.due.delete(endpoint);
-            return;
+            return true;
         }
         this.records.set(endpoint, messages);
         this.due.set(
             endpoint,
             Math.min(...messages.map((m) => m.retryAt ?? m.deliverAt)),
         );
+        return true;
     }
     async claimDue(now: number, leaseMs: number, limit: number) {
         const ids = [...this.due]
@@ -78,9 +93,7 @@ class MemoryStore {
         _loaded: LoadedSchedule,
         messages: Array<ScheduledMessage>,
     ) {
-        if (!(await this.unchanged(id, _loaded))) return false;
-        await this.replace(id, messages);
-        return true;
+        return this.replace(id, messages, _loaded.raw);
     }
 }
 
@@ -217,6 +230,58 @@ describe("ScheduledDelivery.schedule", () => {
         await scheduler.tick();
         expect(sent).toHaveLength(2);
         expect(store.records.size).toBe(0);
+    });
+
+    it("writes nothing when the same list arrives again", async () => {
+        const { store, scheduler } = setup();
+        const list = schedule([
+            { deliverAt: at(HOUR), content: "AAAA", topic: "daily" },
+        ]);
+        await scheduler.schedule(list);
+        expect(store.writes).toBe(1);
+        const ack = await scheduler.schedule(list);
+        expect((ack.object as { pending: number }).pending).toBe(1);
+        // A write would reset the claim of a send in progress.
+        expect(store.writes).toBe(1);
+    });
+
+    it("does not bring back a message delivered while the list was being saved", async () => {
+        const { store, clock, scheduler } = setup();
+        const list = schedule([
+            { deliverAt: at(MINUTE), content: "FIRST" },
+            { deliverAt: at(HOUR), content: "SECOND" },
+            { deliverAt: at(2 * HOUR), content: "THIRD" },
+        ]);
+        await scheduler.schedule(list);
+        clock.now = NOW + MINUTE;
+
+        // A worker finishes sending FIRST between this request reading the
+        // record and writing it.
+        const pending = store.pending.bind(store);
+        let raced = false;
+        store.pending = async (endpoint: string) => {
+            const snapshot = await pending(endpoint);
+            if (!raced) {
+                raced = true;
+                store.records.set(
+                    endpoint,
+                    snapshot.messages.filter((m) => m.content !== "FIRST"),
+                );
+            }
+            return snapshot;
+        };
+        // The same list minus its last item, so there is something to write.
+        const ack = await scheduler.schedule(
+            schedule([
+                { deliverAt: at(MINUTE), content: "FIRST" },
+                { deliverAt: at(HOUR), content: "SECOND" },
+            ]),
+        );
+
+        expect((ack.object as { pending: number }).pending).toBe(1);
+        expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
+            "SECOND",
+        ]);
     });
 
     it("enforces the per-subscription, look-ahead and server-wide limits", async () => {
