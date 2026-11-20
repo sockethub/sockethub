@@ -316,7 +316,9 @@ export class ScheduledDelivery {
         // otherwise read it again.
         for (let attempt = 0; attempt < SCHEDULE_WRITE_ATTEMPTS; attempt++) {
             const current = await this.store.pending(endpoint);
-            const messages = merge(wanted, current.messages, now);
+            // The time after the read: on a second attempt a message may
+            // have come due, and been sent, since the request arrived.
+            const messages = merge(wanted, current.messages, this.now());
             if (JSON.stringify(messages) === JSON.stringify(current.messages)) {
                 // The same list again. Nothing is written, so a send in
                 // progress keeps its claim.

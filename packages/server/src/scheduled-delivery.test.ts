@@ -284,6 +284,47 @@ describe("ScheduledDelivery.schedule", () => {
         ]);
     });
 
+    it("does not bring back a message that came due and was sent during the request", async () => {
+        const { store, clock, scheduler } = setup();
+        const item = (ms: number, content: string) => ({
+            deliverAt: at(ms),
+            content,
+        });
+        await scheduler.schedule(
+            schedule([
+                item(DUE, "SOON"),
+                item(HOUR, "LATER"),
+                item(2 * HOUR, "LAST"),
+            ]),
+        );
+
+        // The request arrives just before SOON is due. Before it can write,
+        // SOON comes due and a worker sends and removes it.
+        const replace = store.replace.bind(store);
+        let raced = false;
+        store.replace = async (endpoint, messages, expected) => {
+            if (!raced) {
+                raced = true;
+                clock.now = NOW + DUE + 1;
+                store.records.set(
+                    endpoint,
+                    (store.records.get(endpoint) ?? []).filter(
+                        (m) => m.content !== "SOON",
+                    ),
+                );
+            }
+            return replace(endpoint, messages, expected);
+        };
+        const ack = await scheduler.schedule(
+            schedule([item(DUE, "SOON"), item(HOUR, "LATER")]),
+        );
+
+        expect((ack.object as { pending: number }).pending).toBe(1);
+        expect(store.records.get(ENDPOINT)?.map((m) => m.content)).toEqual([
+            "LATER",
+        ]);
+    });
+
     it("enforces the per-subscription, look-ahead and server-wide limits", async () => {
         const { store, scheduler } = setup();
         const item = (ms: number) => ({ deliverAt: at(ms), content: "AAAA" });
