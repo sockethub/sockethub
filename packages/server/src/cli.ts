@@ -6,6 +6,7 @@
  * is missing or invalid, and must never reach the point of binding a port.
  */
 
+import { CONFIG_FLAGS } from "./config-schema.js";
 import { SOCKETHUB_VERSION } from "./version.js";
 
 export function renderHelp(): string {
@@ -57,6 +58,54 @@ export function parseInfoFlag(
     }
     if (argv.includes("--version") || argv.includes("-v")) {
         return "version";
+    }
+    return undefined;
+}
+
+/** Flags read directly from argv that take no value. */
+const BARE_FLAGS = new Set([
+    "--help",
+    "-h",
+    "--version",
+    "-v",
+    "-c",
+    "--config",
+    "--write-config",
+    "--write-config-webpush-enabled",
+    "--webpush-subject",
+    "--sentry-test",
+    "--sentry-test-crash",
+    "--info",
+    ...CONFIG_FLAGS,
+]);
+
+/** Flags whose parsers also accept `--flag=value`. */
+const VALUE_FLAGS = new Set([
+    "--config",
+    "--write-config",
+    "--write-config-webpush-enabled",
+    "--webpush-subject",
+    ...CONFIG_FLAGS,
+]);
+
+/**
+ * The first flag in `argv` that Sockethub does not recognize, if any, without
+ * any `=value` so a mistyped flag never prints a secret. An unknown flag
+ * would otherwise be ignored and the server started, so a typo or a flag from
+ * a newer version would boot a server instead of exiting. Arguments that do
+ * not start with `-` are values and are not checked.
+ */
+export function findUnknownFlag(argv: Array<string>): string | undefined {
+    for (const arg of argv) {
+        if (!arg.startsWith("-") || arg === "-") {
+            continue;
+        }
+        const eq = arg.indexOf("=");
+        const known =
+            eq === -1 ? BARE_FLAGS.has(arg) : VALUE_FLAGS.has(arg.slice(0, eq));
+        if (!known) {
+            return eq === -1 ? arg : arg.slice(0, eq);
+        }
     }
     return undefined;
 }
