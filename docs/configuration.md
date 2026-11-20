@@ -786,7 +786,10 @@ with no client connected. It is off until a secret is set, in the platform's
 }
 ```
 
-The secret encrypts the stored schedules. It must stay the same across
+The secret is for the server's own use: it encrypts the stored schedules.
+Apps never send or see it, and there is nothing to hand to app developers. An
+app learns whether it can use `schedule` from `webpush.scheduling` in the
+[service descriptor](#api-discovery). The secret must stay the same across
 restarts and on every server that shares the Redis, so it cannot be one of
 the secrets Sockethub generates for itself at each start. It can also be set
 as `SOCKETHUB_SCHEDULED_DELIVERY_SECRET`.

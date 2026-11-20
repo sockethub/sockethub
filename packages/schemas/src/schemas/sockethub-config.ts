@@ -328,7 +328,7 @@ export const SockethubConfigSchema = {
                                     pattern: "^(|.{32,})$",
                                     default: "",
                                     description:
-                                        "Encrypts stored schedules. At least 32 characters; must stay the same across restarts and on every server sharing the Redis. Empty turns scheduled delivery off",
+                                        "Used only by the server, to encrypt stored schedules; apps never send it. At least 32 characters; must stay the same across restarts and on every server sharing the Redis. Empty turns scheduled delivery off",
                                 },
                                 maxMessagesPerSubscription: {
                                     type: "integer",
