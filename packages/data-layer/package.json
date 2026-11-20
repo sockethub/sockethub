@@ -43,7 +43,7 @@
     "clean:deps": "rm -rf node_modules",
     "doc": "typedoc --options typedoc.json",
     "test": "bun test src/",
-    "test:integration": "bun test ./integration/redis.integration.ts"
+    "test:integration": "bun test ./integration/redis.integration.ts ./integration/schedule-store.integration.ts"
   },
   "dependencies": {
     "@sockethub/logger": "^1.0.0-beta.7",

@@ -265,6 +265,60 @@ export const SockethubConfigSchema = {
                         },
                     },
                 },
+                "@sockethub/platform-webpush": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        vapid: {
+                            type: "object",
+                            additionalProperties: false,
+                            required: ["publicKey", "privateKey", "subject"],
+                            description:
+                                "The key pair that signs every push request. A subscription only works with the key it was created against: changing the pair invalidates every existing subscription",
+                            properties: {
+                                publicKey: {
+                                    type: "string",
+                                    pattern: "^[A-Za-z0-9_-]{87}$",
+                                    description:
+                                        "P-256 public key, base64url. Published in the service descriptor for apps to subscribe with",
+                                },
+                                privateKey: {
+                                    type: "string",
+                                    pattern: "^[A-Za-z0-9_-]{43}$",
+                                    description:
+                                        "P-256 private key, base64url. Keep it secret and backed up",
+                                },
+                                subject: {
+                                    type: "string",
+                                    pattern: "^(mailto:.+@.+|https://.+)$",
+                                    description:
+                                        "Operator contact sent to push services, as a mailto: or https: URL",
+                                },
+                            },
+                        },
+                        allowedHosts: {
+                            type: "array",
+                            uniqueItems: true,
+                            items: { type: "string", minLength: 1 },
+                            description:
+                                "Push service hosts that may be sent to; *.example.com matches subdomains (default: Apple, Google, Mozilla and Microsoft)",
+                        },
+                        timeoutMs: {
+                            type: "integer",
+                            minimum: 1,
+                            default: 15000,
+                            description:
+                                "Time allowed for a push service to answer one request",
+                        },
+                        concurrency: {
+                            type: "integer",
+                            minimum: 1,
+                            description: "Requests sent at once (default 10)",
+                        },
+                        allowPrivateAddresses: { type: "boolean" },
+                        allowInsecureHttp: { type: "boolean" },
+                    },
+                },
             },
         },
         credentials: {
@@ -572,6 +626,49 @@ export const SockethubConfigSchema = {
                     type: "number",
                     minimum: 0,
                     default: 15000,
+                },
+            },
+        },
+        scheduledDelivery: {
+            type: "object",
+            additionalProperties: false,
+            description:
+                "Web Push messages held for delivery at a later time. Needs @sockethub/platform-webpush, and Redis persistence so a Redis restart does not lose them",
+            properties: {
+                secret: {
+                    type: "string",
+                    pattern: "^(|.{32,})$",
+                    default: "",
+                    description:
+                        "Encrypts stored schedules. At least 32 characters; must stay the same across restarts and on every server sharing the Redis. Empty turns scheduled delivery off",
+                },
+                maxMessagesPerSubscription: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: 1000,
+                    default: 60,
+                    description:
+                        "Messages one subscription may have pending. Each can be up to 5.5 KB in Redis",
+                },
+                maxSubscriptions: {
+                    type: "integer",
+                    minimum: 1,
+                    default: 10000,
+                    description:
+                        "Subscriptions that may have a schedule at once. Bounds Redis memory together with maxMessagesPerSubscription",
+                },
+                maxDaysAhead: {
+                    type: "integer",
+                    minimum: 1,
+                    default: 60,
+                    description: "How far in the future a message may be due",
+                },
+                maxSchedulesPerMinute: {
+                    type: "integer",
+                    minimum: 0,
+                    default: 30,
+                    description:
+                        "Schedule requests accepted per client address each minute. 0 disables the limit",
                 },
             },
         },

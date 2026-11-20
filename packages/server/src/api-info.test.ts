@@ -132,5 +132,55 @@ describe("api-info", () => {
             });
             expect(JSON.stringify(descriptor)).not.toContain(SOCKETHUB_VERSION);
         });
+
+        it("publishes the Web Push key only once the platform has one", () => {
+            const webpush = {
+                ...(platforms.get("dummy") as NonNullable<
+                    ReturnType<PlatformMap["get"]>
+                >),
+                id: "webpush",
+            };
+            const loaded: PlatformMap = new Map([
+                ...platforms,
+                ["webpush", webpush],
+            ]);
+            const packageConfig = {
+                "@sockethub/platform-webpush": {
+                    vapid: { publicKey: "BPublicKey", privateKey: "private" },
+                },
+            };
+
+            // Loaded but without a key: nothing an app could subscribe with.
+            expect(
+                buildServiceDescriptor(loaded, getConfigWith({})).webpush,
+            ).toBeUndefined();
+            // A key configured for a platform that is not loaded.
+            expect(
+                buildServiceDescriptor(
+                    platforms,
+                    getConfigWith({ packageConfig }),
+                ).webpush,
+            ).toBeUndefined();
+
+            const descriptor = buildServiceDescriptor(
+                loaded,
+                getConfigWith({ packageConfig }),
+            );
+            expect(validateServiceDescriptor(descriptor)).toBeTrue();
+            expect(descriptor.webpush).toEqual({
+                publicKey: "BPublicKey",
+                scheduling: false,
+            });
+            expect(JSON.stringify(descriptor)).not.toContain("private");
+            expect(
+                buildServiceDescriptor(
+                    loaded,
+                    getConfigWith({
+                        packageConfig,
+                        "scheduledDelivery:secret": "x".repeat(32),
+                    }),
+                ).webpush?.scheduling,
+            ).toBeTrue();
+        });
     });
 });

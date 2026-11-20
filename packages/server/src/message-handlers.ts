@@ -18,6 +18,7 @@ import middleware from "./middleware.js";
 import { observability } from "./observability.js";
 import type PlatformInstance from "./platform-instance.js";
 import type ProcessManager from "./process-manager.js";
+import { SCHEDULE_ACTION, WEBPUSH_PLATFORM_ID } from "./scheduled-delivery.js";
 
 export type MessageHandler<T> = (
     data: T,
@@ -39,9 +40,17 @@ export interface MessageHandlersOptions {
     platformSessionId?: string;
     onPlatformInstance?: (platformInstance: PlatformInstance) => void;
     /** Bounded telemetry dimension identifying the public request path. */
-    transport?: "socket" | "http";
+    transport?: "socket" | "http" | "scheduler";
     /** Called only after platform and action labels pass schema validation. */
     onPlatformAction?: (platform: string, action: string) => void;
+    /**
+     * Stores a Web Push `schedule`. Absent when scheduled delivery is turned
+     * off, in which case the action is refused.
+     */
+    scheduleDelivery?: (
+        msg: ActivityStream,
+        clientIp?: string,
+    ) => Promise<ActivityStream>;
 }
 
 /**
@@ -83,6 +92,7 @@ export function createMessageHandlers(
         onPlatformInstance,
         transport = "socket",
         onPlatformAction,
+        scheduleDelivery,
     } = options;
 
     // Shared handler chain for credentials across socket + HTTP paths.
@@ -171,6 +181,33 @@ export function createMessageHandlers(
                 const finish = observability.startAction(platformId, msg.type, {
                     transport,
                 });
+                if (
+                    platformId === WEBPUSH_PLATFORM_ID &&
+                    msg.type === SCHEDULE_ACTION
+                ) {
+                    // Handled here, not queued: a schedule has to outlive
+                    // this server process, and a platform child holds
+                    // nothing that does.
+                    if (!scheduleDelivery) {
+                        finish(true);
+                        next(
+                            attachError(
+                                "scheduled delivery is not enabled on this server",
+                                msg,
+                            ),
+                        );
+                        return;
+                    }
+                    try {
+                        const ack = await scheduleDelivery(msg, clientIp);
+                        finish(false);
+                        next(ack);
+                    } catch (err) {
+                        finish(true);
+                        next(attachError(err, msg));
+                    }
+                    return;
+                }
                 let platformInstance: Awaited<
                     ReturnType<ProcessManager["get"]>
                 >;

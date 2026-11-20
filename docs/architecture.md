@@ -428,7 +428,8 @@ processes are spawned and how credentials are handled.
 - **Connection Pooling**: Platforms reuse connections where possible
 - **Process Lifecycle**: Platform processes automatically cleaned up on session end
 - **Memory Limits**: Platform crashes contained to individual processes
-- **Job Persistence**: Work survives server restarts
+- **Job Persistence**: Queued jobs belong to one server run and do not
+  survive a restart. Scheduled Web Push messages are stored separately and do
 
 ## ActivityStreams Translation
 

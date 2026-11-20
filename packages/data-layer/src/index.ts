@@ -29,6 +29,16 @@ import {
     sweepOrphanedQueues,
 } from "./orphan-sweep.js";
 import { buildCredentialsKey } from "./queue-id.js";
+import {
+    createScheduleRedisConnection,
+    type LoadedSchedule,
+    nextAttempt,
+    SCHEDULE_DUE_KEY,
+    type ScheduledMessage,
+    type ScheduleRecord,
+    ScheduleStore,
+    scheduleRecordKey,
+} from "./schedule-store.js";
 
 export * from "./types.js";
 
@@ -68,6 +78,7 @@ export {
     createCredentialsRedisConnection,
     createIdempotencyRedisConnection,
     createRateLimitRedisConnection,
+    createScheduleRedisConnection,
     getRedisConnectionCount,
     JobQueue,
     KNOWN_SERVERS_KEY,
@@ -75,11 +86,18 @@ export {
     purgeCredentialsStores,
     JobWorker,
     type JobWorkerOptions,
+    type LoadedSchedule,
+    nextAttempt,
     redisCheck,
     resetSharedCredentialsRedisConnection,
     resetSharedIdempotencyRedisConnection,
     resetSharedRateLimitRedisConnection,
     resetSharedRedisConnection,
+    SCHEDULE_DUE_KEY,
+    type ScheduledMessage,
+    type ScheduleRecord,
+    ScheduleStore,
+    scheduleRecordKey,
     startAliveHeartbeat,
     sweepOrphanedQueues,
 };
