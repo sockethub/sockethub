@@ -429,7 +429,8 @@ processes are spawned and how credentials are handled.
 - **Process Lifecycle**: Platform processes automatically cleaned up on session end
 - **Memory Limits**: Platform crashes contained to individual processes
 - **Job Persistence**: Queued jobs belong to one server run and do not
-  survive a restart. Scheduled Web Push messages are stored separately and do
+  survive a restart. Scheduled Web Push messages are stored separately, so
+  they survive a restart
 
 ## ActivityStreams Translation
 

@@ -57,7 +57,8 @@ configure the keys:
 }
 ```
 
-Generate a key pair once:
+Generate a key pair once. The script runs the same under Bun: replace
+`node -e` with `bun -e`.
 
 ```bash
 node -e '
