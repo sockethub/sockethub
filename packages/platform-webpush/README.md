@@ -36,8 +36,17 @@ when the descriptor shows a different one.
 ## Setup
 
 The Sockethub CLI bundles this platform but does not load it by default,
-because it cannot work without a key pair. Add it to `platforms` and
-configure the keys:
+because it cannot work without a key pair. One command sets it up, in a new
+config file or an existing one:
+
+```bash
+sockethub --write-config-webpush-enabled --webpush-subject mailto:ops@example.org
+```
+
+It adds the platform to `platforms`, creates a key pair, and turns on
+scheduled delivery with a new secret. It never replaces a key pair or secret
+that is already in the file. To do the same by hand, add the platform to
+`platforms` and configure the keys:
 
 ```json
 {
@@ -48,17 +57,17 @@ configure the keys:
         "publicKey": "BAEu0HrAjf-sQk7EJ26u43u24OSDIRaCl85TVXLhhn7RJY4U19x-E4H...",
         "privateKey": "08Q3FObTS5f0elafsgHE-b1vAETPn7x9uOoW1LhfxJc",
         "subject": "mailto:ops@example.org"
+      },
+      "scheduledDelivery": {
+        "secret": "a random string of at least 32 characters"
       }
     }
-  },
-  "scheduledDelivery": {
-    "secret": "a random string of at least 32 characters"
   }
 }
 ```
 
-Generate a key pair once. The script runs the same under Bun: replace
-`node -e` with `bun -e`.
+When setting it up by hand, generate a key pair once. The script runs the
+same under Bun: replace `node -e` with `bun -e`.
 
 ```bash
 node -e '
@@ -216,20 +225,20 @@ sends a new list, so schedule far enough ahead to cover the gaps you expect.
     "@sockethub/platform-webpush": {
       "vapid": { "publicKey": "...", "privateKey": "...", "subject": "mailto:ops@example.org" },
       "allowedHosts": ["*.push.apple.com", "fcm.googleapis.com"],
-      "timeoutMs": 15000
+      "timeoutMs": 15000,
+      "scheduledDelivery": {
+        "secret": "...",
+        "maxMessagesPerSubscription": 60,
+        "maxSubscriptions": 10000,
+        "maxDaysAhead": 60,
+        "maxSchedulesPerMinute": 30
+      }
     }
-  },
-  "scheduledDelivery": {
-    "secret": "...",
-    "maxMessagesPerSubscription": 60,
-    "maxSubscriptions": 10000,
-    "maxDaysAhead": 60,
-    "maxSchedulesPerMinute": 30
   }
 }
 ```
 
-Under `packageConfig`:
+All of it goes in the platform's `packageConfig` entry:
 
 * `vapid`: the key pair and contact described under [Setup](#setup).
 * `allowedHosts`: push service hosts that may be sent to. `*.example.com`
@@ -242,7 +251,8 @@ Under `packageConfig`:
 * `allowPrivateAddresses` and `allowInsecureHttp` (default `false`): for
   testing against a local stand-in push service.
 
-Under `scheduledDelivery`:
+Under `scheduledDelivery`, which the server reads itself and does not pass to
+the platform's process:
 
 * `secret`: encrypts stored schedules. At least 32 characters. Also settable
   as `SOCKETHUB_SCHEDULED_DELIVERY_SECRET`. Empty turns `schedule` off.

@@ -41,6 +41,44 @@ function resolveConfigFile(): { file?: string; explicit: boolean } {
     return { file: path.join(process.cwd(), defaultConfig), explicit: false };
 }
 
+const WEBPUSH_PACKAGE = "@sockethub/platform-webpush";
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * Apply `SOCKETHUB_SCHEDULED_DELIVERY_SECRET` over the config file's value.
+ * The setting lives inside `packageConfig`, which convict holds as one opaque
+ * value, so it cannot be bound to the variable in the schema overlay. A
+ * malformed entry is left as it is for validation to report.
+ */
+function applyScheduledDeliverySecretEnv(
+    conf: convict.Config<Record<string, unknown>>,
+): void {
+    const secret = process.env.SOCKETHUB_SCHEDULED_DELIVERY_SECRET;
+    if (!secret) {
+        return;
+    }
+    const packageConfig = conf.get("packageConfig");
+    const webpush = isPlainObject(packageConfig)
+        ? (packageConfig[WEBPUSH_PACKAGE] ?? {})
+        : undefined;
+    if (!isPlainObject(packageConfig) || !isPlainObject(webpush)) {
+        return;
+    }
+    const scheduledDelivery = webpush.scheduledDelivery ?? {};
+    if (!isPlainObject(scheduledDelivery)) {
+        return;
+    }
+    conf.set("packageConfig", {
+        ...packageConfig,
+        [WEBPUSH_PACKAGE]: {
+            ...webpush,
+            scheduledDelivery: { ...scheduledDelivery, secret },
+        },
+    });
+}
+
 export class Config {
     private log: Logger;
     private conf: convict.Config<Record<string, unknown>>;
@@ -68,6 +106,7 @@ export class Config {
         } else if (explicit) {
             throw new Error(`Config file not found: ${path.resolve(file)}`);
         }
+        applyScheduledDeliverySecretEnv(this.conf);
 
         // Coerce + validate top-level keys/types. `strict` makes an unknown or
         // mis-typed top-level key a hard error rather than a silent no-op.

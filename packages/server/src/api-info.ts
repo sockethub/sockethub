@@ -99,12 +99,19 @@ function webPushDescriptor(
     if (!platforms.has("webpush")) {
         return {};
     }
-    const packageConfig = getConfig("packageConfig") as
-        | Record<string, { vapid?: { publicKey?: unknown } } | undefined>
-        | undefined;
-    const publicKey = nonEmptyString(
-        packageConfig?.["@sockethub/platform-webpush"]?.vapid?.publicKey,
-    );
+    const settings = (
+        getConfig("packageConfig") as
+            | Record<
+                  string,
+                  | {
+                        vapid?: { publicKey?: unknown };
+                        scheduledDelivery?: { secret?: unknown };
+                    }
+                  | undefined
+              >
+            | undefined
+    )?.["@sockethub/platform-webpush"];
+    const publicKey = nonEmptyString(settings?.vapid?.publicKey);
     if (!publicKey) {
         return {};
     }
@@ -112,7 +119,7 @@ function webPushDescriptor(
         webpush: {
             publicKey,
             scheduling: Boolean(
-                nonEmptyString(getConfig("scheduledDelivery:secret")),
+                nonEmptyString(settings?.scheduledDelivery?.secret),
             ),
         },
     };

@@ -40,6 +40,8 @@ describe("renderHelp", () => {
         for (const flag of [
             "--config",
             "--write-config",
+            "--write-config-webpush-enabled",
+            "--webpush-subject",
             "--sentry-test",
             "--sentry-test-crash",
             "--version",

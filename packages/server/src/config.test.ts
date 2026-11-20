@@ -192,6 +192,56 @@ describe("config", () => {
         });
     });
 
+    it("takes the scheduled delivery secret from the environment", () => {
+        const vapid = {
+            publicKey: "B".repeat(87),
+            privateKey: "a".repeat(43),
+            subject: "mailto:ops@example.org",
+        };
+        const file = writeConfig({
+            platforms: ["@sockethub/platform-webpush"],
+            packageConfig: {
+                "@sockethub/platform-webpush": {
+                    vapid,
+                    scheduledDelivery: {
+                        secret: "f".repeat(32),
+                        maxDaysAhead: 14,
+                    },
+                },
+            },
+        });
+        process.argv = ["node", "test", "--config", file];
+        process.env.SOCKETHUB_SCHEDULED_DELIVERY_SECRET = "e".repeat(32);
+        expect(new Config().get("packageConfig")).toEqual({
+            "@sockethub/platform-webpush": {
+                vapid,
+                scheduledDelivery: { secret: "e".repeat(32), maxDaysAhead: 14 },
+            },
+        });
+
+        // Empty is unset, and a value is checked like one from the file.
+        process.env.SOCKETHUB_SCHEDULED_DELIVERY_SECRET = "";
+        expect(
+            (
+                new Config().get("packageConfig") as Record<
+                    string,
+                    { scheduledDelivery: { secret: string } }
+                >
+            )["@sockethub/platform-webpush"].scheduledDelivery.secret,
+        ).toEqual("f".repeat(32));
+        process.env.SOCKETHUB_SCHEDULED_DELIVERY_SECRET = "too-short";
+        expect(() => new Config()).toThrow(/invalid configuration/);
+
+        // With no file entry, the variable alone turns it on.
+        process.argv = ["node", "test"];
+        process.env.SOCKETHUB_SCHEDULED_DELIVERY_SECRET = "e".repeat(32);
+        expect(new Config().get("packageConfig")).toEqual({
+            "@sockethub/platform-webpush": {
+                scheduledDelivery: { secret: "e".repeat(32) },
+            },
+        });
+    });
+
     it("rejects a mis-typed packageConfig value", () => {
         const file = writeConfig({
             platforms: ["@sockethub/platform-feeds"],

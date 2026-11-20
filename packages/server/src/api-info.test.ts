@@ -176,8 +176,12 @@ describe("api-info", () => {
                 buildServiceDescriptor(
                     loaded,
                     getConfigWith({
-                        packageConfig,
-                        "scheduledDelivery:secret": "x".repeat(32),
+                        packageConfig: {
+                            "@sockethub/platform-webpush": {
+                                ...packageConfig["@sockethub/platform-webpush"],
+                                scheduledDelivery: { secret: "x".repeat(32) },
+                            },
+                        },
                     }),
                 ).webpush?.scheduling,
             ).toBeTrue();

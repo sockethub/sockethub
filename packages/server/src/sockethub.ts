@@ -43,7 +43,7 @@ import {
 import {
     createQueueDeliver,
     ScheduledDelivery,
-    type ScheduledDeliveryLimits,
+    scheduledDeliverySettings,
     WEBPUSH_PLATFORM_ID,
 } from "./scheduled-delivery.js";
 import { registerServerInfoRoute } from "./server-info.js";
@@ -214,9 +214,7 @@ class Sockethub {
      * restarts, which none of the per-boot secrets allow.
      */
     private startScheduledDelivery() {
-        const settings = (config.get("scheduledDelivery") ?? {}) as {
-            secret?: string;
-        } & ScheduledDeliveryLimits;
+        const settings = scheduledDeliverySettings(config.get("packageConfig"));
         if (!settings.secret) {
             return;
         }

@@ -151,7 +151,12 @@ describe("validateSockethubConfig", () => {
 
     it("requires a scheduled delivery secret of at least 32 characters", () => {
         const withSchedule = (scheduledDelivery: unknown) =>
-            validateSockethubConfig({ ...base, scheduledDelivery });
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-webpush": { scheduledDelivery },
+                },
+            });
         expect(withSchedule({ secret: "" })).toEqual("");
         expect(
             withSchedule({
@@ -165,6 +170,13 @@ describe("validateSockethubConfig", () => {
         expect(withSchedule({ secret: "too-short" })).not.toEqual("");
         expect(withSchedule({ maxMessagesPerSubscription: 0 })).not.toEqual("");
         expect(withSchedule({ maxMessagesPerSubscription: 1001 })).not.toEqual("");
+        // It is a Web Push setting, not a server-wide one.
+        expect(
+            validateSockethubConfig({
+                ...base,
+                scheduledDelivery: { secret: "s".repeat(32) },
+            }),
+        ).not.toEqual("");
     });
 
     it("rejects an unknown key in the metadata packageConfig entry", () => {

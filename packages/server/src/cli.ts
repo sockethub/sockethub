@@ -18,6 +18,12 @@ Options:
                             or the SOCKETHUB_CONFIG environment variable)
       --write-config [path] Write a default config file and exit ("-" for stdout,
                             default: ./sockethub.config.json)
+      --write-config-webpush-enabled [path]
+                            Set up Web Push in a config file and exit: a new
+                            file, or what an existing one is missing. Needs
+                            --webpush-subject when it creates the key pair
+      --webpush-subject <url>
+                            Contact sent to push services, as mailto: or https:
       --host <host>         Address to bind (config: sockethub.host)
       --port <port>         Port to bind (config: sockethub.port)
       --redis.url <url>     Redis connection URL (config: redis.url)

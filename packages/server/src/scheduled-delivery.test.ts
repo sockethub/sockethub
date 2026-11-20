@@ -4,12 +4,14 @@ import type {
     ScheduledMessage,
     ScheduleStore,
 } from "@sockethub/data-layer";
-import type { ActivityStream } from "@sockethub/schemas";
+import { type ActivityStream, SockethubConfigSchema } from "@sockethub/schemas";
 import {
     createQueueDeliver,
+    DEFAULT_LIMITS,
     type DeliveryOutcome,
     ScheduledDelivery,
     type ScheduledDeliveryLimits,
+    scheduledDeliverySettings,
 } from "./scheduled-delivery.js";
 
 const MINUTE = 60 * 1000;
@@ -640,5 +642,42 @@ describe("createQueueDeliver", () => {
 
         const silent = deliverWith(() => {}, 10);
         expect(await silent.result).toEqual({ status: "retry" });
+    });
+});
+
+describe("scheduledDeliverySettings", () => {
+    const withSettings = (scheduledDelivery?: object) =>
+        scheduledDeliverySettings({
+            "@sockethub/platform-webpush": { scheduledDelivery },
+        });
+
+    it("is off, with the documented limits, until a secret is set", () => {
+        expect(scheduledDeliverySettings(undefined)).toEqual({
+            ...DEFAULT_LIMITS,
+            secret: "",
+        });
+        expect(withSettings()).toEqual({ ...DEFAULT_LIMITS, secret: "" });
+
+        const documented =
+            SockethubConfigSchema.properties.packageConfig.properties[
+                "@sockethub/platform-webpush"
+            ].properties.scheduledDelivery.properties;
+        expect(DEFAULT_LIMITS).toEqual({
+            maxMessagesPerSubscription:
+                documented.maxMessagesPerSubscription.default,
+            maxSubscriptions: documented.maxSubscriptions.default,
+            maxDaysAhead: documented.maxDaysAhead.default,
+            maxSchedulesPerMinute: documented.maxSchedulesPerMinute.default,
+        });
+    });
+
+    it("lets the config file replace individual limits", () => {
+        expect(
+            withSettings({ secret: "s".repeat(32), maxDaysAhead: 14 }),
+        ).toEqual({
+            ...DEFAULT_LIMITS,
+            secret: "s".repeat(32),
+            maxDaysAhead: 14,
+        });
     });
 });
