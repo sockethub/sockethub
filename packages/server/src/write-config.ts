@@ -231,16 +231,59 @@ export function writeWebPushConfig(target: string, subject?: string): string {
     if (added.length === 0) {
         return `Web Push is already set up in ${resolved}; nothing changed`;
     }
-    // A new file holds a private key, so only its owner may read it. An
-    // existing one keeps the permissions it has.
-    fs.writeFileSync(
-        resolved,
-        render(config),
-        exists ? {} : { flag: "wx", mode: 0o600 },
-    );
-    const summary = `${exists ? "updated" : "wrote"} ${resolved}, adding ${added.join(", ")}`;
-    return added.includes(SECRET_ADDED)
-        ? `${summary}\nBack up the key pair and the secret, and turn on Redis ` +
-              "persistence (AOF): scheduled messages are lost without it."
-        : summary;
+    const notes = [
+        `${exists ? "updated" : "wrote"} ${resolved}, adding ${added.join(", ")}`,
+    ];
+    if (exists) {
+        const mode = replaceFile(resolved, render(config));
+        if (mode & 0o004 && process.platform !== "win32") {
+            notes.push(
+                `${resolved} holds a private key and any user on this machine ` +
+                    `can read it. Consider: chmod 600 ${resolved}`,
+            );
+        }
+    } else {
+        // It holds a private key, so only its owner may read it.
+        fs.writeFileSync(resolved, render(config), {
+            flag: "wx",
+            mode: 0o600,
+        });
+    }
+    if (added.includes(SECRET_ADDED)) {
+        notes.push(
+            "Back up the key pair and the secret, and turn on Redis " +
+                "persistence (AOF): scheduled messages are lost without it.",
+        );
+    }
+    return notes.join("\n");
+}
+
+/**
+ * Replace `file` in one step, so a write that fails partway cannot leave the
+ * config, and the keys in it, cut short. The new file keeps the old one's
+ * owner and permissions, and a symlink keeps pointing at it. Returns the mode.
+ */
+function replaceFile(file: string, body: string): number {
+    const target = fs.realpathSync(file);
+    const { mode, uid, gid } = fs.statSync(target);
+    const staged = `${target}.${process.pid}.tmp`;
+    // Fails, touching nothing, if something else already has this name.
+    fs.closeSync(fs.openSync(staged, "wx", 0o600));
+    try {
+        fs.writeFileSync(staged, body);
+        try {
+            fs.chownSync(staged, uid, gid);
+        } catch {
+            throw new Error(
+                `cannot keep the owner of ${target}: run this as the user ` +
+                    "that owns the file",
+            );
+        }
+        fs.chmodSync(staged, mode & 0o7777);
+        fs.renameSync(staged, target);
+    } catch (err) {
+        fs.rmSync(staged, { force: true });
+        throw err;
+    }
+    return mode;
 }

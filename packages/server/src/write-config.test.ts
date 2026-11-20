@@ -240,7 +240,8 @@ describe("write-config with Web Push enabled", () => {
             },
         });
         fs.chmodSync(target, 0o640);
-        expect(writeWebPushConfig(target, SUBJECT)).toContain(
+        const message = writeWebPushConfig(target, SUBJECT);
+        expect(message).toContain(
             `updated ${target}, adding the platform, a key pair, a scheduled delivery secret`,
         );
         const written = read(target);
@@ -251,11 +252,72 @@ describe("write-config with Web Push enabled", () => {
         });
         expect(written.packageConfig[WEBPUSH].vapid.subject).toBe(SUBJECT);
         expect(fs.statSync(target).mode & 0o777).toBe(0o640);
+        expect(message).not.toContain("chmod");
 
         // A second run finds nothing to add and leaves the file alone.
         const before = fs.readFileSync(target, "utf8");
         expect(writeWebPushConfig(target)).toContain("nothing changed");
         expect(fs.readFileSync(target, "utf8")).toBe(before);
+    });
+
+    it("replaces an existing file in one step, through a symlink too", () => {
+        const original = { platforms: ["@sockethub/platform-xmpp"] };
+        const target = tmpTarget(original);
+        const link = `${target}.link`;
+        fs.symlinkSync(target, link);
+        tmpFiles.push(link);
+
+        // A write that fails partway leaves the file as it was.
+        const rename = spyOn(fs, "renameSync").mockImplementation(() => {
+            throw new Error("disk full");
+        });
+        try {
+            expect(() => writeWebPushConfig(link, SUBJECT)).toThrow("disk full");
+        } finally {
+            rename.mockRestore();
+        }
+        expect(read(target)).toEqual(original);
+        expect(
+            fs
+                .readdirSync(path.dirname(target))
+                .filter((name) => name.startsWith(path.basename(target)))
+                .sort(),
+        ).toEqual([path.basename(target), path.basename(link)]);
+
+        // Nor is the file handed to whoever ran the command.
+        const chown = spyOn(fs, "chownSync").mockImplementation(() => {
+            throw new Error("EPERM");
+        });
+        try {
+            expect(() => writeWebPushConfig(link, SUBJECT)).toThrow(
+                /run this as the user that owns the file/,
+            );
+        } finally {
+            chown.mockRestore();
+        }
+        expect(read(target)).toEqual(original);
+
+        // A file that already has the staging name is not ours to remove.
+        const taken = `${target}.${process.pid}.tmp`;
+        fs.writeFileSync(taken, "someone else's");
+        tmpFiles.push(taken);
+        expect(() => writeWebPushConfig(link, SUBJECT)).toThrow(/EEXIST/);
+        expect(fs.readFileSync(taken, "utf8")).toBe("someone else's");
+        expect(read(target)).toEqual(original);
+        fs.rmSync(taken);
+
+        writeWebPushConfig(link, SUBJECT);
+        expect(fs.lstatSync(link).isSymbolicLink()).toBeTrue();
+        expect(read(target).platforms).toContain(WEBPUSH);
+    });
+
+    it("says so when the updated file is readable by every user", () => {
+        const target = tmpTarget({});
+        fs.chmodSync(target, 0o644);
+        expect(writeWebPushConfig(target, SUBJECT)).toContain(
+            `chmod 600 ${target}`,
+        );
+        expect(fs.statSync(target).mode & 0o777).toBe(0o644);
     });
 
     it("never replaces a key pair or secret that is already there", () => {
