@@ -175,7 +175,10 @@ describe("ScheduledDelivery.schedule", () => {
             "CCCC",
         ]);
 
-        const ack = await scheduler.schedule(schedule([]));
+        // The same subscription, written with its default port.
+        const ack = await scheduler.schedule(
+            schedule([], ENDPOINT.replace(".com/", ".com:443/")),
+        );
         expect((ack.object as { pending: number }).pending).toBe(0);
         expect(store.records.size).toBe(0);
         expect(store.due.size).toBe(0);

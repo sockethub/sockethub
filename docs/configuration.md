@@ -1049,7 +1049,8 @@ export SOCKETHUB_CORS_ORIGIN="https://app.example.com,https://admin.example.com"
 # Redis connection
 export REDIS_URL=redis://localhost:6379
 
-# Scheduled Web Push delivery (at least 32 characters; unset turns it off)
+# Scheduled Web Push delivery (at least 32 characters). It is off only when
+# no secret is set here or as scheduledDelivery.secret in the config file.
 export SOCKETHUB_SCHEDULED_DELIVERY_SECRET="..."
 
 # Platform child liveness (milliseconds; 0 disables the check)

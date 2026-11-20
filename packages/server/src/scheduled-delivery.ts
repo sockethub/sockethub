@@ -276,7 +276,11 @@ export class ScheduledDelivery {
                 "too many schedule requests; try again in a minute",
             );
         }
-        const endpoint = String(msg.target?.id);
+        // The URL as it will be requested, so one subscription written two
+        // ways (a default port, a fragment) is not stored as two.
+        const url = new URL(String(msg.target?.id));
+        url.hash = "";
+        const endpoint = url.href;
         const items = (msg.object as { items: Array<ScheduleItem> }).items;
         if (items.length > this.limits.maxMessagesPerSubscription) {
             throw new Error(

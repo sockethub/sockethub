@@ -249,16 +249,18 @@ Under `scheduledDelivery`:
   have pending.
 * `maxSubscriptions` (default 10000): subscriptions that may have a schedule
   at once. New ones are refused beyond it. Existing ones can still change or
-  cancel theirs.
+  cancel theirs. It is a soft cap: requests that arrive together can each
+  pass the check and take it a few over.
 * `maxDaysAhead` (default 60): how far in the future `deliverAt` may be.
 * `maxSchedulesPerMinute` (default 30): `schedule` requests accepted per
   client address each minute. 0 turns the limit off.
 
 A delivery URL cannot be checked until something is sent to it, so made-up
-ones can be stored. The two caps bound what that can cost: a typical
+ones can be stored. The two caps limit what that can cost: a typical
 notification is under 400 bytes, and the largest allowed is about 5.5 KB in
-Redis, so the defaults allow 3.3 GB in the worst case and about 240 MB in
-ordinary use. Lower them on a small server.
+Redis, so the defaults come to roughly 3.3 GB if every slot is filled with
+the largest message and about 240 MB in ordinary use. These are estimates,
+not an enforced limit. Lower the caps on a small server.
 
 ## Operating scheduled delivery
 
