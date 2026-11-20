@@ -36,8 +36,10 @@ sockethub --write-config-webpush-enabled --webpush-subject mailto:ops@example.or
 
 Unlike `--write-config`, it also works on an existing file, adding only what
 that file is missing. A key pair or secret already in the file is never
-replaced. `--webpush-subject` is the contact address sent to push services,
-and is needed whenever a key pair is created.
+replaced. `--webpush-subject` is a contact URI for the operator, as `mailto:`
+or `https:`, sent to push services so they can reach whoever runs the server.
+It is stored as `vapid.subject`, the name the Web Push standard gives it, and
+is needed whenever a key pair is created.
 
 The generated file lists every bundled platform except `dummy`. That platform
 exists for tests and the examples and should not be enabled in production;

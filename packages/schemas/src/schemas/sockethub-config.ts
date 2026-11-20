@@ -292,7 +292,7 @@ export const SockethubConfigSchema = {
                                     type: "string",
                                     pattern: "^(mailto:.+@.+|https://.+)$",
                                     description:
-                                        "Operator contact sent to push services, as a mailto: or https: URL",
+                                        "Contact URI for the operator, as mailto: or https:, sent to push services so they can reach whoever runs this server. Named after the token claim that carries it (sub, RFC 8292)",
                                 },
                             },
                         },

@@ -174,8 +174,8 @@ export function enableWebPush(
             )
         ) {
             throw new Error(
-                `${WEBPUSH_SUBJECT_FLAG} is required: a mailto: or https: URL the ` +
-                    "push services can reach you at, for example " +
+                `${WEBPUSH_SUBJECT_FLAG} is required: your contact URI, as ` +
+                    "mailto: or https:, where push services can reach you, for example " +
                     `${WEBPUSH_SUBJECT_FLAG} mailto:ops@example.org`,
             );
         }

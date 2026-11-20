@@ -22,8 +22,9 @@ Options:
                             Set up Web Push in a config file and exit: a new
                             file, or what an existing one is missing. Needs
                             --webpush-subject when it creates the key pair
-      --webpush-subject <url>
-                            Contact sent to push services, as mailto: or https:
+      --webpush-subject <uri>
+                            Your contact URI (mailto: or https:), sent to push
+                            services so they can reach you (vapid.subject)
       --host <host>         Address to bind (config: sockethub.host)
       --port <port>         Port to bind (config: sockethub.port)
       --redis.url <url>     Redis connection URL (config: redis.url)

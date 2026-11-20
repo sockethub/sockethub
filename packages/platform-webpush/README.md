@@ -42,8 +42,9 @@ app developers.
 
 **The operator sets two things, once**, both in the server's config file:
 
-* `vapid`: the key pair Sockethub signs every push request with. Only the
-  public half leaves the server, in the service descriptor.
+* `vapid`: the key pair Sockethub signs every push request with, and
+  `subject`, a contact URI where push services can reach the operator. Only
+  the public key leaves the server for apps, in the service descriptor.
 * `scheduledDelivery.secret`: a random string for Sockethub's own use. It
   encrypts the schedules Sockethub keeps in Redis. No app sends it or sees
   it, and it is not entered anywhere else. It only has to exist, which turns
@@ -71,7 +72,8 @@ config file or an existing one:
 sockethub --write-config-webpush-enabled --webpush-subject mailto:ops@example.org
 ```
 
-It adds the platform to `platforms`, creates a key pair, and turns on
+`--webpush-subject` is your contact URI, explained under `subject` below. The
+command adds the platform to `platforms`, creates a key pair, and turns on
 scheduled delivery with a new secret. It never replaces a key pair or secret
 that is already in the file. To do the same by hand, add the platform to
 `platforms` and configure the keys:
@@ -110,8 +112,12 @@ console.log(JSON.stringify({
 }, null, 2));'
 ```
 
-`subject` is a contact address the push services can reach the operator at,
-as a `mailto:` or `https:` URL. Apple refuses requests without a valid one.
+`subject` is a contact URI for the operator, not a title or a topic: a
+`mailto:` or `https:` address where a push service can reach whoever runs this
+server. The name is the standard's. It is sent as the `sub` (subject) claim
+of the token Sockethub signs
+([RFC 8292, section 2.1](https://www.rfc-editor.org/rfc/rfc8292#section-2.1)).
+Apple refuses requests without a valid one.
 
 `scheduledDelivery.secret` is any random string of at least 32 characters,
 for example from `openssl rand -base64 32`. Sockethub uses it only to encrypt
@@ -275,7 +281,8 @@ sends a new list, so schedule far enough ahead to cover the gaps you expect.
 
 All of it goes in the platform's `packageConfig` entry:
 
-* `vapid`: the key pair and contact described under [Setup](#setup).
+* `vapid`: the key pair and the contact URI (`subject`) described under
+  [Setup](#setup).
 * `allowedHosts`: push service hosts that may be sent to. `*.example.com`
   matches subdomains. The default is `*.push.apple.com`,
   `fcm.googleapis.com`, `updates.push.services.mozilla.com` and
