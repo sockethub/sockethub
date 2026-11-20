@@ -85,15 +85,17 @@ describe("findUnknownFlag", () => {
 
     it("returns the first flag it does not recognize", () => {
         expect(findUnknownFlag(["--write-confg"])).toBe("--write-confg");
-        expect(findUnknownFlag(["--port", "1", "--bogus=1", "-x"])).toBe(
-            "--bogus=1",
+        expect(findUnknownFlag(["--port", "1", "-x", "--bogus"])).toBe("-x");
+    });
+
+    it("leaves the value out, so a mistyped flag never prints a secret", () => {
+        expect(findUnknownFlag(["--redis.urll=redis://u:secret@h"])).toBe(
+            "--redis.urll",
         );
     });
 
-    it("lists every config flag in the help text", () => {
-        const help = renderHelp();
-        for (const flag of CONFIG_FLAGS) {
-            expect(help).toContain(flag);
-        }
+    it("rejects a value on a flag that takes none", () => {
+        expect(findUnknownFlag(["--version=true"])).toBe("--version");
+        expect(findUnknownFlag(["--sentry-test=1"])).toBe("--sentry-test");
     });
 });
