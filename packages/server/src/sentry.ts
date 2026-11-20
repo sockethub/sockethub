@@ -22,7 +22,27 @@ if (!sentryConfig.dsn) {
     throw new Error("Sentry attempted initialization with no DSN provided");
 }
 
-const integrations = [];
+const integrations = [
+    // By default Sentry attaches the body of each incoming HTTP request to
+    // the transaction it records for it. An HTTP actions body is a client's
+    // message: credentials, chat text, a Web Push delivery URL. None of that
+    // may leave the server.
+    Sentry.httpIntegration({ maxIncomingRequestBodySize: "none" }),
+];
+// Sentry records every outbound request's URL as a breadcrumb, and as a span
+// when tracing is sampled. For the Web Push platform that URL is a secret:
+// knowing a subscription's delivery URL is all it takes to change or cancel
+// its schedule. That child makes no other outbound requests.
+if (
+    process.env.SOCKETHUB_PLATFORM_CHILD === "1" &&
+    process.argv[3] === "webpush"
+) {
+    integrations.push(
+        Sentry.nativeNodeFetchIntegration({
+            ignoreOutgoingRequests: () => true,
+        }),
+    );
+}
 if (sentryConfig.profileSessionSampleRate > 0) {
     const { nodeProfilingIntegration } = await import("@sentry/profiling-node");
     integrations.push(nodeProfilingIntegration());

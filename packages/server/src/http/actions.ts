@@ -38,7 +38,10 @@ import type { PlatformMap } from "../bootstrap/load-platforms.js";
 import config from "../config.js";
 import { clearSessionScopes, normalizeIp } from "../connection-scope.js";
 import { createCorsMiddleware } from "../cors.js";
-import { createMessageHandlers } from "../message-handlers.js";
+import {
+    createMessageHandlers,
+    type MessageHandlersOptions,
+} from "../message-handlers.js";
 import { exceedsDepth } from "../middleware/normalize-activity-stream.js";
 import type ProcessManager from "../process-manager.js";
 import {
@@ -69,6 +72,8 @@ interface HttpActionsOptions {
     parentSecret1: string;
     // Loaded platforms, published (id + API version only) by the descriptor.
     platforms: PlatformMap;
+    // Stores a Web Push `schedule`; absent when scheduled delivery is off.
+    scheduleDelivery?: MessageHandlersOptions["scheduleDelivery"];
 }
 
 interface HttpActionsDependencies {
@@ -753,6 +758,7 @@ export function registerHttpActionsRoutes(
                 sessionSecret,
                 credentialsStore,
                 transport: "http",
+                scheduleDelivery: options.scheduleDelivery,
                 // Express ignores forwarding headers unless trust proxy is configured.
                 clientIp: normalizeIp(req.ip ?? req.socket.remoteAddress),
                 onPlatformInstance: (platformInstance) => {

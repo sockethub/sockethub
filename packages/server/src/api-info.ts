@@ -81,6 +81,40 @@ export function buildServiceDescriptor(
             id: platform.id,
             apiVersion: platform.apiVersion,
         })),
+        ...webPushDescriptor(platforms, getConfig),
+    };
+}
+
+/**
+ * What a web app needs before it can use the `webpush` platform: the public
+ * key to subscribe with, and whether this server will hold messages for
+ * later. Published so an app can also notice the key has changed, which
+ * invalidates every subscription made against the old one. Absent unless the
+ * platform is loaded and has a key.
+ */
+function webPushDescriptor(
+    platforms: PlatformMap,
+    getConfig: GetConfig,
+): Pick<ServiceDescriptor, "webpush"> {
+    if (!platforms.has("webpush")) {
+        return {};
+    }
+    const packageConfig = getConfig("packageConfig") as
+        | Record<string, { vapid?: { publicKey?: unknown } } | undefined>
+        | undefined;
+    const publicKey = nonEmptyString(
+        packageConfig?.["@sockethub/platform-webpush"]?.vapid?.publicKey,
+    );
+    if (!publicKey) {
+        return {};
+    }
+    return {
+        webpush: {
+            publicKey,
+            scheduling: Boolean(
+                nonEmptyString(getConfig("scheduledDelivery:secret")),
+            ),
+        },
     };
 }
 

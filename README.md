@@ -113,6 +113,7 @@ example, an XMPP friend request can be modeled as `request-friend`,
 * **[XMPP](packages/platform-xmpp)** - Extensible Messaging and Presence Protocol
 * **[Metadata](packages/platform-metadata)** - Link preview and metadata extraction
 * **[Media](packages/platform-media)** - Image downloads for browser clients blocked by CORS
+* **[Web Push](packages/platform-webpush)** - Notifications for closed web apps, now or scheduled
 
 ### Build Your Own
 
@@ -199,6 +200,7 @@ For debugging and configuration options, see the [Server package documentation](
 * **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support
 * **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction
 * **[@sockethub/platform-media](packages/platform-media)** - Image downloads for CORS-blocked clients
+* **[@sockethub/platform-webpush](packages/platform-webpush)** - Web Push, now or scheduled
 * **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
 
 ### Example Package

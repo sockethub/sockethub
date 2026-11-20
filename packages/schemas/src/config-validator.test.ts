@@ -123,6 +123,50 @@ describe("validateSockethubConfig", () => {
         expect(withImage({ enabled: false })).not.toEqual("");
     });
 
+    it("accepts a Web Push key pair and rejects a malformed one", () => {
+        const withWebPush = (entry: unknown) =>
+            validateSockethubConfig({
+                ...base,
+                packageConfig: { "@sockethub/platform-webpush": entry },
+            });
+        const vapid = {
+            publicKey: "B".repeat(87),
+            privateKey: "a".repeat(43),
+            subject: "mailto:ops@example.org",
+        };
+        expect(
+            withWebPush({
+                vapid,
+                allowedHosts: ["*.push.apple.com", "fcm.googleapis.com"],
+                timeoutMs: 10000,
+            }),
+        ).toEqual("");
+        expect(withWebPush({})).toEqual("");
+        // A key that is not a P-256 pair, or a contact Apple would refuse.
+        expect(withWebPush({ vapid: { ...vapid, publicKey: "short" } })).not.toEqual("");
+        expect(withWebPush({ vapid: { ...vapid, subject: "ops@example.org" } })).not.toEqual("");
+        expect(withWebPush({ vapid: { publicKey: vapid.publicKey } })).not.toEqual("");
+        expect(withWebPush({ vapidKey: "x" })).not.toEqual("");
+    });
+
+    it("requires a scheduled delivery secret of at least 32 characters", () => {
+        const withSchedule = (scheduledDelivery: unknown) =>
+            validateSockethubConfig({ ...base, scheduledDelivery });
+        expect(withSchedule({ secret: "" })).toEqual("");
+        expect(
+            withSchedule({
+                secret: "s".repeat(32),
+                maxMessagesPerSubscription: 30,
+                maxSubscriptions: 500,
+                maxDaysAhead: 14,
+                maxSchedulesPerMinute: 0,
+            }),
+        ).toEqual("");
+        expect(withSchedule({ secret: "too-short" })).not.toEqual("");
+        expect(withSchedule({ maxMessagesPerSubscription: 0 })).not.toEqual("");
+        expect(withSchedule({ maxMessagesPerSubscription: 1001 })).not.toEqual("");
+    });
+
     it("rejects an unknown key in the metadata packageConfig entry", () => {
         expect(
             validateSockethubConfig({

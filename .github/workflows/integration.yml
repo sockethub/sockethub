@@ -78,6 +78,9 @@ jobs:
       - name: Media platform integration tests
         run: bun run integration:media
 
+      - name: Web Push integration tests
+        run: bun run integration:webpush
+
       - name: Rate Limiter Integration Tests
         run: bun run integration:rate-limiter
 

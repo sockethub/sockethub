@@ -6,8 +6,10 @@ import type {
 import {
     CredentialsStore,
     createCredentialsRedisConnection,
+    createScheduleRedisConnection,
     purgeCredentialsStores,
     resetSharedCredentialsRedisConnection,
+    ScheduleStore,
     startAliveHeartbeat,
     sweepOrphanedQueues,
 } from "@sockethub/data-layer";
@@ -18,7 +20,10 @@ import {
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
 import type { Socket } from "socket.io";
-import { buildPlatformRegistryPayload } from "./api-info.js";
+import {
+    buildPlatformRegistryPayload,
+    buildServiceDescriptor,
+} from "./api-info.js";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
@@ -35,6 +40,12 @@ import {
     createRateLimiter,
     stopCleanup,
 } from "./rate-limiter.js";
+import {
+    createQueueDeliver,
+    ScheduledDelivery,
+    type ScheduledDeliveryLimits,
+    WEBPUSH_PLATFORM_ID,
+} from "./scheduled-delivery.js";
 import { registerServerInfoRoute } from "./server-info.js";
 import { resolveSocketClientIp } from "./trust-proxy.js";
 
@@ -74,6 +85,8 @@ class Sockethub {
     private readonly parentId: string;
     private stopAliveHeartbeat?: () => Promise<void>;
     private orphanSweepTimer?: ReturnType<typeof setInterval>;
+    private scheduledDelivery?: ScheduledDelivery;
+    private scheduleRedis?: ReturnType<typeof createScheduleRedisConnection>;
     private readonly parentSecret1: string;
     private readonly parentSecret2: string;
     counter = 0;
@@ -162,21 +175,86 @@ class Sockethub {
         }
 
         log.debug("active platforms: ", [...init.platforms.keys()]);
+        if (
+            init.platforms.has(WEBPUSH_PLATFORM_ID) &&
+            !buildServiceDescriptor(init.platforms).webpush
+        ) {
+            log.warn(
+                "@sockethub/platform-webpush is loaded without a key pair (packageConfig vapid); it cannot send until one is configured",
+            );
+        }
         listener.start(); // start external services
         registerServerInfoRoute(listener.getApp(), {
             platforms: this.platformRegistry,
         });
         registerHealthRoute(listener.getApp());
+        this.startScheduledDelivery();
         registerHttpActionsRoutes(listener.getApp(), {
             processManager: this.processManager,
             parentId: this.parentId,
             parentSecret1: this.parentSecret1,
             platforms: this.platformRegistry,
+            scheduleDelivery: this.scheduleDelivery,
         });
         janitor.start(); // start cleanup cycle
         void this.startOrphanSweep();
         log.debug("registering handlers");
         listener.io.on("connection", this.handleIncomingConnection.bind(this));
+    }
+
+    /** Handed to both transports; undefined while scheduled delivery is off. */
+    private get scheduleDelivery() {
+        const scheduler = this.scheduledDelivery;
+        return scheduler ? scheduler.schedule.bind(scheduler) : undefined;
+    }
+
+    /**
+     * Start sending scheduled Web Push messages. Needs the `webpush` platform
+     * and a configured secret: the schedule has to stay readable across
+     * restarts, which none of the per-boot secrets allow.
+     */
+    private startScheduledDelivery() {
+        const settings = (config.get("scheduledDelivery") ?? {}) as {
+            secret?: string;
+        } & ScheduledDeliveryLimits;
+        if (!settings.secret) {
+            return;
+        }
+        const platform = this.platformRegistry.get(WEBPUSH_PLATFORM_ID);
+        if (!platform) {
+            log.warn(
+                "scheduledDelivery.secret is set but @sockethub/platform-webpush is not in platforms; scheduled delivery is off",
+            );
+            return;
+        }
+        this.scheduleRedis = createScheduleRedisConnection({
+            ...(config.get("redis") as RedisConfig),
+            connectionName: "sockethub:scheduled-delivery",
+        });
+        // Due messages go to the platform under an internal session, the
+        // way HTTP actions submits its requests.
+        const sessionId = `scheduler:${crypto.randId(16)}`;
+        const sessionSecret = crypto.randToken(16);
+        const handlers = createMessageHandlers({
+            processManager: this.processManager,
+            sessionId,
+            sessionSecret,
+            credentialsStore: new CredentialsStore(
+                this.parentId,
+                sessionId,
+                crypto.deriveSecret(this.parentSecret1, sessionSecret),
+                config.get("redis") as RedisConfig,
+                { ttlMs: getCredentialsTtlMs() },
+            ),
+            transport: "scheduler",
+        });
+        this.scheduledDelivery = new ScheduledDelivery(
+            new ScheduleStore(this.scheduleRedis, settings.secret),
+            createQueueDeliver(handlers, platform.contextUrl),
+            settings,
+        );
+        this.scheduledDelivery.start();
+        log.info("scheduled delivery enabled");
     }
 
     /**
@@ -203,6 +281,9 @@ class Sockethub {
     }
 
     async shutdown() {
+        // Before the janitor stops the platforms a due message is sent through.
+        await this.scheduledDelivery?.stop();
+        this.scheduleRedis?.disconnect(false);
         await janitor.stop();
         stopCleanup();
         clearInterval(this.orphanSweepTimer);
@@ -367,6 +448,7 @@ class Sockethub {
             transport: "socket",
             onPlatformAction: (platform) =>
                 connectionTelemetry.recordPlatform(platform),
+            scheduleDelivery: this.scheduleDelivery,
         });
 
         socket.on("credentials", handlers.credentials);

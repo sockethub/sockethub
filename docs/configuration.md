@@ -220,6 +220,11 @@ them. They cannot be supplied by browser clients.
 
 To disable a platform, remove it from the array.
 
+`@sockethub/platform-webpush` is bundled but not loaded by default, because
+it needs a key pair before it can send anything. Add it to the array and
+configure it as described in its
+[README](../packages/platform-webpush/README.md).
+
 ### Per-Platform Configuration (`packageConfig`)
 
 Individual platforms can be configured under `packageConfig`, keyed by the
@@ -254,7 +259,7 @@ passed through to the platform unvalidated.
 
 #### Outbound URL guard
 
-Feeds, metadata, media, CalDAV, and CardDAV fetch client-supplied URLs through the
+Feeds, metadata, media, Web Push, CalDAV, and CardDAV request client-supplied URLs through the
 shared guarded dispatcher in `@sockethub/util`. XMPP and IRC apply the same address
 check to the server they connect to. The check runs when the socket
 connects, including every redirect hop. An address that does not parse is
@@ -726,6 +731,13 @@ curl -H 'Accept: application/json' https://sh.example.org/
   "@sockethub/schemas/service-descriptor"`. The schema allows additional
   members, so a client validating today keeps working when a later server adds
   fields.
+- `webpush` appears when the Web Push platform is loaded and has a key pair:
+  `{ "publicKey": "...", "scheduling": true }`. `publicKey` is what a web app
+  passes to the browser as `applicationServerKey` when it subscribes.
+  A subscription only works with the key it was created against, so an app
+  that sees this value change must subscribe again. `scheduling` says whether
+  the server accepts `schedule` (see
+  [Scheduled Delivery](#scheduled-delivery)).
 - Exact package versions are deliberately not published on either transport,
   to avoid making deployments easy to fingerprint. They remain available in
   the server logs and via `sockethub --version`.
@@ -736,6 +748,39 @@ curl -H 'Accept: application/json' https://sh.example.org/
   actions are disabled; the root variant is always available.
 - A request that carries an invalid request ID still returns `400`, and a valid
   one still replays as NDJSON; neither returns the descriptor.
+
+### Scheduled Delivery
+
+The Web Push platform can hold messages and send each one at a later time,
+with no client connected. It is off until a secret is set:
+
+```json
+{
+  "scheduledDelivery": {
+    "secret": "a random string of at least 32 characters",
+    "maxMessagesPerSubscription": 60,
+    "maxSubscriptions": 10000,
+    "maxDaysAhead": 60,
+    "maxSchedulesPerMinute": 30
+  }
+}
+```
+
+The secret encrypts the stored schedules. It must stay the same across
+restarts and on every server that shares the Redis, so it cannot be one of
+the secrets Sockethub generates for itself at each start. It can also be set
+as `SOCKETHUB_SCHEDULED_DELIVERY_SECRET`.
+
+This is the one feature whose data has to outlive the server process, which
+changes what the deployment needs:
+
+- Redis must persist its data (turn on AOF). See
+  [Redis Configuration](#redis-configuration).
+- The secret and the Web Push key pair need to be backed up.
+
+The limits, what is stored, and what happens when a secret is lost are
+covered in the
+[Web Push README](../packages/platform-webpush/README.md#operating-scheduled-delivery).
 
 ### Redis Configuration
 
@@ -765,6 +810,13 @@ queues of any listed server whose alive key is gone and whose queues have had
 no activity for an hour. The idle hour spares a server that stalled past the
 alive TTL. Servers from releases without alive keys are never listed, so they
 are never swept. Several servers can share one Redis this way.
+
+Nothing above needs Redis to keep its data across a Redis restart: a server
+cannot read what an earlier run stored. [Scheduled Delivery](#scheduled-delivery)
+is the exception. Its records live under `sockethub:{scheduled}:`, carry no
+server id, are left alone by the cleanup described above, and are lost if
+Redis restarts without persistence. Turn on AOF when scheduled delivery is
+enabled.
 
 ### Health checks
 
@@ -996,6 +1048,10 @@ export SOCKETHUB_CORS_ORIGIN="https://app.example.com,https://admin.example.com"
 
 # Redis connection
 export REDIS_URL=redis://localhost:6379
+
+# Scheduled Web Push delivery (at least 32 characters). Takes the place of
+# scheduledDelivery.secret in the config file; with neither set, it is off.
+export SOCKETHUB_SCHEDULED_DELIVERY_SECRET="..."
 
 # Platform child liveness (milliseconds; 0 disables the check)
 export SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS=5000

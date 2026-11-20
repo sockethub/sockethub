@@ -317,6 +317,24 @@
         "@sockethub/server": "^5.0.0-beta.7",
       },
     },
+    "packages/platform-webpush": {
+      "name": "@sockethub/platform-webpush",
+      "version": "1.0.0-beta.7",
+      "dependencies": {
+        "@sockethub/util": "^1.0.0-beta.7",
+        "undici": "^7.30.0",
+      },
+      "devDependencies": {
+        "@sockethub/schemas": "^3.0.0-beta.7",
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "@sockethub/server": "^5.0.0-beta.7",
+      },
+      "optionalPeers": [
+        "@sockethub/server",
+      ],
+    },
     "packages/platform-whatsapp": {
       "name": "@sockethub/platform-whatsapp",
       "version": "1.0.0-beta.7",
@@ -415,6 +433,7 @@
         "@sockethub/platform-media": "^1.0.0-beta.7",
         "@sockethub/platform-messenger": "^1.0.0-beta.7",
         "@sockethub/platform-metadata": "^1.0.1-beta.7",
+        "@sockethub/platform-webpush": "^1.0.0-beta.7",
         "@sockethub/platform-whatsapp": "^1.0.0-beta.7",
         "@sockethub/platform-xmpp": "^5.0.0-beta.7",
       },
@@ -434,6 +453,7 @@
         "@sockethub/platform-media": "^1.0.0-beta.7",
         "@sockethub/platform-messenger": "^1.0.0-beta.7",
         "@sockethub/platform-metadata": "^1.0.1-beta.7",
+        "@sockethub/platform-webpush": "^1.0.0-beta.7",
         "@sockethub/platform-whatsapp": "^1.0.0-beta.7",
         "@sockethub/platform-xmpp": "^5.0.0-beta.7",
         "@sockethub/server": "^5.0.0-beta.7",
@@ -1294,6 +1314,8 @@
     "@sockethub/platform-messenger": ["@sockethub/platform-messenger@workspace:packages/platform-messenger"],
 
     "@sockethub/platform-metadata": ["@sockethub/platform-metadata@workspace:packages/platform-metadata"],
+
+    "@sockethub/platform-webpush": ["@sockethub/platform-webpush@workspace:packages/platform-webpush"],
 
     "@sockethub/platform-whatsapp": ["@sockethub/platform-whatsapp@workspace:packages/platform-whatsapp"],
 
@@ -4301,6 +4323,8 @@
 
     "@sockethub/platform-messenger/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
+    "@sockethub/platform-webpush/@types/bun": ["@types/bun@1.4.5", "", { "dependencies": { "bun-types": "1.4.5" } }, "sha512-DpgwNI9z0L1S0gtb45QLCWgwCUcMLnsHYMJHQvpNj7erGiCGBvpggltAIeARrtobNMKMuy0UP7i56tKKgwFs/Q=="],
+
     "@sockethub/platform-whatsapp/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "@sockethub/platform-xmpp/@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
@@ -5364,6 +5388,8 @@
     "@sockethub/platform-media/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 
     "@sockethub/platform-messenger/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
+
+    "@sockethub/platform-webpush/@types/bun/bun-types": ["bun-types@1.4.5", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-ECHn+9dhL3wv0G6u0+7dQvrnaimXiRDxxerYBmhTaLyJEEuvTPWk2Fye3XIf5Y++JIIiHKfQw4Z7V5D8KuiXbg=="],
 
     "@sockethub/platform-whatsapp/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 

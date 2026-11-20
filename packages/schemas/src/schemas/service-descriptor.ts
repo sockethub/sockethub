@@ -14,6 +14,20 @@ export interface ServiceDescriptor {
      */
     endpoints?: ServiceEndpoints;
     platforms: Array<{ id: string; apiVersion: number }>;
+    /** Present when the `webpush` platform is loaded and has a signing key. */
+    webpush?: ServiceWebPush;
+}
+
+/** What a web app needs to subscribe for Web Push through this server. */
+export interface ServiceWebPush {
+    /**
+     * The VAPID public key (base64url) to pass as `applicationServerKey`.
+     * A subscription only works with the key it was created against, so an
+     * app that sees this value change must subscribe again.
+     */
+    publicKey: string;
+    /** Whether this server accepts `schedule` for delivery at a later time. */
+    scheduling: boolean;
 }
 
 /**
@@ -80,6 +94,15 @@ export const ServiceDescriptorSchema = {
                     id: nonEmptyString,
                     apiVersion,
                 },
+            },
+        },
+        webpush: {
+            type: "object",
+            required: ["publicKey", "scheduling"],
+            additionalProperties: true,
+            properties: {
+                publicKey: nonEmptyString,
+                scheduling: { type: "boolean" },
             },
         },
     },

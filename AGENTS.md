@@ -108,6 +108,7 @@ packages/
   platform-feeds/    - RSS/Atom feeds platform
   platform-metadata/ - URL metadata extraction platform
   platform-media/    - Image downloads for clients blocked by CORS
+  platform-webpush/  - Web Push notifications, sent now or at a scheduled time
   platform-caldav/   - CalDAV calendars and published iCalendar feeds
   platform-carddav/  - CardDAV address books
   platform-messenger/ - Outgoing Facebook Page messages
