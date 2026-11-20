@@ -71,6 +71,8 @@ export interface ScheduledDeliveryLimits {
     maxSchedulesPerMinute: number;
 }
 
+/** The longest delivery URL the `webpush` platform's `send` accepts. */
+const MAX_ENDPOINT_LENGTH = 2048;
 /** How often `schedule` re-reads a record that changed under it. */
 const SCHEDULE_WRITE_ATTEMPTS = 3;
 
@@ -281,6 +283,11 @@ export class ScheduledDelivery {
         const url = new URL(String(msg.target?.id));
         url.hash = "";
         const endpoint = url.href;
+        // Parsing can lengthen a URL by escaping characters. One that no
+        // longer fits what `send` accepts could never be delivered.
+        if (endpoint.length > MAX_ENDPOINT_LENGTH) {
+            throw new Error("target is too long");
+        }
         const items = (msg.object as { items: Array<ScheduleItem> }).items;
         if (items.length > this.limits.maxMessagesPerSubscription) {
             throw new Error(

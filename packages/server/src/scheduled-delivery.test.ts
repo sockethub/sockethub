@@ -184,6 +184,19 @@ describe("ScheduledDelivery.schedule", () => {
         expect(store.due.size).toBe(0);
     });
 
+    it("refuses a delivery URL that parsing makes too long to send to", async () => {
+        const { store, scheduler } = setup();
+        // 2048 characters as written, more once the quotes are escaped.
+        const target = `${ENDPOINT}?${"'".repeat(2048 - ENDPOINT.length - 1)}`;
+        expect(target.length).toBe(2048);
+        await expect(
+            scheduler.schedule(
+                schedule([{ deliverAt: at(HOUR), content: "AAAA" }], target),
+            ),
+        ).rejects.toThrow(/too long/);
+        expect(store.records.size).toBe(0);
+    });
+
     it("leaves out messages whose time has passed, so a list can be sent again", async () => {
         const { store, clock, sent, scheduler } = setup();
         const list = schedule([
