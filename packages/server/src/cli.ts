@@ -6,6 +6,7 @@
  * is missing or invalid, and must never reach the point of binding a port.
  */
 
+import { CONFIG_FLAGS } from "./config-schema.js";
 import { SOCKETHUB_VERSION } from "./version.js";
 
 export function renderHelp(): string {
@@ -59,4 +60,37 @@ export function parseInfoFlag(
         return "version";
     }
     return undefined;
+}
+
+/** Flags read directly from argv rather than through the config schema. */
+const COMMAND_FLAGS = [
+    "--help",
+    "-h",
+    "--version",
+    "-v",
+    "--config",
+    "-c",
+    "--write-config",
+    "--write-config-webpush-enabled",
+    "--webpush-subject",
+    "--sentry-test",
+    "--sentry-test-crash",
+    "--info",
+];
+
+const KNOWN_FLAGS = new Set([...COMMAND_FLAGS, ...CONFIG_FLAGS]);
+
+/**
+ * The first flag in `argv` that Sockethub does not recognize, if any. An
+ * unknown flag would otherwise be ignored and the server started, so a typo
+ * or a flag from a newer version would boot a server instead of exiting.
+ * Arguments that do not start with `-` are values and are not checked.
+ */
+export function findUnknownFlag(argv: Array<string>): string | undefined {
+    return argv.find(
+        (arg) =>
+            arg.startsWith("-") &&
+            arg !== "-" &&
+            !KNOWN_FLAGS.has(arg.split("=")[0]),
+    );
 }

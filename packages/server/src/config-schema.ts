@@ -312,6 +312,11 @@ export const EMPTY_ENV_IS_UNSET_VARS: ReadonlyArray<string> = Object.values(
     .filter((entry) => entry.emptyEnvIsUnset && entry.env)
     .map((entry) => entry.env as string);
 
+/** Command-line flags bound to config settings, such as `--port`. */
+export const CONFIG_FLAGS: ReadonlyArray<string> = Object.values(OVERLAY)
+    .filter((entry) => entry.arg)
+    .map((entry) => `--${entry.arg}`);
+
 function collectDefaults(
     node: JsonSchemaNode,
     overlays: Record<string, OverlayEntry>,

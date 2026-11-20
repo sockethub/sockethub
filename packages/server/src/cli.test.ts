@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
-import { parseInfoFlag, renderHelp } from "./cli.js";
+import { findUnknownFlag, parseInfoFlag, renderHelp } from "./cli.js";
+import { CONFIG_FLAGS } from "./config-schema.js";
 import { SOCKETHUB_VERSION } from "./version.js";
 
 describe("parseInfoFlag", () => {
@@ -47,6 +48,51 @@ describe("renderHelp", () => {
             "--version",
             "--help",
         ]) {
+            expect(help).toContain(flag);
+        }
+    });
+});
+
+describe("findUnknownFlag", () => {
+    it("accepts every documented flag, with and without values", () => {
+        expect(
+            findUnknownFlag([
+                "--config",
+                "a.json",
+                "--host",
+                "0.0.0.0",
+                "--port=10550",
+                "--examples",
+                "--info",
+            ]),
+        ).toBeUndefined();
+        expect(
+            findUnknownFlag([
+                "--write-config-webpush-enabled",
+                "/etc/sockethub.json",
+                "--webpush-subject",
+                "mailto:ops@example.org",
+            ]),
+        ).toBeUndefined();
+        expect(findUnknownFlag(["--write-config", "-"])).toBeUndefined();
+        expect(findUnknownFlag([])).toBeUndefined();
+    });
+
+    it("accepts every flag bound to a config setting", () => {
+        expect(CONFIG_FLAGS).toContain("--redis.url");
+        expect(findUnknownFlag([...CONFIG_FLAGS])).toBeUndefined();
+    });
+
+    it("returns the first flag it does not recognize", () => {
+        expect(findUnknownFlag(["--write-confg"])).toBe("--write-confg");
+        expect(findUnknownFlag(["--port", "1", "--bogus=1", "-x"])).toBe(
+            "--bogus=1",
+        );
+    });
+
+    it("lists every config flag in the help text", () => {
+        const help = renderHelp();
+        for (const flag of CONFIG_FLAGS) {
             expect(help).toContain(flag);
         }
     });

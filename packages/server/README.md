@@ -189,6 +189,9 @@ instead of the server bundle carrying binaries for every platform and Node ABI.
 `--help`, `--version` and `--write-config` answer without loading the config
 file or binding a port, so they work on a host already running Sockethub.
 
+An unknown flag is an error: Sockethub names it and exits with status 2
+instead of starting.
+
 ### Start
 
 Run with debug output and examples enabled:

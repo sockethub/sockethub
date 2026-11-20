@@ -3,7 +3,7 @@ import "./payload-debug.js";
 import path from "node:path";
 import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
 import { toError } from "@sockethub/util/error";
-import { parseInfoFlag, renderHelp } from "./cli.js";
+import { findUnknownFlag, parseInfoFlag, renderHelp } from "./cli.js";
 import type SockethubType from "./sockethub";
 import { SOCKETHUB_VERSION } from "./version.js";
 import {
@@ -51,6 +51,15 @@ async function reportFatal(err: Error, code = 1): Promise<never> {
  */
 export async function server() {
     const argv = process.argv.slice(2);
+
+    const unknownFlag = findUnknownFlag(argv);
+    if (unknownFlag) {
+        console.error(
+            `unknown option: ${unknownFlag} (run sockethub --help for the list)`,
+        );
+        process.exitCode = 2;
+        return;
+    }
 
     // --help/--version short-circuit before anything else: they must answer
     // without loading config, binding a port, or initializing Sentry.
