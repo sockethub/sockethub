@@ -24,6 +24,23 @@ sockethub --write-config -               # prints to stdout
 It refuses to overwrite an existing file, and exits after writing (the server
 does not start).
 
+`sockethub --write-config-webpush-enabled` does the same with
+[Web Push](../packages/platform-webpush/README.md) set up: the platform added
+to `platforms`, a new key pair, and a
+[scheduled delivery](#scheduled-delivery) secret. It takes the same path
+argument:
+
+```bash
+sockethub --write-config-webpush-enabled --webpush-subject mailto:ops@example.org
+```
+
+Unlike `--write-config`, it also works on an existing file, adding only what
+that file is missing. A key pair or secret already in the file is never
+replaced. `--webpush-subject` is a contact URI for the operator, as `mailto:`
+or `https:`, sent to push services so they can reach whoever runs the server.
+It is stored as `vapid.subject`, the name the Web Push standard gives it, and
+is needed whenever a key pair is created.
+
 The generated file lists every bundled platform except `dummy`. That platform
 exists for tests and the examples and should not be enabled in production;
 add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
@@ -752,21 +769,29 @@ curl -H 'Accept: application/json' https://sh.example.org/
 ### Scheduled Delivery
 
 The Web Push platform can hold messages and send each one at a later time,
-with no client connected. It is off until a secret is set:
+with no client connected. It is off until a secret is set, in the platform's
+`packageConfig` entry next to its key pair:
 
 ```json
 {
-  "scheduledDelivery": {
-    "secret": "a random string of at least 32 characters",
-    "maxMessagesPerSubscription": 60,
-    "maxSubscriptions": 10000,
-    "maxDaysAhead": 60,
-    "maxSchedulesPerMinute": 30
+  "packageConfig": {
+    "@sockethub/platform-webpush": {
+      "scheduledDelivery": {
+        "secret": "a random string of at least 32 characters",
+        "maxMessagesPerSubscription": 60,
+        "maxSubscriptions": 10000,
+        "maxDaysAhead": 60,
+        "maxSchedulesPerMinute": 30
+      }
+    }
   }
 }
 ```
 
-The secret encrypts the stored schedules. It must stay the same across
+The secret is for the server's own use: it encrypts the stored schedules.
+Apps never send or see it, and there is nothing to hand to app developers. An
+app learns whether it can use `schedule` from `webpush.scheduling` in the
+[service descriptor](#api-discovery). The secret must stay the same across
 restarts and on every server that shares the Redis, so it cannot be one of
 the secrets Sockethub generates for itself at each start. It can also be set
 as `SOCKETHUB_SCHEDULED_DELIVERY_SECRET`.
@@ -1050,7 +1075,8 @@ export SOCKETHUB_CORS_ORIGIN="https://app.example.com,https://admin.example.com"
 export REDIS_URL=redis://localhost:6379
 
 # Scheduled Web Push delivery (at least 32 characters). Takes the place of
-# scheduledDelivery.secret in the config file; with neither set, it is off.
+# scheduledDelivery.secret in the Web Push packageConfig entry; with neither
+# set, it is off.
 export SOCKETHUB_SCHEDULED_DELIVERY_SECRET="..."
 
 # Platform child liveness (milliseconds; 0 disables the check)

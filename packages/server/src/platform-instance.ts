@@ -50,6 +50,36 @@ function interruptedBy(reason: string): string {
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
 
+/**
+ * `packageConfig` keys the server acts on itself. The child has no use for
+ * them, and `scheduledDelivery.secret` should not leave the parent.
+ */
+const SERVER_ONLY_CONFIG_KEYS: Record<string, ReadonlyArray<string>> = {
+    webpush: ["scheduledDelivery"],
+};
+
+/**
+ * The part of a platform's `packageConfig` entry (keyed by package name) that
+ * its child process is given. Undefined when there is nothing to forward.
+ */
+export function childPlatformConfig(
+    name: string,
+    packageConfig: unknown,
+): Record<string, unknown> | undefined {
+    const entry = (packageConfig as Record<string, unknown> | undefined)?.[
+        `@sockethub/platform-${name}`
+    ];
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        return undefined;
+    }
+    const forwarded = Object.fromEntries(
+        Object.entries(entry).filter(
+            ([key]) => !SERVER_ONLY_CONFIG_KEYS[name]?.includes(key),
+        ),
+    );
+    return Object.keys(forwarded).length > 0 ? forwarded : undefined;
+}
+
 export interface PlatformInstanceParams {
     identifier: string;
     platform: string;
@@ -191,17 +221,11 @@ export default class PlatformInstance {
         }
         // Forward this platform's `packageConfig` entry (keyed by package name)
         // to the forked child, which merges it onto the platform's defaults.
-        const packageConfig = config.get("packageConfig") as
-            | Record<string, unknown>
-            | undefined;
-        const platformConfig =
-            packageConfig?.[`@sockethub/platform-${this.name}`];
-        if (
-            platformConfig &&
-            typeof platformConfig === "object" &&
-            !Array.isArray(platformConfig) &&
-            Object.keys(platformConfig).length > 0
-        ) {
+        const platformConfig = childPlatformConfig(
+            this.name,
+            config.get("packageConfig"),
+        );
+        if (platformConfig) {
             env.SOCKETHUB_PLATFORM_CONFIG = JSON.stringify(platformConfig);
         }
 

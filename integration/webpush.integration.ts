@@ -73,12 +73,12 @@ function writeConfig(name: string, scheduling: boolean): string {
                     allowedHosts: ["127.0.0.1"],
                     allowPrivateAddresses: true,
                     allowInsecureHttp: true,
+                    scheduledDelivery: {
+                        secret: scheduling
+                            ? "webpush-integration-secret-0123456789"
+                            : "",
+                    },
                 },
-            },
-            scheduledDelivery: {
-                secret: scheduling
-                    ? "webpush-integration-secret-0123456789"
-                    : "",
             },
         }),
     );

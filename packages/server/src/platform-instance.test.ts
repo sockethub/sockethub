@@ -26,7 +26,10 @@ import {
     resolveConnectionScope,
 } from "./connection-scope.js";
 import config from "./config.js";
-import PlatformInstance, { platformInstances } from "./platform-instance.js";
+import PlatformInstance, {
+    childPlatformConfig,
+    platformInstances,
+} from "./platform-instance.js";
 
 describe("PlatformInstance", () => {
     let pi, sandbox, forkFake, socketMock, getSocketFake;
@@ -1251,5 +1254,38 @@ describe("PlatformInstance", () => {
                 sinon.assert.calledOnce(queueMock.pause);
             });
         });
+    });
+});
+
+describe("childPlatformConfig", () => {
+    const packageConfig = {
+        "@sockethub/platform-feeds": { connectTimeoutMs: 7000 },
+        "@sockethub/platform-webpush": {
+            vapid: { publicKey: "public" },
+            scheduledDelivery: { secret: "s".repeat(32) },
+        },
+        "@sockethub/platform-irc": {},
+    };
+
+    it("forwards a platform's own entry", () => {
+        expect(childPlatformConfig("feeds", packageConfig)).toEqual({
+            connectTimeoutMs: 7000,
+        });
+        expect(childPlatformConfig("irc", packageConfig)).toBeUndefined();
+        expect(childPlatformConfig("xmpp", packageConfig)).toBeUndefined();
+        expect(childPlatformConfig("feeds", undefined)).toBeUndefined();
+    });
+
+    it("keeps the scheduled delivery settings in the server", () => {
+        expect(childPlatformConfig("webpush", packageConfig)).toEqual({
+            vapid: { publicKey: "public" },
+        });
+        expect(
+            childPlatformConfig("webpush", {
+                "@sockethub/platform-webpush": {
+                    scheduledDelivery: { secret: "s".repeat(32) },
+                },
+            }),
+        ).toBeUndefined();
     });
 });

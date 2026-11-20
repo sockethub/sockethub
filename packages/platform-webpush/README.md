@@ -33,11 +33,50 @@ A subscription only accepts requests signed by the key it was created with.
 The app should store the public key it subscribed with, and subscribe again
 when the descriptor shows a different one.
 
+## Who needs what
+
+**An app needs nothing from the server's config.** It reads the public key
+from the service descriptor and uses the platform by sending `send` and
+`schedule`. There is no token, password or key for the operator to hand to
+app developers.
+
+**The operator sets two things, once**, both in the server's config file:
+
+* `vapid`: the key pair Sockethub signs every push request with, and
+  `subject`, a contact URI where push services can reach the operator. Only
+  the public key leaves the server for apps, in the service descriptor.
+* `scheduledDelivery.secret`: a random string for Sockethub's own use. It
+  encrypts the schedules Sockethub keeps in Redis. No app sends it or sees
+  it, and it is not entered anywhere else. It only has to exist, which turns
+  `schedule` on, and stay the same, so that schedules stored before a restart
+  can still be read.
+
+[Setup](#setup) has a command that generates both.
+
+The descriptor tells an app what the server offers:
+
+```json
+"webpush": { "publicKey": "BAEu0HrAjf...", "scheduling": true }
+```
+
+`scheduling` is `true` when the secret is set. When it is `false`, `send`
+still works and `schedule` is refused.
+
 ## Setup
 
 The Sockethub CLI bundles this platform but does not load it by default,
-because it cannot work without a key pair. Add it to `platforms` and
-configure the keys:
+because it cannot work without a key pair. One command sets it up, in a new
+config file or an existing one:
+
+```bash
+sockethub --write-config-webpush-enabled --webpush-subject mailto:ops@example.org
+```
+
+`--webpush-subject` is your contact URI, explained under `subject` below. The
+command adds the platform to `platforms`, creates a key pair, and turns on
+scheduled delivery with a new secret. It never replaces a key pair or secret
+that is already in the file. To do the same by hand, add the platform to
+`platforms` and configure the keys:
 
 ```json
 {
@@ -48,17 +87,17 @@ configure the keys:
         "publicKey": "BAEu0HrAjf-sQk7EJ26u43u24OSDIRaCl85TVXLhhn7RJY4U19x-E4H...",
         "privateKey": "08Q3FObTS5f0elafsgHE-b1vAETPn7x9uOoW1LhfxJc",
         "subject": "mailto:ops@example.org"
+      },
+      "scheduledDelivery": {
+        "secret": "a random string of at least 32 characters"
       }
     }
-  },
-  "scheduledDelivery": {
-    "secret": "a random string of at least 32 characters"
   }
 }
 ```
 
-Generate a key pair once. The script runs the same under Bun: replace
-`node -e` with `bun -e`.
+When setting it up by hand, generate a key pair once. The script runs the
+same under Bun: replace `node -e` with `bun -e`.
 
 ```bash
 node -e '
@@ -73,12 +112,19 @@ console.log(JSON.stringify({
 }, null, 2));'
 ```
 
-`subject` is a contact address the push services can reach the operator at,
-as a `mailto:` or `https:` URL. Apple refuses requests without a valid one.
+`subject` is a contact URI for the operator, not a title or a topic: a
+`mailto:` or `https:` address where a push service can reach whoever runs this
+server. The name is the standard's. It is sent as the `sub` (subject) claim
+of the token Sockethub signs
+([RFC 8292, section 2.1](https://www.rfc-editor.org/rfc/rfc8292#section-2.1)).
+Apple refuses requests without a valid one.
 
-`scheduledDelivery.secret` turns on `schedule`. Leave it out to offer `send`
-only. See [Operating scheduled delivery](#operating-scheduled-delivery)
-before turning it on.
+`scheduledDelivery.secret` is any random string of at least 32 characters,
+for example from `openssl rand -base64 32`. Sockethub uses it only to encrypt
+the schedules it stores, and apps never need it. Setting it turns on
+`schedule`. Leave it out to offer `send` only. See
+[Operating scheduled delivery](#operating-scheduled-delivery) before turning
+it on.
 
 ## Usage
 
@@ -172,6 +218,10 @@ No other text from the push service is passed on.
 }
 ```
 
+Scheduling asks nothing more of the app than `send` does: the same `actor`,
+`target` and encrypted `content`, plus a time. It works on any server whose
+descriptor reports `"scheduling": true`.
+
 `items` is the complete list of future messages for that subscription. It
 replaces any list sent earlier, and an empty list cancels. Sending the same
 list again changes nothing, so an app can sync every time it opens: an item
@@ -216,22 +266,23 @@ sends a new list, so schedule far enough ahead to cover the gaps you expect.
     "@sockethub/platform-webpush": {
       "vapid": { "publicKey": "...", "privateKey": "...", "subject": "mailto:ops@example.org" },
       "allowedHosts": ["*.push.apple.com", "fcm.googleapis.com"],
-      "timeoutMs": 15000
+      "timeoutMs": 15000,
+      "scheduledDelivery": {
+        "secret": "...",
+        "maxMessagesPerSubscription": 60,
+        "maxSubscriptions": 10000,
+        "maxDaysAhead": 60,
+        "maxSchedulesPerMinute": 30
+      }
     }
-  },
-  "scheduledDelivery": {
-    "secret": "...",
-    "maxMessagesPerSubscription": 60,
-    "maxSubscriptions": 10000,
-    "maxDaysAhead": 60,
-    "maxSchedulesPerMinute": 30
   }
 }
 ```
 
-Under `packageConfig`:
+All of it goes in the platform's `packageConfig` entry:
 
-* `vapid`: the key pair and contact described under [Setup](#setup).
+* `vapid`: the key pair and the contact URI (`subject`) described under
+  [Setup](#setup).
 * `allowedHosts`: push service hosts that may be sent to. `*.example.com`
   matches subdomains. The default is `*.push.apple.com`,
   `fcm.googleapis.com`, `updates.push.services.mozilla.com` and
@@ -242,10 +293,12 @@ Under `packageConfig`:
 * `allowPrivateAddresses` and `allowInsecureHttp` (default `false`): for
   testing against a local stand-in push service.
 
-Under `scheduledDelivery`:
+Under `scheduledDelivery`, which the server reads itself and does not pass to
+the platform's process:
 
-* `secret`: encrypts stored schedules. At least 32 characters. Also settable
-  as `SOCKETHUB_SCHEDULED_DELIVERY_SECRET`. Empty turns `schedule` off.
+* `secret`: encrypts stored schedules. Used only by the server: apps never
+  send it. At least 32 characters. Also settable as
+  `SOCKETHUB_SCHEDULED_DELIVERY_SECRET`. Empty turns `schedule` off.
 * `maxMessagesPerSubscription` (default 60): messages one subscription may
   have pending.
 * `maxSubscriptions` (default 10000): subscriptions that may have a schedule

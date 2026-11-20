@@ -159,10 +159,6 @@ const OVERLAY: Record<string, OverlayEntry> = {
         env: "SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS",
         emptyEnvIsUnset: true,
     },
-    "scheduledDelivery.secret": {
-        env: "SOCKETHUB_SCHEDULED_DELIVERY_SECRET",
-        emptyEnvIsUnset: true,
-    },
     "platformHeartbeat.intervalMs": {
         format: "nat",
         env: "SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS",

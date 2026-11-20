@@ -174,6 +174,10 @@ instead of the server bundle carrying binaries for every platform and Node ABI.
 
   --config, -c        : path to a config file
   --write-config      : write a default config file and exit
+  --write-config-webpush-enabled
+                      : set up Web Push in a new or existing config file and exit
+  --webpush-subject   : your contact URI (mailto: or https:) for push services,
+                        needed with the flag above
 
   --host              : hostname to bind to
   --port              : port to bind to

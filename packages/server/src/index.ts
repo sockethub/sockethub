@@ -6,7 +6,13 @@ import { toError } from "@sockethub/util/error";
 import { parseInfoFlag, renderHelp } from "./cli.js";
 import type SockethubType from "./sockethub";
 import { SOCKETHUB_VERSION } from "./version.js";
-import { parseWriteConfigTarget, writeDefaultConfig } from "./write-config";
+import {
+    parseWebPushSubject,
+    parseWriteConfigTarget,
+    WRITE_WEBPUSH_CONFIG_FLAG,
+    writeDefaultConfig,
+    writeWebPushConfig,
+} from "./write-config";
 
 let sentry: {
     readonly reportError: (err: Error) => void;
@@ -69,9 +75,19 @@ export async function server() {
     // exit. Handled before the config modules load so it works even when an
     // existing config file in the working directory is invalid.
     const writeConfigTarget = parseWriteConfigTarget(argv);
-    if (writeConfigTarget !== undefined) {
+    const webPushConfigTarget = parseWriteConfigTarget(
+        argv,
+        WRITE_WEBPUSH_CONFIG_FLAG,
+    );
+    if (writeConfigTarget !== undefined || webPushConfigTarget !== undefined) {
         try {
-            const message = writeDefaultConfig(writeConfigTarget);
+            const message =
+                webPushConfigTarget !== undefined
+                    ? writeWebPushConfig(
+                          webPushConfigTarget,
+                          parseWebPushSubject(argv),
+                      )
+                    : writeDefaultConfig(writeConfigTarget as string);
             if (message) {
                 console.log(message);
             }

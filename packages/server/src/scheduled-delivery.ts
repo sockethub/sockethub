@@ -71,6 +71,31 @@ export interface ScheduledDeliveryLimits {
     maxSchedulesPerMinute: number;
 }
 
+/** The same values the config schema documents as defaults. */
+export const DEFAULT_LIMITS: ScheduledDeliveryLimits = {
+    maxMessagesPerSubscription: 60,
+    maxSubscriptions: 10000,
+    maxDaysAhead: 60,
+    maxSchedulesPerMinute: 30,
+};
+
+/**
+ * The `scheduledDelivery` settings from the `webpush` platform's
+ * `packageConfig` entry, with defaults filled in: convict holds
+ * `packageConfig` as one value and applies none inside it. An empty `secret`
+ * means scheduled delivery is off.
+ */
+export function scheduledDeliverySettings(
+    packageConfig: unknown,
+): ScheduledDeliveryLimits & { secret: string } {
+    const entry = (
+        packageConfig as
+            | Record<string, { scheduledDelivery?: object } | undefined>
+            | undefined
+    )?.["@sockethub/platform-webpush"];
+    return { ...DEFAULT_LIMITS, secret: "", ...entry?.scheduledDelivery };
+}
+
 /** The longest delivery URL the `webpush` platform's `send` accepts. */
 const MAX_ENDPOINT_LENGTH = 2048;
 /** How often `schedule` re-reads a record that changed under it. */
