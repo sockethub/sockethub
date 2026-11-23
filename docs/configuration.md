@@ -45,6 +45,23 @@ The generated file lists every bundled platform except `dummy`. That platform
 exists for tests and the examples and should not be enabled in production;
 add `@sockethub/platform-dummy` to `platforms` yourself if you want it.
 
+### Unknown flags
+
+Flags are checked before a config file is loaded and before a port is bound.
+The first flag Sockethub does not recognize is printed, and the process exits
+with status 2 instead of starting:
+
+```text
+unknown option: --write-confg (run sockethub --help for the list)
+```
+
+Anything after `=` is left off that line, so a mistyped URL or secret is not
+echoed. A flag that takes no value is rejected the same way when written as
+`--flag=value`. Those flags are `--help`, `-h`, `--version`, `-v`, `--info`,
+`--sentry-test`, and `--sentry-test-crash`. `-c` takes the next argument;
+`-c=path` is not accepted (`--config=path` is). Arguments that do not start
+with `-` are not checked. A lone `-` is the stdout target for `--write-config`.
+
 ### Default Configuration Structure
 
 ```json
@@ -350,9 +367,10 @@ connection stays up.
 Stateless platforms use one shared worker per enabled platform and are excluded
 from these caps, so persistent connections cannot prevent their startup or
 restart. In the schema default those platforms are CalDAV, CardDAV, dummy,
-feeds, metadata, Messenger, Instagram, and WhatsApp. `sockethub --write-config`
-omits dummy. With the other seven enabled, a full persistent cap is at most
-`100 + 7 = 107` workers.
+feeds, media, metadata, Messenger, Instagram, and WhatsApp.
+`sockethub --write-config` omits dummy. With the other eight enabled, a full
+persistent cap is at most `100 + 8 = 108` workers. Web Push is not in that
+default; enabling it adds one more shared worker.
 
 Each instance limit can independently be disabled by setting it to `0`.
 Setting `maxConnectionsPerIp` to `0` removes the per-IP socket connection limit.
