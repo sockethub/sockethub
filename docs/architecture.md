@@ -400,8 +400,8 @@ Platforms are configured to operate in two different modes based on their protoc
 ### Stateless Platforms
 
 These do not keep a connection between jobs. One shared worker serves every
-session. CalDAV, CardDAV, feeds, metadata, and the outgoing Messenger,
-Instagram, and WhatsApp platforms work this way, as does dummy.
+session. CalDAV, CardDAV, feeds, media, metadata, Web Push, and the outgoing
+Messenger, Instagram, and WhatsApp platforms work this way, as does dummy.
 
 ### Persistent Platforms
 

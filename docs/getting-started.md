@@ -34,13 +34,22 @@ otherwise. See [Health checks](configuration.md#health-checks).
 
 ## Try the Examples
 
-Browse to `http://localhost:10550/examples` to see interactive examples for each platform:
+Browse to `http://localhost:10550/examples`. The home page lists every example
+the app ships. A card stays grey, and its sidebar entry says "off", when this
+server's service descriptor does not include that platform.
 
-- **Dummy Platform**: Test basic connectivity with echo messages
-- **Feeds Platform**: Fetch and display RSS/Atom feeds
-- **IRC/XMPP Platforms**: Connect to chat networks (requires credentials)
+Each page is a short sequence of steps. On a wide screen the activity log sits
+beside the steps and shows the JSON that was sent and the reply. The catalog,
+and which activity each page sends, is in the
+[examples README](../packages/examples/README.md).
 
-These examples demonstrate real Sockethub usage and provide copy-paste code for your own applications.
+- **Dummy**: echo, fail, throw, and greet, with nothing to configure
+- **Feeds and metadata**: fetch a public URL
+- **IRC and XMPP**: connect and chat (XMPP needs an account)
+- **Email**: IMAP fetch or watch, and SMTP send
+- **Messenger and Instagram**: send a text reply from your own account
+- **CalDAV and CardDAV**: calendars, to-dos, and contacts. CalDAV can also read
+  a public `.ics` feed with no account
 
 ## Build Your First App
 
@@ -130,7 +139,9 @@ All communication uses ActivityStreams 2.0 format:
 
 ### Core Concepts
 
-- **Platforms**: Protocol modules (dummy, feeds, irc, xmpp, metadata)
+- **Platforms**: Protocol modules. The examples cover dummy, feeds, metadata,
+  IRC, XMPP, email, Messenger, Instagram, CalDAV, and CardDAV. Media, Web Push,
+  and WhatsApp are documented in their package READMEs
 - **@context**: Canonical context array from `sc.contextFor('platform')` after `ready()`
 - **Actor**: Object on each message (`id`, `type`, optional `name`)
 - **Verbs**: Actions like connect, send, join, fetch
@@ -159,7 +170,7 @@ unreachable. It probes the port in `PORT`, which is also what sets
 ### For App Developers
 
 - **[Client Guide](client-guide.md)** - Detailed client library usage
-- **[Platform READMEs](README.md#for-app-developers)** - IRC, XMPP, feeds, metadata, CalDAV, and CardDAV
+- **[Platform READMEs](README.md#for-app-developers)** - usage and constraints for each bundled platform
 - **[Configuration](configuration.md)** - Server configuration options
 
 ### For Platform Developers
