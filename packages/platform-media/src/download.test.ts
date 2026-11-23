@@ -102,6 +102,40 @@ describe("readCapped", () => {
         await new Promise((r) => setTimeout(r, 10));
         expect(pulls).toBeLessThan(10);
     });
+
+    it("cancels the body when the signal aborts", async () => {
+        let pulls = 0;
+        let cancelled = false;
+        const body = new ReadableStream<Uint8Array>({
+            pull(controller) {
+                pulls++;
+                controller.enqueue(new Uint8Array(64));
+                // Stall so the read cannot run ahead of the deadline.
+                return new Promise(() => {});
+            },
+            cancel() {
+                cancelled = true;
+            },
+        });
+        const controller = new AbortController();
+        const pending = readCapped(body, 1024 * 1024, controller.signal);
+        const outcome = Promise.race([
+            pending.then(
+                () => "resolved",
+                () => "rejected",
+            ),
+            new Promise((resolve) => setTimeout(() => resolve("hung"), 500)),
+        ]);
+        await new Promise((r) => setTimeout(r, 20));
+        expect(pulls).toBeGreaterThan(0);
+        controller.abort();
+        expect(await outcome).toBe("rejected");
+        await new Promise((r) => setTimeout(r, 40));
+        expect(cancelled).toBe(true);
+        const after = pulls;
+        await new Promise((r) => setTimeout(r, 40));
+        expect(pulls).toBe(after);
+    });
 });
 
 type Handler = (
@@ -278,6 +312,47 @@ describe("media download", () => {
             expect(err?.message).toContain("(timeout)");
             expect(isExpectedError(err)).toBe(true);
         }
+    });
+
+    it("cancels a body that is still open when the deadline passes", async () => {
+        let pulls = 0;
+        let cancelled = false;
+        // biome-ignore lint/suspicious/noExplicitAny: minimal fake session
+        const platform = new Media({ log: { debug() {} } } as any);
+        Object.assign(platform, {
+            fetchImpl: async () =>
+                new Response(
+                    new ReadableStream({
+                        pull(controller) {
+                            pulls++;
+                            controller.enqueue(PNG);
+                            return new Promise(() => {});
+                        },
+                        cancel() {
+                            cancelled = true;
+                        },
+                    }),
+                ),
+        });
+        Object.assign(platform.config, { timeoutMs: 40 });
+        const err = await new Promise<Error | undefined>((resolve) => {
+            platform.download(
+                {
+                    "@context": ["x"],
+                    type: "download",
+                    actor: { id: "https://example.com/", type: "website" },
+                    object: { type: "image", url: "/a.png" },
+                    // biome-ignore lint/suspicious/noExplicitAny: test job
+                } as any,
+                (e) => resolve(e as Error | undefined),
+            );
+        });
+        expect(err?.message).toContain("(timeout)");
+        await new Promise((r) => setTimeout(r, 20));
+        expect(cancelled).toBe(true);
+        const after = pulls;
+        await new Promise((r) => setTimeout(r, 40));
+        expect(pulls).toBe(after);
     });
 
     it("refuses non-http URLs", async () => {

@@ -98,12 +98,16 @@ export default class Media implements PlatformInterface {
      */
     private getDispatcher(
         maxBytes: number,
+        timeoutMs: number,
     ): ReturnType<typeof createGuardedDispatcher> {
         if (!this.dispatcher) {
             this.dispatcher = createGuardedDispatcher({
                 allowPrivateAddresses:
                     this.config.allowPrivateAddresses === true,
                 maxResponseBytes: maxBytes,
+                // Same budget as the job. Undici then closes a socket that
+                // stays silent after the caller has already given up.
+                timeoutMs,
             });
         }
         return this.dispatcher;
@@ -160,109 +164,129 @@ export default class Media implements PlatformInterface {
             .map((type) => DOWNLOAD_IMAGE_TYPES[type])
             .join(",");
         // withDeadline as well as the signal: undici requests in a platform
-        // child have stayed pending after their signal fired.
+        // child have stayed pending after their signal fired. The controller
+        // is what actually stops a body read once the job has given up.
         const deadline = Date.now() + config.timeoutMs;
+        const controller = new AbortController();
+        const abortTimer = setTimeout(
+            () => controller.abort(),
+            config.timeoutMs,
+        );
+        const timedOut = (error: Error) =>
+            error.name === "TimeoutError" ||
+            error.name === "AbortError" ||
+            errorCause(error).name === "TimeoutError" ||
+            errorCause(error).name === "AbortError";
         let res: Response;
         try {
-            res = (await withDeadline(
-                this.fetchImpl(url.href, {
-                    dispatcher: this.getDispatcher(config.maxBytes),
-                    headers: {
-                        accept,
-                        "user-agent": this.userAgent(),
-                        ...(referer ? { referer } : {}),
-                    },
-                    signal: AbortSignal.timeout(config.timeoutMs),
-                } as RequestInit & {
-                    dispatcher: ReturnType<typeof createGuardedDispatcher>;
-                }),
-                config.timeoutMs,
-            )) as unknown as Response;
-        } catch (err) {
-            const error = toError(err);
-            if (error.name === "TimeoutError") {
-                fail(
-                    "timeout",
-                    url.href,
-                    `no response in ${config.timeoutMs}ms`,
-                );
-            } else {
-                fail("fetch-failed", url.href, errorCause(error).message);
+            try {
+                res = (await withDeadline(
+                    this.fetchImpl(url.href, {
+                        dispatcher: this.getDispatcher(
+                            config.maxBytes,
+                            config.timeoutMs,
+                        ),
+                        headers: {
+                            accept,
+                            "user-agent": this.userAgent(),
+                            ...(referer ? { referer } : {}),
+                        },
+                        signal: controller.signal,
+                    } as RequestInit & {
+                        dispatcher: ReturnType<typeof createGuardedDispatcher>;
+                    }),
+                    config.timeoutMs,
+                )) as unknown as Response;
+            } catch (err) {
+                controller.abort();
+                const error = toError(err);
+                if (timedOut(error)) {
+                    fail(
+                        "timeout",
+                        url.href,
+                        `no response in ${config.timeoutMs}ms`,
+                    );
+                } else {
+                    fail("fetch-failed", url.href, errorCause(error).message);
+                }
+                return;
             }
-            return;
-        }
-        if (!res.ok) {
-            await res.body?.cancel().catch(() => undefined);
-            const code =
-                res.status === 404 || res.status === 410
-                    ? "not-found"
-                    : [401, 403, 429, 451].includes(res.status)
-                      ? "origin-refused"
-                      : "origin-error";
-            fail(code, url.href, `HTTP ${res.status}`);
-            return;
-        }
-        const finalUrl = res.url || url.href;
-        const declaredLength = Number(res.headers.get("content-length"));
-        if (declaredLength > config.maxBytes) {
-            await res.body?.cancel().catch(() => undefined);
-            fail(
-                "too-large",
-                finalUrl,
-                `image is ${declaredLength} bytes; the limit is ${config.maxBytes}`,
-            );
-            return;
-        }
-        let bytes: Uint8Array;
-        try {
-            bytes = await withDeadline(
-                readCapped(res.body, config.maxBytes),
-                Math.max(1, deadline - Date.now()),
-            );
-        } catch (err) {
-            const error = toError(err);
-            if (
-                error instanceof TooLargeError ||
-                errorCause(error).code === "UND_ERR_RES_EXCEEDED_MAX_SIZE"
-            ) {
+            if (!res.ok) {
+                await res.body?.cancel().catch(() => undefined);
+                const code =
+                    res.status === 404 || res.status === 410
+                        ? "not-found"
+                        : [401, 403, 429, 451].includes(res.status)
+                          ? "origin-refused"
+                          : "origin-error";
+                fail(code, url.href, `HTTP ${res.status}`);
+                return;
+            }
+            const finalUrl = res.url || url.href;
+            const declaredLength = Number(res.headers.get("content-length"));
+            if (declaredLength > config.maxBytes) {
+                await res.body?.cancel().catch(() => undefined);
                 fail(
                     "too-large",
                     finalUrl,
-                    `image is larger than ${config.maxBytes} bytes`,
+                    `image is ${declaredLength} bytes; the limit is ${config.maxBytes}`,
                 );
-            } else if (error.name === "TimeoutError") {
-                fail(
-                    "timeout",
-                    finalUrl,
-                    `not received in ${config.timeoutMs}ms`,
-                );
-            } else {
-                fail("fetch-failed", finalUrl, errorCause(error).message);
+                return;
             }
-            return;
+            let bytes: Uint8Array;
+            try {
+                bytes = await withDeadline(
+                    readCapped(res.body, config.maxBytes, controller.signal),
+                    Math.max(1, deadline - Date.now()),
+                );
+            } catch (err) {
+                controller.abort();
+                const error = toError(err);
+                if (
+                    error instanceof TooLargeError ||
+                    errorCause(error).code === "UND_ERR_RES_EXCEEDED_MAX_SIZE"
+                ) {
+                    fail(
+                        "too-large",
+                        finalUrl,
+                        `image is larger than ${config.maxBytes} bytes`,
+                    );
+                } else if (timedOut(error)) {
+                    fail(
+                        "timeout",
+                        finalUrl,
+                        `not received in ${config.timeoutMs}ms`,
+                    );
+                } else {
+                    fail("fetch-failed", finalUrl, errorCause(error).message);
+                }
+                return;
+            }
+            const type = sniffImageType(bytes);
+            if (!type || !config.types.has(type)) {
+                const served =
+                    res.headers.get("content-type")?.split(";", 1)[0].trim() ||
+                    "no content type";
+                fail(
+                    "not-image",
+                    finalUrl,
+                    type
+                        ? `${type} images are not allowed on this server`
+                        : `response is not a supported image (served as ${served})`,
+                );
+                return;
+            }
+            job.object = {
+                type: "image",
+                url: finalUrl,
+                mediaType: DOWNLOAD_IMAGE_TYPES[type],
+                size: bytes.byteLength,
+                data: Buffer.from(bytes).toString("base64"),
+            };
+            cb(null, job);
+        } finally {
+            clearTimeout(abortTimer);
         }
-        const type = sniffImageType(bytes);
-        if (!type || !config.types.has(type)) {
-            const served =
-                res.headers.get("content-type")?.split(";", 1)[0].trim() ||
-                "no content type";
-            fail(
-                "not-image",
-                finalUrl,
-                type
-                    ? `${type} images are not allowed on this server`
-                    : `response is not a supported image (served as ${served})`,
-            );
-            return;
-        }
-        job.object = {
-            type: "image",
-            url: finalUrl,
-            mediaType: DOWNLOAD_IMAGE_TYPES[type],
-            size: bytes.byteLength,
-            data: Buffer.from(bytes).toString("base64"),
-        };
-        cb(null, job);
     }
 
     cleanup(cb: PlatformCallback) {

@@ -14,6 +14,12 @@ export interface GuardedDispatcherOptions {
     allowPrivateAddresses?: boolean;
     /** Cap on response body size in bytes. Defaults to 5 MiB. */
     maxResponseBytes?: number;
+    /**
+     * How long a request may go without headers, and between body chunks,
+     * before undici aborts it. The fetch `AbortSignal` is not always enough:
+     * a request has stayed open after its signal fired.
+     */
+    timeoutMs?: number;
 }
 
 type LookupOptions = { all?: boolean; family?: number } & Record<
@@ -135,9 +141,14 @@ export function createGuardedDispatcher(
     const {
         allowPrivateAddresses = false,
         maxResponseBytes = DEFAULT_MAX_RESPONSE_BYTES,
+        timeoutMs,
     } = options;
     return new Agent({
         maxResponseSize: maxResponseBytes,
         connect: createGuardedConnector(allowPrivateAddresses),
+        // Left unset, undici waits 5 minutes for headers and between chunks.
+        ...(timeoutMs !== undefined
+            ? { headersTimeout: timeoutMs, bodyTimeout: timeoutMs }
+            : {}),
     });
 }
