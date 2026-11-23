@@ -139,33 +139,60 @@ export function sniffImageType(
 /** Thrown by {@link readCapped} when the body exceeds the byte limit. */
 export class TooLargeError extends Error {}
 
+/** The download deadline passed. Named so callers can tell it from other failures. */
+function deadlineError(): Error {
+    return Object.assign(new Error("download aborted"), {
+        name: "TimeoutError",
+    });
+}
+
 /**
  * Read a response body into memory, aborting as soon as it exceeds
- * `maxBytes` instead of buffering the whole response first.
+ * `maxBytes` instead of buffering the whole response first. `signal` stops
+ * the read when the download deadline passes: the caller is no longer
+ * waiting, and a body that keeps arriving would hold memory until it ended.
  */
 export async function readCapped(
     body: ReadableStream<Uint8Array> | null,
     maxBytes: number,
+    signal?: AbortSignal,
 ): Promise<Uint8Array> {
     if (!body) return new Uint8Array(0);
+    if (signal?.aborted) {
+        await body.cancel().catch(() => undefined);
+        throw deadlineError();
+    }
     const reader = body.getReader();
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        total += value.byteLength;
-        if (total > maxBytes) {
-            await reader.cancel().catch(() => undefined);
-            throw new TooLargeError(`image is larger than ${maxBytes} bytes`);
+    const onAbort = () => {
+        reader.cancel().catch(() => undefined);
+    };
+    signal?.addEventListener("abort", onAbort);
+    try {
+        const chunks: Uint8Array[] = [];
+        let total = 0;
+        while (true) {
+            if (signal?.aborted) throw deadlineError();
+            const { done, value } = await reader.read();
+            // A chunk that arrived as the deadline passed is not kept.
+            if (signal?.aborted) throw deadlineError();
+            if (done) break;
+            total += value.byteLength;
+            if (total > maxBytes) {
+                await reader.cancel().catch(() => undefined);
+                throw new TooLargeError(
+                    `image is larger than ${maxBytes} bytes`,
+                );
+            }
+            chunks.push(value);
         }
-        chunks.push(value);
+        const bytes = new Uint8Array(total);
+        let offset = 0;
+        for (const chunk of chunks) {
+            bytes.set(chunk, offset);
+            offset += chunk.byteLength;
+        }
+        return bytes;
+    } finally {
+        signal?.removeEventListener("abort", onAbort);
     }
-    const bytes = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-        bytes.set(chunk, offset);
-        offset += chunk.byteLength;
-    }
-    return bytes;
 }
