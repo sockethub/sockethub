@@ -360,15 +360,43 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(queue.shutdown);
         });
 
-        test("shutdown of a replaced instance disconnects the queue without obliterating it", async () => {
+        test("shutdown of a replaced instance keeps the queue and the slot for the caller", async () => {
             pi.initQueue("a secret");
             const queue = pi.queue;
             pi.markReplaced();
             expect(pi.flaggedForTermination).toEqual(true);
             await pi.shutdown();
+            // The caller disconnects once the replacement is committed, or
+            // obliterates if the start is refused. Doing either here drops
+            // the jobs or frees the slot while that decision is still open.
             sandbox.assert.notCalled(queue.shutdown);
+            sandbox.assert.notCalled(queue.disconnect);
+            expect(pi.queue).toBe(queue);
+            expect(platformInstances.get(pi.id)).toBe(pi);
+            await pi.releaseReplacedQueue();
             sandbox.assert.called(queue.disconnect);
             expect(pi.queue).toBeUndefined();
+        });
+
+        test("abandoning a replacement answers pending jobs and removes the queue", async () => {
+            pi.initQueue("a secret");
+            const queue = pi.queue;
+            const pending = sandbox.spy();
+            pi.registerCompletedJobHandler("running-send", pending);
+            pi.markReplaced();
+            await pi.shutdown();
+            await pi.abandonReplacement();
+            sandbox.assert.calledOnce(pending);
+            expect(pending.firstCall.args[0].error).toContain(
+                "could not be restarted",
+            );
+            expect(pending.firstCall.args[0].error).toContain(
+                "do not automatically retry",
+            );
+            sandbox.assert.calledOnce(queue.shutdown);
+            sandbox.assert.notCalled(queue.disconnect);
+            expect(platformInstances.has(pi.id)).toBeFalse();
+            expect(pi.completedJobHandlers.size).toBe(0);
         });
 
         test("shutdown does not evict a replacement instance from the map", async () => {
