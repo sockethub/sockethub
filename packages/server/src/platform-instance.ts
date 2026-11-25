@@ -332,27 +332,77 @@ export default class PlatformInstance {
         }
 
         try {
-            if (this.replaced || platformInstances.get(this.id) !== this) {
+            if (this.replaced) {
+                // Leave the queue and the map entry for the caller. It
+                // disconnects once the replacement is committed
+                // (releaseReplacedQueue), or obliterates and drops the entry
+                // if the start is refused (abandonReplacement). Removing the
+                // entry here would free the slot while this handoff is still
+                // in progress, and disconnecting would leave no way to
+                // obliterate the jobs if the replacement never starts.
+            } else if (platformInstances.get(this.id) !== this) {
                 // A replacement instance shares this queue's Redis name;
                 // pausing or obliterating it would destroy the replacement's
                 // pending jobs. Close our connections only.
                 await this.queue.disconnect();
+                this.queue = undefined;
             } else {
                 await this.queue.shutdown();
+                this.queue = undefined;
             }
-            this.queue = undefined;
         } catch (_e) {
             // this needs to happen
         }
 
         try {
             // Guard against evicting a replacement instance that has taken
-            // over this identifier since our teardown began.
-            if (platformInstances.get(this.id) === this) {
+            // over this identifier since our teardown began. A handoff
+            // (`replaced`) keeps its own entry until the caller commits or
+            // abandons it, so the slot stays occupied through the yield.
+            if (!this.replaced && platformInstances.get(this.id) === this) {
                 platformInstances.delete(this.id);
             }
         } catch (_e) {
             // this needs to happen
+        }
+    }
+
+    /**
+     * Drop the Redis connection kept across a committed handoff. The jobs
+     * stay; the replacement opens its own connection to the same queue.
+     */
+    public async releaseReplacedQueue(): Promise<void> {
+        // Clear the reference only after disconnect succeeds. A failure leaves
+        // the queue in place so abandonReplacement can still obliterate it.
+        await this.queue?.disconnect();
+        this.queue = undefined;
+    }
+
+    /**
+     * The handoff will not finish. Answer jobs that were waiting on this
+     * worker, delete the queue `shutdown` left in place, and free the slot.
+     */
+    public async abandonReplacement(): Promise<void> {
+        if (!this.retirementError) {
+            this.retirementError = interruptedBy(
+                "platform worker stopped and could not be restarted",
+            );
+            const pending = [...this.completedJobHandlers.values()];
+            this.completedJobHandlers.clear();
+            this.completedJobHandlerTimestamps.clear();
+            for (const handler of pending) this.failRetiredJob(handler);
+        }
+        const queue = this.queue;
+        this.queue = undefined;
+        try {
+            // shutdown() obliterates. disconnect() would leave the jobs with
+            // no worker, and a later start of this actor opens a new queue id.
+            await queue?.shutdown();
+        } catch (_e) {
+            // The caller still has to surface why the start was refused.
+        }
+        if (platformInstances.get(this.id) === this) {
+            platformInstances.delete(this.id);
         }
     }
 

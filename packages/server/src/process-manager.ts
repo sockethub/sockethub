@@ -220,24 +220,42 @@ class ProcessManager {
             // are moved onto the replacement below, once this start is
             // committed. A close that already answered them leaves nothing to
             // move, so the job is not delivered twice.
+            //
+            // shutdown() of a replaced worker leaves it in the map. The slot
+            // has to stay taken until the replacement is committed: deleting
+            // it here lets another start pass the cap during this yield, the
+            // recheck below then refuses, and the callbacks and queue are
+            // nobody's. Nothing retries that handoff, because this instance
+            // is no longer findable.
             inheritedQueueId = existing.queueId;
             existing.markReplaced();
             await existing.shutdown();
-            // Teardown yields; other identifiers may have consumed capacity meanwhile.
-            this.assertInstanceCapacity(
-                platform,
-                identifier,
-                actor === undefined,
-                sessionId,
-                sessionIp,
-                !!reusable,
-            );
-        }
-        // Charge only a start that is about to fork; synchronous from here.
-        if (!reusable && actor !== undefined)
-            this.assertStartRate(sessionIp, true);
-        if (existing && !reusable)
+            try {
+                // Still rechecked: a start that removed this entry (or a
+                // per-session / per-address cap) can make the replacement
+                // illegal. Refuse before forking, and do not leave the
+                // preserved queue or its callbacks behind.
+                this.assertInstanceCapacity(
+                    platform,
+                    identifier,
+                    actor === undefined,
+                    sessionId,
+                    sessionIp,
+                    false,
+                );
+                if (actor !== undefined) this.assertStartRate(sessionIp, true);
+                // Disconnect only after the start is allowed. Until then the
+                // queue object is the only handle that can obliterate it.
+                await existing.releaseReplacedQueue();
+            } catch (err) {
+                await existing.abandonReplacement();
+                throw err;
+            }
             pendingHandlers = existing.takePendingJobHandlers();
+        } else if (!reusable && actor !== undefined) {
+            // Charge only a start that is about to fork.
+            this.assertStartRate(sessionIp, true);
+        }
         const platformInstance = reusable
             ? existing
             : this.createPlatformInstance(

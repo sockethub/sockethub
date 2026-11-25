@@ -301,6 +301,9 @@ describe("ProcessManager", () => {
     it("rechecks capacity after a dead worker finishes teardown", async () => {
         maxPlatformInstances = 1;
         const first = await manager.get("fakeplatform", "a", "a");
+        const queue = first.queue;
+        const pending = sandbox.spy();
+        first.registerCompletedJobHandler("running-send", pending);
         setAlive(first, false);
         let release: () => void = () => {};
         const teardown = new Promise<void>((resolve) => { release = resolve; });
@@ -314,6 +317,47 @@ describe("ProcessManager", () => {
         release();
         await expect(replacement).rejects.toThrow("platform instance limit reached");
         expect(platformInstances.size).toBe(1);
+        // The refused handoff must answer the dead worker's jobs. Leaving
+        // them registered answers nothing: the instance is gone, and the
+        // next start of this actor opens a different queue.
+        sandbox.assert.calledOnce(pending);
+        expect(pending.firstCall.args[0].error).toContain("could not be restarted");
+        sandbox.assert.calledOnce(queue.shutdown);
+    });
+
+    it("holds a dead worker's slot until its replacement is committed", async () => {
+        maxPlatformInstances = 1;
+        const first = await manager.get("fakeplatform", "a", "a");
+        const queue = first.queue;
+        const pending = sandbox.spy();
+        first.registerCompletedJobHandler("running-send", pending);
+        setAlive(first, false);
+        let release: () => void = () => {};
+        const gate = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        const shutdown = first.shutdown.bind(first);
+        sandbox.stub(first, "shutdown").callsFake(async () => {
+            await shutdown();
+            await gate;
+        });
+        const replacementPromise = manager.get("fakeplatform", "a", "a");
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        // Teardown has finished and still holds the only slot, so a second
+        // actor cannot take it out from under the replacement.
+        await expect(manager.get("fakeplatform", "b", "b")).rejects.toThrow(
+            /platform instance limit reached/,
+        );
+        release();
+        const replacement = await replacementPromise;
+        expect(replacement).not.toBe(first);
+        expect(replacement.queueId).toEqual(first.queueId);
+        expect(platformInstances.get(replacement.id)).toBe(replacement);
+        expect(platformInstances.size).toBe(1);
+        sinon.assert.notCalled(pending);
+        expect(replacement.completedJobHandlers.get("running-send")).toBe(pending);
+        sandbox.assert.notCalled(queue.shutdown);
+        sandbox.assert.called(queue.disconnect);
     });
 
     it("bounds concurrent actor churn per session while admitting another client", async () => {
