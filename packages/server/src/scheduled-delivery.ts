@@ -217,6 +217,11 @@ export class ScheduledDelivery {
         string,
         { start: number; count: number }
     >();
+    /**
+     * Subscriptions this server could not decrypt, and when it may try them
+     * again. A wrong secret would otherwise reclaim them on every poll.
+     */
+    private readonly unreadableUntil = new Map<string, number>();
 
     constructor(
         private readonly store: ScheduleStore,
@@ -380,28 +385,80 @@ export class ScheduledDelivery {
     /** Send everything that is due now. Runs on a timer; public for tests. */
     async tick(): Promise<void> {
         while (!this.stopped) {
+            const now = this.now();
+            const leaseUntil = now + LEASE_MS;
             const ids = await this.store.claimDue(
-                this.now(),
+                now,
                 LEASE_MS,
                 BATCH_SIZE,
+                this.unreadableIds(now),
             );
-            await Promise.all(
+            const outcomes = await Promise.all(
                 ids.map((id) =>
-                    this.process(id).catch((err: unknown) => {
+                    this.process(id, leaseUntil, now).catch((err: unknown) => {
                         // Left claimed: it comes due again when the lease ends.
                         log.warn(
                             `scheduled delivery ${id.slice(0, 8)} failed: ${errorMessage(err)}`,
                         );
+                        return "failed" as const;
                     }),
                 ),
             );
-            if (ids.length < BATCH_SIZE) return;
+            // A full batch of records this server cannot read would otherwise
+            // be claimed again on the next iteration, forever.
+            if (
+                ids.length < BATCH_SIZE ||
+                outcomes.some((outcome) => outcome === "unreadable")
+            ) {
+                return;
+            }
         }
     }
 
-    private async process(id: string): Promise<void> {
-        const loaded = await this.store.load(id);
-        if (!loaded) return;
+    /**
+     * Subscriptions this server failed to decrypt and may not claim again
+     * yet. Expired entries are dropped here, which caps the map at however
+     * many are still inside the skip window.
+     */
+    private unreadableIds(now: number): Array<string> {
+        const skip: Array<string> = [];
+        for (const [id, until] of this.unreadableUntil) {
+            if (until > now) skip.push(id);
+            else this.unreadableUntil.delete(id);
+        }
+        return skip;
+    }
+
+    /** Skip `id` until the lease would have ended, then try once more. */
+    private rememberUnreadable(id: string, now: number): void {
+        this.unreadableUntil.set(id, now + LEASE_MS);
+    }
+
+    private async process(
+        id: string,
+        leaseUntil: number,
+        claimedAt: number,
+    ): Promise<"ok" | "unreadable"> {
+        // Claimed again before the skip expired: hand it back without
+        // spending another lease on a record this server still cannot open.
+        if ((this.unreadableUntil.get(id) ?? 0) > claimedAt) {
+            await this.store.releaseClaim(id, leaseUntil, claimedAt);
+            return "unreadable";
+        }
+        const found = await this.store.loadOutcome(id);
+        if (found.kind === "missing") return "ok";
+        if (found.kind === "unreadable") {
+            // The record stays. Holding the claim would keep every server
+            // that has the right secret from sending it until the lease
+            // ended, and this one would take it again.
+            this.rememberUnreadable(id, claimedAt);
+            log.warn(
+                `scheduled delivery ${id.slice(0, 8)} cannot be read with this server's secret; the claim was released`,
+            );
+            await this.store.releaseClaim(id, leaseUntil, claimedAt);
+            return "unreadable";
+        }
+        const loaded = found.loaded;
         const started = this.now();
         const remaining: Array<ScheduledMessage> = [];
         for (const message of loaded.record.messages) {
@@ -412,7 +469,7 @@ export class ScheduledDelivery {
             if (!(await this.store.unchanged(id, loaded))) {
                 // The app replaced or cancelled this list while an earlier
                 // message was being sent. The new list has its own wake-up.
-                return;
+                return "ok";
             }
             // Everything below is decided on the time after that read, as
             // close to the send as this process gets.
@@ -447,7 +504,7 @@ export class ScheduledDelivery {
                 log.debug(
                     `subscription ${id.slice(0, 8)} is gone; schedule removed`,
                 );
-                return;
+                return "ok";
             }
             if (outcome.status !== "retry") {
                 // Sent, or refused for good. Either way it is finished.
@@ -468,5 +525,6 @@ export class ScheduledDelivery {
             }
         }
         await this.store.save(id, loaded, remaining);
+        return "ok";
     }
 }
