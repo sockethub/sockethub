@@ -124,6 +124,35 @@ describe("ScheduleStore", () => {
         expect(await store.count()).toBe(0);
     });
 
+    it("claims the next due subscription when asked to leave one alone", async () => {
+        await put(ENDPOINT, [message(-1000)]);
+        const other = `${ENDPOINT}-later`;
+        await put(other, [message(-500)]);
+        const otherId = store.idFor(other);
+        expect(await store.claimDue(NOW, 60_000, 1, [id])).toEqual([otherId]);
+        // The skipped subscription is still due at its original time.
+        expect(await redis.zscore(SCHEDULE_DUE_KEY, id)).toBe(
+            String(NOW - 1000),
+        );
+    });
+
+    it("gives a claim back only while this server still holds it", async () => {
+        await put(ENDPOINT, [message(-1000)]);
+        const leaseMs = 60_000;
+        expect(await store.claimDue(NOW, leaseMs, 10)).toEqual([id]);
+        await store.releaseClaim(id, NOW + leaseMs, NOW);
+        expect(await redis.zscore(SCHEDULE_DUE_KEY, id)).toBe(String(NOW));
+
+        expect(await store.claimDue(NOW, leaseMs, 10)).toEqual([id]);
+        // Someone who can read the record (or a client sync) moved the
+        // wake-up. Releasing the old lease must not pull it back.
+        await redis.zadd(SCHEDULE_DUE_KEY, NOW + HOUR, id);
+        await store.releaseClaim(id, NOW + leaseMs, NOW);
+        expect(await redis.zscore(SCHEDULE_DUE_KEY, id)).toBe(
+            String(NOW + HOUR),
+        );
+    });
+
     it("hands a due subscription to one claimer until the lease ends", async () => {
         await put(ENDPOINT, [message(-1000)]);
         await put(`${ENDPOINT}-later`, [message(HOUR)]);

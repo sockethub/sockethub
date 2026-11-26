@@ -61,19 +61,44 @@ export interface LoadedSchedule {
     raw: string;
 }
 
+/**
+ * What {@link ScheduleStore.loadOutcome} found. `unreadable` is distinct from
+ * `missing` so a caller that just claimed the id can give the claim back
+ * instead of holding it until the lease ends.
+ */
+export type ScheduleLoad =
+    | { kind: "ready"; loaded: LoadedSchedule }
+    | { kind: "missing" }
+    | { kind: "unreadable" };
+
 /** When a message is next due: its retry time if it has one. */
 export const nextAttempt = (message: ScheduledMessage) =>
     message.retryAt ?? message.deliverAt;
 
-// Claims every id that is due and pushes its score forward by the lease, so
-// no other server picks the same id up while this one works on it. A server
-// that dies mid-send leaves the id to come due again when the lease ends.
+// Claims up to ARGV[3] ids that are due and not listed in ARGV[4..], and
+// pushes each claimed score forward by the lease. Ids this server already
+// failed to decrypt are left for a server that can read them. A server that
+// dies mid-send leaves an id to come due again when the lease ends.
 const CLAIM_SCRIPT = `
-local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, ARGV[3])
-for _, id in ipairs(ids) do
-    redis.call('ZADD', KEYS[1], ARGV[2], id)
+local skip = {}
+local window = tonumber(ARGV[3])
+for i = 4, #ARGV do
+    skip[ARGV[i]] = true
+    window = window + 1
 end
-return ids`;
+local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, window)
+local claimed = {}
+local max = tonumber(ARGV[3])
+for _, id in ipairs(ids) do
+    if not skip[id] then
+        redis.call('ZADD', KEYS[1], ARGV[2], id)
+        table.insert(claimed, id)
+        if #claimed >= max then
+            break
+        end
+    end
+end
+return claimed`;
 
 // Writes a record only if it is still the one that was read ('' for none).
 // A worker and a client can both be changing a subscription at once: a
@@ -99,6 +124,16 @@ return 1`;
 const FORGET_SCRIPT = `
 if redis.call('EXISTS', KEYS[1]) == 0 then
     redis.call('ZREM', KEYS[2], ARGV[1])
+end
+return 1`;
+
+// Gives back a claim this server cannot use. The score is moved only when it
+// is still the lease this server took: a wake-up written since (a client
+// syncing its list, or a server that can read the record) is left alone.
+const RELEASE_CLAIM_SCRIPT = `
+local score = redis.call('ZSCORE', KEYS[1], ARGV[1])
+if score and tonumber(score) == tonumber(ARGV[2]) then
+    redis.call('ZADD', KEYS[1], ARGV[3], ARGV[1])
 end
 return 1`;
 
@@ -276,6 +311,7 @@ export class ScheduleStore {
         now: number,
         leaseMs: number,
         limit: number,
+        skip: Array<string> = [],
     ): Promise<Array<string>> {
         return (await this.redis.eval(
             CLAIM_SCRIPT,
@@ -284,6 +320,7 @@ export class ScheduleStore {
             now,
             now + leaseMs,
             limit,
+            ...skip,
         )) as Array<string>;
     }
 
@@ -292,20 +329,54 @@ export class ScheduleStore {
      * drops its wake-up entry, or when it cannot be read with the current
      * secret. An unreadable record is left alone until it expires: deleting
      * it would let one server started with a mistyped secret destroy every
-     * schedule as it came due.
+     * schedule as it came due. The claim itself is not released here; the
+     * caller uses {@link loadOutcome} and {@link releaseClaim} for that.
      */
     async load(id: string): Promise<LoadedSchedule | null> {
+        const outcome = await this.loadOutcome(id);
+        return outcome.kind === "ready" ? outcome.loaded : null;
+    }
+
+    /**
+     * Read a claimed record, distinguishing a missing one from one this
+     * server's secret cannot open. A missing record's wake-up entry is
+     * dropped. An unreadable record is left stored until it expires.
+     */
+    async loadOutcome(id: string): Promise<ScheduleLoad> {
         const key = scheduleRecordKey(id);
         const raw = await this.redis.get(key);
         if (raw === null) {
             await this.redis.eval(FORGET_SCRIPT, 2, key, SCHEDULE_DUE_KEY, id);
-            return null;
+            return { kind: "missing" };
         }
         try {
-            return { record: this.open(id, raw), raw };
+            return {
+                kind: "ready",
+                loaded: { record: this.open(id, raw), raw },
+            };
         } catch {
-            return null;
+            return { kind: "unreadable" };
         }
+    }
+
+    /**
+     * Give back a claim of `id` whose score is still `leaseUntil`, making it
+     * due at `dueAt`. A server that cannot decrypt a record calls this so a
+     * server that can does not have to wait out the lease.
+     */
+    async releaseClaim(
+        id: string,
+        leaseUntil: number,
+        dueAt: number,
+    ): Promise<void> {
+        await this.redis.eval(
+            RELEASE_CLAIM_SCRIPT,
+            1,
+            SCHEDULE_DUE_KEY,
+            id,
+            leaseUntil,
+            dueAt,
+        );
     }
 
     /** Whether a record is still the one that was read. */

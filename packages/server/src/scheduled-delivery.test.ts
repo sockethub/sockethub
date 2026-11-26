@@ -76,6 +76,19 @@ class MemoryStore {
         for (const id of ids) this.due.set(id, now + leaseMs);
         return ids;
     }
+    async loadOutcome(id: string) {
+        const loaded = await this.load(id);
+        return loaded
+            ? { kind: "ready" as const, loaded }
+            : { kind: "missing" as const };
+    }
+    async releaseClaim(
+        id: string,
+        leaseUntil: number,
+        dueAt: number,
+    ): Promise<void> {
+        if (this.due.get(id) === leaseUntil) this.due.set(id, dueAt);
+    }
     async load(id: string): Promise<LoadedSchedule | null> {
         const messages = this.records.get(id);
         if (!messages) {
@@ -585,6 +598,134 @@ describe("ScheduledDelivery.tick", () => {
         await scheduler.tick();
         expect(sent).toHaveLength(0);
         expect(store.due.size).toBe(0);
+    });
+
+    it("releases a subscription it cannot decrypt so another server can send it", async () => {
+        const record = [
+            { deliverAt: NOW - MINUTE, content: "AAAA", ttl: 3600 },
+        ];
+        const due = new Map<string, number>([["sub", NOW - 1]]);
+        let locked = true;
+        const shared = {
+            async claimDue(now: number, leaseMs: number, limit: number) {
+                const ids = [...due]
+                    .filter(([, at]) => at <= now)
+                    .slice(0, limit)
+                    .map(([id]) => id);
+                for (const id of ids) due.set(id, now + leaseMs);
+                return ids;
+            },
+            async loadOutcome(id: string) {
+                if (locked) return { kind: "unreadable" as const };
+                return {
+                    kind: "ready" as const,
+                    loaded: {
+                        record: { endpoint: ENDPOINT, messages: record },
+                        raw: JSON.stringify(record),
+                    },
+                };
+            },
+            async releaseClaim(id: string, leaseUntil: number, dueAt: number) {
+                if (due.get(id) === leaseUntil) due.set(id, dueAt);
+            },
+            async unchanged() {
+                return true;
+            },
+            async save(
+                _id: string,
+                _loaded: LoadedSchedule,
+                messages: Array<ScheduledMessage>,
+            ) {
+                record.splice(0, record.length, ...messages);
+                return true;
+            },
+        };
+        const blind = new ScheduledDelivery(
+            shared as unknown as ScheduleStore,
+            async () => {
+                throw new Error("unreadable record was sent");
+            },
+            limits,
+            () => NOW,
+        );
+        await blind.tick();
+        // Due again immediately, not held for the two-minute lease.
+        expect(due.get("sub")).toBe(NOW);
+
+        const sent: Array<string> = [];
+        locked = false;
+        const reader = new ScheduledDelivery(
+            shared as unknown as ScheduleStore,
+            async (_endpoint, message) => {
+                sent.push(message.content);
+                return { status: "accepted" };
+            },
+            limits,
+            () => NOW,
+        );
+        await reader.tick();
+        expect(sent).toEqual(["AAAA"]);
+        expect(record).toHaveLength(0);
+    });
+
+    it("does not claim a subscription it failed to decrypt on the next poll", async () => {
+        const skips: Array<Array<string>> = [];
+        let polls = 0;
+        const store = {
+            async claimDue(
+                _now: number,
+                _leaseMs: number,
+                _limit: number,
+                skip: Array<string> = [],
+            ) {
+                polls += 1;
+                skips.push(skip);
+                return polls === 1 ? ["id-0"] : [];
+            },
+            async loadOutcome() {
+                return { kind: "unreadable" as const };
+            },
+            async releaseClaim() {},
+        };
+        const clock = { now: NOW };
+        const scheduler = new ScheduledDelivery(
+            store as unknown as ScheduleStore,
+            async () => {
+                throw new Error("unreadable record was sent");
+            },
+            limits,
+            () => clock.now,
+        );
+        await scheduler.tick();
+        clock.now = NOW + 5000;
+        await scheduler.tick();
+        expect(skips[0]).toEqual([]);
+        expect(skips[1]).toEqual(["id-0"]);
+    });
+
+    it("does not reclaim unreadable subscriptions in the same poll", async () => {
+        let claims = 0;
+        const store = {
+            async claimDue(_now: number, _leaseMs: number, limit: number) {
+                claims += 1;
+                if (claims > 2) throw new Error(`claimed ${claims} times`);
+                return Array.from({ length: limit }, (_value, i) => `id-${i}`);
+            },
+            async loadOutcome() {
+                return { kind: "unreadable" as const };
+            },
+            async releaseClaim() {},
+        };
+        const scheduler = new ScheduledDelivery(
+            store as unknown as ScheduleStore,
+            async () => {
+                throw new Error("unreadable record was sent");
+            },
+            limits,
+            () => NOW,
+        );
+        await scheduler.tick();
+        expect(claims).toBe(1);
     });
 });
 
